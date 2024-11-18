@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { CourseOverviewTop } from '@components/Dashboard/UI/CourseOverviewTop'
 import { motion } from 'framer-motion'
 import EditCourseGeneral from '@components/Dashboard/Course/EditCourseGeneral/EditCourseGeneral'
-import { GalleryVerticalEnd, Info, UserRoundCog } from 'lucide-react'
+import { GalleryVerticalEnd, Map, Info, UserRoundCog } from 'lucide-react'
 import EditCourseAccess from '@components/Dashboard/Course/EditCourseAccess/EditCourseAccess'
 
 export type CourseOverviewParams = {
@@ -82,6 +82,24 @@ function CourseOverviewPage({ params }: { params: CourseOverviewParams }) {
                 </div>
               </div>
             </Link>
+            <Link
+              href={
+                getUriWithOrg(params.orgslug, '') +
+                `/dash/courses/course/${params.courseuuid}/map`
+              }
+            >
+              <div
+                className={`flex space-x-4 py-2 w-fit text-center border-black transition-all ease-linear ${params.subpage.toString() === 'map'
+                  ? 'border-b-4'
+                  : 'opacity-50'
+                  } cursor-pointer`}
+              >
+                <div className="flex items-center space-x-2.5 mx-2">
+                  <Map size={16} />
+                  <div>Map</div>
+                </div>
+              </div>
+            </Link>
           </div>
 
         </div>
@@ -92,6 +110,7 @@ function CourseOverviewPage({ params }: { params: CourseOverviewParams }) {
           transition={{ duration: 0.1, type: 'spring', stiffness: 80 }}
           className="h-full overflow-y-auto"
         >
+          {params.subpage == 'map' ? (<EditCourseAccess orgslug={params.orgslug} />) : ('')}
           {params.subpage == 'content' ? (<EditCourseStructure orgslug={params.orgslug} />) : ('')}
           {params.subpage == 'general' ? (<EditCourseGeneral orgslug={params.orgslug} />) : ('')}
           {params.subpage == 'access' ? (<EditCourseAccess orgslug={params.orgslug} />) : ('')}

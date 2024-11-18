@@ -3,7 +3,7 @@ import ForgotPasswordClient from './forgot'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'LearnHouse - Forgot Password',
+  title: 'Sokrates - Forgot Password',
 }
 
 function ForgotPasswordPage() {
