@@ -3,7 +3,7 @@ import React from 'react'
 import ResetPasswordClient from './reset'
 
 export const metadata: Metadata = {
-    title: 'LearnHouse - Reset Password',
+    title: 'Sokrates - Reset Password',
 }
 
 function ResetPasswordPage() {
