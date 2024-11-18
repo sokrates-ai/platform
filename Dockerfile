@@ -23,13 +23,13 @@ ENV NEXT_PUBLIC_LEARNHOUSE_COLLABORATION_WS_URL=ws://localhost:1998
 WORKDIR /app/web
 COPY ./apps/web/package.json ./apps/web/pnpm-lock.yaml* ./
 COPY ./apps/web /app/web
-RUN rm -f .env* 
+RUN rm -f .env*
 RUN if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile && pnpm run build; \
     else echo "Lockfile not found." && exit 1; \
     fi
 
 # Final image
-FROM base as runner 
+FROM base as runner
 RUN addgroup --system --gid 1001 system \
     && adduser --system --uid 1001 app \
     && mkdir .next \

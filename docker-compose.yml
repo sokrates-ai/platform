@@ -3,7 +3,7 @@ services:
   app:
     build: .
     ports:
-      - "80:80"
+      - "8090:80"
     volumes:
       - .:/usr/learnhouse
     env_file:
