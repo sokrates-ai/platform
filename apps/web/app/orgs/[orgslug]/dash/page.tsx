@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import React from 'react'
-import learnhousetextlogo from '../../../../public/learnhouse_logo.png'
-import { BookCopy, School, Settings, University, Users } from 'lucide-react'
+import learnhousetextlogo from '@public/black_logo.png'
+import { BookCopy, School, Settings, Code, Users } from 'lucide-react'
 import Link from 'next/link'
 import AdminAuthorization from '@components/Security/AdminAuthorization'
 
@@ -44,13 +44,13 @@ function DashboardHome() {
           <div className="h-1 w-[100px] bg-neutral-200 rounded-full mx-auto"></div>
           <div className="flex justify-center items-center">
             <Link
-              href={'https://university.learnhouse.io/'}
+              href={'https://github.com/sokrates-ai'}
               target='_blank'
               className="flex mt-4 sm:mt-[40px] bg-black space-x-2 items-center py-3 px-7 rounded-lg shadow-lg hover:scale-105 transition-all ease-linear cursor-pointer"
             >
-              <University className="text-gray-100" size={20} />
+              <Code className="text-gray-100" size={20} />
               <div className="text-sm font-bold text-gray-100">
-                LearnHouse University
+                Sokrates GitHub
               </div>
             </Link>
           </div>
