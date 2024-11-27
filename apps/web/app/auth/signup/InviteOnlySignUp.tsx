@@ -52,6 +52,7 @@ interface InviteOnlySignUpProps {
 function InviteOnlySignUpComponent(props: InviteOnlySignUpProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const org = useOrg() as any
+
   const router = useRouter()
   const [error, setError] = React.useState('')
   const [message, setMessage] = React.useState('')
@@ -110,7 +111,7 @@ function InviteOnlySignUpComponent(props: InviteOnlySignUpProps) {
             <div className="font-bold text-sm">{message}</div>
           </div>
           <hr className="border-green-900/20 800 w-40 border" />
-          <Link className="flex space-x-2 items-center" href={'/login'}>
+          <Link className="flex space-x-2 items-center" href={`/login?orgslug=${org.slug}`}>
             <User size={14} /> <div>Login </div>
           </Link>
         </div>
