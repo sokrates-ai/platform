@@ -1,9 +1,18 @@
 version: "3.9"
 services:
+  # caddy:
+  #   image: caddy:2.9-alpine
+  #   ports:
+  #     - 1234:80
+  #   env:
+  #     - "SOKRATES_BACKEND_HOST=app"
+  #     - "SOKRATES_BACKEND_PORT=9000"
+  #   volumes:
+  #     - ./Caddyfile:/etc/caddy/Caddyfile
   app:
-    build: .
+    image: sokrates-platform
     ports:
-      - "8090:80"
+      - "8091:80"
     volumes:
       - .:/usr/learnhouse
     env_file:

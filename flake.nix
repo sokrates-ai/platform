@@ -27,6 +27,7 @@
             pkgs.poetry
             pkgs.stdenv.cc.cc.lib
             pkgs.pnpm
+            pkgs.pm2
         ];
 
         LD_LIBRARY_PATH = "${pkgs.stdenv.cc.cc.lib}/lib";

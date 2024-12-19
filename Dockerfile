@@ -1,11 +1,17 @@
 # Base image
 FROM python:3.12.3-slim-bookworm as base
 
-# Install Nginx, curl, and build-essential
-RUN apt update && apt install -y nginx curl build-essential \
+
+RUN apt update && apt install -y debian-keyring debian-archive-keyring apt-transport-https curl  && \
+    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg && \
+    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list && \
+    apt update && \
+    apt install caddy -y
+
+# Install curl, and build-essential
+RUN apt install -y curl build-essential \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm /etc/nginx/sites-enabled/default
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Node tools
 RUN curl -fsSL https://deb.nodesource.com/setup_21.x | bash - \
@@ -15,9 +21,10 @@ RUN curl -fsSL https://deb.nodesource.com/setup_21.x | bash - \
 # Frontend Build
 FROM base AS deps
 
-ENV NEXT_PUBLIC_LEARNHOUSE_API_URL=http://localhost/api/v1/
+ENV NEXT_PUBLIC_LEARNHOUSE_API_URL=http://localhost:9000/api/v1/
 ENV NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL=http://localhost/
 ENV NEXT_PUBLIC_LEARNHOUSE_DOMAIN=localhost
+# ENV NODE_ENV=development
 
 WORKDIR /app/web
 COPY ./apps/web/package.json ./apps/web/pnpm-lock.yaml* ./
@@ -49,7 +56,10 @@ COPY ./apps/api ./
 
 # Run the backend
 WORKDIR /app
-COPY ./extra/nginx.conf /etc/nginx/conf.d/default.conf
+# COPY ./extra/nginx.conf /etc/nginx/conf.d/default.conf
+
+COPY ./extra/Caddyfile /etc/caddy/Caddyfile
+
 ENV PORT=8000 LEARNHOUSE_PORT=9000 HOSTNAME=0.0.0.0
 COPY ./extra/start.sh /app/start.sh
 CMD ["sh", "start.sh"]

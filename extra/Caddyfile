@@ -1,0 +1,21 @@
+:80 {
+    handle /api/revalidate/ {
+        reverse_proxy http://localhost:8000
+    }
+
+    handle /api/auth/session {
+        reverse_proxy http://localhost:8000
+    }
+
+    handle /api/v1/* {
+        reverse_proxy http://localhost:9000
+    }
+    
+    handle /content/* {
+        reverse_proxy http://localhost:9000
+    }
+
+    handle {
+        reverse_proxy http://localhost:8000
+    }
+}
