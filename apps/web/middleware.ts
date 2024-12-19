@@ -32,6 +32,21 @@ export default async function middleware(req: NextRequest) {
   const default_org = getDefaultOrg()
   const { pathname, search } = req.nextUrl
   const fullhost = req.headers ? req.headers.get('host') : ''
+
+  // if (!getAPIUrl()) {
+  //   setAPIURL(`http://${fullhost}/api/v1`)
+  // } else {
+  //   console.log(`not null: ${getAPIUrl()}`)
+  // }
+
+  // if (pathname.startsWith('/api')) {
+  //     console.log("API PATH MIDDLEWARE")
+  //       const response = NextResponse.rewrite(
+  //       new URL(`http://${fullhost}${pathname}${search}`, req.url)
+  //       )
+  //   return response
+  // }
+
   const cookie_orgslug = req.cookies.get('learnhouse_current_orgslug')?.value
   const orgslug = fullhost
     ? fullhost.replace(`.${LEARNHOUSE_DOMAIN}`, '')
@@ -58,8 +73,7 @@ export default async function middleware(req: NextRequest) {
       response.cookies.set({
         name: 'learnhouse_current_orgslug',
         value: orgslug,
-        domain:
-          LEARNHOUSE_TOP_DOMAIN == 'localhost' ? '' : LEARNHOUSE_TOP_DOMAIN,
+        // domain: window.location.hostname // LEARNHOUSE_TOP_DOMAIN == 'localhost' ? '' : LEARNHOUSE_TOP_DOMAIN,
       })
     }
     return response
@@ -85,15 +99,15 @@ export default async function middleware(req: NextRequest) {
   if (req.nextUrl.pathname.startsWith('/payments/stripe/connect/oauth')) {
     const searchParams = req.nextUrl.searchParams
     const orgslug = searchParams.get('state')?.split('_')[0] // Assuming state parameter contains orgslug_randomstring
-    
+
     // Construct the new URL with the required parameters
     const redirectUrl = new URL('/payments/stripe/connect/oauth', req.url)
-    
+
     // Preserve all original search parameters
     searchParams.forEach((value, key) => {
       redirectUrl.searchParams.append(key, value)
     })
-    
+
     // Add orgslug if available
     if (orgslug) {
       redirectUrl.searchParams.set('orgslug', orgslug)
@@ -129,7 +143,7 @@ export default async function middleware(req: NextRequest) {
 
   if (pathname.startsWith('/sitemap.xml')) {
     let orgslug: string;
-    
+
     if (hosting_mode === 'multi') {
       orgslug = fullhost
         ? fullhost.replace(`.${LEARNHOUSE_DOMAIN}`, '')
@@ -164,7 +178,7 @@ export default async function middleware(req: NextRequest) {
     response.cookies.set({
       name: 'learnhouse_current_orgslug',
       value: orgslug,
-      domain: LEARNHOUSE_TOP_DOMAIN == 'localhost' ? '' : LEARNHOUSE_TOP_DOMAIN,
+      // domain: LEARNHOUSE_TOP_DOMAIN == 'localhost' ? '' : LEARNHOUSE_TOP_DOMAIN,
       path: '/',
     })
 
@@ -183,7 +197,7 @@ export default async function middleware(req: NextRequest) {
     response.cookies.set({
       name: 'learnhouse_current_orgslug',
       value: orgslug,
-      domain: LEARNHOUSE_TOP_DOMAIN == 'localhost' ? '' : LEARNHOUSE_TOP_DOMAIN,
+      // domain: LEARNHOUSE_TOP_DOMAIN == 'localhost' ? '' : LEARNHOUSE_TOP_DOMAIN,
       path: '/',
     })
 
