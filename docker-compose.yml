@@ -31,6 +31,8 @@ services:
       - POSTGRES_USER=learnhouse
       - POSTGRES_PASSWORD=learnhouse
       - POSTGRES_DB=learnhouse
+    volumes:
+      - postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U learnhouse"]
       interval: 5s
@@ -50,3 +52,6 @@ services:
     image: chromadb/chroma:0.5.16
     ports:
       - "8000:8000"
+
+volumes:
+  postgres:

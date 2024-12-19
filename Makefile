@@ -15,6 +15,9 @@ docker-nuke:
 	docker-compose down
 	docker-compose rm -f -v
 
+docker-build:
+	docker build . -t sokrates-platform --progress=plain
+
 api-setup:
 	cd ./apps/api/ && poetry lock --no-update && poetry install
 
