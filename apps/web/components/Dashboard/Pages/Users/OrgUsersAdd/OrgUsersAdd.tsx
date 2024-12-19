@@ -34,11 +34,11 @@ function OrgUsersAdd() {
 
     const { data: invites } = useSWR(
         org ? `${getAPIUrl()}orgs/${org?.id}/invites` : null,
-        (url) => swrFetcher(url, access_token)
+        (url: string) => swrFetcher(url, access_token)
     )
     const { data: invited_users } = useSWR(
         org ? `${getAPIUrl()}orgs/${org?.id}/invites/users` : null,
-        (url) => swrFetcher(url, access_token)
+        (url: string) => swrFetcher(url, access_token)
     )
 
     useEffect(() => {

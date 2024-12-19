@@ -13,7 +13,7 @@ function AssignmentSubmissionProvider({ children, assignment_uuid }: { children:
 
     const { data: assignmentSubmission, error: assignmentError } = useSWR(
         `${getAPIUrl()}assignments/${assignment_uuid}/submissions/me`,
-        (url) => swrFetcher(url, accessToken)
+        (url: string) => swrFetcher(url, accessToken)
     )
 
     return (

@@ -23,7 +23,7 @@ function EditCourseAccess(props: EditCourseAccessProps) {
     const { isLoading, courseStructure } = course as any;
     const dispatchCourse = useCourseDispatch() as any;
 
-    const { data: usergroups } = useSWR(courseStructure ? `${getAPIUrl()}usergroups/resource/${courseStructure.course_uuid}` : null, (url) => swrFetcher(url, access_token));
+    const { data: usergroups } = useSWR(courseStructure ? `${getAPIUrl()}usergroups/resource/${courseStructure.course_uuid}` : null, (url: string) => swrFetcher(url, access_token));
     const [isClientPublic, setIsClientPublic] = useState<boolean | undefined>(undefined);
 
     useEffect(() => {

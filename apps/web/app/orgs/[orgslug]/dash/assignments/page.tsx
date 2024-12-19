@@ -17,7 +17,7 @@ function AssignmentsHome() {
   const org = useOrg() as any;
   const [courseAssignments, setCourseAssignments] = React.useState<any[]>([])
 
-  const { data: courses } = useSWR(`${getAPIUrl()}courses/org_slug/${org?.slug}/page/1/limit/50`, (url) => swrFetcher(url, access_token))
+  const { data: courses } = useSWR(`${getAPIUrl()}courses/org_slug/${org?.slug}/page/1/limit/50`, (url: string) => swrFetcher(url, access_token))
 
   async function getAvailableAssignmentsForCourse(course_uuid: string) {
     const res = await getAssignmentsFromACourse(course_uuid, access_token)

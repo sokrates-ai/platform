@@ -13,7 +13,7 @@ function GetStarted() {
     data: install,
     error: error,
     isLoading,
-  } = useSWR(`${getAPIUrl()}install/latest`, (url) => swrFetcher(url, access_token))
+  } = useSWR(`${getAPIUrl()}install/latest`, (url: string) => swrFetcher(url, access_token))
   const router = useRouter()
 
   async function startInstallation() {

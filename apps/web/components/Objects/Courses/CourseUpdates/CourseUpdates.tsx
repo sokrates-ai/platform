@@ -28,7 +28,7 @@ function CourseUpdates() {
   const course = useCourse() as any;
   const session = useLHSession() as any;
   const access_token = session?.data?.tokens?.access_token;
-  const { data: updates } = useSWR(`${getAPIUrl()}courses/${course?.courseStructure.course_uuid}/updates`, (url) => swrFetcher(url, access_token))
+  const { data: updates } = useSWR(`${getAPIUrl()}courses/${course?.courseStructure.course_uuid}/updates`, (url: string) => swrFetcher(url, access_token))
   const [isModelOpen, setIsModelOpen] = React.useState(false)
 
   function handleModelOpen() {
@@ -198,7 +198,7 @@ const UpdatesListView = () => {
   const adminStatus = useAdminStatus() ;
   const session = useLHSession() as any;
   const access_token = session?.data?.tokens?.access_token;
-  const { data: updates } = useSWR(`${getAPIUrl()}courses/${course?.courseStructure?.course_uuid}/updates`, (url) => swrFetcher(url, access_token))
+  const { data: updates } = useSWR(`${getAPIUrl()}courses/${course?.courseStructure?.course_uuid}/updates`, (url: string) => swrFetcher(url, access_token))
 
   return (
     <div className='px-5 bg-white overflow-y-auto' style={{ maxHeight: '400px' }}>

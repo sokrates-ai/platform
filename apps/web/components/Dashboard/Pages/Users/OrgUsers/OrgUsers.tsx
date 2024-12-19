@@ -19,7 +19,7 @@ function OrgUsers() {
   const access_token = session?.data?.tokens?.access_token;
   const { data: orgUsers } = useSWR(
     org ? `${getAPIUrl()}orgs/${org?.id}/users` : null,
-    (url) => swrFetcher(url, access_token)
+    (url: string) => swrFetcher(url, access_token)
   )
   const [rolesModal, setRolesModal] = React.useState(false)
   const [selectedUser, setSelectedUser] = React.useState(null) as any

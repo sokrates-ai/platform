@@ -19,11 +19,11 @@ function ManageUsers(props: ManageUsersProps) {
   const access_token = session?.data?.tokens?.access_token;
   const { data: OrgUsers } = useSWR(
     org ? `${getAPIUrl()}orgs/${org.id}/users` : null,
-    (url) => swrFetcher(url, access_token)
+    (url: string) => swrFetcher(url, access_token)
   )
   const { data: UGusers } = useSWR(
     org ? `${getAPIUrl()}usergroups/${props.usergroup_id}/users` : null,
-    (url) => swrFetcher(url, access_token)
+    (url: string) => swrFetcher(url, access_token)
   )
 
   const isUserPartOfGroup = (user_id: any) => {

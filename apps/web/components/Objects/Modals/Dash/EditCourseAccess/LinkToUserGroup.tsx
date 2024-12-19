@@ -25,7 +25,7 @@ function LinkToUserGroup(props: LinkToUserGroupProps) {
 
     const { data: usergroups } = useSWR(
         courseStructure && org ? `${getAPIUrl()}usergroups/org/${org.id}` : null,
-        (url) => swrFetcher(url, access_token)
+        (url: string) => swrFetcher(url, access_token)
     )
     const [selectedUserGroup, setSelectedUserGroup] = React.useState(null) as any
 

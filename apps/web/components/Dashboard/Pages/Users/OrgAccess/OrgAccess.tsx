@@ -24,7 +24,7 @@ function OrgAccess() {
   const access_token = session?.data?.tokens?.access_token;
   const { data: invites } = useSWR(
     org ? `${getAPIUrl()}orgs/${org?.id}/invites` : null,
-    (url) => swrFetcher(url, access_token)
+    (url: string) => swrFetcher(url, access_token)
   )
   const [isLoading, setIsLoading] = React.useState(false)
   const [joinMethod, setJoinMethod] = React.useState('closed')

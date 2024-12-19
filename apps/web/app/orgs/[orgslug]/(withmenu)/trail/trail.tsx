@@ -18,7 +18,7 @@ function Trail(params: any) {
   const orgID = org?.id
   const { data: trail, error: error } = useSWR(
     `${getAPIUrl()}trail/org/${orgID}/trail`,
-    (url) => swrFetcher(url, access_token)
+    (url: string) => swrFetcher(url, access_token)
   )
 
   useEffect(() => { }, [trail, org])

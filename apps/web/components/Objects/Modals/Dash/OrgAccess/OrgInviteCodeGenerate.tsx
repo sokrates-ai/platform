@@ -21,7 +21,7 @@ function OrgInviteCodeGenerate(props: OrgInviteCodeGenerateProps) {
 
     const { data: usergroups } = useSWR(
         org ? `${getAPIUrl()}usergroups/org/${org.id}` : null,
-        (url) => swrFetcher(url, access_token)
+        (url: string) => swrFetcher(url, access_token)
     )
 
     async function createInviteWithUserGroup() {

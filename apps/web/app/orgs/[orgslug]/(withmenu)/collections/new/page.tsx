@@ -19,7 +19,7 @@ function NewCollection(params: any) {
   const router = useRouter()
   const { data: courses, error: error } = useSWR(
     `${getAPIUrl()}courses/org_slug/${orgslug}/page/1/limit/10`,
-    (url) => swrFetcher(url, access_token)
+    (url: string) => swrFetcher(url, access_token)
   )
   const [isPublic, setIsPublic] = useState('true')
 

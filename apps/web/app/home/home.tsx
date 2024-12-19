@@ -14,7 +14,7 @@ import useSWR from 'swr';
 function HomeClient() {
   const session = useLHSession() as any;
   const access_token = session?.data?.tokens?.access_token;
-  const { data: orgs } = useSWR(`${getAPIUrl()}orgs/user/page/1/limit/10`, (url) => swrFetcher(url, access_token))
+  const { data: orgs } = useSWR(`${getAPIUrl()}orgs/user/page/1/limit/10`, (url: string) => swrFetcher(url, access_token))
 
   useEffect(() => {
   }, [session, orgs])

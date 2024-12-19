@@ -18,11 +18,11 @@ export function OrgProvider({ children, orgslug }: { children: React.ReactNode, 
 
   const { data: org, error: orgError } = useSWR(
     `${getAPIUrl()}orgs/slug/${orgslug}`,
-    (url) => swrFetcher(url, accessToken)
+    (url: string) => swrFetcher(url, accessToken)
   )
   const { data: orgs, error: orgsError } = useSWR(
     `${getAPIUrl()}orgs/user/page/1/limit/10`,
-    (url) => swrFetcher(url, accessToken)
+    (url: string) => swrFetcher(url, accessToken)
   )
 
 

@@ -4,12 +4,11 @@ import {
   loginAndGetToken,
   loginWithOAuthToken,
 } from '@services/auth/auth'
-import { LEARNHOUSE_TOP_DOMAIN, getUriWithOrg } from '@services/config/config'
+import { LEARNHOUSE_TOP_DOMAIN, getUriWithOrg, isDevEnv } from '@services/config/config'
 import { getResponseMetadata } from '@services/utils/ts/requests'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
 
-export const isDevEnv = LEARNHOUSE_TOP_DOMAIN == 'localhost' ? true : false
 
 export const nextAuthOptions = {
   debug: true,

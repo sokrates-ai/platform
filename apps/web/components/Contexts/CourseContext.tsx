@@ -13,7 +13,7 @@ export function CourseProvider({ children, courseuuid }: any) {
   const access_token = session?.data?.tokens?.access_token;
 
   const { data: courseStructureData, error } = useSWR(`${getAPIUrl()}courses/${courseuuid}/meta`,
-    url => swrFetcher(url, access_token)
+    (url: string) => swrFetcher(url, access_token)
   );
 
   const initialState = {
