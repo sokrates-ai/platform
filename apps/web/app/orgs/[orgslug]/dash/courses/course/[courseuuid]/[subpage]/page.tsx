@@ -9,6 +9,7 @@ import { GalleryVerticalEnd, Map, Info, UserRoundCog } from 'lucide-react'
 import EditCourseStructure from '@components/Dashboard/Pages/Course/EditCourseStructure/EditCourseStructure'
 import EditCourseGeneral from '@components/Dashboard/Pages/Course/EditCourseGeneral/EditCourseGeneral'
 import EditCourseAccess from '@components/Dashboard/Pages/Course/EditCourseAccess/EditCourseAccess'
+import EditCourseMap from '@components/Dashboard/Pages/Course/EditCourseMap/EditCourseMap'
 
 export type CourseOverviewParams = {
   orgslug: string
@@ -110,7 +111,7 @@ function CourseOverviewPage({ params }: { params: CourseOverviewParams }) {
           transition={{ duration: 0.1, type: 'spring', stiffness: 80 }}
           className="h-full overflow-y-auto"
         >
-          {params.subpage == 'map' ? (<EditCourseAccess orgslug={params.orgslug} />) : ('')}
+          {params.subpage == 'map' ? (<EditCourseMap orgslug={params.orgslug} />) : ('')}
           {params.subpage == 'content' ? (<EditCourseStructure orgslug={params.orgslug} />) : ('')}
           {params.subpage == 'general' ? (<EditCourseGeneral orgslug={params.orgslug} />) : ('')}
           {params.subpage == 'access' ? (<EditCourseAccess orgslug={params.orgslug} />) : ('')}
