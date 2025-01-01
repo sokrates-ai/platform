@@ -1,6 +1,5 @@
 # Base image
-FROM python:3.12.3-slim-bookworm as base
-
+FROM python:3.12.3-slim-bookworm AS base
 
 RUN apt update && apt install -y debian-keyring debian-archive-keyring apt-transport-https curl  && \
     curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg && \
@@ -18,31 +17,10 @@ RUN curl -fsSL https://deb.nodesource.com/setup_21.x | bash - \
     && apt-get install -y nodejs \
     && npm install -g corepack pm2
 
-# Frontend Build
-FROM base AS deps
-
-ENV NEXT_PUBLIC_LEARNHOUSE_API_URL=http://localhost:9000/api/v1/
-ENV NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL=http://localhost/
-ENV NEXT_PUBLIC_LEARNHOUSE_DOMAIN=localhost
-# ENV NODE_ENV=development
-
-WORKDIR /app/web
-COPY ./apps/web/package.json ./apps/web/pnpm-lock.yaml* ./
-COPY ./apps/web /app/web
-RUN rm -f .env*
-RUN if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile && pnpm run build; \
-    else echo "Lockfile not found." && exit 1; \
-    fi
-
-# Final image
-FROM base as runner
 RUN addgroup --system --gid 1001 system \
     && adduser --system --uid 1001 app \
     && mkdir .next \
     && chown app:system .next
-COPY --from=deps /app/web/public ./app/web/public
-COPY --from=deps --chown=app:system /app/web/.next/standalone ./app/web/
-COPY --from=deps --chown=app:system /app/web/.next/static ./app/web/.next/static
 
 # Backend Build
 WORKDIR /app/api
@@ -52,12 +30,40 @@ RUN pip install --upgrade pip \
     && pip install poetry \
     && poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-ansi
-COPY ./apps/api ./
+
+# Frontend Build
+FROM base AS deps
+
+ENV NEXT_PUBLIC_LEARNHOUSE_API_URL=http://localhost:9000/api/v1/
+ENV NEXT_PUBLIC_LEARNHOUSE_BASE_URL=http://localhost
+ENV NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL=http://localhost/
+ENV NEXT_PUBLIC_LEARNHOUSE_DOMAIN=http://localhost:8091
+
+COPY ./apps/web/ /app/web
+WORKDIR /app/web
+RUN ls -lah
+COPY ./apps/web/package.json ./apps/web/pnpm-lock.yaml ./
+RUN rm -f .env*
+RUN if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile && pnpm run build; \
+    else echo "Lockfile not found." && exit 1; \
+    fi
+
+# Final image
+FROM base AS runner
+WORKDIR /
+COPY --from=deps /app/web/ ./app/web/
+COPY --from=deps /app/web/public ./app/web/public
+COPY --from=deps --chown=app:system /app/web/.next/standalone ./app/web/
+COPY --from=deps --chown=app:system /app/web/.next/static ./app/web/.next/static
+RUN ls -lah
 
 # Run the backend
-WORKDIR /app
-# COPY ./extra/nginx.conf /etc/nginx/conf.d/default.conf
 
+WORKDIR /app/api
+COPY ./apps/api ./
+RUN ls -lah
+
+WORKDIR /app/
 COPY ./extra/Caddyfile /etc/caddy/Caddyfile
 
 ENV PORT=8000 LEARNHOUSE_PORT=9000 HOSTNAME=0.0.0.0

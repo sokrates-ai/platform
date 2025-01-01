@@ -15,6 +15,25 @@ docker-nuke:
 	docker-compose down
 	docker-compose rm -f -v
 
+PRODUCTION_DIR=PRODUCTION
+
+mock-docker-build-web: ./apps/web/
+	rm -rf $(PRODUCTION_DIR); mkdir -p $(PRODUCTION_DIR)
+	cd ./apps/web/ && npm run build
+	cp -r ./apps/web/ $(PRODUCTION_DIR)/
+	cp -r ./apps/web/.next/standalone/* $(PRODUCTION_DIR)/web/
+	cp -r ./apps/web/.next/static/ $(PRODUCTION_DIR)/web/.next/static
+
+mock-docker-build-backend:
+
+mock-docker-build: mock-docker-build-web mock-docker-build-backend
+	cd ./apps/
+
+mock-docker-run:
+	cd $(PRODUCTION_DIR)/web && NODE_ENV=development node server.js &
+	make api-run &
+	caddy run --config /etc/caddy/Caddyfile 2> /dev/null
+
 docker-build:
 	docker build . -t sokrates-platform --progress=plain
 

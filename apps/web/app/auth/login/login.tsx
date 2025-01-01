@@ -61,6 +61,8 @@ const LoginClient = (props: LoginClientProps) => {
         setSubmitting(false);
         return;
       }
+
+      console.log(`FORM IS SUBMITTING: ${values}`)
       
       const res = await signIn('credentials', {
         redirect: false,

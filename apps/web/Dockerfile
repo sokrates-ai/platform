@@ -40,7 +40,7 @@ FROM base AS runner
 WORKDIR /app
 
 # Install curl
-RUN apk add --no-cache curl
+# RUN apk add --no-cache curl
 
 # HACK: this is not production now for debugging
 # ENV NODE_ENV production

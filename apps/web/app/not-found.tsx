@@ -5,7 +5,7 @@ import learnhouseIcon from 'public/black_logo.png'
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-screen w-full flex-col items-center justify-center 
+    <div className="flex min-h-screen w-full flex-col items-center justify-center
    bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-200 to-slate-300">
     <div className="nx-flex nx-items-center hover:nx-opacity-75 ltr:nx-mr-auto rtl:nx-ml-auto pb-20">
         <Image quality={100}
@@ -28,7 +28,7 @@ export default function NotFound() {
         <button className="flex w-fit h-[50px] text-xl space-x-2 bg-black px-6 py-2 text-md rounded-lg font-bold text-white items-center shadow-md">
           <Link className='flex gap-2' href="/" >
             Go back to homepage
-            <ArrowRight className='tracking-tight group-hover:translate-x-0.5 
+            <ArrowRight className='tracking-tight group-hover:translate-x-0.5
         transition-transform duration-150 ease-in-out ml-1' />
           </Link>
         </button>

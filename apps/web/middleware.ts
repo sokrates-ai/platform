@@ -74,6 +74,7 @@ export default async function middleware(req: NextRequest) {
         name: 'learnhouse_current_orgslug',
         value: orgslug,
         // domain: window.location.hostname // LEARNHOUSE_TOP_DOMAIN == 'localhost' ? '' : LEARNHOUSE_TOP_DOMAIN,
+        domain: '.localhost'
       })
     }
     return response
@@ -179,6 +180,7 @@ export default async function middleware(req: NextRequest) {
       name: 'learnhouse_current_orgslug',
       value: orgslug,
       // domain: LEARNHOUSE_TOP_DOMAIN == 'localhost' ? '' : LEARNHOUSE_TOP_DOMAIN,
+      domain: '.localhost',
       path: '/',
     })
 
@@ -198,6 +200,7 @@ export default async function middleware(req: NextRequest) {
       name: 'learnhouse_current_orgslug',
       value: orgslug,
       // domain: LEARNHOUSE_TOP_DOMAIN == 'localhost' ? '' : LEARNHOUSE_TOP_DOMAIN,
+      domain: '.',
       path: '/',
     })
 
