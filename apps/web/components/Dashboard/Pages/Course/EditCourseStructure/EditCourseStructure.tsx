@@ -1,7 +1,7 @@
 'use client'
 import { getAPIUrl } from '@services/config/config'
 import { revalidateTags } from '@services/utils/ts/requests'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, FC } from 'react'
 import { DragDropContext, Droppable } from 'react-beautiful-dnd'
 import { mutate } from 'swr'
 import ChapterElement from './DraggableElements/ChapterElement'
@@ -16,6 +16,107 @@ import { Hexagon } from 'lucide-react'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import NewChapterModal from '@components/Objects/Modals/Chapters/NewChapter'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
+
+//
+// Sigma.js
+//
+
+import Graph from "graphology";
+import { useSigma, SigmaContainer, useLoadGraph, useRegisterEvents } from "@react-sigma/core";
+import "@react-sigma/core/lib/react-sigma.min.css";
+import { useWorkerLayoutForceAtlas2 } from "@react-sigma/layout-forceatlas2";
+import { useLayoutCircular } from "@react-sigma/layout-circular";
+const sigmaStyle = { height: "500px", width: "100%" };
+
+type DisplayGraphProps = {
+    chapters: any[]
+}
+
+const Fa2: FC = () => {
+  const { start, kill } = useWorkerLayoutForceAtlas2({ settings: { slowDown: 10 } });
+
+  useEffect(() => {
+    // start FA2
+    start();
+
+    setTimeout(kill, 500)
+
+    // Kill FA2 on unmount
+    return () => {
+      kill();
+    };
+  }, [start, kill]);
+
+  return null;
+};
+
+export const LoadGraph = (props: DisplayGraphProps) => {
+  const loadGraph = useLoadGraph();
+  const { assign } = useLayoutCircular();
+
+  const sigma = useSigma();
+
+  useEffect(() => {
+    const graph = new Graph();
+
+    for (let chapter of props.chapters) {
+        console.log(chapter)
+        graph.addNode(chapter.id, { x: 0, y: 0, size: 15, label: chapter.name, color: "#FA4F40" });
+    }
+
+    for (let chapter of props.chapters) {
+        for (let pred of chapter.predecessors) {
+            console.log(`PRED=${pred}`)
+            let from = pred
+            let to = chapter.id
+            console.log(from, to)
+            graph.addDirectedEdge(from, to, { size: 2 })
+        }
+    }
+
+    loadGraph(graph);
+    assign();
+  }, [loadGraph]);
+
+  return null;
+};
+
+export const DisplayGraph = (props: DisplayGraphProps) => {
+ const GraphEvents = () => {
+    const sigma = useSigma();
+
+    useEffect(() => {
+      const handleNodeClick = (event: any) => {
+        const { node } = event;
+        console.log("Node clicked:", node);
+        // Perform your actions here
+      };
+
+      // Register the clickNode event
+      sigma.on("clickNode", handleNodeClick);
+
+      // Cleanup to avoid memory leaks
+      return () => {
+        sigma.off("clickNode", handleNodeClick);
+      };
+    }, [sigma]);
+
+    return null; // No UI, just event handling
+  };
+
+  return (
+    <SigmaContainer style={sigmaStyle} settings={{ allowInvalidContainer: true }} >
+      <LoadGraph chapters={props.chapters} />
+      <GraphEvents/>
+      <Fa2></Fa2>
+    </SigmaContainer>
+  );
+};
+
+//
+// End sigma.js
+//
+
 
 type EditCourseStructureProps = {
   orgslug: string
@@ -122,6 +223,9 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
 
   return (
     <div className="flex flex-col">
+
+      <DisplayGraph chapters={course_structure.chapters}/>
+
       <div className="h-6"></div>
       {winReady ? (
         <DragDropContext onDragEnd={updateStructure}>
@@ -142,6 +246,7 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
                         course_uuid={course_uuid}
                         chapter={chapter}
                       />
+
                     )
                   })}
                 {provided.placeholder}

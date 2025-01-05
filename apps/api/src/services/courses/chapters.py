@@ -8,7 +8,7 @@ from src.security.rbac.rbac import (
     authorization_verify_if_element_is_public,
     authorization_verify_if_user_is_anon,
 )
-from src.db.courses.course_chapters import CourseChapter
+from src.db.courses.course_chapters import CourseChapter, CourseChapter_Graph
 from src.db.courses.activities import Activity, ActivityRead
 from src.db.courses.chapter_activities import ChapterActivity
 from src.db.courses.chapters import (
@@ -36,7 +36,7 @@ async def create_chapter(
 ) -> ChapterRead:
     chapter = Chapter.model_validate(chapter_object)
 
-    # Get COurse
+    # Get Course
     statement = select(Course).where(Course.id == chapter_object.course_id)
 
     course = db_session.exec(statement).one()
@@ -51,32 +51,19 @@ async def create_chapter(
     chapter.update_date = str(datetime.now())
     chapter.org_id = course.org_id
 
-    # Find the last chapter in the course and add it to the list
-    statement = (
-        select(CourseChapter)
-        .where(CourseChapter.course_id == chapter.course_id)
-        .order_by(CourseChapter.order)
-    )
-    course_chapters = db_session.exec(statement).all()
-
-    # get last chapter order
-    last_order = course_chapters[-1].order if course_chapters else 0
-    to_be_used_order = last_order + 1
-
-    # Add chapter to database
+    # Add chapter to database.
     db_session.add(chapter)
     db_session.commit()
     db_session.refresh(chapter)
 
-    chapter = ChapterRead(**chapter.model_dump(), activities=[])
+    chapter = ChapterRead(**chapter.model_dump(), activities=[], predecessors=[])
 
-    # Check if COurseChapter link exists
-
+    # Check if CourseChapter link exists
     statement = (
         select(CourseChapter)
         .where(CourseChapter.chapter_id == chapter.id)
         .where(CourseChapter.course_id == chapter.course_id)
-        .where(CourseChapter.order == to_be_used_order)
+        # .where(CourseChapter.order == to_be_used_order)
     )
     course_chapter = db_session.exec(statement).first()
 
@@ -88,11 +75,39 @@ async def create_chapter(
             org_id=chapter.org_id,
             creation_date=str(datetime.now()),
             update_date=str(datetime.now()),
-            order=to_be_used_order,
+            # order=to_be_used_order,
         )
 
         # Insert CourseChapter link in DB
         db_session.add(course_chapter)
+        db_session.commit()
+
+    # NOTE: all of this code is only used to determine the last course chapter.
+    # Find the last chapter in the course.
+    # This is required so that we can add it as an automatic predecessor.
+    # TODO: this will not work right now, we need to do a graph traversal (in a nutshell)
+    statement = (
+        select(CourseChapter)
+        .where(CourseChapter.course_id == chapter.course_id)
+        .where(CourseChapter.chapter_id != chapter.id)
+        # .order_by(CourseChapter.order)
+    )
+    course_chapters = db_session.exec(statement).all()
+    print(f"COURSE_CHAPTERS={course_chapters}")
+
+    if course_chapters:
+        print("NOTE: previous chapters exist, adding an edge...")
+
+        predecessor_id = course_chapters[-1].chapter_id
+        chapter.predecessors = [predecessor_id]
+
+        course_chapter_graph_edge = CourseChapter_Graph(
+                course_id=chapter.course_id,
+                chapter_id=chapter.id,
+                predecessor_id=predecessor_id,
+        )
+
+        db_session.add(course_chapter_graph_edge)
         db_session.commit()
 
     return chapter
@@ -226,18 +241,21 @@ async def get_course_chapters(
         .join(CourseChapter, Chapter.id == CourseChapter.chapter_id)
         .where(CourseChapter.course_id == course_id)
         .where(Chapter.course_id == course_id)
-        .order_by(CourseChapter.order)
-        .group_by(Chapter.id, CourseChapter.order)
+        # .order_by(CourseChapter.order)
+        # .group_by(Chapter.id, CourseChapter.order)
     )
     chapters = db_session.exec(statement).all()
 
-    chapters = [ChapterRead(**chapter.model_dump(), activities=[]) for chapter in chapters]
+    chapters = [ChapterRead(**chapter.model_dump(), activities=[], predecessors=[]) for chapter in chapters]
 
     # RBAC check
     await rbac_check(request, course.course_uuid, current_user, "read", db_session)  # type: ignore
 
-    # Get activities for each chapter
+    # Get activities and predecessor(s) for each chapter
     for chapter in chapters:
+        #
+        # Activities.
+        #
         statement = (
             select(ChapterActivity)
             .where(ChapterActivity.chapter_id == chapter.id)
@@ -256,6 +274,20 @@ async def get_course_chapters(
 
             if activity:
                 chapter.activities.append(ActivityRead(**activity.model_dump()))
+
+        #
+        # Predecessors.
+        #
+
+        statement = (
+            select(CourseChapter_Graph)
+            .where(CourseChapter_Graph.course_id == course_id)
+            .where(CourseChapter_Graph.chapter_id == chapter.id)
+        )
+
+        incoming_edges = db_session.exec(statement).all()
+        print(f"INCOMING={incoming_edges}")
+        chapter.predecessors = [chapter.predecessor_id for chapter in incoming_edges if chapter.predecessor_id]
 
     return chapters
 

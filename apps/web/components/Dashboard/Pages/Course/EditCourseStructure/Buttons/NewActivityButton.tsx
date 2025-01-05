@@ -16,6 +16,7 @@ import React, { useEffect } from 'react'
 import { mutate } from 'swr'
 import toast from 'react-hot-toast'
 
+
 type NewActivityButtonProps = {
   chapterId: string
   orgslug: string

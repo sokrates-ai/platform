@@ -44,6 +44,7 @@ class ChapterRead(ChapterBase):
     chapter_uuid: str
     creation_date: str
     update_date: str
+    predecessors: List[int]
     pass
 
 
