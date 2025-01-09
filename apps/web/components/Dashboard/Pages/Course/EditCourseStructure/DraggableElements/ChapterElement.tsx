@@ -65,19 +65,7 @@ function ChapterElement(props: ChapterElementProps) {
   }
 
   return (
-    <Draggable
-      key={props.chapter.chapter_uuid}
-      draggableId={props.chapter.chapter_uuid}
-      index={props.chapterIndex}
-    >
-      {(provided, snapshot) => (
-        <div
-          className="mx-2 sm:mx-4 md:mx-6 lg:mx-10 bg-white rounded-xl nice-shadow px-3 sm:px-4 md:px-6 pt-4 sm:pt-6"
-          key={props.chapter.chapter_uuid}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          ref={provided.innerRef}
-        >
+    <div>
           <div className="flex flex-wrap items-center justify-between pb-3">
             <div className="flex grow items-center space-x-2 mb-2 sm:mb-0">
               <div className="bg-neutral-100 rounded-md p-2">
@@ -179,8 +167,6 @@ function ChapterElement(props: ChapterElementProps) {
             </div>
           </div>
         </div>
-      )}
-    </Draggable>
   )
 }
 

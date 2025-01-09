@@ -12,10 +12,13 @@ import {
   useCourse,
   useCourseDispatch,
 } from '@components/Contexts/CourseContext'
-import { Hexagon } from 'lucide-react'
+import { Hexagon, MousePointer } from 'lucide-react'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import NewChapterModal from '@components/Objects/Modals/Chapters/NewChapter'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
+
+import { ReactFlow } from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 
 //
 // Sigma.js
@@ -26,10 +29,13 @@ import { useSigma, SigmaContainer, useLoadGraph, useRegisterEvents } from "@reac
 import "@react-sigma/core/lib/react-sigma.min.css";
 import { useWorkerLayoutForceAtlas2 } from "@react-sigma/layout-forceatlas2";
 import { useLayoutCircular } from "@react-sigma/layout-circular";
-const sigmaStyle = { height: "500px", width: "100%" };
+import styled from 'styled-components'
+const sigmaStyle = { height: "100%", width: "100%", 'background-color': 'transparent'};
 
 type DisplayGraphProps = {
     chapters: any[]
+    setChapterID: Function
+    chapterID: number,
 }
 
 const Fa2: FC = () => {
@@ -51,6 +57,7 @@ const Fa2: FC = () => {
 };
 
 export const LoadGraph = (props: DisplayGraphProps) => {
+
   const loadGraph = useLoadGraph();
   const { assign } = useLayoutCircular();
 
@@ -70,7 +77,7 @@ export const LoadGraph = (props: DisplayGraphProps) => {
             let from = pred
             let to = chapter.id
             console.log(from, to)
-            graph.addDirectedEdge(from, to, { size: 2 })
+            graph.addDirectedEdge(from, to, { size: 3 })
         }
     }
 
@@ -81,6 +88,51 @@ export const LoadGraph = (props: DisplayGraphProps) => {
   return null;
 };
 
+export const NewGraph = (props: DisplayGraphProps) => {
+    const initialNodes = []
+    for (let i = 0; i < props.chapters.length; i++) {
+        const current = props.chapters[i]
+        console.log(current)
+
+        initialNodes.push({
+            id: `${current.id}`,
+            position: {
+                x: 10,
+                y: i * 100,
+            },
+            data: {
+                label: current.name
+            }
+        })
+    }
+
+    // [
+    //     { id: '1', position: { x: 0, y: 0 }, data: { label: '1' } },
+    //     { id: '2', position: { x: 0, y: 100 }, data: { label: '2' } },
+    // ];
+
+    const initialEdges = [];
+    for (let chapter of props.chapters) {
+        for (let pred of chapter.predecessors) {
+            // console.log(`PRED=${pred}`)
+            let from = pred
+            let to = chapter.id
+            // console.log(from, to)
+            // graph.addDirectedEdge(from, to, { size: 3 })
+            initialEdges.push({
+                id: `${from}:${to}`,
+                source: `${from}`,
+                target: `${to}`,
+            })
+        }
+    }
+    // const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
+
+    return (
+    <ReactFlow nodes={initialNodes} edges={initialEdges} />
+    )
+}
+
 export const DisplayGraph = (props: DisplayGraphProps) => {
  const GraphEvents = () => {
     const sigma = useSigma();
@@ -88,7 +140,9 @@ export const DisplayGraph = (props: DisplayGraphProps) => {
     useEffect(() => {
       const handleNodeClick = (event: any) => {
         const { node } = event;
-        console.log("Node clicked:", node);
+        const nodeClicked = parseInt(node)
+        // console.log("Node clicked:", nodeClicked);
+        props.setChapterID(nodeClicked)
         // Perform your actions here
       };
 
@@ -106,7 +160,7 @@ export const DisplayGraph = (props: DisplayGraphProps) => {
 
   return (
     <SigmaContainer style={sigmaStyle} settings={{ allowInvalidContainer: true }} >
-      <LoadGraph chapters={props.chapters} />
+      <LoadGraph chapters={props.chapters} setChapterID={props.setChapterID} chapterID={props.chapterID} />
       <GraphEvents/>
       <Fa2></Fa2>
     </SigmaContainer>
@@ -138,7 +192,46 @@ export type OrderPayload =
     }
   | undefined
 
+const BlurVignette = styled.div`
+  --radius: 44px;
+  --inset: 18px;
+  --transition-length: 60px;
+  --blur: 50px;
+
+
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  -webkit-backdrop-filter: blur(var(--blur));
+  backdrop-filter: blur(var(--blur));
+  --r: max(var(--transition-length), calc(var(--radius) - var(--inset)));
+  --corner-size: calc(var(--r) + var(--inset)) calc(var(--r) + var(--inset));
+  --corner-gradient: transparent 0px,
+    transparent calc(var(--r) - var(--transition-length)), black var(--r);
+  --fill-gradient: black, black var(--inset),
+    transparent calc(var(--inset) + var(--transition-length)),
+    transparent calc(100% - var(--transition-length) - var(--inset)),
+    black calc(100% - var(--inset));
+  --fill-narrow-size: calc(100% - (var(--inset) + var(--r)) * 2);
+  --fill-farther-position: calc(var(--inset) + var(--r));
+  -webkit-mask-image: linear-gradient(to right, var(--fill-gradient)),
+    linear-gradient(to bottom, var(--fill-gradient)),
+    radial-gradient(at bottom right, var(--corner-gradient)),
+    radial-gradient(at bottom left, var(--corner-gradient)),
+    radial-gradient(at top left, var(--corner-gradient)),
+    radial-gradient(at top right, var(--corner-gradient));
+  -webkit-mask-size: 100% var(--fill-narrow-size), var(--fill-narrow-size) 100%,
+    var(--corner-size), var(--corner-size), var(--corner-size),
+    var(--corner-size);
+  -webkit-mask-position: 0 var(--fill-farther-position), var(--fill-farther-position) 0,
+    0 0, 100% 0, 100% 100%, 0 100%;
+  -webkit-mask-repeat: no-repeat;
+`;
+
 const EditCourseStructure = (props: EditCourseStructureProps) => {
+  // TODO: typing?
+  const [chapterID, setChapterID] = useState(-1);
+
   const router = useRouter()
   const session = useLHSession() as any;
   const access_token = session?.data?.tokens?.access_token;
@@ -220,72 +313,81 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
   }, [props.course_uuid, course_structure, course])
 
   if (!course) return <PageLoading></PageLoading>
+  if (!course_structure || !course_structure.chapters) return <PageLoading></PageLoading>
+
+  const currentChapter = course_structure.chapters.find((c: any) => {
+      const matches = c.id === chapterID
+      // console.log(typeof c.id, typeof chapterID)
+      // console.log(`c.id=${c.id}, chapterID=${chapterID} | chap=${JSON.stringify(c)} | matches=${matches}`)
+      return matches
+  })
+
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-row h-full">
 
-      <DisplayGraph chapters={course_structure.chapters}/>
+    <div className='flex flex-col justify-center h-full w-2/5'>
+      { /* <DisplayGraph chapters={course_structure.chapters} setChapterID={setChapterID} chapterID={chapterID}/> */}
+      <NewGraph chapters={course_structure.chapters} setChapterID={setChapterID} chapterID={chapterID} />
 
-      <div className="h-6"></div>
-      {winReady ? (
-        <DragDropContext onDragEnd={updateStructure}>
-          <Droppable type="chapter" droppableId="chapters">
-            {(provided) => (
-              <div
-                className="space-y-4"
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-              >
-                {course_structure.chapters &&
-                  course_structure.chapters.map((chapter: any, index: any) => {
-                    return (
-                      <ChapterElement
-                        key={chapter.chapter_uuid}
-                        chapterIndex={index}
-                        orgslug={props.orgslug}
-                        course_uuid={course_uuid}
-                        chapter={chapter}
-                      />
-
-                    )
-                  })}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-
-          {/* New Chapter Modal */}
-          <Modal
+      <div>
+        <Modal
             isDialogOpen={newChapterModal}
             onOpenChange={setNewChapterModal}
             minHeight="sm"
             dialogContent={
-              <NewChapterModal
+            <NewChapterModal
                 course={course ? course.courseStructure : null}
                 closeModal={closeNewChapterModal}
                 submitChapter={submitChapter}
-              ></NewChapterModal>
+            ></NewChapterModal>
             }
             dialogTitle="Create chapter"
             dialogDescription="Add a new chapter to the course"
             dialogTrigger={
-              <div className="w-44 my-16 py-5 max-w-screen-2xl mx-auto bg-cyan-800 text-white rounded-xl shadow-sm px-6 items-center flex flex-row h-10">
+            <div className="w-44 mt-10 py-5 max-w-screen-2xl mx-auto bg-cyan-800 text-white rounded-xl shadow-sm px-6 items-center flex flex-row h-10">
                 <div className="mx-auto flex space-x-2 items-center hover:cursor-pointer">
-                  <Hexagon
+                <Hexagon
                     strokeWidth={3}
                     size={16}
                     className="text-white text-sm "
-                  />
-                  <div className="font-bold text-sm">Add Chapter</div>
+                />
+                <div className="font-bold text-sm">Add Chapter</div>
                 </div>
-              </div>
+            </div>
             }
-          />
+        />
+      </div>
+    </div>
+
+       <div className='w-3/5 p-10 bg-gray-200'>
+      {winReady && currentChapter ? (
+
+        <DragDropContext onDragEnd={updateStructure}>
+        <ChapterElement
+            key={ currentChapter.chapter_uuid}
+            chapterIndex={0}
+            orgslug={props.orgslug}
+            course_uuid={course_uuid}
+            chapter={currentChapter}
+        />
         </DragDropContext>
       ) : (
-        <></>
+        <div className='flex flex-col justify-center items-center h-full'>
+
+            <MousePointer className='text-gray-400 mb-3' size={80} />
+
+            <h2 className='text-gray-500 text-4xl mb-3'>
+                No Chapter Selected
+            </h2>
+
+            <h6 className='text-gray-400 text-2xl'>
+                Use the content graph on the left to select a chapter.
+            </h6>
+        </div>
       )}
     </div>
+</div>
   )
 }
 

@@ -16,7 +16,7 @@ export function LEARNHOUSE_BASE_URL(): string {
 
     console.log(`server BASE_URL=${url}`)
     if (!url) {
-        console.error("NEXT_PUBLIC_LEARNHOUSE_BASE_URL undefined")
+        // console.error("NEXT_PUBLIC_LEARNHOUSE_BASE_URL undefined")
         return "error"
     }
     return url
@@ -28,7 +28,7 @@ function getLearnhouseBaseURL(): string {
     if (isDevEnv || typeof window === 'undefined') {
         // TODO: i need to fix this
         url = LEARNHOUSE_BASE_URL()
-        console.error("RUNNING IN SERVER MODE: " + url)
+        // console.error("RUNNING IN SERVER MODE: " + url)
     } else {
         const fullhost = window.location.host;
         const proto = window.location.protocol;
@@ -45,7 +45,7 @@ export const getAPIUrl = () => {
     if (isDevEnv || typeof window === 'undefined') {
         // TODO: i need to fix this
         url = LEARNHOUSE_API_URL
-        console.error("(API) RUNNING IN SERVER MODE: " + url)
+        // console.error("(API) RUNNING IN SERVER MODE: " + url)
     } else {
         const fullhost = window.location.host;
         const proto = window.location.protocol;
