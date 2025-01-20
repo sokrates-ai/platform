@@ -14,7 +14,6 @@ export function LEARNHOUSE_BASE_URL(): string {
     let L = 'L'
     let url = process.env['NEXT_PUBLIC_LEARNHOUSE_BASE_UR' + L]
 
-    console.log(`server BASE_URL=${url}`)
     if (!url) {
         // console.error("NEXT_PUBLIC_LEARNHOUSE_BASE_URL undefined")
         return "error"
@@ -35,7 +34,6 @@ function getLearnhouseBaseURL(): string {
         url = `${proto}//${fullhost}`
     }
 
-    console.log(`base_URL=${url}`)
     return url
 }
 
@@ -45,14 +43,12 @@ export const getAPIUrl = () => {
     if (isDevEnv || typeof window === 'undefined') {
         // TODO: i need to fix this
         url = LEARNHOUSE_API_URL
-        // console.error("(API) RUNNING IN SERVER MODE: " + url)
     } else {
         const fullhost = window.location.host;
         const proto = window.location.protocol;
         url = `${proto}//${fullhost}/api/v1/`
     }
 
-    console.log(`API_URL=${url}`)
     return url
 }
 
@@ -73,7 +69,6 @@ export const getUriWithOrg = (orgslug: string, path: string) => {
   }
 
   const completePath = `${baseURL}${path}`
-  console.log(`GOT COMPLETE PATH: ${completePath}`)
   return completePath
 }
 

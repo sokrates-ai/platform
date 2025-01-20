@@ -52,13 +52,18 @@ class ActivityOrder(BaseModel):
     activity_id: int
 
 
-class ChapterOrder(BaseModel):
-    chapter_id: int
-    activities_order_by_ids: List[ActivityOrder]
+# class ChapterOrder(BaseModel):
+#     chapter_id: int
+#     activities_order_by_ids: List[ActivityOrder]
 
 
-class ChapterUpdateOrder(BaseModel):
-    chapter_order_by_ids: List[ChapterOrder]
+# class ChapterUpdateOrder(BaseModel):
+#     chapter_order_by_ids: List[ChapterOrder]
+
+class ChapterEdge(BaseModel):
+    from_chapter_id: int
+    to_chapter_id: int
+    delete: bool
 
 
 class DepreceatedChaptersRead(BaseModel):

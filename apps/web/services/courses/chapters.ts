@@ -1,4 +1,4 @@
-import { OrderPayload } from '@components/Dashboard/Pages/Course/EditCourseStructure/EditCourseStructure'
+import { ChapterEdgeModification, OrderPayload } from '@components/Dashboard/Pages/Course/EditCourseStructure/EditCourseStructure'
 import { getAPIUrl } from '@services/config/config'
 import {
   RequestBodyWithAuthHeader,
@@ -50,6 +50,7 @@ export async function updateChapter(
   return res
 }
 
+// TODO: remove this.
 export async function updateCourseOrderStructure(
   course_uuid: any,
   data: OrderPayload,
@@ -57,6 +58,19 @@ export async function updateCourseOrderStructure(
 ) {
   const result: any = await fetch(
     `${getAPIUrl()}chapters/course/${course_uuid}/order`,
+    RequestBodyWithAuthHeader('PUT', data, null, access_token)
+  )
+  const res = await errorHandling(result)
+  return res
+}
+
+export async function updateChapterEdge(
+  course_uuid: any,
+  data: ChapterEdgeModification,
+  access_token: any
+) {
+  const result: any = await fetch(
+    `${getAPIUrl()}chapters/course/${course_uuid}/edge`,
     RequestBodyWithAuthHeader('PUT', data, null, access_token)
   )
   const res = await errorHandling(result)

@@ -5,7 +5,7 @@ from src.db.courses.chapters import (
     ChapterCreate,
     ChapterRead,
     ChapterUpdate,
-    ChapterUpdateOrder,
+    ChapterEdge,
 )
 from src.services.courses.chapters import (
     DEPRECEATED_get_course_chapters,
@@ -13,7 +13,7 @@ from src.services.courses.chapters import (
     delete_chapter,
     get_chapter,
     get_course_chapters,
-    reorder_chapters_and_activities,
+    modify_chapter_edge,
     update_chapter,
 )
 
@@ -64,18 +64,35 @@ async def api_get_chapter_meta(
     )
 
 
-@router.put("/course/{course_uuid}/order")
-async def api_update_chapter_meta(
+# @router.put("/course/{course_uuid}/order")
+# async def api_update_chapter_meta(
+#     request: Request,
+#     course_uuid: str,
+#     order: ChapterUpdateOrder,
+#     current_user: PublicUser = Depends(get_current_user),
+#     db_session=Depends(get_db_session),
+# ):
+#     """
+#     Update Chapter metadata
+#     """
+#     return await reorder_chapters_and_activities(
+#         request, course_uuid, order, current_user, db_session
+#     )
+
+
+@router.put("/course/{course_uuid}/edge")
+async def api_update_chapter_add_edge(
     request: Request,
     course_uuid: str,
-    order: ChapterUpdateOrder,
+    order: ChapterEdge,
     current_user: PublicUser = Depends(get_current_user),
     db_session=Depends(get_db_session),
 ):
     """
-    Update Chapter metadata
+    Update Chapter edge
     """
-    return await reorder_chapters_and_activities(
+    print(f"Updating chapter edge | course_uuid = {course_uuid}")
+    return await modify_chapter_edge(
         request, course_uuid, order, current_user, db_session
     )
 

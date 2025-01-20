@@ -16,7 +16,7 @@ from src.db.courses.chapters import (
     ChapterCreate,
     ChapterRead,
     ChapterUpdate,
-    ChapterUpdateOrder,
+    ChapterEdge,
 )
 from src.services.courses.courses import Course
 from src.services.users.users import PublicUser
@@ -376,204 +376,263 @@ async def DEPRECEATED_get_course_chapters(
     return final
 
 
-async def reorder_chapters_and_activities(
+async def modify_chapter_edge(
     request: Request,
     course_uuid: str,
-    chapters_order: ChapterUpdateOrder,
+    edge_param: ChapterEdge,
     current_user: PublicUser,
     db_session: Session,
 ):
-    statement = select(Course).where(Course.course_uuid == course_uuid)
-    course = db_session.exec(statement).first()
-
-    if not course:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Course does not exist"
-        )
-
-    # RBAC check
-    await rbac_check(request, course.course_uuid, current_user, "update", db_session)
-
-    ###########
-    # Chapters
-    ###########
-
-    # Delete CourseChapters that are not linked to chapter_id and activity_id and org_id and course_id
-    statement = (
-        select(CourseChapter)
-        .where(
-            CourseChapter.course_id == course.id, CourseChapter.org_id == course.org_id
-        )
-        .order_by(CourseChapter.order)
+    statement = select(CourseChapter_Graph).where(
+            CourseChapter_Graph.chapter_id == edge_param.to_chapter_id
+            and CourseChapter_Graph.predecessor_id == edge_param.from_chapter_id
     )
-    course_chapters = db_session.exec(statement).all()
+    selected_edge = db_session.exec(statement).first()
 
-    chapter_ids_to_keep = [
-        chapter_order.chapter_id
-        for chapter_order in chapters_order.chapter_order_by_ids
-    ]
-    for course_chapter in course_chapters:
-        if course_chapter.chapter_id not in chapter_ids_to_keep:
-            db_session.delete(course_chapter)
-            db_session.commit()
+    if edge_param.delete:
+        # RBAC check
+        await rbac_check(request, course_uuid, current_user, "update", db_session)
 
-    # Delete Chapters that are not in the list of chapters_order
-    statement = select(Chapter).where(Chapter.course_id == course.id)
-    chapters = db_session.exec(statement).all()
-
-    chapter_ids_to_keep = [
-        chapter_order.chapter_id
-        for chapter_order in chapters_order.chapter_order_by_ids
-    ]
-
-    for chapter in chapters:
-        if chapter.id not in chapter_ids_to_keep:
-            db_session.delete(chapter)
-            db_session.commit()
-
-    # If links do not exists, create them
-    for chapter_order in chapters_order.chapter_order_by_ids:
-        statement = (
-            select(CourseChapter)
-            .where(
-                CourseChapter.chapter_id == chapter_order.chapter_id,
-                CourseChapter.course_id == course.id,
+        if not selected_edge:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="Edge does not exist"
             )
-            .order_by(CourseChapter.order)
+
+        db_session.delete(selected_edge)
+        db_session.commit()
+    else:
+        # RBAC check
+        await rbac_check(request, course_uuid, current_user, "update", db_session)
+
+        if selected_edge:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="Edge already exists"
+            )
+
+        #
+        # TODO: here | check the integrity of the new graph: are there any loops in the graph?
+        #
+
+        # Get course from DB in order to get its ID, not UUID.
+        statement = select(Course).where(Course.course_uuid == course_uuid)
+        course = db_session.exec(statement).first()
+
+        if not course:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="Course does not exist"
+            )
+
+        new_edge = CourseChapter_Graph(
+            course_id=course.id,
+            chapter_id=edge_param.to_chapter_id,
+            predecessor_id=edge_param.from_chapter_id,
         )
-        course_chapter = db_session.exec(statement).first()
 
-        if not course_chapter:
-            # Add CourseChapter link
-            course_chapter = CourseChapter(
-                chapter_id=chapter_order.chapter_id,
-                course_id=course.id,  # type: ignore
-                org_id=course.org_id,
-                creation_date=str(datetime.now()),
-                update_date=str(datetime.now()),
-                order=chapter_order.chapter_id,
-            )
-
-            # Insert CourseChapter link in DB
-            db_session.add(course_chapter)
-            db_session.commit()
-
-    # Update order of chapters
-    for chapter_order in chapters_order.chapter_order_by_ids:
-        statement = (
-            select(CourseChapter)
-            .where(
-                CourseChapter.chapter_id == chapter_order.chapter_id,
-                CourseChapter.course_id == course.id,
-            )
-            .order_by(CourseChapter.order)
-        )
-        course_chapter = db_session.exec(statement).first()
-
-        if course_chapter:
-            # Get the order from the index of the chapter_order_by_ids list
-            course_chapter.order = chapters_order.chapter_order_by_ids.index(
-                chapter_order
-            )
-            db_session.commit()
-
-    ###########
-    # Activities
-    ###########
-
-    # Delete ChapterActivities that are no longer part of the new order
-    statement = (
-        select(ChapterActivity)
-        .where(
-            ChapterActivity.course_id == course.id,
-            ChapterActivity.org_id == course.org_id,
-        )
-        .order_by(ChapterActivity.order)
-    )
-    chapter_activities = db_session.exec(statement).all()
-
-    activity_ids_to_delete = []
-    for chapter_activity in chapter_activities:
-        if (
-            chapter_activity.chapter_id not in chapter_ids_to_keep
-            or chapter_activity.activity_id not in activity_ids_to_delete
-        ):
-            activity_ids_to_delete.append(chapter_activity.activity_id)
-
-    for activity_id in activity_ids_to_delete:
-        statement = (
-            select(ChapterActivity)
-            .where(
-                ChapterActivity.activity_id == activity_id,
-                ChapterActivity.course_id == course.id,
-            )
-            .order_by(ChapterActivity.order)
-        )
-        chapter_activity = db_session.exec(statement).first()
-
-        db_session.delete(chapter_activity)
+        # Insert ChapterEdge link in DB
+        db_session.add(new_edge)
         db_session.commit()
 
-    # If links do not exist, create them
-    chapter_activity_map = {}
-    for chapter_order in chapters_order.chapter_order_by_ids:
-        for activity_order in chapter_order.activities_order_by_ids:
-            if (
-                activity_order.activity_id in chapter_activity_map
-                and chapter_activity_map[activity_order.activity_id]
-                != chapter_order.chapter_id
-            ):
-                continue
+    return
 
-            statement = (
-                select(ChapterActivity)
-                .where(
-                    ChapterActivity.chapter_id == chapter_order.chapter_id,
-                    ChapterActivity.activity_id == activity_order.activity_id,
-                )
-                .order_by(ChapterActivity.order)
-            )
-            chapter_activity = db_session.exec(statement).first()
 
-            if not chapter_activity:
-                # Add ChapterActivity link
-                chapter_activity = ChapterActivity(
-                    chapter_id=chapter_order.chapter_id,
-                    activity_id=activity_order.activity_id,
-                    org_id=course.org_id,
-                    course_id=course.id,  # type: ignore
-                    creation_date=str(datetime.now()),
-                    update_date=str(datetime.now()),
-                    order=activity_order.activity_id,
-                )
-
-                # Insert ChapterActivity link in DB
-                db_session.add(chapter_activity)
-                db_session.commit()
-
-            chapter_activity_map[activity_order.activity_id] = chapter_order.chapter_id
-
-    # Update order of activities
-    for chapter_order in chapters_order.chapter_order_by_ids:
-        for activity_order in chapter_order.activities_order_by_ids:
-            statement = (
-                select(ChapterActivity)
-                .where(
-                    ChapterActivity.chapter_id == chapter_order.chapter_id,
-                    ChapterActivity.activity_id == activity_order.activity_id,
-                )
-                .order_by(ChapterActivity.order)
-            )
-            chapter_activity = db_session.exec(statement).first()
-
-            if chapter_activity:
-                # Get the order from the index of the chapter_order_by_ids list
-                chapter_activity.order = chapter_order.activities_order_by_ids.index(
-                    activity_order
-                )
-                db_session.commit()
-
-    return {"detail": "Chapters reordered"}
+# async def reorder_chapters_and_activities(
+#     request: Request,
+#     course_uuid: str,
+#     chapters_order: ChapterUpdateOrder,
+#     current_user: PublicUser,
+#     db_session: Session,
+# ):
+#     statement = select(Course).where(Course.course_uuid == course_uuid)
+#     course = db_session.exec(statement).first()
+#
+#     if not course:
+#         raise HTTPException(
+#             status_code=status.HTTP_409_CONFLICT, detail="Course does not exist"
+#         )
+#
+#     # RBAC check
+#     await rbac_check(request, course.course_uuid, current_user, "update", db_session)
+#
+#     ###########
+#     # Chapters
+#     ###########
+#
+#     # Delete CourseChapters that are not linked to chapter_id and activity_id and org_id and course_id
+#     statement = (
+#         select(CourseChapter)
+#         .where(
+#             CourseChapter.course_id == course.id, CourseChapter.org_id == course.org_id
+#         )
+#         .order_by(CourseChapter.order)
+#     )
+#     course_chapters = db_session.exec(statement).all()
+#
+#     chapter_ids_to_keep = [
+#         chapter_order.chapter_id
+#         for chapter_order in chapters_order.chapter_order_by_ids
+#     ]
+#     for course_chapter in course_chapters:
+#         if course_chapter.chapter_id not in chapter_ids_to_keep:
+#             db_session.delete(course_chapter)
+#             db_session.commit()
+#
+#     # Delete Chapters that are not in the list of chapters_order
+#     statement = select(Chapter).where(Chapter.course_id == course.id)
+#     chapters = db_session.exec(statement).all()
+#
+#     chapter_ids_to_keep = [
+#         chapter_order.chapter_id
+#         for chapter_order in chapters_order.chapter_order_by_ids
+#     ]
+#
+#     for chapter in chapters:
+#         if chapter.id not in chapter_ids_to_keep:
+#             db_session.delete(chapter)
+#             db_session.commit()
+#
+#     # If links do not exists, create them
+#     for chapter_order in chapters_order.chapter_order_by_ids:
+#         statement = (
+#             select(CourseChapter)
+#             .where(
+#                 CourseChapter.chapter_id == chapter_order.chapter_id,
+#                 CourseChapter.course_id == course.id,
+#             )
+#             .order_by(CourseChapter.order)
+#         )
+#         course_chapter = db_session.exec(statement).first()
+#
+#         if not course_chapter:
+#             # Add CourseChapter link
+#             course_chapter = CourseChapter(
+#                 chapter_id=chapter_order.chapter_id,
+#                 course_id=course.id,  # type: ignore
+#                 org_id=course.org_id,
+#                 creation_date=str(datetime.now()),
+#                 update_date=str(datetime.now()),
+#                 order=chapter_order.chapter_id,
+#             )
+#
+#             # Insert CourseChapter link in DB
+#             db_session.add(course_chapter)
+#             db_session.commit()
+#
+#     # Update order of chapters
+#     for chapter_order in chapters_order.chapter_order_by_ids:
+#         statement = (
+#             select(CourseChapter)
+#             .where(
+#                 CourseChapter.chapter_id == chapter_order.chapter_id,
+#                 CourseChapter.course_id == course.id,
+#             )
+#             .order_by(CourseChapter.order)
+#         )
+#         course_chapter = db_session.exec(statement).first()
+#
+#         if course_chapter:
+#             # Get the order from the index of the chapter_order_by_ids list
+#             course_chapter.order = chapters_order.chapter_order_by_ids.index(
+#                 chapter_order
+#             )
+#             db_session.commit()
+#
+#     ###########
+#     # Activities
+#     ###########
+#
+#     # Delete ChapterActivities that are no longer part of the new order
+#     statement = (
+#         select(ChapterActivity)
+#         .where(
+#             ChapterActivity.course_id == course.id,
+#             ChapterActivity.org_id == course.org_id,
+#         )
+#         .order_by(ChapterActivity.order)
+#     )
+#     chapter_activities = db_session.exec(statement).all()
+#
+#     activity_ids_to_delete = []
+#     for chapter_activity in chapter_activities:
+#         if (
+#             chapter_activity.chapter_id not in chapter_ids_to_keep
+#             or chapter_activity.activity_id not in activity_ids_to_delete
+#         ):
+#             activity_ids_to_delete.append(chapter_activity.activity_id)
+#
+#     for activity_id in activity_ids_to_delete:
+#         statement = (
+#             select(ChapterActivity)
+#             .where(
+#                 ChapterActivity.activity_id == activity_id,
+#                 ChapterActivity.course_id == course.id,
+#             )
+#             .order_by(ChapterActivity.order)
+#         )
+#         chapter_activity = db_session.exec(statement).first()
+#
+#         db_session.delete(chapter_activity)
+#         db_session.commit()
+#
+#     # If links do not exist, create them
+#     chapter_activity_map = {}
+#     for chapter_order in chapters_order.chapter_order_by_ids:
+#         for activity_order in chapter_order.activities_order_by_ids:
+#             if (
+#                 activity_order.activity_id in chapter_activity_map
+#                 and chapter_activity_map[activity_order.activity_id]
+#                 != chapter_order.chapter_id
+#             ):
+#                 continue
+#
+#             statement = (
+#                 select(ChapterActivity)
+#                 .where(
+#                     ChapterActivity.chapter_id == chapter_order.chapter_id,
+#                     ChapterActivity.activity_id == activity_order.activity_id,
+#                 )
+#                 .order_by(ChapterActivity.order)
+#             )
+#             chapter_activity = db_session.exec(statement).first()
+#
+#             if not chapter_activity:
+#                 # Add ChapterActivity link
+#                 chapter_activity = ChapterActivity(
+#                     chapter_id=chapter_order.chapter_id,
+#                     activity_id=activity_order.activity_id,
+#                     org_id=course.org_id,
+#                     course_id=course.id,  # type: ignore
+#                     creation_date=str(datetime.now()),
+#                     update_date=str(datetime.now()),
+#                     order=activity_order.activity_id,
+#                 )
+#
+#                 # Insert ChapterActivity link in DB
+#                 db_session.add(chapter_activity)
+#                 db_session.commit()
+#
+#             chapter_activity_map[activity_order.activity_id] = chapter_order.chapter_id
+#
+#     # Update order of activities
+#     for chapter_order in chapters_order.chapter_order_by_ids:
+#         for activity_order in chapter_order.activities_order_by_ids:
+#             statement = (
+#                 select(ChapterActivity)
+#                 .where(
+#                     ChapterActivity.chapter_id == chapter_order.chapter_id,
+#                     ChapterActivity.activity_id == activity_order.activity_id,
+#                 )
+#                 .order_by(ChapterActivity.order)
+#             )
+#             chapter_activity = db_session.exec(statement).first()
+#
+#             if chapter_activity:
+#                 # Get the order from the index of the chapter_order_by_ids list
+#                 chapter_activity.order = chapter_order.activities_order_by_ids.index(
+#                     activity_order
+#                 )
+#                 db_session.commit()
+#
+#     return {"detail": "Chapters reordered"}
 
 
 ## 🔒 RBAC Utils ##
