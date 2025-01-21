@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Literal
+from typing import List, Dict, Literal
 from uuid import uuid4
 from sqlmodel import Session, select
 from src.db.users import AnonymousUser
@@ -375,6 +375,114 @@ async def DEPRECEATED_get_course_chapters(
 
     return final
 
+#
+#
+# Graph utilities.
+#
+#
+
+
+def is_cyclic_helper(
+    adjacency_list: List[List[int]],
+    current_index: int,
+    visited: Dict[int, bool],
+    recursion_stack: Dict[int, bool],
+):
+    if not visited[current_index]:
+        # Mark the current node as visited.
+        # and part of recursion stack.
+        visited[current_index] = True
+        print(f"current_index={current_index} | stack={recursion_stack}")
+        recursion_stack[current_index] = True
+
+        # Recur for all the vertices.
+        # adjacent to this vertex
+        for neightbour in adjacency_list[current_index]:
+            if not visited[neightbour] and is_cyclic_helper(
+                    adjacency_list,
+                    neightbour,
+                    visited,
+                    recursion_stack,
+            ):
+                return True
+            elif recursion_stack[neightbour]:
+                return True
+
+    # Remove the vertex from recursion stack
+    recursion_stack[current_index] = False
+    return False
+
+
+def is_new_graph_cyclic_after_new_edge(
+    course_id: int,
+    new_edge: ChapterEdge,
+    db_session: Session,
+) -> bool:
+    #
+    # Step 1: fetch all nodes & edges of
+    # this course and construct a in-memory graph.
+    #
+
+    statement_edges = select(CourseChapter_Graph).where(
+            CourseChapter_Graph.course_id == course_id
+    )
+    edges: [CourseChapter_Graph] = db_session.exec(statement_edges).all()
+    edges.append(CourseChapter_Graph(
+        course_id=course_id,
+        chapter_id=new_edge.to_chapter_id,
+        predecessor_id=new_edge.from_chapter_id,
+    ))
+
+    statement_nodes = select(Chapter).where(Chapter.course_id == course_id)
+    nodes: [Chapter] = db_session.exec(statement_nodes).all()
+
+    #
+    # Step 2: Construct adjacency list
+    #
+
+    adjacency_list = {}
+    for node in nodes:
+        print(f"node={node}")
+        adjacency_list[node.id] = []
+
+    for edge in edges:
+        print(f"edge={edge}")
+        adjacency_list[edge.chapter_id].append(edge.predecessor_id)
+
+    print(f"adjacency_list={adjacency_list}")
+
+    #
+    # Step 3: get the initial nodes (no predecessors).
+    # In case multiple elements are found in the list, we can terminate here
+    # and just return `false` since no loops are possible.
+    #
+
+    initial_nodes = []
+    rec_stack = {}
+    visited = {}
+
+    for node_id in adjacency_list.keys():
+        visited[node_id] = False
+        rec_stack[node_id] = False
+
+        if len(adjacency_list[node_id]) == 0:
+            initial_nodes.append(node_id)
+
+    #
+    # Step 4: perform DFS on the graph.
+    #
+
+    for node in nodes:
+        if not visited[node.id] and is_cyclic_helper(
+                adjacency_list,
+                node.id,
+                visited,
+                rec_stack,
+        ):
+            return True
+
+    return False
+
 
 async def modify_chapter_edge(
     request: Request,
@@ -409,17 +517,22 @@ async def modify_chapter_edge(
                 status_code=status.HTTP_409_CONFLICT, detail="Edge already exists"
             )
 
-        #
-        # TODO: here | check the integrity of the new graph: are there any loops in the graph?
-        #
 
         # Get course from DB in order to get its ID, not UUID.
         statement = select(Course).where(Course.course_uuid == course_uuid)
         course = db_session.exec(statement).first()
-
         if not course:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, detail="Course does not exist"
+            )
+
+        #
+        # Check the integrity of the new graph: is the new graph cyclic?
+        #
+
+        if is_new_graph_cyclic_after_new_edge(course.id, edge_param, db_session):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Cyclic course structure"
             )
 
         new_edge = CourseChapter_Graph(

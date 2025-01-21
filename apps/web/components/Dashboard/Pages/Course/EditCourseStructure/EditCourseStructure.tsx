@@ -18,7 +18,7 @@ import NewChapterModal from '@components/Objects/Modals/Chapters/NewChapter'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 
 import dagre from 'dagre';
-import { Background, BackgroundVariant, Controls, MiniMap, addEdge, useEdgesState, useNodesState } from '@xyflow/react';
+import { Background, BackgroundVariant, Controls, Handle, MiniMap, NodeProps, Position, addEdge, useEdgesState, useNodesState } from '@xyflow/react';
 const ReactFlow = dynamic(() => import('@xyflow/react').then((mod) => mod.ReactFlow), {
   ssr: false,
 });
@@ -27,7 +27,7 @@ import './graph.css';
 
 import styled from 'styled-components'
 import dynamic from 'next/dynamic'
-const sigmaStyle = { height: "100%", width: "100%", 'background-color': 'transparent'};
+import classNames from 'classnames';
 
 type DisplayGraphProps = {
     chapters: any[]
@@ -206,9 +206,39 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
     }
   }
 
-  //
-  // GRAPH.
-  //
+//
+// GRAPH.
+//
+
+const CustomNode: React.FC<NodeProps> = (props: any) => {
+  return (
+    <div style={{ padding: '10px', border: '1px solid black', borderRadius: '5px', transform: 'translateX(-50%)' }}>
+      <p>{props.data.label}</p>
+      {/* Custom Handle with increased hitbox */}
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{
+          width: '15px', // Increase the hitbox width
+          height: '15px', // Increase the hitbox height
+          background: 'black', // Optional: Change color for better visibility
+          borderRadius: '50%',
+        }}
+      />
+
+      <Handle
+        type="target"
+        position={Position.Top}
+        style={{
+          width: '15px', // Increase the hitbox width
+          height: '15px', // Increase the hitbox height
+          background: 'gray', // Optional: Change color for better visibility
+          borderRadius: '50%',
+        }}
+      />
+    </div>
+  );
+};
 
 const NewGraph = (props: DisplayGraphProps) => {
     const initialNodes: any = []
@@ -216,6 +246,8 @@ const NewGraph = (props: DisplayGraphProps) => {
 
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+    const [graphError, setGraphError] = useState<string | null>(null);
 
     // State to track if layout has been applied.
     const [isLayouted, setIsLayouted] = useState(false);
@@ -231,6 +263,7 @@ const NewGraph = (props: DisplayGraphProps) => {
 
         initialNodes.push({
             id: `${current.id}`,
+            type: 'customNode',
             position: {
                 x: 0,
                 y: 0
@@ -267,7 +300,11 @@ const NewGraph = (props: DisplayGraphProps) => {
     const nodeHeight = 50;
 
     const getLayoutedNodesAndEdges = (nodes: any[], edges: any[], direction = 'TB') => {
-        dagreGraph.setGraph({ rankdir: direction }); // TB (top-bottom), LR (left-right)
+        dagreGraph.setGraph({
+            rankdir: direction,
+            nodesep: 50,
+            ranksep: 100,
+        }); // TB (top-bottom), LR (left-right)
 
         // Add nodes to Dagre graph
         nodes.forEach((node: any) => {
@@ -285,6 +322,9 @@ const NewGraph = (props: DisplayGraphProps) => {
         // Update node positions
         const layoutedNodes = nodes.map((node: any) => {
             const nodeWithPosition = dagreGraph.node(node.id);
+            node.targetPosition = Position.Top;
+            node.sourcePosition = Position.Bottom;
+            
             return {
             ...node,
             position: {
@@ -297,13 +337,7 @@ const NewGraph = (props: DisplayGraphProps) => {
         return { nodes: layoutedNodes, edges };
     };
 
-    const onLayout = useCallback(() => {
-        // Only apply layout if it's not already applied to avoid the animation running twice.
-        if (layoutApplied) {
-            console.log('layout was applied')
-            return
-        }
-
+    function onLayoutInternal() {
         console.log("ON LAYOUT")
 
         const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedNodesAndEdges(
@@ -323,6 +357,16 @@ const NewGraph = (props: DisplayGraphProps) => {
         setTimeout(() => {
             setIsAnimating(false);
         }, 500); // Match with animation duration.
+    }
+
+    const onLayout = useCallback(() => {
+        // Only apply layout if it's not already applied to avoid the animation running twice.
+        if (layoutApplied) {
+            console.log('layout was applied')
+            return
+        }
+
+        onLayoutInternal()
     }, [nodes, edges, setLayoutApplied, setNodes, setEdges, setIsAnimating]);
 
     //
@@ -385,6 +429,7 @@ const NewGraph = (props: DisplayGraphProps) => {
 
             console.log(res)
 
+
             onEdgesChange(params)
         },
         [setEdges]
@@ -397,13 +442,21 @@ const NewGraph = (props: DisplayGraphProps) => {
             const fromNodeID = parseInt(params.source)
             const toNodeID = parseInt(params.target)
 
-            let res = await modifyChapterEdge(
-                fromNodeID,
-                toNodeID,
-                false,
-            )
-
-            console.log(res)
+            try {
+                let _res = await modifyChapterEdge(
+                    fromNodeID,
+                    toNodeID,
+                    false,
+                )
+            } catch (e: any) {
+                if (e.message === "Unprocessable Entity") {
+                    setGraphError("Cyclic dependency")
+                    setTimeout(() => {
+                        setGraphError(null)
+                    }, 1000)
+                    return
+                }
+            }
 
             setEdges((eds) => addEdge(params, eds))
         },
@@ -425,12 +478,14 @@ const NewGraph = (props: DisplayGraphProps) => {
         }
     }, [onLayout, setIsLayouted]);
 
+
     return (
         <ReactFlow
             nodes={nodes.map((node) => ({
                 ...node,
                 className: isAnimating ? 'position-transition' : '', // Add / Remove animation class.
             }))}
+            nodeTypes={{ customNode: CustomNode }}
             edges={edges}
             onNodesChange={onNodesChange}
             onNodesDelete={onNodesDelete}
@@ -439,6 +494,14 @@ const NewGraph = (props: DisplayGraphProps) => {
             onNodeClick={onNodeClick}
             nodesDraggable={true}
             fitView
+            defaultEdgeOptions={{
+                style: {
+                strokeWidth: 3, // Set global edge thickness
+                // stroke: '#000', // Optional: Set color
+                },
+            }}
+            maxZoom={4}
+            minZoom={1}
             //deleteKeyCode={null} // Disable delete key
         >
             <Controls
@@ -451,11 +514,15 @@ const NewGraph = (props: DisplayGraphProps) => {
                     flexDirection: 'column',
                     padding: '10px',
                     gap: '10px', // Adds spacing between controls
+                    width: '12rem'
                 }}
             >
                 {/* Custom Auto Layout Button */}
                 <button
-                    onClick={onLayout}
+                    onClick={() => {
+                        console.log('hallo')
+                        onLayoutInternal();
+                    }}
                     style={{
                         background: '#007BFF',
                         color: '#fff',
@@ -469,6 +536,16 @@ const NewGraph = (props: DisplayGraphProps) => {
                 >
                     Auto Layout
                 </button>
+
+                <span className={classNames(graphError ? {
+                   'text-red-500': true,
+                   'font-bold': true,
+                   'animate-pulse': true,
+                } : {
+                   'text-teal-600': true,
+                })}>
+                    {graphError ? graphError : "Semantics Valid"}
+                </span>
             </Controls>
             <MiniMap />
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
