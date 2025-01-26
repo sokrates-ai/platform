@@ -4,10 +4,13 @@ import { swrFetcher } from '@services/utils/ts/requests'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import React, { MutableRefObject, Ref, RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useSWR from 'swr'
-import { Stage, Sprite } from '@pixi/react';
-import {  BlurFilter, SCALE_MODES } from 'pixi.js';
+import { Stage, Sprite, Container } from '@pixi/react';
+import {  BaseTexture, SCALE_MODES, Texture } from 'pixi.js';
 import { TEST_SPRITES } from './assets'
 import { settings as pixiSettings } from 'pixi.js'
+
+
+BaseTexture.defaultOptions.scaleMode = SCALE_MODES.LINEAR;
 
 type EditCourseMapProps = {
     orgslug: string
@@ -15,14 +18,19 @@ type EditCourseMapProps = {
 }
 
 
-
 const MapEditorCanvas = () => {
   // const blurFilter = useMemo(() => new BlurFilter(2), []);
   // const bunnyUrl = 'https://pixijs.io/pixi-react/img/bunny.png';
   // Set PixiJS SCALE_MODE
-  pixiSettings.SCALE_MODE = SCALE_MODES.NEAREST;
 
-  const [size, setSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+   const SCALE = 10
+
+  const [zoom, setZoom] = useState(0.05);
+  const [size, setSize] = useState({
+      width: window.innerWidth,
+      height: window.innerHeight,
+      scale: SCALE,
+  });
 
   // Handle window resize
   useEffect(() => {
@@ -35,9 +43,13 @@ const MapEditorCanvas = () => {
             return
         }
 
+    const width = parentDiv.offsetWidth
+    const height = parentDiv.offsetHeight
+
       setSize({
-        width: parentDiv.offsetWidth,
-        height: parentDiv.offsetHeight,
+        width: width,
+        height: height,
+        scale: SCALE
       });
     };
 
@@ -52,6 +64,10 @@ const MapEditorCanvas = () => {
     };
   }, []);
 
+  const handleZoomChange = (factor: number) => {
+    setZoom((prevZoom) => Math.max(0.05, prevZoom + factor)); // Prevent zooming too far out
+  };
+
   interface DraggableState {
     x: number,
     y: number,
@@ -60,13 +76,15 @@ const MapEditorCanvas = () => {
     id: number,
   }
 
-  const [additional_elementsInternal, setAdditional_elementsInternal] = useState<DraggableState[]>([])
+  const additional_elementsInternal = useRef<DraggableState[]>([])
   const [additional_elements, setAdditional_elements] = useState<DraggableState[]>([])
 
-  function handleClickAsset(e: any, sprite: any) {
-        const newList = [...additional_elementsInternal, {
-           x: 100,
-           y: 100,
+  function handleClickAsset(_e: any, sprite: any) {
+       console.log(size.width / 2, size.height / 2)
+
+        const newList = [...additional_elementsInternal.current, {
+           x: size.width / 2 * SCALE,
+           y: size.height / 2 * SCALE,
            source: sprite.image,
            label: sprite.name,
            id: additional_elements.length,
@@ -74,6 +92,7 @@ const MapEditorCanvas = () => {
 
         console.log(newList)
 
+        additional_elementsInternal.current = newList
         setAdditional_elements(newList)
   }
 
@@ -85,30 +104,42 @@ const MapEditorCanvas = () => {
     const [position, setPosition] = useState({ x, y });
 
     const setPositionWrapper = ({x, y}: {x: number, y: number}) => {
+        const additional_elements2 = additional_elementsInternal.current.map((e) => {
+            if (e.id  === id) {
+                const e2: DraggableState = {
+                    id: e.id,
+                    source: e.source,
+                    label: e.source,
+                    x: x,
+                    y: y,
+                }
+
+                return e2
+            } else {
+                return e
+            }
+        })
+
+        additional_elementsInternal.current = additional_elements2
+
         setPosition({x, y})
+        // console.log(additional_elementsInternal.current)
+        // setAdditional_elements(additional_elements2)
     }
 
     const onDown = useCallback(() => {
-        // const additional_elements2 = additional_elements.map((e) => {
-        //     if (e.id  === id) {
-        //         const e2 = {
-        //             ...e,
-        //             x: x,
-        //             y: y,
-        //         }
-        //
-        //         console.dir(e2)
-        //
-        //         return e2
-        //     } else {
-        //         return e
-        //     }
-        // })
-        // setAdditional_elementsInternal(additional_elements2)
-
         setIsDragging(true)
     }, []);
-    const onUp = useCallback(() => setIsDragging(false), []);
+
+    const onUp = useCallback(() => {
+     setIsDragging(false)
+
+     // setTimeout(() => {
+     //    setAdditional_elements(additional_elementsInternal.current)
+     // }, 100)
+
+    }, [])
+
     // TODO: this is currently fucked
     const onMove = useCallback((e: any) => {
         // console.dir(e)
@@ -143,13 +174,20 @@ const MapEditorCanvas = () => {
   //   );
   // };
 
-  const DraggableAsset = ({ x = 400, y = 300, id = 0, src="", ...props }) => {
+  const DraggableAsset = ({ x, y, id, src, ...props }: { x: number, y: number, id: number, src: string }) => {
     const bind = useDrag({ x, y, id });
+
+    // Create texture and set scale mode
+    const texture = React.useMemo(() => {
+        const tex = Texture.from(src);
+        tex.baseTexture.scaleMode = SCALE_MODES.LINEAR; // Prevents smoothing when scaled
+        return tex;
+    }, [src]);
 
     return (
       <Sprite
-        image={src}
-        scale={4}
+        texture={texture} // Use the texture with the desired scale mode
+        scale={1}
         {...bind}
         {...props}
       />
@@ -190,26 +228,36 @@ const MapEditorCanvas = () => {
   //     setDragStartPos({ x: e.data.global.x, y: e.data.global.y });  // Update the drag start position
   //   }
   // };
+  //
+
+  console.log('rerender')
 
   return (
-        <div className='flex w-full h-full bg-green-100'>
-            <div id='canvas-parent' style={{width: '80%', height: 'auto', 'aspectRatio': '16/9'}}>
-                <Stage options={{ background: 0x1099bb }} style={{ width: size.width, height: size.height }}>
+        <div className='flex w-full h-full'>
+            <div id='canvas-parent' style={{width: '85%', height: 'auto', 'aspectRatio': '16/9'}}>
+                <Stage
+                    options={{
+                        background: 0x8da64a,
+                        autoDensity: true,
+                        resolution: window.devicePixelRatio * 4
+                    }}
+                    style={{ width: size.width, height: size.height }}
+                >
+                <Container scale={zoom}>
                     {additional_elements.map((sprite, _) => (
                         <DraggableAsset
                             id={sprite.id}
-                            x={100}
-                            y={100}
-                            scale={0.1}
+                            x={sprite.x}
+                            y={sprite.y}
                             src={sprite.source}
                         />
                     ))}
+                    </Container>
                 </Stage>
             </div>
-            <div className='w-1/3 bg-red-400' style={{width: '20%', 'overflowY': 'auto', height: '100%'}}>
-                <div className="sprite-panel">
-                    <h3>Available Sprites</h3>
-                        {TEST_SPRITES.map((sprite, index) => (
+            <div className='bg-red-400 p-10' style={{width: '15%', 'overflowY': 'auto', height: '100%'}}>
+                <div className="sprite-panel flex flex-col items-center gap-10">
+                    {TEST_SPRITES.map((sprite, index) => (
                         <div
                             key={index}
                             className="sprite-item"
@@ -217,12 +265,14 @@ const MapEditorCanvas = () => {
                             // onDragStart={(e) => handleDragStart(e, sprite)}  // Trigger drag start for each sprite
                             onClick={(e) => handleClickAsset(e, sprite)}
                         >
-                            <img src={sprite.image} alt={sprite.name} width={50} height={50} />
-                            <p>{sprite.name}</p>
+                            <div className='bg-black flex flex-col items-center p-20 rounded-md'>
+                                <img src={sprite.image} alt={sprite.name} width={80} />
+                                <span className='font-extrabold text-3xl'>{sprite.name}</span>
+                            </div>
                         </div>
-                        ))}
-                    </div>
+                    ))}
                 </div>
+            </div>
         </div>
   );
 };
