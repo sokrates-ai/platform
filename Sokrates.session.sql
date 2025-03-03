@@ -1,1 +1,1 @@
-SELECT * from coursechapter;
+SELECT * from activity;

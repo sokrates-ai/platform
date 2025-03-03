@@ -10,12 +10,7 @@ export async function createWorkspace(
   org_id: any,
   access_token: string
 ) {
- return {
-    success: true,
- }
-  data.content = {}
-  // remove chapter_id from data
-  delete data.chapterId
+  console.dir(data)
 
   const result = await fetch(
     `${getAPIUrl()}activities/?coursechapter_id=${chapter_id}&org_id=${org_id}`,
