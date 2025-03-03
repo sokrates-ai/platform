@@ -364,7 +364,8 @@ const EditorInfoWrapper = styled.div`
   flex-direction: row;
   margin-bottom: 5px;
 `
-const EditorButtonsWrapper = styled.div``
+
+export const EditorButtonsWrapper = styled.div``
 
 // Inside EditorUsersSection
 const EditorUserProfileWrapper = styled.div`
