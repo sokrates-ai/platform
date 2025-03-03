@@ -6,8 +6,6 @@ import React, { ReactNode, RefObject, useCallback, useEffect, useRef, useState }
 import useSWR from 'swr'
 import { Stage, Sprite, Container, Text as PText } from '@pixi/react';
 import {  BaseTexture, SCALE_MODES, Texture, TextStyle } from 'pixi.js';
-import Image from 'next/image'
-// import { TEST_SPRITES } from './assets'
 import { SPRITES } from './spriteIndex'
 import { CourseMapEditorToolbar } from './CourseMapEditorToolbar'
 
@@ -19,12 +17,14 @@ type EditCourseMapProps = {
 }
 
 function spriteURL(file: string): string {
-    return `/content_map/${file}`
+    return `/contentMap/${file}`
 }
 
 const LS_MAP_STATE_KEY = 'map_state'
 
 const MapEditorCanvas = (courseStructure: any) => {
+
+    // TODO: why are the texture sources empty???
     function draggableNodeFromData(data: DraggableStateData): ReactNode {
         if (data.associatedWithChapterID) {
             return (<ChapterAsset
@@ -343,6 +343,7 @@ const MapEditorCanvas = (courseStructure: any) => {
 
     // Create texture and set scale mode
     const texture = React.useMemo(() => {
+        console.log(`TEX SRC=${src}`)
         const tex = Texture.from(src);
         tex.baseTexture.scaleMode = SCALE_MODES.LINEAR;
         return tex;
@@ -453,8 +454,8 @@ const MapEditorCanvas = (courseStructure: any) => {
                         >
                             <img
                                 style={{filter: "saturate(150%)"}}
-                                // src={spriteURL(sprite.file)}
-                                src={'/content_map/Bank.webp'}
+                                src={spriteURL(sprite.file)}
+                                // src={'/contentMap/Bank.webp'}
                                 alt={sprite.label}
                                 width={80}
                             />

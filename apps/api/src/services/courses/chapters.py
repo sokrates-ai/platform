@@ -286,8 +286,8 @@ async def get_course_chapters(
         )
 
         incoming_edges = db_session.exec(statement).all()
-        print(f"INCOMING={incoming_edges}")
-        chapter.predecessors = [chapter.predecessor_id for chapter in incoming_edges if chapter.predecessor_id]
+        print(f"INCOMING of {chapter.id} = {incoming_edges}")
+        chapter.predecessors = [ch.predecessor_id for ch in incoming_edges]
 
     return chapters
 
@@ -491,10 +491,9 @@ async def modify_chapter_edge(
     current_user: PublicUser,
     db_session: Session,
 ):
-    statement = select(CourseChapter_Graph).where(
-            CourseChapter_Graph.chapter_id == edge_param.to_chapter_id
-            and CourseChapter_Graph.predecessor_id == edge_param.from_chapter_id
-    )
+    print(f"Would add edge from {edge_param.from_chapter_id} ---> {edge_param.to_chapter_id}")
+    statement = select(CourseChapter_Graph).where(CourseChapter_Graph.chapter_id == edge_param.to_chapter_id).where(CourseChapter_Graph.predecessor_id == edge_param.from_chapter_id)
+    
     selected_edge = db_session.exec(statement).first()
 
     if edge_param.delete:
@@ -513,6 +512,7 @@ async def modify_chapter_edge(
         await rbac_check(request, course_uuid, current_user, "update", db_session)
 
         if selected_edge:
+            print(selected_edge)
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, detail="Edge already exists"
             )

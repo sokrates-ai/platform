@@ -28,10 +28,10 @@ def upgrade() -> None:
     # If a chapter has no predecessors, it is the initial chapter.
     op.create_table(
         'coursechapter_graph',
-        sa.Column('course_id', sa.Integer, primary_key=True),
-        sa.Column('chapter_id', sa.Integer, primary_key=True),
+        sa.Column('course_id', sa.Integer, primary_key=True, nullable=False),
+        sa.Column('chapter_id', sa.Integer, primary_key=True, nullable=False),
         # The actual ID, not the chapter_id of the other link.
-        sa.Column('predecessor_id', sa.Integer, nullable=False),
+        sa.Column('predecessor_id', sa.Integer, primary_key=True, nullable=True),
     )
 
     op.create_foreign_key('coursechapter_graph_fk_0', 'coursechapter_graph', 'chapter', ['predecessor_id'], ['id'])
@@ -43,6 +43,14 @@ def upgrade() -> None:
     #         referent_table="coursechapter",
     #         local_cols=["predecessor_id"],
     #         remote_cols=["chapter_id"])
+
+    op.create_table(
+        'course_workspace',
+        sa.Column('course_id', sa.Integer, primary_key=True, nullable=False),
+        sa.Column('chapter_id', sa.Integer, primary_key=True, nullable=False),
+        # The actual ID, not the chapter_id of the other link.
+        sa.Column('predecessor_id', sa.Integer, primary_key=True, nullable=True),
+    )
 
 
 def downgrade() -> None:

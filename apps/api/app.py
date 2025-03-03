@@ -64,6 +64,7 @@ app.include_router(v1_router)
 
 
 if __name__ == "__main__":
+    print("Hello")
     uvicorn.run(
         "app:app",
         host="0.0.0.0",

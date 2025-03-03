@@ -21,4 +21,6 @@ async def init_logging():
         ]
     )
 
+    logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
     logging.info("Logging initiated")

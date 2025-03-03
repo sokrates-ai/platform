@@ -9,6 +9,7 @@ import VideoModal from './NewActivityModal/Video'
 import Image from 'next/image'
 import DocumentPdfModal from './NewActivityModal/DocumentPdf'
 import Assignment from './NewActivityModal/Assignment'
+import Workspace from './NewActivityModal/Workspace'
 
 function NewActivityModal({
   closeModal,
@@ -48,6 +49,7 @@ function NewActivityModal({
               Video
             </div>
           </ActivityOption>
+
           <ActivityOption
             onClick={() => {
               setSelectedView('documentpdf')
@@ -60,7 +62,8 @@ function NewActivityModal({
               Document
             </div>
           </ActivityOption>
-          <ActivityOption
+
+          {/* <ActivityOption
             onClick={() => {
               setSelectedView('assignments')
             }}
@@ -70,6 +73,19 @@ function NewActivityModal({
             </div>
             <div className="flex text-sm h-5 font-medium text-gray-500 items-center justify-center text-center">
               Assignments
+            </div>
+          </ActivityOption> */}
+
+          <ActivityOption
+            onClick={() => {
+              setSelectedView('workspaces')
+            }}
+          >
+            <div className="h-20 rounded-lg m-0.5 flex flex-col items-center justify-end text-center bg-white hover:cursor-pointer">
+              <Image unoptimized quality={100} alt="Assignment Page" src={AssignmentActivityImage}></Image>
+            </div>
+            <div className="flex text-sm h-5 font-medium text-gray-500 items-center justify-center text-center">
+              Workspace
             </div>
           </ActivityOption>
         </div>
@@ -100,8 +116,17 @@ function NewActivityModal({
         />
       )}
 
-      {selectedView === 'assignments' && (
+      {/* {selectedView === 'assignments' && (
         <Assignment
+          submitActivity={submitActivity}
+          chapterId={chapterId}
+          course={course}
+          closeModal={closeModal}
+        />)
+      } */}
+
+      {selectedView === 'workspaces' && (
+        <Workspace
           submitActivity={submitActivity}
           chapterId={chapterId}
           course={course}

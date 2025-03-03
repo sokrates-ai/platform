@@ -22,11 +22,11 @@ class CourseChapter(SQLModel, table=True):
 
 class CourseChapter_Graph(SQLModel, table=True):
     course_id: int = Field(
-        sa_column=Column(Integer, ForeignKey("course.id", ondelete="CASCADE"), primary_key=True, )
+        sa_column=Column(Integer, ForeignKey("course.id", ondelete="CASCADE"), primary_key=True, nullable=False)
     )
     chapter_id: int = Field(
-        sa_column=Column(Integer,  ForeignKey("chapter.id", ondelete="CASCADE"), primary_key=True,)
+        sa_column=Column(Integer,  ForeignKey("chapter.id", ondelete="CASCADE"), primary_key=True, nullable=False)
     )
     predecessor_id: int = Field(
-        sa_column=Column(Integer, ForeignKey("chapter.id", ondelete="CASCADE"))
+        sa_column=Column(Integer, ForeignKey("chapter.id", ondelete="CASCADE"), primary_key=True, nullable=True)
     )

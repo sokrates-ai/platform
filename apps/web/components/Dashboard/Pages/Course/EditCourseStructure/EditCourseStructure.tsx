@@ -219,8 +219,8 @@ const CustomNode: React.FC<NodeProps> = (props: any) => {
         type="source"
         position={Position.Bottom}
         style={{
-          width: '15px', // Increase the hitbox width
-          height: '15px', // Increase the hitbox height
+          width: '20px', // Increase the hitbox width
+          height: '20px', // Increase the hitbox height
           background: 'black', // Optional: Change color for better visibility
           borderRadius: '50%',
         }}
@@ -230,8 +230,8 @@ const CustomNode: React.FC<NodeProps> = (props: any) => {
         type="target"
         position={Position.Top}
         style={{
-          width: '15px', // Increase the hitbox width
-          height: '15px', // Increase the hitbox height
+          width: '20px', // Increase the hitbox width
+          height: '20px', // Increase the hitbox height
           background: 'gray', // Optional: Change color for better visibility
           borderRadius: '50%',
         }}
@@ -269,7 +269,7 @@ const NewGraph = (props: DisplayGraphProps) => {
                 y: 0
             },
             data: {
-                label: current.name
+                label: `${current.name} (ID=${current.id})`
             },
             draggable: true,
         })

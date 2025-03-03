@@ -1,5 +1,6 @@
 from typing import Literal, List
 from uuid import uuid4
+from src.db.courses.chapters import Chapter
 from sqlmodel import Session, select, or_, and_
 from src.db.usergroup_resources import UserGroupResource
 from src.db.usergroup_user import UserGroupUser
@@ -407,6 +408,7 @@ async def delete_course(
     current_user: PublicUser | AnonymousUser,
     db_session: Session,
 ):
+    # Get course
     statement = select(Course).where(Course.course_uuid == course_uuid)
     course = db_session.exec(statement).first()
 
@@ -416,12 +418,18 @@ async def delete_course(
             detail="Course not found",
         )
 
+    # Delete all chapters of this course first.
+    statement = select(Chapter).where(Chapter.course_id == course.id)
+    chapters = db_session.exec(statement).all()
+
     # RBAC check
     await rbac_check(request, course.course_uuid, current_user, "delete", db_session)
 
     # Feature usage
     decrease_feature_usage("courses", course.org_id, db_session)
 
+    for chapter in chapters:
+        db_session.delete(chapter)
     db_session.delete(course)
     db_session.commit()
 

@@ -36,6 +36,9 @@ function SaveState(props: { orgslug: string }) {
   //
   // Course Order
   const changeOrderBackend = async () => {
+    // TODO: this does nothing!
+    return
+
     mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
     await updateCourseOrderStructure(
       course.courseStructure.course_uuid,

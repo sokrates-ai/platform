@@ -10,6 +10,7 @@ from src.core.events.sentry import init_sentry
 
 def startup_app(app: FastAPI) -> Callable:
     async def start_app() -> None:
+        print("Start app handler")
         # Get LearnHouse Config
         learnhouse_config: LearnHouseConfig = get_learnhouse_config()
         app.learnhouse_config = learnhouse_config  # type: ignore
