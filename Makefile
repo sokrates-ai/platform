@@ -19,7 +19,7 @@ docker-build:
 	docker build . -t sokrates-platform --progress=plain
 
 api-setup:
-	cd ./apps/api/ && poetry lock --no-update && poetry install
+	cd ./apps/api/ && poetry lock && poetry install
 
 web-setup:
 	cd ./apps/web/ && pnpm i
