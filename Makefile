@@ -30,6 +30,6 @@ api-run: check
 	cd ./apps/api/ && poetry run python3 app.py
 
 web-run: check
-	NODE_ENV=development NEXT_PUBLIC_LEARNHOUSE_API_URL=http://localhost:1338/api/v1/ NEXT_PUBLIC_LEARNHOUSE_BASE_URL=http://localhost:3000 NEXTAUTH_SECRET=changeme bash -c 'cd ./apps/web/ && pnpm run dev'
+	NODE_ENV=development NEXT_PUBLIC_LEARNHOUSE_API_URL=http://localhost:1338/api/v1/ NEXT_PUBLIC_LEARNHOUSE_BASE_URL=http://localhost:3000 NEXT_PUBLIC_LEARNHOUSE_DEFAULT_ORG=default NEXTAUTH_SECRET=changeme bash -c 'cd ./apps/web/ && pnpm run dev'
 
 all-run: api-run web-run
