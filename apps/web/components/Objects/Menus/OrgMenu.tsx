@@ -3,27 +3,22 @@ import React from 'react'
 import Link from 'next/link'
 import { getUriWithOrg } from '@services/config/config'
 import { HeaderProfileBox } from '@components/Security/HeaderProfileBox'
-import MenuLinks from './OrgMenuLinks'
+
 import { getOrgLogoMediaDirectory } from '@services/media/media'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
-import logo_black from '@public/black_logo.png'
+import logo_black from '@public/black_logo.svg'
 import Image from 'next/image'
+import MenuLinks from './OrgMenuLinks'
 
 export const OrgMenu = (props: any) => {
-  const orgslug = props.orgslug
-  const session = useLHSession() as any;
-  const access_token = session?.data?.tokens?.access_token;
-  const [feedbackModal, setFeedbackModal] = React.useState(false)
-  const org = useOrg() as any;
+  const { orgslug } = props
+  const session = useLHSession() as any
+  const org = useOrg() as any
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
 
-  function closeFeedbackModal() {
-    setFeedbackModal(false)
-  }
-
   function toggleMenu() {
-    setIsMenuOpen(!isMenuOpen)
+    setIsMenuOpen((prev) => !prev)
   }
 
   return (
@@ -74,12 +69,11 @@ export const OrgMenu = (props: any) => {
         </div>
       </div>
       <div
-        className={`fixed inset-x-0 z-40 bg-white/80 backdrop-blur-lg md:hidden shadow-lg transition-all duration-300 ease-in-out ${
-          isMenuOpen ? 'top-[60px] opacity-100' : '-top-full opacity-0'
-        }`}
+        className={`fixed inset-x-0 z-40 bg-white/80 backdrop-blur-lg md:hidden shadow-lg transition-all duration-300 ease-in-out ${isMenuOpen ? 'top-[60px] opacity-100' : '-top-full opacity-0'
+          }`}
       >
         <div className="flex flex-col px-4 py-3 space-y-4 justify-center items-center">
-          <div className='py-4'>
+          <div className="py-4">
             <MenuLinks orgslug={orgslug} />
           </div>
           <div className="border-t border-gray-200">
@@ -91,13 +85,13 @@ export const OrgMenu = (props: any) => {
   )
 }
 
-const LearnHouseLogo = () => {
-    return (
-        <Image
-            width={100}
-            className="mx-auto"
-            src={logo_black}
-            alt=""
-        />
-    )
-}
+const LearnHouseLogo = () => (
+  <Image
+    width={40}
+    className="mx-auto"
+    src={logo_black}
+    alt="HPI Sokrates"
+  />
+)
+
+export default OrgMenu

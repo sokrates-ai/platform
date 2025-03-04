@@ -1,62 +1,31 @@
-import AuthenticatedClientElement from '@components/Security/AuthenticatedClientElement'
 import { getUriWithOrg } from '@services/config/config'
-import { BookCopy, Signpost, SquareLibrary } from 'lucide-react'
+import { BookCopy } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
 
-function MenuLinks(props: { orgslug: string }) {
+function MenuLinks({ orgslug }: { orgslug: string }) {
   return (
     <div className='pl-1'>
       <ul className="flex space-x-5">
-        <LinkItem
-          link="/courses"
-          type="courses"
-          orgslug={props.orgslug}
-        ></LinkItem>
-        <LinkItem
-          link="/collections"
-          type="collections"
-          orgslug={props.orgslug}
-        ></LinkItem>
-        <AuthenticatedClientElement checkMethod="authentication">
-          <LinkItem
-            link="/trail"
-            type="trail"
-            orgslug={props.orgslug}
-          ></LinkItem>
-        </AuthenticatedClientElement>
+        {/* <LinkItem link="/courses" type="courses" orgslug={orgslug} /> */}
       </ul>
     </div>
   )
 }
-const LinkItem = (props: any) => {
-  const link = props.link
-  const orgslug = props.orgslug
+
+const LinkItem = ({ link, orgslug, type }: { link: string; orgslug: string; type: string }) => {
   return (
     <Link href={getUriWithOrg(orgslug, link)}>
       <li className="flex space-x-2 items-center text-[#909192] font-medium">
-        {props.type == 'courses' && (
+        {type === 'courses' && (
           <>
-            <BookCopy size={20}  />{' '}
+            <BookCopy size={20} />
             <span>Courses</span>
-          </>
-        )}
-
-        {props.type == 'collections' && (
-          <>
-            <SquareLibrary size={20} />{' '}
-            <span>Collections</span>
-          </>
-        )}
-
-        {props.type == 'trail' && (
-          <>
-            <Signpost size={20} />{' '}
-            <span>Trail</span>
           </>
         )}
       </li>
     </Link>
   )
 }
+
 export default MenuLinks

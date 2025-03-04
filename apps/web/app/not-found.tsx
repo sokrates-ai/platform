@@ -1,7 +1,7 @@
 import { ArrowRight } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import learnhouseIcon from 'public/black_logo.png'
+import learnhouseIcon from 'public/black_logo.svg'
 
 export default function NotFound() {
   return (

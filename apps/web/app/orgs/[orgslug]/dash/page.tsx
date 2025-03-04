@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import React from 'react'
-import learnhousetextlogo from '@public/black_logo.png'
+import learnhousetextlogo from '@public/black_logo.svg'
 import { BookCopy, School, Settings, Code, Users } from 'lucide-react'
 import Link from 'next/link'
 import AdminAuthorization from '@components/Security/AdminAuthorization'
