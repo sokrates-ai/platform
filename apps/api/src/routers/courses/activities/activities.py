@@ -104,6 +104,29 @@ async def api_delete_activity(
     """
     return await delete_activity(request, activity_uuid, current_user, db_session)
 
+    
+# Workspace activity
+
+@router.post("/workspaces")
+async def api_create_workspace(
+    request: Request,
+    name: str = Form(),
+    chapter_id: str = Form(),
+    current_user: PublicUser = Depends(get_current_user),
+    video_file: UploadFile | None = None,
+    db_session=Depends(get_db_session),
+) -> ActivityRead:
+    """
+    Create new activity
+    """
+    return await create_video_activity(
+        request,
+        name,
+        chapter_id,
+        current_user,
+        db_session,
+        video_file,
+    )
 
 # Video activity
 

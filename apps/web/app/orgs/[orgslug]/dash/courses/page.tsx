@@ -11,7 +11,7 @@ type MetadataProps = {
   searchParams: { [key: string]: string | string[] | undefined }
 }
 
-export async function generateMetadata({
+async function generateMetadata({
   params,
 }: MetadataProps): Promise<Metadata> {
   // Get Org context information

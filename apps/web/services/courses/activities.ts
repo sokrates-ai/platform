@@ -4,7 +4,6 @@ import {
   RequestBodyWithAuthHeader,
 } from '@services/utils/ts/requests'
 
-// TODO: maybe this is the route that we need?
 export async function createActivity(
   data: any,
   chapter_id: any,

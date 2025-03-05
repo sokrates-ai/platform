@@ -24,22 +24,14 @@ function NewWorkspace({ submitActivity, chapterId, course, closeModal }: any) {
     const session = useLHSession() as any
     const [activityName, setActivityName] = React.useState('')
     const [isSubmitting, setIsSubmitting] = React.useState(false)
-    const [activityDescription, setActivityDescription] = React.useState('')
+    const [activityTaskID, setActivityTaskID] = React.useState(-1)
 
     const handleNameChange = (e: any) => {
         setActivityName(e.target.value)
     }
 
-    const handleDescriptionChange = (e: any) => {
-        setActivityDescription(e.target.value)
-    }
-
-    const handleDueDateChange = (e: any) => {
-        // setDueDate(e.target.value)
-    }
-
-    const handleGradingTypeChange = (e: any) => {
-        // setGradingType(e.target.value)
+    const handleActivityTaskIDChange = (e: any) => {
+        setActivityTaskID(e.target.value)
     }
 
     const handleSubmit = async (e: any) => {
@@ -54,25 +46,24 @@ function NewWorkspace({ submitActivity, chapterId, course, closeModal }: any) {
             course_id: course?.courseStructure.id,
         }
 
-        const activity_res = await createActivity(activity, chapterId, org?.id, session.data?.tokens?.access_token)
-        const res = await createWorkspace({
-            title: activityName,
-            description: activityDescription,
-            course_id: course?.courseStructure.id,
-            activity_id: activity_res?.id,
-        },
-        chapterId,
-        org?.id,
-        session.data?.tokens?.access_token)
+        const res = await createWorkspace(
+            activity,
+            activityTaskID,
+            chapterId,
+            org?.id,
+            session.data?.tokens?.access_token,
+        )
+        console.log("activity res:", res)
+
         const toast_loading = toast.loading('Creating workspace...')
 
-        if (res.success) {
+        if (res.success || res.success === undefined) {
             toast.dismiss(toast_loading)
             toast.success('Workspace created successfully')
         } else {
+            console.error(res)
             toast.error(res.data.detail)
-            await deleteActivity(activity_res.activity_uuid, session.data?.tokens?.access_token)
-
+            // await deleteActivity(res.activity_uuid, session.data?.tokens?.access_token)
         }
 
         mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
@@ -83,12 +74,12 @@ function NewWorkspace({ submitActivity, chapterId, course, closeModal }: any) {
 
     return (
         <FormLayout onSubmit={handleSubmit}>
+            {/* Name */}
             <FormField name="assignment-activity-title">
                 <Flex css={{ alignItems: 'baseline', justifyContent: 'space-between' }}>
                     <FormLabel>Workspace Title</FormLabel>
                     <FormMessage match="valueMissing">
-                        Please provide a name for your workspace
-
+                        Please provide a name for your workspace session.
                         <span color='red'></span>
                     </FormMessage>
                 </Flex>
@@ -98,7 +89,7 @@ function NewWorkspace({ submitActivity, chapterId, course, closeModal }: any) {
             </FormField>
 
             {/* Description  */}
-            <FormField name="assignment-activity-description">
+            {/* <FormField name="assignment-activity-description">
                 <Flex css={{ alignItems: 'baseline', justifyContent: 'space-between' }}>
                     <FormLabel>Workspace Description</FormLabel>
                     <FormMessage match="valueMissing">
@@ -108,21 +99,23 @@ function NewWorkspace({ submitActivity, chapterId, course, closeModal }: any) {
                 <Form.Control asChild>
                     <Input onChange={handleDescriptionChange} type="text" required />
                 </Form.Control>
-            </FormField>
+            </FormField> */}
 
-            {/* Choose Remote Workspace */}
+            <span style={{color: 'red'}}>TODO: @Albert / Tyron: RESKIN</span>
+
+            {/* Choose Excercise */}
             <FormField name="assignment-activity-grading-type">
                 <Flex css={{ alignItems: 'baseline', justifyContent: 'space-between' }}>
-                    <FormLabel>Remote Workspace Link</FormLabel>
+                    <FormLabel>Select Excercise</FormLabel>
                     <FormMessage match="valueMissing">
-                        Please provide a remote workspace reference
+                        Please select an excercise from the excercise library.
                     </FormMessage>
                 </Flex>
                 <Form.Control asChild>
-                    <select className='bg-gray-100/40 rounded-lg px-1 py-2 outline outline-1 outline-gray-100' onChange={handleGradingTypeChange} required>
-                        <option value="foo-one">Session One</option>
-                        <option value="foo-two">Session Two</option>
-                        <option value="foo-three">Session Three</option>
+                    <select className='bg-gray-100/40 rounded-lg px-1 py-2 outline outline-1 outline-gray-100' onChange={handleActivityTaskIDChange} required>
+                        <option value={1}>Task-Foo</option>
+                        <option value={2}>Task-Bar</option>
+                        <option value={3}>Task-Baz</option>
                     </select>
                 </Form.Control>
             </FormField>

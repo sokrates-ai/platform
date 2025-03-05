@@ -36,22 +36,6 @@ def upgrade() -> None:
 
     op.create_foreign_key('coursechapter_graph_fk_0', 'coursechapter_graph', 'chapter', ['predecessor_id'], ['id'])
 
-    # TODO: decide whether we need foreign keys.
-    # op.create_foreign_key(
-    #         constraint_name="coursechapter_graph_fk_0",
-    #         source_table="coursechapter_graph",
-    #         referent_table="coursechapter",
-    #         local_cols=["predecessor_id"],
-    #         remote_cols=["chapter_id"])
-
-    op.create_table(
-        'course_workspace',
-        sa.Column('course_id', sa.Integer, primary_key=True, nullable=False),
-        sa.Column('chapter_id', sa.Integer, primary_key=True, nullable=False),
-        # The actual ID, not the chapter_id of the other link.
-        sa.Column('predecessor_id', sa.Integer, primary_key=True, nullable=True),
-    )
-
 
 def downgrade() -> None:
     op.drop_table('coursechapter_graph')
