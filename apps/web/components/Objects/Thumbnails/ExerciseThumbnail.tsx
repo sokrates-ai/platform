@@ -43,18 +43,17 @@ function ExerciseThumbnail(props: PropsType) {
 
   const deleteExercise = async () => {
     // TODO: not implemented!
-
-    // const toastId = toast.loading('Deleting exercise...')
-    // try {
-    //   await deleteCourseFromBackend(course.course_uuid, session.data?.tokens?.access_token)
-    //   await revalidateTags(['courses'], orgslug)
-    //   toast.success('Course deleted successfully')
-    //   router.refresh()
-    // } catch (error) {
-    //   toast.error('Failed to delete course')
-    // } finally {
-    //   toast.dismiss(toastId)
-    // }
+    const toastId = toast.loading('Deleting exercise...')
+    try {
+      await deleteCourseFromBackend(course.course_uuid, session.data?.tokens?.access_token)
+      await revalidateTags(['courses'], orgslug)
+      toast.success('Course deleted successfully')
+      router.refresh()
+    } catch (error) {
+      toast.error('Failed to delete course')
+    } finally {
+      toast.dismiss(toastId)
+    }
   }
 
   // const thumbnailImage = course.thumbnail_image
@@ -62,7 +61,7 @@ function ExerciseThumbnail(props: PropsType) {
   //   : '../empty_thumbnail.png'
 
   return (
-    <div className="relative">
+    <div className="relative bg-gray-200 p-2 rounded-l">
       <AdminEditOptions
         exercise={props.exercise}
         orgSlug={props.orgslug}

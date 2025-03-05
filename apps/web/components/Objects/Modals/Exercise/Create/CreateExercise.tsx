@@ -61,22 +61,24 @@ function CreateExerciseModal({ closeModal, orgslug }: any) {
           session.data?.tokens?.access_token
         )
 
-        if (res.success) {
+        if (res.success || res.success === undefined) {
           // await revalidateTags(['courses'], orgslug)
           toast.dismiss(toast_loading)
           toast.success('Exercise created successfully')
 
-          if (res.data.org_id === orgId) {
+          // if (res.data.org_id === orgId) {
             closeModal()
             router.refresh()
             // TODO: what is `revalidateTags?`
             // await revalidateTags(['courses'], orgslug)
-          }
+          // }
         } else {
+          console.log(res)
           toast.error(res.data.detail)
         }
       } catch (error) {
         toast.error('Failed to create exercise')
+        console.error(error)
       } finally {
         setSubmitting(false)
       }

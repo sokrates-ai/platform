@@ -1,6 +1,5 @@
 import { getAPIUrl } from '@services/config/config'
 import {
-  RequestBodyFormWithAuthHeader,
   RequestBodyWithAuthHeader,
 } from '@services/utils/ts/requests'
 
@@ -26,13 +25,21 @@ export async function createWorkspace(
 }
 
 export async function createExercise(
-  // org_id: any,
   data: any,
   access_token: string,
 ) {
   const result = await fetch(
     `${getAPIUrl()}tasks`,
     RequestBodyWithAuthHeader('POST', data, null, access_token)
+  )
+  const res = await result.json()
+  return res
+}
+
+export async function deleteExercise(exercise_id: number, access_token:any) {
+  const result: any = await fetch(
+    `${getAPIUrl()}tasks/${exercise_id}`,
+    RequestBodyWithAuthHeader('DELETE', null, null,access_token)
   )
   const res = await result.json()
   return res

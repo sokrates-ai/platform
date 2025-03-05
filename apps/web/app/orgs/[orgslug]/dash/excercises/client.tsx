@@ -11,7 +11,7 @@ import useSWR from 'swr'
 import { getAPIUrl } from '@services/config/config'
 import { swrFetcher } from '@services/utils/ts/requests'
 import CreateExerciseModal from '@components/Objects/Modals/Exercise/Create/CreateExercise'
-import ExerciseThumbnail from '@components/Objects/Thumbnails/CourseThumbnail'
+import ExerciseThumbnail from '@components/Objects/Thumbnails/ExerciseThumbnail'
 
 type ExerciseProps = {
   orgslug: string
@@ -83,15 +83,15 @@ function ExerciseHome(params: ExerciseProps) {
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {exercises.map((course: any) => (
-          <div key={course.course_uuid}>
+        {exercises.map((exercise: any) => (
+          <div key={exercise.id}>
             <ExerciseThumbnail
-              customLink={`/dash/courses/course/${removeCoursePrefix(course.course_uuid)}/general`}
-              course={course}
-              orgslug={orgslug}
+              // customLink={`/dash/courses/course/${removeCoursePrefix(course.course_uuid)}/general`}
+              // course={course}
+              orgId={org.id}
+              orgslug={params.orgslug}
+              exercise={exercise} 
             />
-            ExerciseT
-            <span>{JSON.stringify(course)}</span>
           </div>
         ))}
         {exercises.length === 0 && (
