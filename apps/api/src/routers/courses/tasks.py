@@ -1,5 +1,5 @@
 from typing import List, Optional
-from src.services.courses.activities.workspaces import Task, TaskBase, TaskCreate, create_task, get_tasks
+from src.services.courses.activities.workspaces import Task, TaskBase, TaskCreate, create_task, delete_task, get_tasks
 from fastapi import APIRouter, Depends, UploadFile, Form, Request
 from sqlmodel import Session
 from src.core.events.database import get_db_session
@@ -136,6 +136,25 @@ async def api_get_task_list(
     """
     return await get_tasks(
         request, db_session, page, limit
+    )
+
+
+@router.delete("/id/{id}")
+async def api_get_task_list(
+    request: Request,
+    id: int,
+    # org_slug: str,
+    db_session: Session = Depends(get_db_session),
+    current_user: PublicUser = Depends(get_current_user),
+) -> None:
+    """
+    Get tasks based on page and limit
+    """
+    return await delete_task(
+        request,
+        db_session,
+        id,
+        current_user,
     )
 
 

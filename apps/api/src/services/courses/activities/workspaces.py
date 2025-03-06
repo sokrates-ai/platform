@@ -176,6 +176,31 @@ async def create_task(
     return task
 
 
+async def delete_task(
+    request: Request,
+    db_session: Session,
+    id: int,
+    current_user: PublicUser | AnonymousUser,
+) -> List[Task]:
+    statement = select(Task).where(Task.id == id)
+    task = db_session.exec(statement).first()
+    if not Task:
+        # TODO: raise an unprocessable entiry
+        return
+
+    print(f"task={task}")
+
+    # TODO: protect this route a bit.
+    # await rbac_check(request, course.course_uuid, current_user, "delete", db_session)
+
+    # Feature usage
+    # decrease_feature_usage("assignments", course.org_id, db_session)
+
+    # Delete Assignment
+    db_session.delete(task)
+    db_session.commit()
+
+
 async def rbac_check(
     request: Request,
     course_id: str,

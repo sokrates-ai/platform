@@ -36,9 +36,9 @@ export async function createExercise(
   return res
 }
 
-export async function deleteExercise(exercise_id: number, access_token:any) {
+export async function deleteExerciseFromBE(exercise_id: number, access_token:any) {
   const result: any = await fetch(
-    `${getAPIUrl()}tasks/${exercise_id}`,
+    `${getAPIUrl()}tasks/id/${exercise_id}`,
     RequestBodyWithAuthHeader('DELETE', null, null,access_token)
   )
   const res = await result.json()

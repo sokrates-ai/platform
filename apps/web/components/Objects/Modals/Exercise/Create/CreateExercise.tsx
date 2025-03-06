@@ -20,6 +20,7 @@ import * as Yup from 'yup'
 import {  UploadCloud, Image as ImageIcon } from 'lucide-react'
 import UnsplashImagePicker from "@components/Dashboard/Pages/Course/EditCourseGeneral/UnsplashImagePicker"
 import { createExercise } from "@services/courses/workspaces"
+import { mutate } from "swr"
 
 const validationSchema = Yup.object().shape({
   title: Yup.string()
@@ -31,7 +32,7 @@ const validationSchema = Yup.object().shape({
   solution: Yup.string(),
 })
 
-function CreateExerciseModal({ closeModal, orgslug }: any) {
+function CreateExerciseModal({ closeModal, orgslug, mutateURL }: any) {
   const router = useRouter()
   const session = useLHSession() as any
   const [orgId, setOrgId] = React.useState(null) as any
@@ -65,13 +66,14 @@ function CreateExerciseModal({ closeModal, orgslug }: any) {
           // await revalidateTags(['courses'], orgslug)
           toast.dismiss(toast_loading)
           toast.success('Exercise created successfully')
+          // await revalidateTags(['tasks'], orgslug)
+          // router.push(router.asPath)
 
-          // if (res.data.org_id === orgId) {
-            closeModal()
-            router.refresh()
-            // TODO: what is `revalidateTags?`
-            // await revalidateTags(['courses'], orgslug)
-          // }
+          closeModal()
+          mutate(mutateURL)
+
+          // router.refresh()
+          // router.refresh()
         } else {
           console.log(res)
           toast.error(res.data.detail)

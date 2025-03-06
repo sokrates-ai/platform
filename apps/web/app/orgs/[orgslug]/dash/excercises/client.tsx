@@ -7,11 +7,12 @@ import React, { useEffect } from 'react'
 import useAdminStatus from '@components/Hooks/useAdminStatus'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
-import useSWR from 'swr'
+import useSWR, { mutate } from 'swr'
 import { getAPIUrl } from '@services/config/config'
 import { swrFetcher } from '@services/utils/ts/requests'
 import CreateExerciseModal from '@components/Objects/Modals/Exercise/Create/CreateExercise'
 import ExerciseThumbnail from '@components/Objects/Thumbnails/ExerciseThumbnail'
+//import { Divide } from 'lucide-react'
 
 type ExerciseProps = {
   orgslug: string
@@ -34,16 +35,16 @@ function ExerciseHome(params: ExerciseProps) {
   const session = useLHSession() as any;
   const access_token = session?.data?.tokens?.access_token;
   const org = useOrg() as any;
-  const [exercises, setExercises] = React.useState<any[]>([])
+  // const [exercises, setExercises] = React.useState<any[]>([])
 
   // TODO: set limit?
-  const res = useSWR(`${getAPIUrl()}tasks/list/page/1/limit/50`, (url: string) => swrFetcher(url, access_token))
+  const TASKS_URL = `${getAPIUrl()}tasks/list/page/1/limit/50`;
+  const { data: exercises } = useSWR(TASKS_URL, (url: string) => swrFetcher(url, access_token))
 
-  useEffect(() => {
-    if (res.data)
-      setExercises(res.data)
-  }, [res])
-
+  // useEffect(() => {
+  //   if (res.data)
+  //     setExercises(res.data)
+  // }, [res])
 
   return (
     <div className="h-full w-full bg-[#f8f8f8] pl-10 pr-10">
@@ -65,6 +66,7 @@ function ExerciseHome(params: ExerciseProps) {
                 <CreateExerciseModal
                   closeModal={closeNewCourseModal}
                   orgslug={params.orgslug}
+                  mutateURL={TASKS_URL}
                 />
               }
               dialogTitle="Create Exercise"
@@ -83,7 +85,7 @@ function ExerciseHome(params: ExerciseProps) {
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {exercises.map((exercise: any) => (
+        {exercises ? exercises.map((exercise: any) => (
           <div key={exercise.id}>
             <ExerciseThumbnail
               // customLink={`/dash/courses/course/${removeCoursePrefix(course.course_uuid)}/general`}
@@ -91,10 +93,11 @@ function ExerciseHome(params: ExerciseProps) {
               orgId={org.id}
               orgslug={params.orgslug}
               exercise={exercise} 
+              mutateURL={TASKS_URL}
             />
           </div>
-        ))}
-        {exercises.length === 0 && (
+        )) : <div></div>}
+        {(!exercises || exercises.length === 0) && (
           <div className="col-span-full flex justify-center items-center py-8">
             <div className="text-center">
               <div className="mb-4">
@@ -135,6 +138,7 @@ function ExerciseHome(params: ExerciseProps) {
                         <CreateExerciseModal
                           closeModal={closeNewCourseModal}
                           orgslug={params.orgslug}
+                          mutateURL={TASKS_URL}
                         />
                       }
                       dialogTitle="Create Exercise"

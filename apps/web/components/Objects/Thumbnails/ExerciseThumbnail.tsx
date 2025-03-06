@@ -18,9 +18,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@components/ui/dropdown-menu"
+import { deleteExerciseFromBE } from '@services/courses/workspaces'
+import { mutate } from 'swr'
 
 type Exercise = {
-  id: string
+  id: number
   title: string
   description: string
   task: string
@@ -31,6 +33,7 @@ type PropsType = {
   exercise: Exercise
   orgslug: string
   orgId: string
+  mutateURL: string
   // customLink?: string
 }
 
@@ -45,12 +48,13 @@ function ExerciseThumbnail(props: PropsType) {
     // TODO: not implemented!
     const toastId = toast.loading('Deleting exercise...')
     try {
-      await deleteCourseFromBackend(course.course_uuid, session.data?.tokens?.access_token)
-      await revalidateTags(['courses'], orgslug)
-      toast.success('Course deleted successfully')
-      router.refresh()
+      await deleteExerciseFromBE(props.exercise.id, session.data?.tokens?.access_token)
+      await revalidateTags(['tasks'], props.orgslug)
+      toast.success('Exercise deleted successfully')
+      // router.refresh()
+      mutate(props.mutateURL)
     } catch (error) {
-      toast.error('Failed to delete course')
+      toast.error('Failed to delete exercise')
     } finally {
       toast.dismiss(toastId)
     }
