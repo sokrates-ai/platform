@@ -47,3 +47,6 @@ next.config.original.js
 certificates
 # Sentry Config File
 .env.sentry-build-plugin
+
+
+components/Dashboard/Menus/oldRefacturedDashLeftmenu.tsx

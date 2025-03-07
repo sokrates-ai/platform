@@ -5,14 +5,19 @@ import { getOrgCourses } from '@services/courses/courses'
 import Link from 'next/link'
 import { getOrganizationContextInfo } from '@services/organizations/orgs'
 import GeneralWrapperStyled from '@components/Objects/StyledElements/Wrappers/GeneralWrapper'
+import { Button } from '@components/ui/button'
 import TypeOfContentTitle from '@components/Objects/StyledElements/Titles/TypeOfContentTitle'
 import CourseThumbnail from '@components/Objects/Thumbnails/CourseThumbnail'
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import AuthenticatedClientElement from '@components/Security/AuthenticatedClientElement'
-import NewCourseButton from '@components/Objects/StyledElements/Buttons/NewCourseButton'
 import ContentPlaceHolderIfUserIsNotAdmin from '@components/Objects/ContentPlaceHolder'
 import { getServerSession } from 'next-auth'
 import { nextAuthOptions } from 'app/auth/options'
 import { getOrgThumbnailMediaDirectory } from '@services/media/media'
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+
+
+
 
 
 type MetadataProps = {
@@ -88,53 +93,36 @@ const OrgHomePage = async (params: any) => {
 							orgId={org_id}
 						>
 							<Link href={getUriWithOrg(orgslug, '/courses?new=true')}>
-								<NewCourseButton />
+								<Button variant="default">New Course</Button>
 							</Link>
 						</AuthenticatedClientElement>
 					</div>
+
+
 					<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 						{courses.map((course: any) => (
-							<div key={course.course_uuid} className="p-3">
-								<CourseThumbnail course={course} orgslug={orgslug} />
-							</div>
+							<Card key={course.course_uuid}>
+							<CardHeader>
+							<CardTitle>{course.name}</CardTitle>
+							</CardHeader>
+							<CardContent>
+							<CourseThumbnail course={course} orgslug={orgslug} />
+							</CardContent>
+							</Card>
 						))}
+
+
 						{courses.length === 0 && (
-							<div className="col-span-full flex justify-center items-center py-8">
-								<div className="text-center">
-									<div className="mb-4">
-										<svg
-											width="50"
-											height="50"
-											viewBox="0 0 295 295"
-											fill="none"
-											xmlns="http://www.w3.org/2000/svg"
-											className="mx-auto"
-										>
-											<rect
-												opacity="0.51"
-												x="10"
-												y="10"
-												width="275"
-												height="275"
-												rx="75"
-												stroke="#4B5564"
-												strokeOpacity="0.15"
-												strokeWidth="20"
-											/>
-											<path
-												d="M135.8 200.8V130L122.2 114.6L135.8 110.4V102.8L122.2 87.4L159.8 76V200.8L174.6 218H121L135.8 200.8Z"
-												fill="#4B5564"
-												fillOpacity="0.08"
-											/>
-										</svg>
-									</div>
-									<h1 className="text-xl font-bold text-gray-600 mb-2">
-										No courses yet
-									</h1>
-									<p className="text-md text-gray-400">
-										<ContentPlaceHolderIfUserIsNotAdmin text="Create courses to add content" />
-									</p>
-								</div>
+							<div className="col-span-full flex justify-center">
+							
+							<Alert variant="default" className='max-w-md' >
+							<AlertTitle>No courses yet</AlertTitle>
+							<AlertDescription>
+								<ContentPlaceHolderIfUserIsNotAdmin text="Create courses to add content" />
+							</AlertDescription>
+							</Alert>
+
+
 							</div>
 						)}
 					</div>

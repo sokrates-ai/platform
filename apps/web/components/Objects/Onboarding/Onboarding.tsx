@@ -1,4 +1,3 @@
-import Modal from '@components/Objects/StyledElements/Modal/Modal';
 import Image, { StaticImageData } from 'next/image';
 import React, { useEffect, useState } from 'react';
 import OnBoardWelcome from '@public/onboarding/OnBoardWelcome.png';
@@ -9,11 +8,15 @@ import OnBoardAI from '@public/onboarding/OnBoardAI.png';
 import OnBoardUGs from '@public/onboarding/OnBoardUGs.png';
 import OnBoardAccess from '@public/onboarding/OnBoardAccess.png';
 import OnBoardMore from '@public/onboarding/OnBoardMore.png';
-import { ArrowRight, Book, Check, Globe, Info, PictureInPicture, Sparkle, Sprout, SquareUser } from 'lucide-react';
+import { ArrowRight, Book, Check, Globe, Info, PictureInPicture, Sparkle, Sprout, SquareUser, ArrowRightLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getUriWithOrg } from '@services/config/config';
 import { useOrg } from '@components/Contexts/OrgContext';
 import useAdminStatus from '@components/Hooks/useAdminStatus';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from '@components/ui/button';
+import { cn } from '@/lib/utils';
+import { Badge } from '@components/ui/badge'
 
 interface OnboardingStep {
   imageSrc: StaticImageData;
@@ -154,37 +157,38 @@ const Onboarding: React.FC = () => {
     }
   };
 
+
+
   return (
     <div>
-      {isUserAdmin.isAdmin && !isUserAdmin.loading && !isOnboardingComplete && <Modal
-        isDialogOpen={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        minHeight="sm"
-        minWidth='md'
-        dialogContent={
-          <OnboardingScreen
-            step={onboardingData[currentStep]}
-            onboardingData={onboardingData}
-            currentStep={currentStep}
-            nextStep={nextStep}
-            skipOnboarding={skipOnboarding}
-            setIsModalOpen={setIsModalOpen}
-
-            goToStep={goToStep}
-          />
-        }
-        dialogTrigger={
-
-          <div className='fixed pb-10 w-full bottom-0 bg-gradient-to-t from-1% from-gray-950/25 to-transparent'>
-            <div className='bg-gray-950 flex space-x-2 font-bold cursor-pointer hover:bg-gray-900 shadow-md items-center text-gray-200 px-5 py-2 w-fit rounded-full mx-auto'>
-              <Sprout size={20} />
-              <p>Onboarding</p>
-              <div className='h-2 w-2 bg-green-500 animate-pulse rounded-full'></div>
+      {isUserAdmin.isAdmin && !isUserAdmin.loading && !isOnboardingComplete && 
+      
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen} >
+          <DialogTrigger asChild>
+            <div className=' fixed pb-10 w-full bottom-0 bg-gradient-to-t from-1% from-gray-950/25 to-transparent'>
+              <div className='bg-gray-950 flex space-x-2 font-bold cursor-pointer hover:bg-gray-900 shadow-md items-center text-gray-200 px-5 py-2 w-fit rounded-full mx-auto'>
+                <ArrowRightLeft size={20} />
+                <p>Onboarding</p>
+                <div className='h-2 w-2 bg-blue-500 animate-pulse rounded-full'></div>
+              </div>
             </div>
-          </div>
-        }
-      />}
-    </div>
+          </DialogTrigger>
+          <DialogContent  className= "w-[700px] h-[600px] max-w-full max-h-[90vh] overflow-hidden">
+            <DialogHeader>
+              <DialogTitle>Onboarding</DialogTitle>
+            </DialogHeader>
+            <OnboardingScreen
+              step={onboardingData[currentStep]}
+              onboardingData={onboardingData}
+              currentStep={currentStep}
+              nextStep={nextStep}
+              skipOnboarding={skipOnboarding}
+              setIsModalOpen={setIsModalOpen}
+              goToStep={goToStep}
+            />
+          </DialogContent>
+        </Dialog>}
+        </div>
   );
 };
 
@@ -216,12 +220,15 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
           <Image unoptimized className='mx-auto shadow-md shadow-gray-200 rounded-lg aspect-auto' alt='' priority quality={100} src={step.imageSrc} />
         </div>
         <div className='grid grid-flow-col justify-stretch space-x-3 mt-4'>
-          {onboardingData.map((_, index) => (
-            <div
+        {onboardingData.map((_, index) => (
+            <Badge
               key={index}
               onClick={() => goToStep(index)}
-              className={`h-[7px] w-auto ${index === currentStep ? 'bg-black' : 'bg-gray-300'} hover:bg-gray-700 rounded-lg shadow-md cursor-pointer`}
-            ></div>
+              className={cn("h-[7px] w-15 rounded-full cursor-pointer transition-all", {
+                "bg-black": index === currentStep,
+                "bg-gray-300 hover:bg-gray-500": index !== currentStep,
+              })}
+            />
           ))}
         </div>
       </div>
@@ -232,40 +239,35 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
       <div className='onboarding_actions flex flex-row-reverse w-full px-4'>
         <div className='flex flex-row justify-between w-full py-2'>
           <div className='utils_buttons flex flex-row space-x-2'>
-            <div
-              className="inline-flex items-center px-5 space-x-1 cursor-pointer py-1 rounded-full text-gray-600 antialiased font-bold bg-gray-100 hover:bg-gray-200"
+
+            <Button
+              variant='secondary'
               onClick={() => setIsModalOpen(false)}
             >
               <PictureInPicture size={16} />
-            </div>
+            </Button>
           </div>
+
           <div className='actions_buttons flex space-x-2'>
             {step.buttons?.map((button, index) => (
-              <div
-                key={index}
-                className="inline-flex items-center px-5 space-x-2 cursor-pointer py-1 rounded-full text-gray-200 antialiased font-bold bg-black hover:bg-gray-700 shadow-md whitespace-nowrap"
+              <Button
                 onClick={button.action}
               >
                 <p>{button.label}</p>
                 {button.icon}
-              </div>
+              </Button>
             ))}
             {isLastStep ? (
-              <div
-                className="inline-flex items-center px-5 space-x-2 cursor-pointer py-1 rounded-full text-gray-200 antialiased font-bold bg-black hover:bg-gray-700 shadow-md whitespace-nowrap"
-                onClick={nextStep}
-              >
+              <Button onClick={nextStep}>
                 <p>Finish Onboarding</p>
                 <Check size={16} />
-              </div>
+              </Button>
             ) : (
-              <div
-                className="inline-flex items-center px-5 space-x-2 cursor-pointer py-1 rounded-full text-gray-200 antialiased font-bold bg-black hover:bg-gray-700 shadow-md whitespace-nowrap"
-                onClick={nextStep}
-              >
-                <p>Next</p>
+              
+              <Button onClick={nextStep}>
+                Next
                 <ArrowRight size={16} />
-              </div>
+              </Button>
             )}
           </div>
         </div>
