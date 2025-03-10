@@ -5,7 +5,7 @@ import { useLHSession } from '@components/Contexts/LHSessionContext'
 import React, { ReactNode, RefObject, useCallback, useEffect, useRef, useState } from 'react'
 import useSWR from 'swr'
 import { Stage, Sprite, Container, Text as PText } from '@pixi/react';
-import { BaseTexture, SCALE_MODES, Texture, TextStyle } from 'pixi.js';
+import { BaseTexture, SCALE_MODES, Texture, TextStyle, Point } from 'pixi.js';
 import { SPRITES } from './spriteIndex'
 import { CourseMapEditorToolbar } from './CourseMapEditorToolbar'
 
@@ -45,9 +45,8 @@ const MapEditorCanvas = (courseStructure: any) => {
         }
     }
 
-    const SCALE = 10
+    const SCALE = 1
 
-    const [zoom, setZoom] = useState(0.05);
     const [offset, setOffset] = useState({ x: 0, y: 0 });
     const [size, setSize] = useState({
         width: window.innerWidth,
@@ -55,41 +54,27 @@ const MapEditorCanvas = (courseStructure: any) => {
         scale: SCALE,
     });
 
-    // Handle window resize
     useEffect(() => {
         const handleResize = () => {
-            console.log('resize')
-
-            const parentDiv = document.getElementById('canvas-parent')
+            const parentDiv = document.getElementById('canvas-parent');
             if (!parentDiv) {
-                console.error("BUGGGG")
-                return
+                return;
             }
-
-            const width = parentDiv.offsetWidth
-            const height = parentDiv.offsetHeight
-
+            const width = parentDiv.clientWidth;
+            const height = parentDiv.clientHeight;
             setSize({
-                width: width,
-                height: height,
+                width,
+                height,
                 scale: SCALE
             });
         };
 
         window.addEventListener("resize", handleResize);
-
-        // Call the resize function one time.
-        handleResize()
-
-        // Clean up the event listener
+        handleResize();
         return () => {
             window.removeEventListener("resize", handleResize);
         };
     }, []);
-
-    const handleZoomChange = (factor: number) => {
-        setZoom((prevZoom) => Math.max(0.05, prevZoom + factor)); // Prevent zooming too far out
-    };
 
     const handleWheel = (e: React.WheelEvent) => {
         e.preventDefault();
@@ -119,7 +104,6 @@ const MapEditorCanvas = (courseStructure: any) => {
 
     function serializeEditorState(data: DraggableState[]) {
         const serialized = JSON.stringify(data.map((datapoint) => datapoint.data))
-        console.log(serialized)
         localStorage.setItem(LS_MAP_STATE_KEY, serialized)
     }
 
@@ -128,28 +112,19 @@ const MapEditorCanvas = (courseStructure: any) => {
         setAdditional_elementsUnwrapped(data)
     }
 
-
     useEffect(() => {
         if (!courseStructure.courseStructure.chapters) {
             return
         }
 
-        //
-        // TODO: when loading the old data from disk, we should create a merge algo that also checks for
-        // new chapters / deleted chapters and adds / removes them from the nodes list.
-        //
-        // MERGE ALGO HERE!!!
-        //
         // MERGE ALGO:
         //      1) only add the nodes which are not already present.
         //      2) remove the ones that are no longer present.
-
         const chapters = courseStructure.courseStructure.chapters
 
         // Step 1: Prevent duplicates.
         const chaptersToAdd = chapters.filter((chapter: any) => {
             if (additional_elements.find((element) => element.data.associatedWithChapterID === chapter.id)) {
-                console.log(`Prevented duplicate: ID ${chapter.id} exists.`)
                 return null
             } else {
                 return chapter
@@ -160,11 +135,7 @@ const MapEditorCanvas = (courseStructure: any) => {
             const padding = 1000
             const centerPointX = size.width / 2 * SCALE
             const centerPointY = size.height / 2 * SCALE
-
-            // Translate to the left (approx 100pixels).
             const offsetX = (centerPointX - 100)
-
-            // Translate to the top and then align vertically.
             const offsetY = (centerPointY + index * padding) - (courseStructure.courseStructure.chapters.length * padding / 2)
 
             const aboveTextureSource = spriteURL(SPRITES[30].file)
@@ -182,26 +153,20 @@ const MapEditorCanvas = (courseStructure: any) => {
                 associatedWithChapterID: chapter.id,
             }
             const node = draggableNodeFromData(data)
-
             return Object.create({ node, data } as DraggableState)
         })
 
         // Step 2: Remove old chapters.
         const initialWithoutOld = initial.filter((draggable) => {
-            // If no chapter is associated, just return it.
             if (!draggable.data.associatedWithChapterID) {
                 return draggable
             }
-
             const corresPondingChapter = chapters.find((chapter: any) => {
                 return chapter.id === draggable.data.associatedWithChapterID
             })
-
             if (!corresPondingChapter) {
-                console.log(`Prevented dangling pointer: chapter ${draggable.data.associatedWithChapterID} was deleted`)
                 return null
             }
-
             return draggable
         })
 
@@ -210,32 +175,21 @@ const MapEditorCanvas = (courseStructure: any) => {
     }, [courseStructure])
 
     useEffect(() => {
-        //
         // Load previous editor state from disk.
-        //
-
         const item = localStorage.getItem(LS_MAP_STATE_KEY)
         if (!item) {
-            // Nothing to load!
             return
         }
-
         const deserialized: DraggableStateData[] = JSON.parse(item)
         const reconstructed = deserialized.map((data) => {
             const node = draggableNodeFromData(data)
-
-            return {
-                data,
-                node,
-            } as DraggableState
+            return { data, node } as DraggableState
         })
-
         setAdditional_elementsUnwrapped(reconstructed)
         additional_elementsInternal.current = reconstructed
     }, [])
 
     function handleClickAsset(_e: any, sprite: any) {
-        console.log(size.width / 2, size.height / 2)
         const x = size.width / 2 * SCALE
         const y = size.height / 2 * SCALE
         const id = additional_elements.length
@@ -249,16 +203,8 @@ const MapEditorCanvas = (courseStructure: any) => {
             associatedWithChapterID: null,
         } as DraggableStateData
         const node = draggableNodeFromData(data)
-
-        const toAdd = {
-            node,
-            data,
-        } as DraggableState
-
+        const toAdd = { node, data } as DraggableState
         const newList = [...additional_elementsInternal.current, toAdd]
-
-        console.log(newList)
-
         additional_elementsInternal.current = newList
         setAdditional_elements(newList)
     }
@@ -267,54 +213,67 @@ const MapEditorCanvas = (courseStructure: any) => {
         const sprite = useRef<any>(null);
         const [isDragging, setIsDragging] = useState(false);
         const [position, setPosition] = useState({ x, y });
+        const stageRef = useRef<any>(null);
+        const isDraggingRef = useRef(false);
 
         const setPositionWrapper = ({ x, y }: { x: number, y: number }) => {
-            const additional_elements2 = additional_elementsInternal.current.map((e) => {
+            // Update the state and persist the new position in additional_elementsInternal
+            const updatedElements = additional_elementsInternal.current.map((e) => {
                 if (e.data.id === id) {
-                    const e2: DraggableState = {
+                    return {
                         node: e.node,
-                        data: {
-                            id: e.data.id,
-                            label: e.data.label,
-                            x: x,
-                            y: y,
-                            textureSources: e.data.textureSources,
-                            associatedWithChapterID: e.data.associatedWithChapterID,
-                        }
-                    }
-
-                    return e2
-                } else {
-                    return e
+                        data: { ...e.data, x, y },
+                    };
                 }
-            })
+                return e;
+            });
+            additional_elementsInternal.current = updatedElements;
+            setPosition({ x, y });
+        };
 
-            additional_elementsInternal.current = additional_elements2
+        const setIsDraggingWrapper = (value: any) => {
+            isDraggingRef.current = value;
+            setIsDragging(value);
+        };
 
-            setPosition({ x, y })
-        }
+        // Global pointer move event using Pixi's toLocal conversion.
+        const onGlobalMove = useCallback((e: PointerEvent) => {
+            const canvasElement = document.getElementById('canvas-parent');
+            if (canvasElement) {
+                const canvasBounds = canvasElement.getBoundingClientRect();
 
-        const onDown = useCallback((e: any) => {
-            setIsDragging(true)
+                const relativeX = e.clientX - canvasBounds.left;
+                const relativeY = e.clientY - canvasBounds.top;
+
+                const localPos = stageRef.current.toLocal(new Point(relativeX, relativeY));
+                setPositionWrapper(localPos);
+            }
         }, []);
 
-        const onUp = useCallback((e: any) => {
-            setIsDragging(false)
-        }, [])
+        const onGlobalUp = useCallback((e: any) => {
+            setIsDraggingWrapper(false);
+            window.removeEventListener('pointermove', onGlobalMove);
+            window.removeEventListener('pointerup', onGlobalUp);
+        }, [onGlobalMove]);
+
+        const onDown = useCallback((e: any) => {
+            setIsDraggingWrapper(true);
+            stageRef.current = sprite.current?.parent;
+            window.addEventListener('pointermove', onGlobalMove);
+            window.addEventListener('pointerup', onGlobalUp);
+        }, [onGlobalMove, onGlobalUp]);
 
         const onMove = useCallback((e: any) => {
-            if (isDragging && sprite.current) {
+            if (isDraggingRef.current && sprite.current) {
                 const newPos = e.data.getLocalPosition(sprite.current.parent);
                 setPositionWrapper(newPos);
             }
-        }, [isDragging, setPosition]);
+        }, []);
 
         return {
             ref: sprite,
             interactive: true,
             pointerdown: onDown,
-            pointerup: onUp,
-            pointerupoutside: onUp,
             pointermove: onMove,
             alpha: isDragging ? 0.5 : 1,
             anchor: 0.5,
@@ -324,10 +283,7 @@ const MapEditorCanvas = (courseStructure: any) => {
 
     const DraggableAsset = ({ x, y, id, src, ...props }: { x: number, y: number, id: number, src: string }) => {
         const bind = useDrag({ x, y, id });
-
-        // Create texture and set scale mode
         const texture = React.useMemo(() => {
-            console.log(`TEX SRC=${src}`)
             const tex = Texture.from(src);
             tex.baseTexture.scaleMode = SCALE_MODES.LINEAR;
             return tex;
@@ -354,8 +310,6 @@ const MapEditorCanvas = (courseStructure: any) => {
                 chapterID: number,
             }) => {
         const bind = useDrag({ x, y, id });
-
-        // Create texture and set scale mode
         const texture = React.useMemo(() => {
             const tex = Texture.from(overlaySource);
             tex.baseTexture.scaleMode = SCALE_MODES.LINEAR;
@@ -392,7 +346,7 @@ const MapEditorCanvas = (courseStructure: any) => {
                             fontFamily: '"Source Sans Pro", Helvetica, sans-serif',
                             fontSize: 300,
                             fontWeight: '400',
-                            fill: ['#ffffff', '#00ff99'], // gradient
+                            fill: ['#ffffff', '#00ff99'],
                             stroke: '#01d27e',
                             strokeThickness: 5,
                             letterSpacing: 20,
@@ -411,39 +365,40 @@ const MapEditorCanvas = (courseStructure: any) => {
     };
 
     return (
-        <div
-            className="flex w-full h-full overflow-hidden"
-            style={{ height: 'calc(100vh - 19rem)' }}
-            onWheel={handleWheel}
-        >
-            <div id="canvas-parent" style={{ width: '85%', height: 'auto', aspectRatio: '16/9' }}>
+        <div className="flex w-full h-full overflow-hidden" style={{ height: 'calc(100vh - 19rem)' }}>
+            <div
+                id="canvas-parent"
+                style={{ width: '85%', height: '100%' }}
+                onWheel={handleWheel}
+            >
                 <Stage
+                    width={size.width}
+                    height={size.height}
                     options={{
                         background: 0x8da64a,
                         autoDensity: true,
                         resolution: window.devicePixelRatio * 4,
+                        antialias: true,
                     }}
-                    style={{ width: size.width, height: size.height }}
                 >
-                    <Container scale={zoom} position={[offset.x, offset.y]}>
+                    <Container scale={0.1} position={[offset.x, offset.y]}>
                         {additional_elements.map((sprite) => sprite.node)}
                     </Container>
                 </Stage>
             </div>
-            <div className='bg-gray-300 p-5' style={{ width: '15%', 'overflowY': 'scroll' }}>
+
+            <div className='bg-gray-300 p-5' style={{ width: '15%', overflowY: 'scroll' }}>
                 <div className="sprite-panel flex flex-col items-center gap-10">
                     {SPRITES.map((sprite, index) => (
                         <div
                             key={index}
                             draggable
-                            // onDragStart={(e) => handleDragStart(e, sprite)}  // Trigger drag start for each sprite
                             onClick={(e) => handleClickAsset(e, sprite)}
                             className='sprite-item flex flex-col items-center p-10 rounded-md w-full box-border bg-gray-400 hover:bg-sky-600 cursor-pointer'
                         >
                             <img
                                 style={{ filter: "saturate(150%)" }}
                                 src={spriteURL(sprite.file)}
-                                // src={'/contentMap/Bank.webp'}
                                 alt={sprite.label}
                                 width={80}
                             />
@@ -468,7 +423,10 @@ function EditCourseMap(props: EditCourseMapProps) {
     const { isLoading, courseStructure } = course as any;
     const dispatchCourse = useCourseDispatch() as any;
 
-    const { data: usergroups } = useSWR(courseStructure ? `${getAPIUrl()}usergroups/resource/${courseStructure.course_uuid}` : null, (url: string) => swrFetcher(url, access_token));
+    const { data: usergroups } = useSWR(
+        courseStructure ? `${getAPIUrl()}usergroups/resource/${courseStructure.course_uuid}` : null,
+        (url: string) => swrFetcher(url, access_token)
+    );
     const [isClientPublic, setIsClientPublic] = useState<boolean | undefined>(undefined);
 
     useEffect(() => {
