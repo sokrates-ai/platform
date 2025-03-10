@@ -54,6 +54,8 @@ const MapEditorCanvas = (courseStructure: any) => {
         scale: SCALE,
     });
 
+    const targetOffsetRef = useRef(offset);
+
     useEffect(() => {
         const handleResize = () => {
             const parentDiv = document.getElementById('canvas-parent');
@@ -78,11 +80,30 @@ const MapEditorCanvas = (courseStructure: any) => {
 
     const handleWheel = (e: React.WheelEvent) => {
         e.preventDefault();
-        setOffset((prev) => ({
-            x: prev.x - e.deltaX,
-            y: prev.y - e.deltaY,
-        }));
+        targetOffsetRef.current = {
+            x: targetOffsetRef.current.x - e.deltaX,
+            y: targetOffsetRef.current.y - e.deltaY,
+        };
     };
+
+    useEffect(() => {
+        let animationFrameId: number;
+
+        const animate = () => {
+            setOffset((prev) => {
+                const target = targetOffsetRef.current;
+                const lerpFactor = 0.9;
+                const newX = prev.x + (target.x - prev.x) * lerpFactor;
+                const newY = prev.y + (target.y - prev.y) * lerpFactor;
+                return { x: newX, y: newY };
+            });
+            animationFrameId = requestAnimationFrame(animate);
+        };
+
+        animate();
+        return () => cancelAnimationFrame(animationFrameId);
+    }, []);
+
 
     interface DraggableStateData {
         x: number,
