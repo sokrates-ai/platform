@@ -12,13 +12,15 @@ import * as Form from '@radix-ui/react-form'
 import { BarLoader } from 'react-spinners'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { getAPIUrl } from '@services/config/config'
-import { mutate } from 'swr'
+import useSWR, { mutate } from 'swr'
 import { createAssignment } from '@services/courses/assignments'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { createActivity, deleteActivity } from '@services/courses/activities'
 import toast from 'react-hot-toast'
+import { TASKS_URL  } from '@/app/orgs/[orgslug]/dash/excercises/client'
+import { swrFetcher } from '@services/utils/ts/requests'
 
-function NewAssignment({ submitActivity, chapterId, course, closeModal }: any) {
+function NewAssignment({ submitActivity, chapterId, course, closeModal, access_token }: any) {
     const org = useOrg() as any;
     const session = useLHSession() as any
     const [activityName, setActivityName] = React.useState('')
@@ -26,6 +28,9 @@ function NewAssignment({ submitActivity, chapterId, course, closeModal }: any) {
     const [activityDescription, setActivityDescription] = React.useState('')
     const [dueDate, setDueDate] = React.useState('')
     const [gradingType, setGradingType] = React.useState('ALPHABET')
+
+    // Fetch exercise library here.
+    const { data: exercises } = useSWR(TASKS_URL, (url: string) => swrFetcher(url, access_token))
 
     const handleNameChange = (e: any) => {
         setActivityName(e.target.value)
@@ -133,9 +138,14 @@ function NewAssignment({ submitActivity, chapterId, course, closeModal }: any) {
                 </Flex>
                 <Form.Control asChild>
                     <select className='bg-gray-100/40 rounded-lg px-1 py-2 outline outline-1 outline-gray-100' onChange={handleGradingTypeChange} required>
-                        <option value="ALPHABET">Alphabet</option>
-                        <option value="NUMERIC">Numeric</option>
-                        <option value="PERCENTAGE">Percentage</option>
+                        {exercises.map((ex: any) => {
+                            (<option value={ex.id}>
+                                <span>{ex.title}</span>
+                                <span className='text-xs'>{ex.description}</span>
+                            </option>)
+                        })}
+                        {/* <option value="NUMERIC">Numeric</option>
+                        <option value="PERCENTAGE">Percentage</option> */}
                     </select>
                 </Form.Control>
             </FormField>

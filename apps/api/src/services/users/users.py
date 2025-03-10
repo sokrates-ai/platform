@@ -116,10 +116,11 @@ async def create_user(
     increase_feature_usage("members", org_id, db_session)
 
     # Send Account creation email
-    send_account_creation_email(
-        user=user,
-        email=user.email,
-    )
+    # send_account_creation_email(
+    #     user=user,
+    #     email=user.email,
+    # )
+    # TODO: is this required?
 
     return user
 

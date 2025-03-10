@@ -37,6 +37,17 @@ class Task(TaskBase, table=True):
 class TaskCreate(TaskBase):
     pass
 
+async def get_task(
+    request: Request,
+    db_session: Session,
+    id: int,
+) -> Optional[Task]:
+    statement = select(Task).where(Task.id == id)
+    task = db_session.exec(statement).first()
+    print(f"task={task}")
+    return task
+
+
 async def get_tasks(
     request: Request,
     db_session: Session,
@@ -48,59 +59,6 @@ async def get_tasks(
     print(f"tasks={tasks}")
     return tasks
 
-    # chapters = [ChapterRead(**chapter.model_dump(), activities=[], predecessors=[]) for chapter in chapters]
-
-    # RBAC check
-    # await rbac_check(request, course.course_uuid, current_user, "read", db_session)  # type: ignore
-
-    # Get activities and predecessor(s) for each chapter
-    # for chapter in chapters:
-    #     #
-    #     # Activities.
-    #     #
-    #     statement = (
-    #         select(ChapterActivity)
-    #         .where(ChapterActivity.chapter_id == chapter.id)
-    #         .order_by(ChapterActivity.order)
-    #         .distinct(ChapterActivity.id, ChapterActivity.order)
-    #     )
-    #     chapter_activities = db_session.exec(statement).all()
-
-    #     for chapter_activity in chapter_activities:
-    #         statement = (
-    #             select(Activity)
-    #             .where(Activity.id == chapter_activity.activity_id)
-    #             .distinct(Activity.id)
-    #         )
-    #         activity = db_session.exec(statement).first()
-
-    #         if activity:
-    #             chapter.activities.append(ActivityRead(**activity.model_dump()))
-
-    #     #
-    #     # Predecessors.
-    #     #
-
-    #     statement = (
-    #         select(CourseChapter_Graph)
-    #         .where(CourseChapter_Graph.course_id == course_id)
-    #         .where(CourseChapter_Graph.chapter_id == chapter.id)
-    #     )
-
-    #     incoming_edges = db_session.exec(statement).all()
-    #     print(f"INCOMING of {chapter.id} = {incoming_edges}")
-    #     chapter.predecessors = [ch.predecessor_id for ch in incoming_edges]
-
-    # return chapters
-
-# class WorkspaceData(BaseModel):
-#     extra: str
-#     chapter_id: str
-
-
-# class WorkspaceDataInDB(BaseModel):
-#     activity_id: str
-
 
 async def create_task(
     request: Request,
@@ -111,67 +69,11 @@ async def create_task(
     # RBAC check
     await rbac_check(request, "activity_x", current_user, "create", db_session)
 
-    # get chapter_id
-    # statement = select(Chapter).where(Chapter.id == data.chapter_id)
-    # chapter = db_session.exec(statement).first()
-
-    # if not chapter:
-    #     raise HTTPException(
-    #         status_code=404,
-    #         detail="Chapter not found",
-    #     )
-
-    # statement = select(CourseChapter).where(CourseChapter.chapter_id == data.chapter_id)
-    # coursechapter = db_session.exec(statement).first()
-
-    # if not coursechapter:
-    #     raise HTTPException(
-    #         status_code=404,
-    #         detail="CourseChapter not found",
-    #     )
-
-    # generate activity_uuid
-    # activity_uuid = str(f"activity_{uuid4()}")
-
-    # task = TaskCreate(
-        # data
-        # name=data.name,
-        # activity_type=ActivityTypeEnum.TYPE_WORKSPACE,
-        # activity_sub_type=ActivitySubTypeEnum.SUBTYPE_WORKSPACE_ANY,
-        # activity_uuid=activity_uuid,
-        # course_id=coursechapter.course_id,
-        # org_id=coursechapter.org_id,
-        # published_version=1,
-        # content={
-        #     "extra": data.uri,
-        #     "type": data.type,
-        #     "activity_uuid": activity_uuid,
-        # },
-        # version=1,
-        # creation_date=str(datetime.now()),
-        # update_date=str(datetime.now()),
-    # )
-
     # create activity
     task = Task.model_validate(data)
     db_session.add(task)
     db_session.commit()
     db_session.refresh(task)
-
-    # update chapter
-    # chapter_activity_object = ChapterActivity(
-    #     chapter_id=coursechapter.chapter_id,  # type: ignore
-    #     activity_id=activity.id,  # type: ignore
-    #     course_id=coursechapter.course_id,
-    #     org_id=coursechapter.org_id,
-    #     creation_date=str(datetime.now()),
-    #     update_date=str(datetime.now()),
-    #     order=1,
-    # )
-
-    # Insert ChapterActivity link in DB
-    # db_session.add(chapter_activity_object)
-    # db_session.commit()
 
     return task
 

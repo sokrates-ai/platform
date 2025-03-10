@@ -18,6 +18,7 @@ function NewActivityModal({
   submitExternalVideo,
   chapterId,
   course,
+  access_token,
 }: any) {
   const [selectedView, setSelectedView] = useState('home')
 
@@ -131,6 +132,7 @@ function NewActivityModal({
           chapterId={chapterId}
           course={course}
           closeModal={closeModal}
+          access_token={access_token}
         />)
       }
     </>

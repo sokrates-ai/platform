@@ -5,6 +5,7 @@ import { getOrganizationContextInfo } from '@services/organizations/orgs'
 import { Metadata } from 'next'
 import { getServerSession } from 'next-auth'
 import { nextAuthOptions } from 'app/auth/options'
+import { LEARNHOUSE_BASE_URL } from '@services/config/config'
 
 type MetadataProps = {
   params: { orgslug: string; courseuuid: string; activityid: string }
@@ -64,6 +65,19 @@ const ActivityPage = async (params: any) => {
   const courseuuid = params.params.courseuuid
   const orgslug = params.params.orgslug
 
+  let backlink = "/"
+  if (typeof window === 'undefined') {
+      backlink = `${LEARNHOUSE_BASE_URL()}/course/${courseuuid}`
+  } else {
+    const searchParams = new URLSearchParams(window.location.search)
+    let backlinkT = searchParams.get('backlink')
+    if (!backlinkT) {
+      backlinkT = window.location.origin
+    }
+
+    backlink = backlinkT
+ }
+
   const course_meta = await getCourseMetadata(
     courseuuid,
     { revalidate: 0, tags: ['courses'] },
@@ -82,6 +96,7 @@ const ActivityPage = async (params: any) => {
         orgslug={orgslug}
         activity={activity}
         course={course_meta}
+        backlink={backlink}
       />
     </>
   )

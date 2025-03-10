@@ -27,6 +27,7 @@ import { mutate } from 'swr'
 import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationModal/ConfirmationModal'
 import { useMediaQuery } from 'usehooks-ts'
 import PaidCourseActivityDisclaimer from '@components/Objects/Courses/CourseActions/PaidCourseActivityDisclaimer'
+import WorkspaceActivity from '@components/Objects/Activities/Workspace/WorkspaceActivity'
 
 interface ActivityClientProps {
   activityid: string
@@ -34,6 +35,7 @@ interface ActivityClientProps {
   orgslug: string
   activity: any
   course: any
+  backlink: string
 }
 
 function ActivityClient(props: ActivityClientProps) {
@@ -191,6 +193,14 @@ function ActivityClient(props: ActivityClientProps) {
                           <DocumentPdfActivity
                             course={course}
                             activity={activity}
+                          />
+                        )}
+                        {activity.activity_type == 'TYPE_WORKSPACE' && (
+                          <WorkspaceActivity
+                            course={course}
+                            activity={activity}
+                            access_token={access_token}
+                            backlink={props.backlink}
                           />
                         )}
                         {activity.activity_type == 'TYPE_ASSIGNMENT' && (

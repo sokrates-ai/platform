@@ -19,6 +19,8 @@ type ExerciseProps = {
   org_id: string
 }
 
+export const TASKS_URL = `${getAPIUrl()}tasks/list/page/1/limit/50`;
+
 function ExerciseHome(params: ExerciseProps) {
   const searchParams = useSearchParams()
   const isCreatingExercise = searchParams.get('new') ? true : false
@@ -38,7 +40,6 @@ function ExerciseHome(params: ExerciseProps) {
   // const [exercises, setExercises] = React.useState<any[]>([])
 
   // TODO: set limit?
-  const TASKS_URL = `${getAPIUrl()}tasks/list/page/1/limit/50`;
   const { data: exercises } = useSWR(TASKS_URL, (url: string) => swrFetcher(url, access_token))
 
   // useEffect(() => {

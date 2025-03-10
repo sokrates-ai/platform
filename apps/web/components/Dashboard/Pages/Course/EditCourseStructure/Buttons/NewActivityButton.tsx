@@ -109,6 +109,7 @@ function NewActivityButton(props: NewActivityButtonProps) {
             submitActivity={submitActivity}
             chapterId={props.chapterId}
             course={course}
+            access_token={access_token}
           ></NewActivityModal>
         }
         dialogTitle="Create Activity"
