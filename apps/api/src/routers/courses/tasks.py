@@ -1,6 +1,7 @@
 import json
 import time
 import requests
+import httpx
 from typing import List, Optional
 from config.config import WorkspaceConfig
 from src.security.rbac.rbac import authorization_verify_based_on_roles_and_authorship
@@ -53,29 +54,29 @@ class SessionResponse(BaseModel):
     token: str
     workspace_url: str
 
-def workspace_system_obtain_token(user: PublicUser, task_id: int, config: WorkspaceConfig) -> str:
-    print(f"CREATING WS SESSION FOR USER={user} and TASK={task_id}...")
-
+async def workspace_system_obtain_token(user: PublicUser, task_id: int, config: WorkspaceConfig) -> str:
     url=f"http://{config.workspace_api_host}:{config.workspace_api_port}/api/createSession"
     body={
         "workspace_id": task_id,
         "username": user.user_uuid,
     }
-    res=requests.post(url, json=body)
+    print(f"CREATING WS SESSION FOR USER={user} and TASK={task_id}...", url, body)
+    async with httpx.AsyncClient() as client:
+        res=await client.post(url, json=body)
+        print(res)
 
-    print(res)
+        if res.status_code != 200:
+            raise Exception(res.text)
 
-    if res.status_code != 200:
-        raise(res.txt())
 
-    parsed=res.json()
+        parsed=res.json()
 
-    if "token" not in parsed:
-        raise("Illegal response: " + res.text())
+        if "token" not in parsed:
+            raise("Illegal response: " + res.text)
 
-    token=parsed["token"]
+        token=parsed["token"]
 
-    return token
+        return token
 
 @router.post("/session")
 async def api_create_session(
@@ -122,16 +123,14 @@ async def api_create_session(
     print(f"LEARNHOUSE={request.app.learnhouse_config.workspace_config}")
 
     workspace_config: WorkspaceConfig =request.app.learnhouse_config.workspace_config
-    token=workspace_system_obtain_token(user=current_user, task_id=task_id, config=workspace_config)
+    token=await workspace_system_obtain_token(user=current_user, task_id=task_id, config=workspace_config)
+
+    print(f"token={token}")
 
     return SessionResponse(
         token=token,
         workspace_url=workspace_config.workspace_external_base_url,
     )
-
-    # return await create_task(
-    #     request, current_user, task_obj, db_session
-    # )
 
 @router.post("/")
 async def api_create_task(
