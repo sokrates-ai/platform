@@ -13,7 +13,7 @@ import { Button } from '@components/ui/button'
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink } from "@/components/ui/navigation-menu"
 import { Tooltip, TooltipContent,TooltipProvider,TooltipTrigger } from '@components/ui/tooltip'
 
-import { Backpack, BookCopy, Home,School,  Users } from 'lucide-react'
+import { Backpack, BookCopy, BookMarked, Home,School,  Users } from 'lucide-react'
 
 import logo_black from '@public/black_logo.svg'
 import Image from 'next/image'
@@ -91,14 +91,14 @@ export const DashLeftMenu = (props: any) => {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
-                        <Link href={'/dash/assignments'} >
+                        <Link href={'/dash/exercises'} >
                             <Button variant="ghost" size="icon">
-                            <Backpack size={18} />
+                            <BookMarked size={18} />
                             </Button>
                           </Link>
                     </TooltipTrigger>
                     <TooltipContent
-                    >Assignments</TooltipContent>
+                    >Exercises</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
 

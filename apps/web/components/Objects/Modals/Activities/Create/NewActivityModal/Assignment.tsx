@@ -17,7 +17,7 @@ import { createAssignment } from '@services/courses/assignments'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { createActivity, deleteActivity } from '@services/courses/activities'
 import toast from 'react-hot-toast'
-import { TASKS_URL  } from '@/app/orgs/[orgslug]/dash/excercises/client'
+import { TASKS_URL  } from '@/app/orgs/[orgslug]/dash/exercises/client'
 import { swrFetcher } from '@services/utils/ts/requests'
 
 function NewAssignment({ submitActivity, chapterId, course, closeModal, access_token }: any) {
