@@ -45,6 +45,21 @@ const MapEditorCanvas = (courseStructure: any) => {
         }
     }
 
+    useEffect(() => {
+        const canvasParent = document.getElementById('canvas-parent');
+        if (!canvasParent) return;
+
+        const handleWheelPassive = (e: WheelEvent) => {
+            e.preventDefault();
+        };
+
+        canvasParent.addEventListener('wheel', handleWheelPassive, { passive: false });
+
+        return () => {
+            canvasParent.removeEventListener('wheel', handleWheelPassive);
+        };
+    }, []);
+
     const SCALE = 1
 
     const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -386,10 +401,10 @@ const MapEditorCanvas = (courseStructure: any) => {
     };
 
     return (
-        <div className="flex w-full h-full overflow-hidden" style={{ height: 'calc(100vh - 19rem)' }}>
+        <div className="flex w-full h-full overflow-hidden" style={{ height: 'calc(100vh - 19rem)'}}>
             <div
                 id="canvas-parent"
-                style={{ width: '85%', height: '100%' }}
+                style={{ width: '85%', height: '100%', overscrollBehaviorX: 'none'}}
                 onWheel={handleWheel}
             >
                 <Stage
