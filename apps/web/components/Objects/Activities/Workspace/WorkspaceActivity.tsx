@@ -36,6 +36,8 @@ function WorkspaceActivity({
 
   const [url, setURL] = React.useState<string | null>(null)
 
+  console.dir(activity)
+
   useEffect(() => {
     // Fetch redirect URL here.
     createSession(activity.activity_uuid, access_token).then(res => {
@@ -51,13 +53,21 @@ function WorkspaceActivity({
         </h1>
 
         <h5>
-          {url ? (<a className='text-white' href={url}>{url}</a>) : 'please wait'}
+          {url ? (<a className='text-teal-600 underline decoration-solid' href={url}>{url}</a>) : 'please wait'}
         </h5>
 
-        <MoonLoader
+        {/* <MoonLoader
           size={60}
           color="#ffffff"
-        />
+        /> */}
+
+        <BarLoader
+          width={600}
+          height={10}
+          color="#ffffff"
+          cssOverride={{'borderRadius': '3rem'}}
+        >
+        </BarLoader>
       </div>
         )
   }

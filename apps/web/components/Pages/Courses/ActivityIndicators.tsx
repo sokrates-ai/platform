@@ -59,7 +59,7 @@ function ActivityIndicators(props: Props) {
               {chapter.activities.map((activity: any) => {
                 return (
                   <ToolTip
-                    sideOffset={8}
+                    sideOffset={20}
                     slateBlack
                     content={activity.name}
                     key={activity.activity_uuid}
@@ -74,10 +74,12 @@ function ActivityIndicators(props: Props) {
                       }
                     >
                       <div
-                        className={`h-[7px] w-auto ${getActivityClass(
+                        className={`h-[70px] w-auto flex justify-center items-center ${getActivityClass(
                           activity
                         )} rounded-lg shadow-md`}
-                      ></div>
+                      >
+                        <span className='text-white text-xl'>{activity.name}</span>
+                      </div>
                     </Link>
                   </ToolTip>
                 )

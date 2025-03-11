@@ -54,16 +54,18 @@ class SessionResponse(BaseModel):
     token: str
     workspace_url: str
 
-async def workspace_system_obtain_token(user: PublicUser, task_id: int, config: WorkspaceConfig) -> str:
+async def workspace_system_obtain_token(user: PublicUser, task_id: int, activity_uuid: str, config: WorkspaceConfig) -> str:
     url=f"http://{config.workspace_api_host}:{config.workspace_api_port}/api/createSession"
     body={
-        "workspace_id": task_id,
-        "username": user.user_uuid,
+        "activity_uuid": activity_uuid,
+        "exercise_id": task_id,
+        "user_uuid": user.user_uuid,
     }
-    print(f"CREATING WS SESSION FOR USER={user} and TASK={task_id}...", url, body)
+    # print(f"CREATING WS SESSION FOR USER={user} and TASK={task_id}...", url, body)
+    print(f"user={user.user_uuid}")
     async with httpx.AsyncClient() as client:
         res=await client.post(url, json=body)
-        print(res)
+        # print(res)
 
         if res.status_code != 200:
             raise Exception(res.text)
@@ -123,7 +125,7 @@ async def api_create_session(
     print(f"LEARNHOUSE={request.app.learnhouse_config.workspace_config}")
 
     workspace_config: WorkspaceConfig =request.app.learnhouse_config.workspace_config
-    token=await workspace_system_obtain_token(user=current_user, task_id=task_id, config=workspace_config)
+    token=await workspace_system_obtain_token(user=current_user, task_id=task_id, activity_uuid=activity.activity_uuid, config=workspace_config)
 
     print(f"token={token}")
 

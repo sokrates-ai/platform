@@ -1,7 +1,9 @@
+from src.services.users.users import security_get_user_by_uuid
 from fastapi import APIRouter, Depends, Request
 from src.core.events.database import get_db_session
 from src.db.trails import TrailCreate, TrailRead
 from src.security.auth import get_current_user
+from pydantic import BaseModel
 from src.services.trail.trail import (
     Trail,
     add_activity_to_trail,
@@ -94,4 +96,27 @@ async def api_add_activity_to_trail(
     """
     return await add_activity_to_trail(
         request, user, activity_uuid, db_session
+    )
+
+class WSMarkComplete(BaseModel):
+    activity_uuid: str
+    user_uuid: str
+
+@router.post("/ws_mark_complete")
+async def api_ws_mark_complete(
+    request: Request,
+    body: WSMarkComplete,
+    # user=Depends(get_current_user),
+    db_session=Depends(get_db_session),
+) -> TrailRead:
+    """
+    Add Course to trail from WS
+    """
+
+    user = await security_get_user_by_uuid(request, db_session, uuid=body.user_uuid)
+    if user is None:
+        raise Exception("illegal user")
+
+    return await add_activity_to_trail(
+        request, user, body.activity_uuid, db_session
     )

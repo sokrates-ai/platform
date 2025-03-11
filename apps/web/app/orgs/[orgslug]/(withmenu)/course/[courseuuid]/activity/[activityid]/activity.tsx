@@ -241,6 +241,8 @@ export function MarkStatus(props: {
   const router = useRouter()
   const session = useLHSession() as any;
   const isMobile = useMediaQuery('(max-width: 768px)')
+
+  // TODO: hit this route from the workspace!
   async function markActivityAsCompleteFront() {
     const trail = await markActivityAsComplete(
       props.orgslug,

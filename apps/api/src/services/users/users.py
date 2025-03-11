@@ -534,6 +534,20 @@ async def delete_user_by_id(
 
 # Utils & Security functions
 
+async def security_get_user_by_uuid(request: Request, db_session: Session, uuid: str) -> User:
+    # Check if user exists
+    statement = select(User).where(User.user_uuid == uuid)
+    user = db_session.exec(statement).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User with UUID does not exist",
+        )
+
+    user = User(**user.model_dump())
+
+    return user
 
 async def security_get_user(request: Request, db_session: Session, email: str) -> User:
     # Check if user exists
