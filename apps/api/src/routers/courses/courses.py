@@ -157,6 +157,7 @@ async def api_update_course(
     """
     Update Course by course_uuid
     """
+    print(f"aa={course_object}")
     return await update_course(
         request, course_object, course_uuid, current_user, db_session
     )

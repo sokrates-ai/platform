@@ -194,7 +194,16 @@ async def get_courses_orgslug(
         )
 
     # Apply pagination
-    query = query.offset(offset).limit(limit).distinct()
+    # The distinct columns are a hack that prevents that the = operator is used on a JSON column.
+    query = query.offset(offset).limit(limit).distinct(
+        Course.name,
+        Course.description,
+        Course.about,
+        Course.learnings,
+        Course.tags,
+        Course.thumbnail_image,
+        Course.public,
+    )
 
     courses = db_session.exec(query).all()
 
@@ -241,6 +250,9 @@ async def create_course(
     course.course_uuid = str(f"course_{uuid4()}")
     course.creation_date = str(datetime.now())
     course.update_date = str(datetime.now())
+    course.map_state = {
+        "objects": [],
+    }
 
     # Upload thumbnail
     if thumbnail_file and thumbnail_file.filename:
@@ -362,6 +374,8 @@ async def update_course(
     current_user: PublicUser | AnonymousUser,
     db_session: Session,
 ):
+    print(f"upd: {course_object}")
+
     statement = select(Course).where(Course.course_uuid == course_uuid)
     course = db_session.exec(statement).first()
 
@@ -377,6 +391,7 @@ async def update_course(
     # Update only the fields that were passed in
     for var, value in vars(course_object).items():
         if value is not None:
+            print(f"update: {var} : {value}")
             setattr(course, var, value)
 
     # Complete the course object

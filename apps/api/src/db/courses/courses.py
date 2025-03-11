@@ -1,10 +1,10 @@
 from typing import List, Optional
-from sqlalchemy import Column, ForeignKey, Integer
+from sqlalchemy import Column, ForeignKey, Integer, JSON
 from sqlmodel import Field, SQLModel
 from src.db.users import UserRead
 from src.db.trails import TrailRead
 from src.db.courses.chapters import ChapterRead
-
+# from sqlalchemy import JSON, Column, ForeignKey, Integer
 
 class CourseBase(SQLModel):
     name: str
@@ -13,6 +13,8 @@ class CourseBase(SQLModel):
     learnings: Optional[str]
     tags: Optional[str]
     thumbnail_image: Optional[str]
+    # map_state: Optional[str]
+    map_state: dict = Field(default={}, sa_column=Column(JSON))
     public: bool
 
 
@@ -37,6 +39,7 @@ class CourseUpdate(CourseBase):
     about: Optional[str]
     learnings: Optional[str]
     tags: Optional[str]
+    map_state: dict
     public: Optional[bool]
 
 

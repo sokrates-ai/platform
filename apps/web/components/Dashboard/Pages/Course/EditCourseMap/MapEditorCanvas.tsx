@@ -6,6 +6,8 @@ import { ChapterAsset } from './ChapterAsset';
 import { DraggableState, DraggableStateData } from './types';
 import { SPRITES } from './spriteIndex';
 import { Position } from './useDrag';
+import { propagateServerField } from 'next/dist/server/lib/render-server';
+import { useCourseDispatch } from '@components/Contexts/CourseContext';
 
 const LS_MAP_STATE_KEY = 'map_state';
 const SCALE = 1;
@@ -18,13 +20,16 @@ const clamp = (value: number, min: number, max: number) =>
 
 export interface MapEditorCanvasProps {
 	courseStructure: any;
+	onMapUpdateCallback: Function | undefined,
 	readOnly?: boolean;
 }
 
 export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	courseStructure,
+	onMapUpdateCallback,
 	readOnly = false,
 }) => {
+
 	// Offset for panning and canvas size state
 	const [offset, setOffset] = useState({ x: 0, y: 0 });
 	const [size, setSize] = useState({
@@ -89,12 +94,22 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 		);
 	}, [readOnly]);
 
-	// Persist editor state to localStorage
+	// Persist editor state to backend storage.
 	const serializeEditorState = useCallback((data: DraggableState[]) => {
-		const serialized = JSON.stringify(data.map((d) => d.data));
-		console.log("serialized: ", serialized)
-		localStorage.setItem(LS_MAP_STATE_KEY, serialized);
-	}, []);
+		const mapData = data.map((d) => d.data)
+		// const serialized = JSON.stringify(mapData);
+		// console.log("serialized: ", mapData)
+		// localStorage.setItem(LS_MAP_STATE_KEY, serialized);
+		// TODO: use real save API.
+		// aooo
+
+		if (onMapUpdateCallback) {
+			console.log('caller side: ', mapData)
+			onMapUpdateCallback(mapData)
+		} else {
+			console.warn('map update is not ready: ', onMapUpdateCallback)
+		}
+	}, [])
 
 	const setAdditionalElements = (data: DraggableState[]) => {
 		serializeEditorState(data);
@@ -196,16 +211,25 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 
 		const merged = [...nonChapterNodes, ...updatedChapterNodes, ...newChapterNodes];
 		additionalElementsRef.current = merged;
-		setAdditionalElements(merged);
+		setAdditionalElementsState(merged);
 	}, [courseStructure, size, renderDraggableNode]);
 
-	// Load saved state (from localStorage) once on mount.
+	// Load saved state (from DB) once on mount.
 	useEffect(() => {
-		const item = localStorage.getItem(LS_MAP_STATE_KEY);
-		if (!item) return;
+		// const item = localStorage.getItem(LS_MAP_STATE_KEY);
+		// if (!item) return;
+		console.log(courseStructure)
+
+		if (!courseStructure.map_state) {
+			console.warn("waiting for more course data...")
+			return
+		}
+
+		const objects = courseStructure.map_state.objects
+		console.log('loaded objects from DB: ', objects)
 		try {
-			const deserialized: DraggableStateData[] = JSON.parse(item);
-			const reconstructed = deserialized.map((data) => ({
+			// const deserialized: DraggableStateData[] = JSON.parse(item);
+			const reconstructed = objects.map((data: any) => ({
 				data,
 				node: renderDraggableNode(data),
 			}));

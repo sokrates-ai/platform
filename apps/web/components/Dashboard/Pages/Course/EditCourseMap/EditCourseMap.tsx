@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import useSWR from 'swr';
 import { useCourse, useCourseDispatch } from '@components/Contexts/CourseContext';
 import { getAPIUrl } from '@services/config/config';
@@ -6,6 +6,8 @@ import { swrFetcher } from '@services/utils/ts/requests';
 import { useLHSession } from '@components/Contexts/LHSessionContext';
 import { CourseMapEditorToolbar } from './CourseMapEditorToolbar';
 import { MapEditorCanvas } from './MapEditorCanvas';
+import { Divide } from 'lucide-react';
+import { BarLoader } from 'react-spinners';
 
 export interface EditCourseMapProps {
     orgslug: string;
@@ -24,12 +26,25 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
         (url: string) => swrFetcher(url, access_token)
     );
     const [isClientPublic, setIsClientPublic] = useState<boolean | undefined>(undefined);
+    const onMapUpdateCallbackRef = useRef<Function | undefined>(undefined)
 
     useEffect(() => {
         if (!isLoading && courseStructure?.public !== undefined) {
             setIsClientPublic(courseStructure.public);
+
+            onMapUpdateCallbackRef.current = (mapData: any[]) => {
+                console.log('map update callback', mapData)
+                dispatchCourse({ type: 'setIsNotSaved' });
+                const updatedCourse = { ...courseStructure, map_state: { objects: mapData } };
+                dispatchCourse({ type: 'setCourseStructure', payload: updatedCourse });
+            }
         }
     }, [isLoading, courseStructure]);
+
+    // useEffect(() => {
+    //     if (!isLoading) {
+    //     }
+    // }, [isLoading])
 
     useEffect(() => {
         if (!isLoading && courseStructure?.public !== undefined && isClientPublic !== undefined) {
@@ -41,14 +56,36 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
         }
     }, [isLoading, isClientPublic, courseStructure, dispatchCourse]);
 
-    return (
-        <div>
-            <div className="flex items-center p-5">
-                <CourseMapEditorToolbar undo={() => { }} redo={() => { }} reset={() => { }} />
+    if (!onMapUpdateCallbackRef.current) {
+        return (<div>
+            <BarLoader
+            width={600}
+            height={10}
+            color="#ffffff"
+            cssOverride={{'borderRadius': '3rem'}}
+            >
+            </BarLoader>
+        </div>)
+    } else {
+        // const onUpdate = (mapData: any[]) => {
+        //             console.log('map update callback', mapData)
+        //             dispatchCourse({ type: 'setIsNotSaved' });
+        //             const updatedCourse = { ...courseStructure, map_state: { objects: mapData } };
+        //             dispatchCourse({ type: 'setCourseStructure', payload: updatedCourse });
+        // }
+
+        // KOMPLETT FUCKED!
+        // console.dir(courseStructure.map_state)
+
+        return (
+            <div>
+                <div className="flex items-center p-5">
+                    <CourseMapEditorToolbar undo={() => { }} redo={() => { }} reset={() => { }} />
+                </div>
+                <MapEditorCanvas courseStructure={courseStructure} onMapUpdateCallback={onMapUpdateCallbackRef.current} readOnly={false} />
             </div>
-            <MapEditorCanvas courseStructure={courseStructure} readOnly={false} />
-        </div>
-    );
+        );
+    }
 };
 
 export default EditCourseMap;
