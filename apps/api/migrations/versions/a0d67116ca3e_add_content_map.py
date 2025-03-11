@@ -36,6 +36,10 @@ def upgrade() -> None:
 
     op.create_foreign_key('coursechapter_graph_fk_0', 'coursechapter_graph', 'chapter', ['predecessor_id'], ['id'])
 
+    # We add the coursemap JSON column to the course table.
+    op.add_column('course', sa.Column('map_state', sa.JSON, nullable=False))
+
 
 def downgrade() -> None:
     op.drop_table('coursechapter_graph')
+    op.drop_column('course', 'map_state')

@@ -1,18 +1,27 @@
 import { useCallback, useRef, useState } from 'react';
 import { Point } from 'pixi.js';
 
+export interface Position {
+  x: number;
+  y: number;
+}
+
 export const useDrag = (
-  initial: { x: number; y: number; id: number },
-  readOnly?: boolean
+  initial: Position,
+  id: number,
+  positionUpdateCallback: Function,
+  readOnly?: boolean,
 ) => {
   const spriteRef = useRef<any>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: initial.x, y: initial.y });
   const stageRef = useRef<any>(null);
   const isDraggingRef = useRef(false);
+  const positionRef = useRef(initial)
 
-  const setPositionWrapper = (newPos: { x: number; y: number }) => {
-    setPosition(newPos);
+  const setPositionWrapper = (newPos: Position) => {
+    positionRef.current = newPos
+    setPosition(newPos)
   };
 
   const setIsDraggingWrapper = (value: boolean) => {
@@ -36,6 +45,7 @@ export const useDrag = (
     setIsDraggingWrapper(false);
     window.removeEventListener('pointermove', onGlobalMove);
     window.removeEventListener('pointerup', onGlobalUp);
+    positionUpdateCallback(positionRef.current, id)
   }, [onGlobalMove]);
 
   const onDown = useCallback((e: any) => {

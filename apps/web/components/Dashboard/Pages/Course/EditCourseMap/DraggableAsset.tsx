@@ -8,6 +8,7 @@ interface DraggableAssetProps {
     y: number;
     id: number;
     src: string;
+    updatePositionCallBack: Function,
     readOnly?: boolean;
 }
 
@@ -16,9 +17,10 @@ export const DraggableAsset: React.FC<DraggableAssetProps> = ({
     y,
     id,
     src,
+    updatePositionCallBack,
     readOnly = false,
 }) => {
-    const bind = useDrag({ x, y, id }, readOnly);
+    const bind = useDrag({ x, y }, id, updatePositionCallBack, readOnly);
 
     const texture = React.useMemo(() => {
         const tex = Texture.from(src);

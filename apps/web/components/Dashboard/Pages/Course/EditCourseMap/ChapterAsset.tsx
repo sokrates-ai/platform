@@ -9,6 +9,7 @@ interface ChapterAssetProps {
     id: number;
     overlaySource: string;
     stoneSource: string;
+    updatePositionCallback: Function,
     chapterID: number;
     readOnly?: boolean;
 }
@@ -19,10 +20,11 @@ export const ChapterAsset: React.FC<ChapterAssetProps> = ({
     id,
     overlaySource,
     stoneSource,
+    updatePositionCallback,
     chapterID,
     readOnly = false,
 }) => {
-    const bind = useDrag({ x, y, id }, readOnly);
+    const bind = useDrag({ x, y }, id, updatePositionCallback, readOnly);
 
     const overlayTexture = React.useMemo(() => {
         const tex = Texture.from(overlaySource);

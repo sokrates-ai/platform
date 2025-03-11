@@ -5,6 +5,7 @@ import { DraggableAsset } from './DraggableAsset';
 import { ChapterAsset } from './ChapterAsset';
 import { DraggableState, DraggableStateData } from './types';
 import { SPRITES } from './spriteIndex';
+import { Position } from './useDrag';
 
 const LS_MAP_STATE_KEY = 'map_state';
 const SCALE = 1;
@@ -41,6 +42,25 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	// Helper: build sprite URL
 	const spriteURL = (file: string): string => `/contentMap/${file}`;
 
+	const updatePositionCallBack = (pos: Position, id: number) => {
+		// Find element based on ID in the additional elements and patch its location.
+		const index = additionalElementsRef.current.findIndex((element) => element.data.id === id)
+		if (index < 0) {
+			throw('Bug: this cannot happen')
+		}
+
+		console.log(index, pos)
+
+		// Update position.
+		const copy = additionalElementsRef.current
+		copy[index].data.x = pos.x
+		copy[index].data.y = pos.y
+		additionalElementsRef.current = copy
+
+		// Update additional elements.
+		setAdditionalElements(additionalElementsRef.current)
+	}
+
 	// Memoize the node renderer so that it doesn’t change on every render.
 	const renderDraggableNode = useCallback((data: DraggableStateData): React.ReactNode => {
 		if (data.associatedWithChapterID) {
@@ -50,6 +70,7 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 					y={data.y}
 					overlaySource={data.textureSources[0]}
 					stoneSource={data.textureSources[1]}
+					updatePositionCallback={updatePositionCallBack}
 					chapterID={data.associatedWithChapterID}
 					id={data.id}
 					readOnly={readOnly}
@@ -62,6 +83,7 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 				y={data.y}
 				id={data.id}
 				src={data.textureSources[0]}
+				updatePositionCallBack={updatePositionCallBack}
 				readOnly={readOnly}
 			/>
 		);
@@ -70,6 +92,7 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	// Persist editor state to localStorage
 	const serializeEditorState = useCallback((data: DraggableState[]) => {
 		const serialized = JSON.stringify(data.map((d) => d.data));
+		console.log("serialized: ", serialized)
 		localStorage.setItem(LS_MAP_STATE_KEY, serialized);
 	}, []);
 
