@@ -9,9 +9,11 @@ interface ChapterAssetProps {
     id: number;
     overlaySource: string;
     stoneSource: string;
-    updatePositionCallback: Function,
+    updatePositionCallback: Function;
     chapterID: number;
     readOnly?: boolean;
+    onChapterClick: (id: number) => void;
+    onContextMenu?: (chapterID: number, pos: { clientX: number; clientY: number }) => void;
 }
 
 export const ChapterAsset: React.FC<ChapterAssetProps> = ({
@@ -23,6 +25,8 @@ export const ChapterAsset: React.FC<ChapterAssetProps> = ({
     updatePositionCallback,
     chapterID,
     readOnly = false,
+    onChapterClick,
+    onContextMenu
 }) => {
     const bind = useDrag({ x, y }, id, updatePositionCallback, readOnly);
 
@@ -38,8 +42,35 @@ export const ChapterAsset: React.FC<ChapterAssetProps> = ({
         return tex;
     }, [stoneSource]);
 
+    const handleContextMenu = (e: any) => {
+        e.preventDefault();
+        if (!readOnly && onContextMenu && e.data?.originalEvent) {
+            const { clientX, clientY } = e.data.originalEvent;
+            onContextMenu(chapterID, { clientX, clientY });
+        }
+    };
+
+    const handlePointerUp = (e: any) => {
+        if (e.button === 0 && readOnly) {
+            onChapterClick(chapterID);
+        }
+    };
+
+    const handlePointerDown = (e: any) => {
+        if (!readOnly && e.data?.originalEvent?.button === 2) {
+            e.data.originalEvent.preventDefault();
+            if (onContextMenu) {
+                const { clientX, clientY } = e.data.originalEvent;
+                onContextMenu(id, { clientX, clientY });
+            }
+        } else if (readOnly && e.data?.originalEvent?.button === 0) {
+            onChapterClick(id);
+        }
+    };
+
+
     return (
-        <Container>
+        <Container interactive={true} onpointerdown={handlePointerDown}>
             <Sprite texture={stoneTexture} scale={1} {...bind} />
             <Sprite texture={overlayTexture} scale={1} {...bind} />
             <PText

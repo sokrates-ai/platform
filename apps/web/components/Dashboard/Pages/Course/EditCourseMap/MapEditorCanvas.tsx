@@ -8,6 +8,12 @@ import { SPRITES } from './spriteIndex';
 import { Position } from './useDrag';
 import { propagateServerField } from 'next/dist/server/lib/render-server';
 import { useCourseDispatch } from '@components/Contexts/CourseContext';
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { ChevronDown, ChevronUp } from "lucide-react"
+
 
 const LS_MAP_STATE_KEY = 'map_state';
 const SCALE = 1;
@@ -20,17 +26,18 @@ const clamp = (value: number, min: number, max: number) =>
 
 export interface MapEditorCanvasProps {
 	courseStructure: any;
-	onMapUpdateCallback: Function | undefined,
-	readOnly?: boolean;
+	onMapUpdateCallback?: Function,
+	onChapterClick: (chapterID: number) => void,
+	readOnly?: boolean,
 }
 
 export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	courseStructure,
 	onMapUpdateCallback,
+	onChapterClick,
 	readOnly = false,
 }) => {
 
-	// Offset for panning and canvas size state
 	const [offset, setOffset] = useState({ x: 0, y: 0 });
 	const [size, setSize] = useState({
 		width: window.innerWidth,
@@ -51,10 +58,8 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 		// Find element based on ID in the additional elements and patch its location.
 		const index = additionalElementsRef.current.findIndex((element) => element.data.id === id)
 		if (index < 0) {
-			throw('Bug: this cannot happen')
+			throw ('Bug: this cannot happen')
 		}
-
-		console.log(index, pos)
 
 		// Update position.
 		const copy = additionalElementsRef.current
@@ -65,6 +70,30 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 		// Update additional elements.
 		setAdditionalElements(additionalElementsRef.current)
 	}
+
+	const [contextMenu, setContextMenu] = useState<{ chapterID: number; x: string; y: string } | null>(null);
+	const [popoverOpen, setPopoverOpen] = useState(false);
+
+	// Callback to receive the right-click info from ChapterAsset.
+	const handleAssetContextMenu = (chapterID: number, pos: { clientX: number, clientY: number }) => {
+		const canvasElement = document.getElementById('canvas-parent');
+		const canvasBounds = canvasElement?.getBoundingClientRect();
+		const anchorX = pos.clientX - (canvasBounds?.left ?? 0);
+		const anchorY = pos.clientY - (canvasBounds?.top ?? 0);
+
+		setContextMenu({ chapterID, x: `${anchorX}px`, y: `${anchorY}px` });
+		setPopoverOpen(true);
+	};
+
+	useEffect(() => {
+		const handleClickOutside = () => {
+			if (contextMenu) {
+				setContextMenu(null);
+			}
+		};
+		window.addEventListener('click', handleClickOutside);
+		return () => window.removeEventListener('click', handleClickOutside);
+	}, [contextMenu]);
 
 	// Memoize the node renderer so that it doesn’t change on every render.
 	const renderDraggableNode = useCallback((data: DraggableStateData): React.ReactNode => {
@@ -79,6 +108,8 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 					chapterID={data.associatedWithChapterID}
 					id={data.id}
 					readOnly={readOnly}
+					onChapterClick={onChapterClick}
+					onContextMenu={handleAssetContextMenu}
 				/>
 			);
 		}
@@ -90,21 +121,15 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 				src={data.textureSources[0]}
 				updatePositionCallBack={updatePositionCallBack}
 				readOnly={readOnly}
+				onContextMenu={handleAssetContextMenu}
 			/>
 		);
-	}, [readOnly]);
+	}, [readOnly, onChapterClick]);
 
 	// Persist editor state to backend storage.
 	const serializeEditorState = useCallback((data: DraggableState[]) => {
 		const mapData = data.map((d) => d.data)
-		// const serialized = JSON.stringify(mapData);
-		// console.log("serialized: ", mapData)
-		// localStorage.setItem(LS_MAP_STATE_KEY, serialized);
-		// TODO: use real save API.
-		// aooo
-
 		if (onMapUpdateCallback) {
-			console.log('caller side: ', mapData)
 			onMapUpdateCallback(mapData)
 		} else {
 			console.warn('map update is not ready: ', onMapUpdateCallback)
@@ -216,10 +241,6 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 
 	// Load saved state (from DB) once on mount.
 	useEffect(() => {
-		// const item = localStorage.getItem(LS_MAP_STATE_KEY);
-		// if (!item) return;
-		console.log(courseStructure)
-
 		if (!courseStructure.map_state) {
 			console.warn("waiting for more course data...")
 			return
@@ -281,6 +302,7 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 				id="canvas-parent"
 				style={{ width: '85%', height: '100%', overscrollBehaviorX: 'none' }}
 				onWheel={handleWheel}
+				onContextMenu={(e) => e.preventDefault()}
 			>
 				<Stage
 					width={size.width}
@@ -318,6 +340,58 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 								</span>
 							</div>
 						))}
+					</div>
+				</div>
+			)}
+
+			{/* {popoverOpen && contextMenu && (
+				<Popover open={popoverOpen} onOpenChange={(open) => { if (!open) { setPopoverOpen(false); setContextMenu(null); } }}>
+					<PopoverAnchor>
+						<div style={{ position: 'absolute', top: contextMenu.y, left: contextMenu.x, width: 0, height: 0 }} />
+					</PopoverAnchor>
+					<PopoverContent className="w-48 p-2">
+						This is the popover.
+					</PopoverContent>
+				</Popover>
+			)} */}
+
+			{contextMenu && (
+				<div
+					onContextMenu={(e: React.MouseEvent) => {
+						e.preventDefault()
+					}}
+					className="absolute z-50 w-56 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+					style={{
+						top: contextMenu.y,
+						left: contextMenu.x,
+					}}
+				>
+					<div className="p-2">
+						<div className="grid gap-2">
+							<div className="flex items-center justify-between">
+								<Label htmlFor="layer" className="text-xs font-medium">
+									Layer
+								</Label>
+								<div className="flex h-7 items-center">
+									<Button variant="outline" size="icon" className="h-7 w-7 rounded-r-none px-1" onClick={(e: any) => {
+										e.stopPropagation()
+									}}>
+										<ChevronDown className="h-3 w-3" />
+										<span className="sr-only">Decrease layer</span>
+									</Button>
+									<Input id="layer" value="1" className="h-7 w-8 rounded-none text-center text-xs" readOnly />
+									<Button variant="outline" size="icon" className="h-7 w-7 rounded-l-none px-1" onClick={(e: any) => {
+										e.stopPropagation()
+									}}>
+										<ChevronUp className="h-3 w-3" />
+										<span className="sr-only">Increase layer</span>
+									</Button>
+								</div>
+							</div>
+							<Button variant="destructive" size="sm" className="mt-1 w-full text-xs">
+								Remove
+							</Button>
+						</div>
 					</div>
 				</div>
 			)}

@@ -8,7 +8,7 @@ import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet"
 import { Button } from '@components/ui/button'
-import { NavigationMenu, NavigationMenuList, NavigationMenuItem} from "@/components/ui/navigation-menu"
+import { NavigationMenu, NavigationMenuList, NavigationMenuItem } from "@/components/ui/navigation-menu"
 import logo_black from '@public/black_logo.svg'
 import Image from 'next/image'
 import MenuLinks from './OrgMenuLinks'
@@ -44,20 +44,20 @@ export const OrgMenu = (props: any) => {
             </div>
 
             <NavigationMenu className="hidden md:flex">
-                <NavigationMenuList>
-                  <NavigationMenuItem>
-                    <MenuLinks orgslug={orgslug} />
-                  </NavigationMenuItem>
-                </NavigationMenuList>
-              </NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <MenuLinks orgslug={orgslug} />
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
 
           </div>
           <div className="flex items-center space-x-4">
             <div className="hidden md:flex">
               <HeaderProfileBox />
             </div>
-                  
-            
+
+
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden">

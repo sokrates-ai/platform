@@ -12,6 +12,7 @@ import { BarLoader } from 'react-spinners';
 export interface EditCourseMapProps {
     orgslug: string;
     course_uuid?: string;
+    onChapterClick?: (chapterID: number) => void;
 }
 
 const EditCourseMap: React.FC<EditCourseMapProps> = () => {
@@ -33,18 +34,12 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
             setIsClientPublic(courseStructure.public);
 
             onMapUpdateCallbackRef.current = (mapData: any[]) => {
-                console.log('map update callback', mapData)
                 dispatchCourse({ type: 'setIsNotSaved' });
                 const updatedCourse = { ...courseStructure, map_state: { objects: mapData } };
                 dispatchCourse({ type: 'setCourseStructure', payload: updatedCourse });
             }
         }
     }, [isLoading, courseStructure]);
-
-    // useEffect(() => {
-    //     if (!isLoading) {
-    //     }
-    // }, [isLoading])
 
     useEffect(() => {
         if (!isLoading && courseStructure?.public !== undefined && isClientPublic !== undefined) {
@@ -59,30 +54,20 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
     if (!onMapUpdateCallbackRef.current) {
         return (<div>
             <BarLoader
-            width={600}
-            height={10}
-            color="#ffffff"
-            cssOverride={{'borderRadius': '3rem'}}
+                width={600}
+                height={10}
+                color="#ffffff"
+                cssOverride={{ 'borderRadius': '3rem' }}
             >
             </BarLoader>
         </div>)
     } else {
-        // const onUpdate = (mapData: any[]) => {
-        //             console.log('map update callback', mapData)
-        //             dispatchCourse({ type: 'setIsNotSaved' });
-        //             const updatedCourse = { ...courseStructure, map_state: { objects: mapData } };
-        //             dispatchCourse({ type: 'setCourseStructure', payload: updatedCourse });
-        // }
-
-        // KOMPLETT FUCKED!
-        // console.dir(courseStructure.map_state)
-
         return (
             <div>
                 <div className="flex items-center p-5">
                     <CourseMapEditorToolbar undo={() => { }} redo={() => { }} reset={() => { }} />
                 </div>
-                <MapEditorCanvas courseStructure={courseStructure} onMapUpdateCallback={onMapUpdateCallbackRef.current} readOnly={false} />
+                <MapEditorCanvas courseStructure={courseStructure} onMapUpdateCallback={onMapUpdateCallbackRef.current} readOnly={false} onChapterClick={() => { console.log("HELLO"); if (courseStructure.onChapterClick) courseStructure.onChapterClick() }} />
             </div>
         );
     }
