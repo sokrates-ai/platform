@@ -42,7 +42,7 @@ permissions:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: 2001-proj-sokrates 
 
     steps:
       - name: Checkout repository

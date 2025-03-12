@@ -1,7 +1,4 @@
-import ToolTip from '@components/Objects/StyledElements/Tooltip/Tooltip'
-import { getUriWithOrg } from '@services/config/config'
-import { Check, Divide, Lock, Rocket } from 'lucide-react'
-import Link from 'next/link'
+import { Lock } from 'lucide-react'
 import React from 'react'
 import ChapterActivities from './ChapterActivities'
 import { isChapterLocked } from './utils'

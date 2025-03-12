@@ -1,4 +1,3 @@
-import ToolTip from '@components/Objects/StyledElements/Tooltip/Tooltip'
 import { getUriWithOrg } from '@services/config/config'
 import { Check, Lock, Rocket } from 'lucide-react'
 import Link from 'next/link'
