@@ -55,7 +55,7 @@ export const ChapterAsset: React.FC<ChapterAssetProps> = ({
                 onContextMenu(id, { clientX, clientY });
             }
         } else if (readOnly && e.data?.originalEvent?.button === 0) {
-            onChapterClick(id);
+            onChapterClick(chapterID);
         }
         if (onDragStart) onDragStart();
         if (bind.pointerdown) {

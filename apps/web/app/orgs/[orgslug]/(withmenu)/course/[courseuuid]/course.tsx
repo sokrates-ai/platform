@@ -18,12 +18,16 @@ import CourseUpdates from '@components/Objects/Courses/CourseUpdates/CourseUpdat
 import { CourseProvider } from '@components/Contexts/CourseContext'
 import { useMediaQuery } from 'usehooks-ts'
 import CoursesActions, { courseIsStarted } from '@components/Objects/Courses/CourseActions/CoursesActions'
-import ChapterActivities from '@components/Pages/Courses/ChapterActivities'
+// import ChapterActivities from '@components/Pages/Courses/ChapterActivities'
 import { MapEditorCanvas } from '@components/Dashboard/Pages/Course/EditCourseMap/MapEditorCanvas'
+import ChapterActivities from '@components/Pages/Courses/ChapterActivities'
+import CourseChapter from '@components/Pages/Courses/CourseChapter'
+import Modal from '@components/Objects/StyledElements/Modal/Modal'
 
 const CourseClient = (props: any) => {
 	const [learnings, setLearnings] = useState<any>([])
 	const courseuuid = props.courseuuid
+  	const courseid = courseuuid.replace('course_', '')
 	const orgslug = props.orgslug
 	const course = props.course
 	const org = useOrg() as any
@@ -42,6 +46,9 @@ const CourseClient = (props: any) => {
 
 	const isStarted = courseIsStarted(course)
 	console.log(isStarted)
+
+  	const [chapterDialogOpen, setChapterDialogOpen] = useState(false)
+	const [selectedChapter, setSelectedChapter] = useState(0)
 
 	if (isStarted) {
 		return (
@@ -72,10 +79,38 @@ const CourseClient = (props: any) => {
 			// 		})}
 			// 	</div>
 
-				<div style={{width: '90vw', height: '90vh'}}>
+				<div style={{width: '100vw', height: 'calc(100vh - 60px)'}}>
+						<Modal
+						isDialogOpen={chapterDialogOpen}
+						onOpenChange={setChapterDialogOpen}
+						minHeight="md"
+						dialogContent={
+							<CourseChapter
+								course={course}
+								courseId={courseid}
+								orgslug={orgslug}
+								chapterID={selectedChapter}
+							></CourseChapter>
+						}
+						dialogTitle="Foo-bar-title"
+						dialogDescription="Foo-bar-desc"
+						// dialogTrigger={
+						// 	<button>
+						// 		<NewCourseButton />
+						// 	</button>
+						// }
+						/>
+
+					{/* <div className='flex flex-col gap-5'>
+					</div> */}
 					<MapEditorCanvas
 						courseStructure={course}
 						readOnly={true}
+						onChapterClick={(chapter) => {
+							console.log(chapter)
+							setSelectedChapter(chapter)
+							setChapterDialogOpen(true)
+						}}
 					>
 					</MapEditorCanvas>
 				</div>

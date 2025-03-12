@@ -310,10 +310,10 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	//#endregion
 
 	return (
-		<div className="flex w-full h-full" style={{ height: 'calc(100vh - 19rem)', position: 'relative' }}>
+		<div className="flex w-full h-full" style={{ height: readOnly ? '100%' : 'calc(100vh - 15.5rem)', position: 'relative' }}>
 			<div
 				id="canvas-parent"
-				style={{ width: '85%', height: '100%', overscrollBehaviorX: 'none' }}
+				style={{ width: readOnly ? '100%' : '85%', height: '100%', overscrollBehaviorX: 'none' }}
 				onWheel={handleWheel}
 				onContextMenu={(e) => e.preventDefault()}
 				onDragOver={(e) => e.preventDefault()}

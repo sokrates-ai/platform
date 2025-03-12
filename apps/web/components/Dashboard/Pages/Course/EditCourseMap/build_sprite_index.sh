@@ -13,7 +13,8 @@ rm -f "${OUTPUT}"
 
 # counter=0
 echo "export const SPRITES = [" >> "${OUTPUT}"
-for file in ../../../../../public/content_map/*; do
+for file in ../../../../../public/contentMap/*; do
+    echo "FILE"
     path=$(basename "${file}")
     label=$(echo "${path}" | sed -e "s/.webp//g")
     echo "  { scale: 1, file: '${path}', label: '${label}' }," >> "${OUTPUT}"
