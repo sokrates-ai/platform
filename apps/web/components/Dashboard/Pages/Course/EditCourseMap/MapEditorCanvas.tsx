@@ -56,7 +56,7 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	// 	})
 	// }, [canvasElement])
 
-	console.log('render')
+	// console.log('render')
 
 	const targetOffsetRef = useRef(offset);
 
@@ -240,11 +240,15 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 
 	// Animation loop for smooth panning.
 	useEffect(() => {
-		console.log('pan')
+		// console.log('pan')
 		let animationFrameId: number;
 		const animate = () => {
-			console.log('off')
-			setOffset((prev) => {
+			// if (offset.x !== 0 && offset.y !== 0)
+			// 	console.log('off', offset)
+
+			// console.log('animate')
+
+			const calc = (prev: any) => {
 				if (!isDragging) {
 					velocityRef.current.x *= 0.95;
 					velocityRef.current.y *= 0.95;
@@ -257,7 +261,13 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 				const newX = clamp(prev.x + (targetOffsetRef.current.x - prev.x) * lerpFactor, -WORLD_LIMIT_X, WORLD_LIMIT_X);
 				const newY = clamp(prev.y + (targetOffsetRef.current.y - prev.y) * lerpFactor, -WORLD_LIMIT_Y, WORLD_LIMIT_Y);
 				return { x: newX, y: newY };
-			});
+			}
+
+			const newOffset = calc(offset)
+
+			if (newOffset.x !== offset.x || newOffset.y !== offset.y) {
+				setOffset(newOffset);
+			}
 			animationFrameId = requestAnimationFrame(animate);
 		};
 		animate();
