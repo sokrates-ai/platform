@@ -1,17 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Stage, Container } from '@pixi/react';
-import { SCALE_MODES } from 'pixi.js';
 import { DraggableAsset } from './DraggableAsset';
 import { ChapterAsset } from './ChapterAsset';
 import { DraggableState, DraggableStateData } from './types';
 import { SPRITES } from './spriteIndex';
 import { Position } from './useDrag';
-import { propagateServerField } from 'next/dist/server/lib/render-server';
-import { useCourseDispatch } from '@components/Contexts/CourseContext';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ChevronDown, ChevronUp } from "lucide-react"
 
 
@@ -249,7 +245,6 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 		const objects = courseStructure.map_state.objects
 		console.log('loaded objects from DB: ', objects)
 		try {
-			// const deserialized: DraggableStateData[] = JSON.parse(item);
 			const reconstructed = objects.map((data: any) => ({
 				data,
 				node: renderDraggableNode(data),
@@ -261,14 +256,23 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 		}
 	}, [renderDraggableNode]);
 
-	// Handler for adding a new asset from the sprite panel.
-	const handleClickAsset = (sprite: any) => {
-		const x = (size.width / 2) * SCALE;
-		const y = (size.height / 2) * SCALE;
+	const worldWidth = WORLD_LIMIT_X * 2;
+	const worldHeight = WORLD_LIMIT_Y * 2;
+
+	const ratioX = size.width / worldWidth;
+	const ratioY = size.height / worldHeight;
+
+	const thumbWidth = ratioX * size.width;
+	const thumbHeight = ratioY * size.height;
+
+	const thumbLeft = (1 - ((offset.x + WORLD_LIMIT_X) / worldWidth)) * (size.width - thumbWidth);
+	const thumbTop = (1 - ((offset.y + WORLD_LIMIT_Y) / worldHeight)) * (size.height - thumbHeight);
+
+	const handleAddAssetAtDrop = (sprite: any, dropX: number, dropY: number) => {
 		const id = additionalElementsRef.current.length;
 		const data: DraggableStateData = {
-			x,
-			y,
+			x: dropX,
+			y: dropY,
 			label: sprite.name,
 			id,
 			textureSources: [spriteURL(sprite.file)],
@@ -283,26 +287,34 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 		setAdditionalElements(newList);
 	};
 
-	const worldWidth = WORLD_LIMIT_X * 2;
-	const worldHeight = WORLD_LIMIT_Y * 2;
-
-	const ratioX = size.width / worldWidth;
-	const ratioY = size.height / worldHeight;
-
-	const thumbWidth = ratioX * size.width;
-	const thumbHeight = ratioY * size.height;
-
-	const thumbLeft = (1 - ((offset.x + WORLD_LIMIT_X) / worldWidth)) * (size.width - thumbWidth);
-	const thumbTop = (1 - ((offset.y + WORLD_LIMIT_Y) / worldHeight)) * (size.height - thumbHeight);
 
 	return (
 		<div className="flex w-full h-full" style={{ height: 'calc(100vh - 19rem)', position: 'relative' }}>
-			{/* Canvas & Stage container */}
 			<div
 				id="canvas-parent"
 				style={{ width: '85%', height: '100%', overscrollBehaviorX: 'none' }}
 				onWheel={handleWheel}
 				onContextMenu={(e) => e.preventDefault()}
+				onDragOver={(e) => e.preventDefault()}
+				onDrop={(e) => {
+					e.preventDefault();
+					const spriteData = e.dataTransfer.getData("application/json");
+					if (!spriteData) return;
+					const sprite = JSON.parse(spriteData);
+					const canvasElement = document.getElementById('canvas-parent');
+					const canvasBounds = canvasElement?.getBoundingClientRect();
+					if (!canvasBounds) return;
+
+					const stageX = e.clientX - canvasBounds.left;
+					const stageY = e.clientY - canvasBounds.top;
+
+					const containerScale = 0.1;
+
+					const localX = (stageX - offset.x) / containerScale;
+					const localY = (stageY - offset.y) / containerScale;
+
+					handleAddAssetAtDrop(sprite, localX, localY);
+				}}
 			>
 				<Stage
 					width={size.width}
@@ -327,7 +339,10 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 							<div
 								key={index}
 								className="sprite-item flex flex-col items-center p-10 rounded-md w-full box-border bg-gray-400 hover:bg-sky-600 cursor-pointer"
-								onClick={() => handleClickAsset(sprite)}
+								draggable
+								onDragStart={(e) => {
+									e.dataTransfer.setData("application/json", JSON.stringify(sprite));
+								}}
 							>
 								<img
 									style={{ filter: "saturate(150%)" }}
@@ -343,18 +358,6 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 					</div>
 				</div>
 			)}
-
-			{/* {popoverOpen && contextMenu && (
-				<Popover open={popoverOpen} onOpenChange={(open) => { if (!open) { setPopoverOpen(false); setContextMenu(null); } }}>
-					<PopoverAnchor>
-						<div style={{ position: 'absolute', top: contextMenu.y, left: contextMenu.x, width: 0, height: 0 }} />
-					</PopoverAnchor>
-					<PopoverContent className="w-48 p-2">
-						This is the popover.
-					</PopoverContent>
-				</Popover>
-			)} */}
-
 			{contextMenu && (
 				<div
 					onContextMenu={(e: React.MouseEvent) => {
