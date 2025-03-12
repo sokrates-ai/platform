@@ -5,27 +5,24 @@ import { ChapterAsset } from './ChapterAsset';
 import { DraggableState, DraggableStateData } from './types';
 import { SPRITES } from './spriteIndex';
 import { Position } from './useDrag';
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { ChevronDown, ChevronUp } from "lucide-react"
-
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { SCALE, WORLD_LIMIT_X, WORLD_LIMIT_Y } from './constants';
 
 const LS_MAP_STATE_KEY = 'map_state';
-const SCALE = 1;
-
-const WORLD_LIMIT_X = 1000;
-const WORLD_LIMIT_Y = 1000;
-
-const clamp = (value: number, min: number, max: number) =>
-	Math.max(min, Math.min(max, value));
 
 export interface MapEditorCanvasProps {
 	courseStructure: any;
-	onMapUpdateCallback?: Function,
-	onChapterClick: (chapterID: number) => void,
-	readOnly?: boolean,
+	onMapUpdateCallback?: Function;
+	onChapterClick: (chapterID: number) => void;
+	readOnly?: boolean;
 }
+
+export const clamp = (value: number, min: number, max: number): number =>
+	Math.max(min, Math.min(max, value));
+
 
 export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	courseStructure,
@@ -33,7 +30,7 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	onChapterClick,
 	readOnly = false,
 }) => {
-
+	//#region STATE & REFS
 	const [offset, setOffset] = useState({ x: 0, y: 0 });
 	const [size, setSize] = useState({
 		width: window.innerWidth,
@@ -42,52 +39,44 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	});
 	const targetOffsetRef = useRef(offset);
 
-	// State for draggable elements
 	const initialElements: DraggableState[] = [];
 	const additionalElementsRef = useRef<DraggableState[]>(initialElements);
 	const [additionalElements, setAdditionalElementsState] = useState<DraggableState[]>(initialElements);
-
-	// Helper: build sprite URL
-	const spriteURL = (file: string): string => `/contentMap/${file}`;
-
-	const updatePositionCallBack = (pos: Position, id: number) => {
-		// Find element based on ID in the additional elements and patch its location.
-		const index = additionalElementsRef.current.findIndex((element) => element.data.id === id)
-		if (index < 0) {
-			throw ('Bug: this cannot happen')
-		}
-
-		// Update position.
-		const copy = additionalElementsRef.current
-		copy[index].data.x = pos.x
-		copy[index].data.y = pos.y
-		additionalElementsRef.current = copy
-
-		// Update additional elements.
-		setAdditionalElements(additionalElementsRef.current)
-	}
-
 	const [contextMenu, setContextMenu] = useState<{ chapterID: number; x: string; y: string } | null>(null);
 
-	// Callback to receive the right-click info from ChapterAsset.
-	const handleAssetContextMenu = (chapterID: number, pos: { clientX: number, clientY: number }) => {
-		const canvasElement = document.getElementById('canvas-parent');
-		const canvasBounds = canvasElement?.getBoundingClientRect();
-		const anchorX = pos.clientX - (canvasBounds?.left ?? 0);
-		const anchorY = pos.clientY - (canvasBounds?.top ?? 0);
+	const [isDragging, setIsDragging] = useState(false);
+	const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+	const velocityRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+	const isAssetDraggingRef = useRef(false);
+	//#endregion
 
-		setContextMenu({ chapterID, x: `${anchorX}px`, y: `${anchorY}px` });
+	//#region HELPER FUNCTIONS
+	const spriteURL = (file: string): string => `/contentMap/${file}`;
+
+	const updatePositionCallback = (pos: Position, id: number) => {
+		const index = additionalElementsRef.current.findIndex((el) => el.data.id === id);
+		if (index < 0) {
+			throw new Error('Bug: this cannot happen');
+		}
+		// Update the element’s position.
+		additionalElementsRef.current[index].data.x = pos.x;
+		additionalElementsRef.current[index].data.y = pos.y;
+		setAdditionalElements(additionalElementsRef.current);
 	};
 
-	useEffect(() => {
-		const handleClickOutside = () => {
-			if (contextMenu) {
-				setContextMenu(null);
-			}
-		};
-		window.addEventListener('click', handleClickOutside);
-		return () => window.removeEventListener('click', handleClickOutside);
-	}, [contextMenu]);
+	const setAdditionalElements = (data: DraggableState[]) => {
+		serializeEditorState(data);
+		setAdditionalElementsState(data);
+	};
+
+	const serializeEditorState = useCallback((data: DraggableState[]) => {
+		const mapData = data.map((d) => d.data);
+		if (onMapUpdateCallback) {
+			onMapUpdateCallback(mapData);
+		} else {
+			console.warn('map update is not ready: ', onMapUpdateCallback);
+		}
+	}, [onMapUpdateCallback]);
 
 	const renderDraggableNode = useCallback((data: DraggableStateData): React.ReactNode => {
 		if (data.associatedWithChapterID) {
@@ -97,7 +86,7 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 					y={data.y}
 					overlaySource={data.textureSources[0]}
 					stoneSource={data.textureSources[1]}
-					updatePositionCallback={updatePositionCallBack}
+					updatePositionCallback={updatePositionCallback}
 					chapterID={data.associatedWithChapterID}
 					id={data.id}
 					readOnly={readOnly}
@@ -114,7 +103,7 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 				y={data.y}
 				id={data.id}
 				src={data.textureSources[0]}
-				updatePositionCallBack={updatePositionCallBack}
+				updatePositionCallBack={updatePositionCallback}
 				readOnly={readOnly}
 				onContextMenu={handleAssetContextMenu}
 				onDragStart={handleAssetDragStart}
@@ -123,53 +112,16 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 		);
 	}, [readOnly, onChapterClick]);
 
-	// Persist editor state to backend storage.
-	const serializeEditorState = useCallback((data: DraggableState[]) => {
-		const mapData = data.map((d) => d.data)
-		if (onMapUpdateCallback) {
-			onMapUpdateCallback(mapData)
-		} else {
-			console.warn('map update is not ready: ', onMapUpdateCallback)
-		}
-	}, [])
+	//#endregion
 
-	const setAdditionalElements = (data: DraggableState[]) => {
-		serializeEditorState(data);
-		setAdditionalElementsState(data);
+	//#region EVENT HANDLERS
+	const handleAssetContextMenu = (chapterID: number, pos: { clientX: number; clientY: number }) => {
+		const canvasElement = document.getElementById('canvas-parent');
+		const canvasBounds = canvasElement?.getBoundingClientRect();
+		const anchorX = pos.clientX - (canvasBounds?.left ?? 0);
+		const anchorY = pos.clientY - (canvasBounds?.top ?? 0);
+		setContextMenu({ chapterID, x: `${anchorX}px`, y: `${anchorY}px` });
 	};
-
-	// Adjust canvas size on window resize
-	useEffect(() => {
-		const handleResize = () => {
-			const parentDiv = document.getElementById('canvas-parent');
-			if (!parentDiv) return;
-			setSize({
-				width: parentDiv.clientWidth,
-				height: parentDiv.clientHeight,
-				scale: SCALE,
-			});
-		};
-		window.addEventListener("resize", handleResize);
-		handleResize();
-		return () => window.removeEventListener("resize", handleResize);
-	}, []);
-
-	// Prevent default wheel behavior on canvas
-	useEffect(() => {
-		const canvasParent = document.getElementById('canvas-parent');
-		if (!canvasParent) return;
-		const handleWheelPassive = (e: WheelEvent) => {
-			e.preventDefault();
-		};
-		canvasParent.addEventListener('wheel', handleWheelPassive, { passive: false });
-		return () => canvasParent.removeEventListener('wheel', handleWheelPassive);
-	}, []);
-
-
-	const [isDragging, setIsDragging] = useState(false);
-	const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-	const velocityRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-	const isAssetDraggingRef = useRef(false);
 
 	const handleAssetDragStart = () => {
 		isAssetDraggingRef.current = true;
@@ -190,30 +142,77 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 		const deltaX = e.clientX - dragStartRef.current.x;
 		const deltaY = e.clientY - dragStartRef.current.y;
 		dragStartRef.current = { x: e.clientX, y: e.clientY };
-
 		targetOffsetRef.current = {
 			x: clamp(targetOffsetRef.current.x + deltaX, -WORLD_LIMIT_X, WORLD_LIMIT_X),
 			y: clamp(targetOffsetRef.current.y + deltaY, -WORLD_LIMIT_Y, WORLD_LIMIT_Y)
 		};
-
-		velocityRef.current = {
-			x: deltaX,
-			y: deltaY
-		};
+		velocityRef.current = { x: deltaX, y: deltaY };
 	};
 
 	const handlePointerUp = () => {
 		setIsDragging(false);
 	};
 
-
 	const handleWheel = (e: React.WheelEvent) => {
-		e.preventDefault();
-		const newTargetX = clamp(targetOffsetRef.current.x - e.deltaX, -WORLD_LIMIT_X, WORLD_LIMIT_X);
-		const newTargetY = clamp(targetOffsetRef.current.y - e.deltaY, -WORLD_LIMIT_Y, WORLD_LIMIT_Y);
-		targetOffsetRef.current = { x: newTargetX, y: newTargetY };
+		targetOffsetRef.current = {
+			x: clamp(targetOffsetRef.current.x - e.deltaX, -WORLD_LIMIT_X, WORLD_LIMIT_X),
+			y: clamp(targetOffsetRef.current.y - e.deltaY, -WORLD_LIMIT_Y, WORLD_LIMIT_Y)
+		};
 	};
 
+	const handleAddAssetAtDrop = (sprite: any, dropX: number, dropY: number) => {
+		const id = additionalElementsRef.current.length;
+		const data: DraggableStateData = {
+			x: dropX,
+			y: dropY,
+			label: sprite.name,
+			id,
+			textureSources: [spriteURL(sprite.file)],
+			associatedWithChapterID: null,
+		};
+		const newElement = { data, node: renderDraggableNode(data) };
+		const newList = [...additionalElementsRef.current, newElement];
+		additionalElementsRef.current = newList;
+		setAdditionalElements(newList);
+	};
+	//#endregion
+
+	//#region EFFECTS
+	// Hide context menu when clicking outside.
+	useEffect(() => {
+		const handleClickOutside = () => {
+			if (contextMenu) setContextMenu(null);
+		};
+		window.addEventListener('click', handleClickOutside);
+		return () => window.removeEventListener('click', handleClickOutside);
+	}, [contextMenu]);
+
+	// Adjust canvas size on window resize.
+	useEffect(() => {
+		const handleResize = () => {
+			const parentDiv = document.getElementById('canvas-parent');
+			if (!parentDiv) return;
+			setSize({
+				width: parentDiv.clientWidth,
+				height: parentDiv.clientHeight,
+				scale: SCALE,
+			});
+		};
+		window.addEventListener("resize", handleResize);
+		handleResize();
+		return () => window.removeEventListener("resize", handleResize);
+	}, []);
+
+	// Prevent default wheel behavior on canvas.
+	useEffect(() => {
+		const canvasParent = document.getElementById('canvas-parent');
+		if (!canvasParent) return;
+		const handleWheelPassive = (e: WheelEvent) => e.preventDefault();
+		canvasParent.addEventListener('wheel', handleWheelPassive, { passive: false });
+		return () => canvasParent.removeEventListener('wheel', handleWheelPassive);
+	}, []);
+
+	// Animation loop for smooth panning.
 	useEffect(() => {
 		let animationFrameId: number;
 		const animate = () => {
@@ -235,18 +234,14 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 		};
 		animate();
 		return () => cancelAnimationFrame(animationFrameId);
-	}, [isDragging])
+	}, [isDragging]);
 
-	// Merge chapter nodes with existing ones to avoid re-creation and flickering.
+	// Merge chapter nodes with existing elements.
 	useEffect(() => {
 		if (!courseStructure || !courseStructure.chapters) return;
 		const chapters = courseStructure.chapters;
-		const currentChapterNodes = additionalElementsRef.current.filter(
-			(el) => el.data.associatedWithChapterID !== null
-		);
-		const nonChapterNodes = additionalElementsRef.current.filter(
-			(el) => el.data.associatedWithChapterID === null
-		);
+		const currentChapterNodes = additionalElementsRef.current.filter(el => el.data.associatedWithChapterID !== null);
+		const nonChapterNodes = additionalElementsRef.current.filter(el => el.data.associatedWithChapterID === null);
 
 		const newChapterNodes: DraggableState[] = chapters
 			.filter((chapter: any) =>
@@ -281,15 +276,13 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 		setAdditionalElementsState(merged);
 	}, [courseStructure, size, renderDraggableNode]);
 
-	// Load saved state (from DB) once on mount.
+	// Load saved state from backend (if available).
 	useEffect(() => {
 		if (!courseStructure.map_state) {
-			console.warn("waiting for more course data...")
-			return
+			console.warn("waiting for more course data...");
+			return;
 		}
-
-		const objects = courseStructure.map_state.objects
-		console.log('loaded objects from DB: ', objects)
+		const objects = courseStructure.map_state.objects;
 		try {
 			const reconstructed = objects.map((data: any) => ({
 				data,
@@ -300,39 +293,19 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 		} catch (error) {
 			console.error("Failed to parse stored map state", error);
 		}
-	}, [renderDraggableNode]);
+	}, [renderDraggableNode, courseStructure]);
+	//#endregion
 
+	//#region CALC THUMB DIM
 	const worldWidth = WORLD_LIMIT_X * 2;
 	const worldHeight = WORLD_LIMIT_Y * 2;
-
 	const ratioX = size.width / worldWidth;
 	const ratioY = size.height / worldHeight;
-
 	const thumbWidth = ratioX * size.width;
 	const thumbHeight = ratioY * size.height;
-
 	const thumbLeft = (1 - ((offset.x + WORLD_LIMIT_X) / worldWidth)) * (size.width - thumbWidth);
 	const thumbTop = (1 - ((offset.y + WORLD_LIMIT_Y) / worldHeight)) * (size.height - thumbHeight);
-
-	const handleAddAssetAtDrop = (sprite: any, dropX: number, dropY: number) => {
-		const id = additionalElementsRef.current.length;
-		const data: DraggableStateData = {
-			x: dropX,
-			y: dropY,
-			label: sprite.name,
-			id,
-			textureSources: [spriteURL(sprite.file)],
-			associatedWithChapterID: null,
-		};
-		const newElement = {
-			data,
-			node: renderDraggableNode(data),
-		};
-		const newList = [...additionalElementsRef.current, newElement];
-		additionalElementsRef.current = newList;
-		setAdditionalElements(newList);
-	};
-
+	//#endregion
 
 	return (
 		<div className="flex w-full h-full" style={{ height: 'calc(100vh - 19rem)', position: 'relative' }}>
@@ -353,12 +326,9 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 
 					const stageX = e.clientX - canvasBounds.left;
 					const stageY = e.clientY - canvasBounds.top;
-
 					const containerScale = 0.1;
-
 					const localX = (stageX - offset.x) / containerScale;
 					const localY = (stageY - offset.y) / containerScale;
-
 					handleAddAssetAtDrop(sprite, localX, localY);
 				}}
 				onPointerDown={handlePointerDown}
@@ -408,16 +378,12 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 					</div>
 				</div>
 			)}
+
 			{contextMenu && (
 				<div
-					onContextMenu={(e: React.MouseEvent) => {
-						e.preventDefault()
-					}}
-					className="absolute z-50 w-56 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
-					style={{
-						top: contextMenu.y,
-						left: contextMenu.x,
-					}}
+					onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
+					className="absolute z-50 w-56 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in"
+					style={{ top: contextMenu.y, left: contextMenu.x }}
 				>
 					<div className="p-2">
 						<div className="grid gap-2">
@@ -426,16 +392,12 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 									Layer
 								</Label>
 								<div className="flex h-7 items-center">
-									<Button variant="outline" size="icon" className="h-7 w-7 rounded-r-none px-1" onClick={(e: any) => {
-										e.stopPropagation()
-									}}>
+									<Button variant="outline" size="icon" className="h-7 w-7 rounded-r-none px-1" onClick={(e) => e.stopPropagation()}>
 										<ChevronDown className="h-3 w-3" />
 										<span className="sr-only">Decrease layer</span>
 									</Button>
 									<Input id="layer" value="1" className="h-7 w-8 rounded-none text-center text-xs" readOnly />
-									<Button variant="outline" size="icon" className="h-7 w-7 rounded-l-none px-1" onClick={(e: any) => {
-										e.stopPropagation()
-									}}>
+									<Button variant="outline" size="icon" className="h-7 w-7 rounded-l-none px-1" onClick={(e) => e.stopPropagation()}>
 										<ChevronUp className="h-3 w-3" />
 										<span className="sr-only">Increase layer</span>
 									</Button>
@@ -449,28 +411,17 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 				</div>
 			)}
 
-			<div
-				className="absolute bottom-0 left-0 w-[85%] h-2"
-			>
+			<div className="absolute bottom-0 left-0 w-[85%] h-2">
 				<div
 					className="absolute h-full rounded-full bg-primary dark:bg-primary-foreground hover:bg-primary/80 dark:hover:bg-primary-foreground/80 transition-colors"
-					style={{
-						left: thumbLeft,
-						width: thumbWidth,
-					}}
+					style={{ left: thumbLeft, width: thumbWidth }}
 				/>
 			</div>
 
-
-			<div
-				className="absolute top-0 right-[15%] w-2 h-full"
-			>
+			<div className="absolute top-0 right-[15%] w-2 h-full">
 				<div
 					className="absolute w-full rounded-full bg-primary dark:bg-primary-foreground hover:bg-primary/80 dark:hover:bg-primary-foreground/80 transition-colors"
-					style={{
-						top: thumbTop,
-						height: thumbHeight,
-					}}
+					style={{ top: thumbTop, height: thumbHeight }}
 				/>
 			</div>
 		</div>

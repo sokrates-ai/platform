@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Sprite } from '@pixi/react';
 import { Texture, SCALE_MODES } from 'pixi.js';
 import { useDrag } from './useDrag';
@@ -10,7 +10,7 @@ interface DraggableAssetProps {
     src: string;
     updatePositionCallBack: Function;
     readOnly?: boolean;
-    onContextMenu?: (id: number, pos: { clientX: number, clientY: number }) => void;
+    onContextMenu?: (id: number, pos: { clientX: number; clientY: number }) => void;
     onDragStart?: () => void;
     onDragEnd?: () => void;
 }
@@ -40,7 +40,7 @@ export const DraggableAsset: React.FC<DraggableAssetProps> = ({
         if (onDragStart) onDragStart();
     };
 
-    const texture = React.useMemo(() => {
+    const texture = useMemo(() => {
         const tex = Texture.from(src);
         tex.baseTexture.scaleMode = SCALE_MODES.LINEAR;
         return tex;
@@ -51,7 +51,7 @@ export const DraggableAsset: React.FC<DraggableAssetProps> = ({
             texture={texture}
             scale={1}
             {...bind}
-            interactive={true}
+            interactive
             onpointerdown={handlePointerDown}
             onpointerup={(e) => {
                 e.stopPropagation();

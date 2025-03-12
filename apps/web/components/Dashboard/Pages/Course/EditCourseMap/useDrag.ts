@@ -14,14 +14,14 @@ export const useDrag = (
 ) => {
 	const spriteRef = useRef<any>(null);
 	const [isDragging, setIsDragging] = useState(false);
-	const [position, setPosition] = useState({ x: initial.x, y: initial.y });
+	const [position, setPosition] = useState<Position>({ x: initial.x, y: initial.y });
 	const stageRef = useRef<any>(null);
 	const isDraggingRef = useRef(false);
-	const positionRef = useRef(initial)
+	const positionRef = useRef<Position>(initial);
 
 	const setPositionWrapper = (newPos: Position) => {
-		positionRef.current = newPos
-		setPosition(newPos)
+		positionRef.current = newPos;
+		setPosition(newPos);
 	};
 
 	const setIsDraggingWrapper = (value: boolean) => {
@@ -45,8 +45,8 @@ export const useDrag = (
 		setIsDraggingWrapper(false);
 		window.removeEventListener('pointermove', onGlobalMove);
 		window.removeEventListener('pointerup', onGlobalUp);
-		positionUpdateCallback(positionRef.current, id)
-	}, [onGlobalMove]);
+		positionUpdateCallback(positionRef.current, id);
+	}, [onGlobalMove, positionUpdateCallback, id]);
 
 	const onDown = useCallback((e: any) => {
 		if (e.button !== 0 || readOnly) return;
