@@ -11,6 +11,8 @@ interface DraggableAssetProps {
     updatePositionCallBack: Function;
     readOnly?: boolean;
     onContextMenu?: (id: number, pos: { clientX: number, clientY: number }) => void;
+    onDragStart?: () => void;
+    onDragEnd?: () => void;
 }
 
 export const DraggableAsset: React.FC<DraggableAssetProps> = ({
@@ -20,19 +22,14 @@ export const DraggableAsset: React.FC<DraggableAssetProps> = ({
     src,
     updatePositionCallBack,
     onContextMenu,
+    onDragStart,
+    onDragEnd,
     readOnly = false,
 }) => {
     const bind = useDrag({ x, y }, id, updatePositionCallBack, readOnly);
 
-    // const handleContextMenu = (e: any) => {
-    //     e.preventDefault();
-    //     if (!readOnly && onContextMenu && e.data?.originalEvent) {
-    //         const { clientX, clientY } = e.data.originalEvent;
-    //         onContextMenu(id, { clientX, clientY });
-    //     }
-    // };
-
     const handlePointerDown = (e: any) => {
+        e.stopPropagation();
         if (!readOnly && e.data?.originalEvent?.button === 2) {
             e.data.originalEvent.preventDefault();
             if (onContextMenu) {
@@ -40,6 +37,7 @@ export const DraggableAsset: React.FC<DraggableAssetProps> = ({
                 onContextMenu(id, { clientX, clientY });
             }
         }
+        if (onDragStart) onDragStart();
     };
 
     const texture = React.useMemo(() => {
@@ -55,7 +53,10 @@ export const DraggableAsset: React.FC<DraggableAssetProps> = ({
             {...bind}
             interactive={true}
             onpointerdown={handlePointerDown}
+            onpointerup={(e) => {
+                e.stopPropagation();
+                if (onDragEnd) onDragEnd();
+            }}
         />
     );
-
 };

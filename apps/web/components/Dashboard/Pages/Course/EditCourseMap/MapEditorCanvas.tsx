@@ -68,7 +68,6 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	}
 
 	const [contextMenu, setContextMenu] = useState<{ chapterID: number; x: string; y: string } | null>(null);
-	const [popoverOpen, setPopoverOpen] = useState(false);
 
 	// Callback to receive the right-click info from ChapterAsset.
 	const handleAssetContextMenu = (chapterID: number, pos: { clientX: number, clientY: number }) => {
@@ -78,7 +77,6 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 		const anchorY = pos.clientY - (canvasBounds?.top ?? 0);
 
 		setContextMenu({ chapterID, x: `${anchorX}px`, y: `${anchorY}px` });
-		setPopoverOpen(true);
 	};
 
 	useEffect(() => {
@@ -91,7 +89,6 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 		return () => window.removeEventListener('click', handleClickOutside);
 	}, [contextMenu]);
 
-	// Memoize the node renderer so that it doesn’t change on every render.
 	const renderDraggableNode = useCallback((data: DraggableStateData): React.ReactNode => {
 		if (data.associatedWithChapterID) {
 			return (
@@ -106,6 +103,8 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 					readOnly={readOnly}
 					onChapterClick={onChapterClick}
 					onContextMenu={handleAssetContextMenu}
+					onDragStart={handleAssetDragStart}
+					onDragEnd={handleAssetDragEnd}
 				/>
 			);
 		}
@@ -118,6 +117,8 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 				updatePositionCallBack={updatePositionCallBack}
 				readOnly={readOnly}
 				onContextMenu={handleAssetContextMenu}
+				onDragStart={handleAssetDragStart}
+				onDragEnd={handleAssetDragEnd}
 			/>
 		);
 	}, [readOnly, onChapterClick]);
@@ -164,7 +165,48 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 		return () => canvasParent.removeEventListener('wheel', handleWheelPassive);
 	}, []);
 
-	// Update the target offset based on wheel events with clamping.
+
+	const [isDragging, setIsDragging] = useState(false);
+	const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+	const velocityRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+	const isAssetDraggingRef = useRef(false);
+
+	const handleAssetDragStart = () => {
+		isAssetDraggingRef.current = true;
+	};
+
+	const handleAssetDragEnd = () => {
+		isAssetDraggingRef.current = false;
+	};
+
+	const handlePointerDown = (e: React.PointerEvent) => {
+		velocityRef.current = { x: 0, y: 0 };
+		setIsDragging(true);
+		dragStartRef.current = { x: e.clientX, y: e.clientY };
+	};
+
+	const handlePointerMove = (e: React.PointerEvent) => {
+		if (!isDragging || isAssetDraggingRef.current) return;
+		const deltaX = e.clientX - dragStartRef.current.x;
+		const deltaY = e.clientY - dragStartRef.current.y;
+		dragStartRef.current = { x: e.clientX, y: e.clientY };
+
+		targetOffsetRef.current = {
+			x: clamp(targetOffsetRef.current.x + deltaX, -WORLD_LIMIT_X, WORLD_LIMIT_X),
+			y: clamp(targetOffsetRef.current.y + deltaY, -WORLD_LIMIT_Y, WORLD_LIMIT_Y)
+		};
+
+		velocityRef.current = {
+			x: deltaX,
+			y: deltaY
+		};
+	};
+
+	const handlePointerUp = () => {
+		setIsDragging(false);
+	};
+
+
 	const handleWheel = (e: React.WheelEvent) => {
 		e.preventDefault();
 		const newTargetX = clamp(targetOffsetRef.current.x - e.deltaX, -WORLD_LIMIT_X, WORLD_LIMIT_X);
@@ -172,24 +214,28 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 		targetOffsetRef.current = { x: newTargetX, y: newTargetY };
 	};
 
-	// Animate the panning (using a lerp) and clamp the new offset.
 	useEffect(() => {
 		let animationFrameId: number;
 		const animate = () => {
 			setOffset((prev) => {
-				const target = targetOffsetRef.current;
+				if (!isDragging) {
+					velocityRef.current.x *= 0.95;
+					velocityRef.current.y *= 0.95;
+					targetOffsetRef.current = {
+						x: clamp(targetOffsetRef.current.x + velocityRef.current.x, -WORLD_LIMIT_X, WORLD_LIMIT_X),
+						y: clamp(targetOffsetRef.current.y + velocityRef.current.y, -WORLD_LIMIT_Y, WORLD_LIMIT_Y)
+					};
+				}
 				const lerpFactor = 0.7;
-				let newX = prev.x + (target.x - prev.x) * lerpFactor;
-				let newY = prev.y + (target.y - prev.y) * lerpFactor;
-				newX = clamp(newX, -WORLD_LIMIT_X, WORLD_LIMIT_X);
-				newY = clamp(newY, -WORLD_LIMIT_Y, WORLD_LIMIT_Y);
+				const newX = clamp(prev.x + (targetOffsetRef.current.x - prev.x) * lerpFactor, -WORLD_LIMIT_X, WORLD_LIMIT_X);
+				const newY = clamp(prev.y + (targetOffsetRef.current.y - prev.y) * lerpFactor, -WORLD_LIMIT_Y, WORLD_LIMIT_Y);
 				return { x: newX, y: newY };
 			});
 			animationFrameId = requestAnimationFrame(animate);
 		};
 		animate();
 		return () => cancelAnimationFrame(animationFrameId);
-	}, []);
+	}, [isDragging])
 
 	// Merge chapter nodes with existing ones to avoid re-creation and flickering.
 	useEffect(() => {
@@ -315,6 +361,10 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 
 					handleAddAssetAtDrop(sprite, localX, localY);
 				}}
+				onPointerDown={handlePointerDown}
+				onPointerMove={handlePointerMove}
+				onPointerUp={handlePointerUp}
+				onPointerCancel={handlePointerUp}
 			>
 				<Stage
 					width={size.width}
