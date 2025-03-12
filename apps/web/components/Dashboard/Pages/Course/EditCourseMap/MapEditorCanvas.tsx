@@ -261,8 +261,10 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 					label: `${chapter.id}`,
 					id: -chapter.id,
 					textureSources: [
-						spriteURL(SPRITES[30].file),
-						spriteURL(SPRITES[112].file),
+						// TODO: ensure that the index addition does not cause an out-of bounds.
+						// TODO: 119-128 select random
+						spriteURL(SPRITES[119 + index].file),
+						spriteURL(SPRITES[100].file),
 					],
 					associatedWithChapterID: chapter.id,
 				};
@@ -377,7 +379,7 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 									width={80}
 								/>
 								<span className="font-bold text-2xl text-ellipsis overflow-hidden" style={{ maxWidth: '8rem' }}>
-									{sprite.label}
+									{sprite.label} | {index}
 								</span>
 							</div>
 						))}
