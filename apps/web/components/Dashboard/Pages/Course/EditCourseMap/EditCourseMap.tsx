@@ -39,17 +39,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
             }
         }
     }, [isLoading, courseStructure])
-
-    useEffect(() => {
-        if (!isLoading && courseStructure?.public !== undefined && isClientPublic !== undefined) {
-            if (isClientPublic !== courseStructure.public) {
-                dispatchCourse({ type: 'setIsNotSaved' })
-                const updatedCourse = { ...courseStructure, public: isClientPublic }
-                dispatchCourse({ type: 'setCourseStructure', payload: updatedCourse })
-            }
-        }
-    }, [isLoading, isClientPublic, courseStructure, dispatchCourse])
-
+    
     if (!onMapUpdateCallbackRef.current) {
         return (<div className='bg-black flex flex-col items-center justify-center h-full'>
             <BarLoader

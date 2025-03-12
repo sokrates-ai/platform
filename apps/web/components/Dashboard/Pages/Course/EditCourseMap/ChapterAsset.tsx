@@ -65,9 +65,6 @@ export const ChapterAsset: React.FC<ChapterAssetProps> = ({
 
     const handlePointerUp = (e: any) => {
         e.stopPropagation();
-        if (e.button === 0 && readOnly) {
-            onChapterClick(chapterID);
-        }
         if (onDragEnd) onDragEnd();
     };
 
@@ -76,6 +73,7 @@ export const ChapterAsset: React.FC<ChapterAssetProps> = ({
             {...bind}
             onpointerdown={handlePointerDown}
             onpointerup={handlePointerUp}
+            interactive={true}
         >
             <Sprite texture={stoneTexture} scale={1} />
             <Sprite texture={overlayTexture} scale={1} />
