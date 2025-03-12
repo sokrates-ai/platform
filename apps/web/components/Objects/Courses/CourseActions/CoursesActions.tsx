@@ -71,6 +71,12 @@ const AuthorInfo = ({ author, isMobile }: { author: Author, isMobile: boolean })
   </div>
 )
 
+export function courseIsStarted(course: any): boolean {
+  return course.trail?.runs?.some(
+    (run: any) => run.status === 'STATUS_IN_PROGRESS' && run.course_id === course.id
+  ) ?? false
+}
+
 const Actions = ({ courseuuid, orgslug, course }: CourseActionsProps) => {
   const router = useRouter()
   const session = useLHSession() as any
@@ -79,9 +85,7 @@ const Actions = ({ courseuuid, orgslug, course }: CourseActionsProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [hasAccess, setHasAccess] = useState<boolean | null>(null)
 
-  const isStarted = course.trail?.runs?.some(
-    (run) => run.status === 'STATUS_IN_PROGRESS' && run.course_id === course.id
-  ) ?? false
+  const isStarted = courseIsStarted(course)
 
   useEffect(() => {
     const fetchLinkedProducts = async () => {

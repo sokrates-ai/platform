@@ -194,10 +194,10 @@ const LoginClient = (props: LoginClientProps) => {
               <UserRoundPlus size={17} />
               <span>Sign up</span>
             </Link>
-            <button onClick={() => signIn('google', { callbackUrl: '/redirect_from_auth' })} className="flex justify-center py-3 text-md w-full bg-white text-slate-600 space-x-3 font-semibold text-center p-2 rounded-md shadow hover:cursor-pointer">
+            {/* <button onClick={() => signIn('google', { callbackUrl: '/redirect_from_auth' })} className="flex justify-center py-3 text-md w-full bg-white text-slate-600 space-x-3 font-semibold text-center p-2 rounded-md shadow hover:cursor-pointer">
               <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" alt="" />
               <span>Sign in with Google</span>
-            </button>
+            </button> */}
           </div>
         </div>
       </div>

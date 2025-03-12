@@ -1,14 +1,12 @@
-"use client"
-
-import React, { useEffect, useRef, useState } from 'react'
-import useSWR from 'swr'
-import { useCourse, useCourseDispatch } from '@components/Contexts/CourseContext'
-import { getAPIUrl } from '@services/config/config'
-import { swrFetcher } from '@services/utils/ts/requests'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
-import { CourseMapEditorToolbar } from './CourseMapEditorToolbar'
-import { MapEditorCanvas } from './MapEditorCanvas'
-import { Skeleton } from '@/components/ui/skeleton'
+import React, { useEffect, useRef, useState } from 'react';
+import useSWR from 'swr';
+import { useCourse, useCourseDispatch } from '@components/Contexts/CourseContext';
+import { getAPIUrl } from '@services/config/config';
+import { swrFetcher } from '@services/utils/ts/requests';
+import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { CourseMapEditorToolbar } from './CourseMapEditorToolbar';
+import { MapEditorCanvas } from './MapEditorCanvas';
+import { BarLoader } from 'react-spinners';
 
 export interface EditCourseMapProps {
     orgslug: string
@@ -53,33 +51,30 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
     }, [isLoading, isClientPublic, courseStructure, dispatchCourse])
 
     if (!onMapUpdateCallbackRef.current) {
+        return (<div className='bg-black flex flex-col items-center justify-center h-full'>
+            <BarLoader
+            width={600}
+            height={10}
+            color="#ffffff"
+            cssOverride={{'borderRadius': '3rem'}}
+            >
+            </BarLoader>
+        </div>)
+    } else {
         return (
-            <div className="flex items-center justify-center w-full h-[calc(100vh-10rem)]">
-                <Skeleton className="w-[600px] h-2 rounded-full" />
-            </div>
-        )
-    }
-
-    return (
-        <div className="flex flex-col h-full">
-            <div className="flex items-center p-4 border-b">
-                <CourseMapEditorToolbar
-                    undo={() => { }}
-                    redo={() => { }}
-                    reset={() => { }}
+            <div>
+                <div className="flex items-center p-5">
+                    <CourseMapEditorToolbar undo={() => { }} redo={() => { }} reset={() => { }} />
+                </div>
+                <MapEditorCanvas
+                    courseStructure={courseStructure}
+                    onMapUpdateCallback={onMapUpdateCallbackRef.current}
+                    readOnly={false}
+                    onChapterClick={() => {}}
                 />
             </div>
-            <MapEditorCanvas
-                courseStructure={courseStructure}
-                onMapUpdateCallback={onMapUpdateCallbackRef.current}
-                readOnly={false}
-                onChapterClick={() => {
-                    console.log("HELLO")
-                    if (courseStructure.onChapterClick) courseStructure.onChapterClick()
-                }}
-            />
-        </div>
-    )
-}
+        );
+    }
+};
 
 export default EditCourseMap

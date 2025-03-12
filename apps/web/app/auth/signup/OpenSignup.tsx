@@ -106,7 +106,7 @@ function OpenSignUpComponent() {
             <div className="font-bold text-sm">{message}</div>
           </div>
           <hr className="border-green-900/20 800 w-40 border" />
-          <Link className="flex space-x-2 items-center" href={'/login'}>
+          <Link className="flex space-x-2 items-center" href={`/login?orgslug=${org?.slug}`}>
             <User size={14} /> <div>Login </div>
           </Link>
         </div>
@@ -177,13 +177,13 @@ function OpenSignUpComponent() {
           </Form.Submit>
         </div>
       </FormLayout>
-      <div>
+      {/* <div>
         <div className='flex h-0.5 rounded-2xl bg-slate-100 mt-5 mb-5 mx-10'></div>
         <button onClick={() => signIn('google')} className="flex justify-center py-3 text-md w-full bg-white text-slate-600 space-x-3 font-semibold text-center p-2 rounded-md shadow hover:cursor-pointer">
           <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" alt="" />
           <span>Sign in with Google</span>
         </button>
-      </div>
+      </div> */}
     </div>
   )
 }

@@ -11,13 +11,11 @@ import { Label } from "@/components/ui/label";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { SCALE, WORLD_LIMIT_X, WORLD_LIMIT_Y } from './constants';
 
-const LS_MAP_STATE_KEY = 'map_state';
-
 export interface MapEditorCanvasProps {
 	courseStructure: any;
-	onMapUpdateCallback?: Function;
 	onChapterClick: (chapterID: number) => void;
-	readOnly?: boolean;
+	readOnly: boolean;
+	onMapUpdateCallback?: Function;
 }
 
 export const clamp = (value: number, min: number, max: number): number =>
@@ -26,17 +24,40 @@ export const clamp = (value: number, min: number, max: number): number =>
 
 export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	courseStructure,
-	onMapUpdateCallback,
 	onChapterClick,
-	readOnly = false,
+	readOnly,
+	onMapUpdateCallback,
 }) => {
 	//#region STATE & REFS
 	const [offset, setOffset] = useState({ x: 0, y: 0 });
+
+	// const canvasElement = document.getElementById('canvas-parent');
+
 	const [size, setSize] = useState({
-		width: window.innerWidth,
-		height: window.innerHeight,
+		width: 0,//: window.innerWidth,
+		height: 0,//: window.innerHeight,
 		scale: SCALE,
 	});
+
+	// useEffect(() => {
+	// 	const canvasBounds = canvasElement?.getBoundingClientRect();
+
+	// 	if (!canvasBounds) {
+	// 		throw('bug')
+	// 	}
+
+	// 	const height = canvasBounds!.height
+	// 	const width = canvasBounds!.width
+
+	// 	setSize({
+	// 		height,
+	// 		width,
+	// 		scale: size.scale,
+	// 	})
+	// }, [canvasElement])
+
+	console.log('render')
+
 	const targetOffsetRef = useRef(offset);
 
 	const initialElements: DraggableState[] = [];
@@ -180,6 +201,7 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	//#region EFFECTS
 	// Hide context menu when clicking outside.
 	useEffect(() => {
+		console.log('context menu')
 		const handleClickOutside = () => {
 			if (contextMenu) setContextMenu(null);
 		};
@@ -189,9 +211,12 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 
 	// Adjust canvas size on window resize.
 	useEffect(() => {
+		console.log('resize')
+
 		const handleResize = () => {
 			const parentDiv = document.getElementById('canvas-parent');
 			if (!parentDiv) return;
+			console.log('set size called')
 			setSize({
 				width: parentDiv.clientWidth,
 				height: parentDiv.clientHeight,
@@ -205,6 +230,7 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 
 	// Prevent default wheel behavior on canvas.
 	useEffect(() => {
+		console.log('wheel')
 		const canvasParent = document.getElementById('canvas-parent');
 		if (!canvasParent) return;
 		const handleWheelPassive = (e: WheelEvent) => e.preventDefault();
@@ -214,8 +240,10 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 
 	// Animation loop for smooth panning.
 	useEffect(() => {
+		console.log('pan')
 		let animationFrameId: number;
 		const animate = () => {
+			console.log('off')
 			setOffset((prev) => {
 				if (!isDragging) {
 					velocityRef.current.x *= 0.95;
@@ -238,6 +266,7 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 
 	// Merge chapter nodes with existing elements.
 	useEffect(() => {
+		console.log('merge')
 		if (!courseStructure || !courseStructure.chapters) return;
 		const chapters = courseStructure.chapters;
 		const currentChapterNodes = additionalElementsRef.current.filter(el => el.data.associatedWithChapterID !== null);
@@ -278,6 +307,7 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 
 	// Load saved state from backend (if available).
 	useEffect(() => {
+		console.log('load')
 		if (!courseStructure.map_state) {
 			console.warn("waiting for more course data...");
 			return;
@@ -308,10 +338,10 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	//#endregion
 
 	return (
-		<div className="flex w-full h-full" style={{ height: 'calc(100vh - 19rem)', position: 'relative' }}>
+		<div className="flex" style={{ height: '100%', width: '100%', position: 'relative' }}>
 			<div
 				id="canvas-parent"
-				style={{ width: '85%', height: '100%', overscrollBehaviorX: 'none' }}
+				style={{ width: readOnly ? '100%' : '100%', height: '100%', overscrollBehaviorX: 'none', position: 'relative' }}
 				onWheel={handleWheel}
 				onContextMenu={(e) => e.preventDefault()}
 				onDragOver={(e) => e.preventDefault()}
@@ -411,14 +441,14 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 				</div>
 			)}
 
-			<div className="absolute bottom-0 left-0 w-[85%] h-2">
+			<div className="absolute bottom-0 left-0 w-full h-2">
 				<div
 					className="absolute h-full rounded-full bg-primary dark:bg-primary-foreground hover:bg-primary/80 dark:hover:bg-primary-foreground/80 transition-colors"
 					style={{ left: thumbLeft, width: thumbWidth }}
 				/>
 			</div>
 
-			<div className="absolute top-0 right-[15%] w-2 h-full">
+			<div className="absolute top-0 right-0 w-2 h-full">
 				<div
 					className="absolute w-full rounded-full bg-primary dark:bg-primary-foreground hover:bg-primary/80 dark:hover:bg-primary-foreground/80 transition-colors"
 					style={{ top: thumbTop, height: thumbHeight }}
