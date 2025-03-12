@@ -251,6 +251,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
           <div className='actions_buttons flex space-x-2'>
             {step.buttons?.map((button, index) => (
               <Button
+                key={index}
                 onClick={button.action}
               >
                 <p>{button.label}</p>

@@ -33,6 +33,7 @@ function ChapterActivities(props: Props) {
           courseId={courseid}
           orgslug={orgslug}
           state={activityState}
+          key={activity.id}
         >
 
         </ChapterActivity>

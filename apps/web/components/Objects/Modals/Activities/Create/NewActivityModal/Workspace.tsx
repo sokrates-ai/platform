@@ -130,7 +130,11 @@ function NewWorkspace({ submitActivity, chapterId, course, closeModal, access_to
                 <Form.Control asChild>
                     <select className='bg-gray-100/40 rounded-lg px-1 py-2 outline outline-1 outline-gray-100' onChange={handleActivityTaskIDChange} required>
                         {exercises.map((ex: any) => {
-                            return (<option value={ex.id}>
+                            return (
+                            <option
+                                key={ex.id}
+                                value={ex.id}
+                            >
                                 <span>{ex.title}</span>
                                 <span> | </span>
                                 <span className='text-xs'>{ex.description}</span>
