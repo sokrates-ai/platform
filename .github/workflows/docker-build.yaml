@@ -42,7 +42,7 @@ permissions:
 
 jobs:
   build-and-push:
-    runs-on: 2001-proj-sokrates 
+    runs-on: self-hosted
 
     steps:
       - name: Checkout repository
