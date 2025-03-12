@@ -36,6 +36,8 @@ export const useDrag = (
 			const canvasBounds = canvasElement.getBoundingClientRect();
 			const relativeX = e.clientX - canvasBounds.left;
 			const relativeY = e.clientY - canvasBounds.top;
+			console.log(e.clientX, e.clientY, "|", relativeX, relativeY)
+			
 			const localPos = stageRef.current.toLocal(new Point(relativeX, relativeY));
 			setPositionWrapper({ x: localPos.x, y: localPos.y });
 		}

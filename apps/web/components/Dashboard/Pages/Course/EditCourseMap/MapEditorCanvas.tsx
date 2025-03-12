@@ -10,12 +10,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { SCALE, WORLD_LIMIT_X, WORLD_LIMIT_Y } from './constants';
+import { Point } from 'pixi.js';
+
+const LS_MAP_STATE_KEY = 'map_state';
 
 export interface MapEditorCanvasProps {
 	courseStructure: any;
-	onChapterClick: (chapterID: number) => void;
-	readOnly: boolean;
 	onMapUpdateCallback?: Function;
+	onChapterClick: (chapterID: number) => void;
+	readOnly?: boolean;
 }
 
 export const clamp = (value: number, min: number, max: number): number =>
@@ -24,40 +27,17 @@ export const clamp = (value: number, min: number, max: number): number =>
 
 export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	courseStructure,
-	onChapterClick,
-	readOnly,
 	onMapUpdateCallback,
+	onChapterClick,
+	readOnly = false,
 }) => {
 	//#region STATE & REFS
 	const [offset, setOffset] = useState({ x: 0, y: 0 });
-
-	// const canvasElement = document.getElementById('canvas-parent');
-
 	const [size, setSize] = useState({
-		width: 0,//: window.innerWidth,
-		height: 0,//: window.innerHeight,
+		width: window.innerWidth,
+		height: window.innerHeight,
 		scale: SCALE,
 	});
-
-	// useEffect(() => {
-	// 	const canvasBounds = canvasElement?.getBoundingClientRect();
-
-	// 	if (!canvasBounds) {
-	// 		throw('bug')
-	// 	}
-
-	// 	const height = canvasBounds!.height
-	// 	const width = canvasBounds!.width
-
-	// 	setSize({
-	// 		height,
-	// 		width,
-	// 		scale: size.scale,
-	// 	})
-	// }, [canvasElement])
-
-	// console.log('render')
-
 	const targetOffsetRef = useRef(offset);
 
 	const initialElements: DraggableState[] = [];
@@ -69,6 +49,7 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 	const velocityRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 	const isAssetDraggingRef = useRef(false);
+	const containerRef = useRef<any>(null);
 	//#endregion
 
 	//#region HELPER FUNCTIONS
@@ -201,7 +182,6 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	//#region EFFECTS
 	// Hide context menu when clicking outside.
 	useEffect(() => {
-		console.log('context menu')
 		const handleClickOutside = () => {
 			if (contextMenu) setContextMenu(null);
 		};
@@ -211,12 +191,9 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 
 	// Adjust canvas size on window resize.
 	useEffect(() => {
-		console.log('resize')
-
 		const handleResize = () => {
 			const parentDiv = document.getElementById('canvas-parent');
 			if (!parentDiv) return;
-			console.log('set size called')
 			setSize({
 				width: parentDiv.clientWidth,
 				height: parentDiv.clientHeight,
@@ -230,7 +207,6 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 
 	// Prevent default wheel behavior on canvas.
 	useEffect(() => {
-		console.log('wheel')
 		const canvasParent = document.getElementById('canvas-parent');
 		if (!canvasParent) return;
 		const handleWheelPassive = (e: WheelEvent) => e.preventDefault();
@@ -240,15 +216,9 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 
 	// Animation loop for smooth panning.
 	useEffect(() => {
-		// console.log('pan')
 		let animationFrameId: number;
 		const animate = () => {
-			// if (offset.x !== 0 && offset.y !== 0)
-			// 	console.log('off', offset)
-
-			// console.log('animate')
-
-			const calc = (prev: any) => {
+			setOffset((prev) => {
 				if (!isDragging) {
 					velocityRef.current.x *= 0.95;
 					velocityRef.current.y *= 0.95;
@@ -261,13 +231,7 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 				const newX = clamp(prev.x + (targetOffsetRef.current.x - prev.x) * lerpFactor, -WORLD_LIMIT_X, WORLD_LIMIT_X);
 				const newY = clamp(prev.y + (targetOffsetRef.current.y - prev.y) * lerpFactor, -WORLD_LIMIT_Y, WORLD_LIMIT_Y);
 				return { x: newX, y: newY };
-			}
-
-			const newOffset = calc(offset)
-
-			if (newOffset.x !== offset.x || newOffset.y !== offset.y) {
-				setOffset(newOffset);
-			}
+			});
 			animationFrameId = requestAnimationFrame(animate);
 		};
 		animate();
@@ -276,7 +240,6 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 
 	// Merge chapter nodes with existing elements.
 	useEffect(() => {
-		console.log('merge')
 		if (!courseStructure || !courseStructure.chapters) return;
 		const chapters = courseStructure.chapters;
 		const currentChapterNodes = additionalElementsRef.current.filter(el => el.data.associatedWithChapterID !== null);
@@ -317,7 +280,6 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 
 	// Load saved state from backend (if available).
 	useEffect(() => {
-		console.log('load')
 		if (!courseStructure.map_state) {
 			console.warn("waiting for more course data...");
 			return;
@@ -348,10 +310,10 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	//#endregion
 
 	return (
-		<div className="flex" style={{ height: '100%', width: '100%', position: 'relative' }}>
+		<div className="flex w-full h-full" style={{ height: 'calc(100vh - 19rem)', position: 'relative' }}>
 			<div
 				id="canvas-parent"
-				style={{ width: readOnly ? '100%' : '100%', height: '100%', overscrollBehaviorX: 'none', position: 'relative' }}
+				style={{ width: '85%', height: '100%', overscrollBehaviorX: 'none' }}
 				onWheel={handleWheel}
 				onContextMenu={(e) => e.preventDefault()}
 				onDragOver={(e) => e.preventDefault()}
@@ -361,15 +323,18 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 					if (!spriteData) return;
 					const sprite = JSON.parse(spriteData);
 					const canvasElement = document.getElementById('canvas-parent');
-					const canvasBounds = canvasElement?.getBoundingClientRect();
-					if (!canvasBounds) return;
+					if (!canvasElement) return;
 
-					const stageX = e.clientX - canvasBounds.left;
-					const stageY = e.clientY - canvasBounds.top;
-					const containerScale = 0.1;
-					const localX = (stageX - offset.x) / containerScale;
-					const localY = (stageY - offset.y) / containerScale;
-					handleAddAssetAtDrop(sprite, localX, localY);
+					const canvasBounds = canvasElement?.getBoundingClientRect();
+					const relativeX = e.clientX - canvasBounds.left;
+					const relativeY = e.clientY - canvasBounds.top;
+
+					if (containerRef.current) {
+						// Use the Container's toLocal conversion for consistent positioning
+						const localPos = containerRef.current.toLocal(new Point(relativeX, relativeY));
+						console.log("DRAG AND DROP >>", e.clientX, e.clientY, relativeX, relativeY)
+						handleAddAssetAtDrop(sprite, localPos.x, localPos.y);
+					}
 				}}
 				onPointerDown={handlePointerDown}
 				onPointerMove={handlePointerMove}
@@ -377,16 +342,17 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 				onPointerCancel={handlePointerUp}
 			>
 				<Stage
+					id="stage"
 					width={size.width}
 					height={size.height}
 					options={{
 						background: 0x8da64a,
-						autoDensity: true,
-						resolution: window.devicePixelRatio * 4,
+						// autoDensity: true,
+						resolution: window.devicePixelRatio,
 						antialias: true,
 					}}
 				>
-					<Container scale={0.1} position={[offset.x, offset.y]}>
+					<Container ref={containerRef} scale={0.1} position={[offset.x, offset.y]}>
 						{additionalElements.map((sprite) => sprite.node)}
 					</Container>
 				</Stage>
@@ -451,14 +417,14 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 				</div>
 			)}
 
-			<div className="absolute bottom-0 left-0 w-full h-2">
+			<div className="absolute bottom-0 left-0 w-[85%] h-2">
 				<div
 					className="absolute h-full rounded-full bg-primary dark:bg-primary-foreground hover:bg-primary/80 dark:hover:bg-primary-foreground/80 transition-colors"
 					style={{ left: thumbLeft, width: thumbWidth }}
 				/>
 			</div>
 
-			<div className="absolute top-0 right-0 w-2 h-full">
+			<div className="absolute top-0 right-[15%] w-2 h-full">
 				<div
 					className="absolute w-full rounded-full bg-primary dark:bg-primary-foreground hover:bg-primary/80 dark:hover:bg-primary-foreground/80 transition-colors"
 					style={{ top: thumbTop, height: thumbHeight }}
