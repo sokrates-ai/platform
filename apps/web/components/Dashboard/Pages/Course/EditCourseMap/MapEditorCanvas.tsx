@@ -9,10 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { SCALE, WORLD_LIMIT_X, WORLD_LIMIT_Y } from './constants';
+import { WORLD_LIMIT_X, WORLD_LIMIT_Y, SCALE } from './constants';
 import { Point } from 'pixi.js';
 
 const LS_MAP_STATE_KEY = 'map_state';
+
+const DESIGN_WIDTH = 1920 * SCALE;
+const DESIGN_HEIGHT = 1080 * SCALE;
 
 export interface MapEditorCanvasProps {
 	courseStructure: any;
@@ -23,7 +26,6 @@ export interface MapEditorCanvasProps {
 
 export const clamp = (value: number, min: number, max: number): number =>
 	Math.max(min, Math.min(max, value));
-
 
 export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	courseStructure,
@@ -36,8 +38,8 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	const [size, setSize] = useState({
 		width: window.innerWidth,
 		height: window.innerHeight,
-		scale: SCALE,
 	});
+	const [scale, setScale] = useState(1);
 	const targetOffsetRef = useRef(offset);
 
 	const initialElements: DraggableState[] = [];
@@ -52,6 +54,15 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	const containerRef = useRef<any>(null);
 	//#endregion
 
+	//#region VIEWPORT SCALING
+	const calculateScale = useCallback((width: number, height: number) => {
+		const widthScale = width / DESIGN_WIDTH;
+		const heightScale = height / DESIGN_HEIGHT;
+
+		return Math.min(widthScale, heightScale);
+	}, []);
+	//#endregion
+
 	//#region HELPER FUNCTIONS
 	const spriteURL = (file: string): string => `/contentMap/${file}`;
 
@@ -60,7 +71,7 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 		if (index < 0) {
 			throw new Error('Bug: this cannot happen');
 		}
-		// Update the element’s position.
+		// Update the element's position.
 		additionalElementsRef.current[index].data.x = pos.x;
 		additionalElementsRef.current[index].data.y = pos.y;
 		setAdditionalElements(additionalElementsRef.current);
@@ -113,7 +124,6 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 			/>
 		);
 	}, [readOnly, onChapterClick]);
-
 	//#endregion
 
 	//#region EVENT HANDLERS
@@ -141,8 +151,11 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 
 	const handlePointerMove = (e: React.PointerEvent) => {
 		if (!isDragging || isAssetDraggingRef.current) return;
-		const deltaX = e.clientX - dragStartRef.current.x;
-		const deltaY = e.clientY - dragStartRef.current.y;
+
+		// Adjust delta based on the current scale
+		const deltaX = (e.clientX - dragStartRef.current.x) / scale;
+		const deltaY = (e.clientY - dragStartRef.current.y) / scale;
+
 		dragStartRef.current = { x: e.clientX, y: e.clientY };
 		targetOffsetRef.current = {
 			x: clamp(targetOffsetRef.current.x + deltaX, -WORLD_LIMIT_X, WORLD_LIMIT_X),
@@ -156,9 +169,10 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 	};
 
 	const handleWheel = (e: React.WheelEvent) => {
+		// Adjust wheel deltas based on scale
 		targetOffsetRef.current = {
-			x: clamp(targetOffsetRef.current.x - e.deltaX, -WORLD_LIMIT_X, WORLD_LIMIT_X),
-			y: clamp(targetOffsetRef.current.y - e.deltaY, -WORLD_LIMIT_Y, WORLD_LIMIT_Y)
+			x: clamp(targetOffsetRef.current.x - e.deltaX / scale, -WORLD_LIMIT_X, WORLD_LIMIT_X),
+			y: clamp(targetOffsetRef.current.y - e.deltaY / scale, -WORLD_LIMIT_Y, WORLD_LIMIT_Y)
 		};
 	};
 
@@ -189,21 +203,29 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 		return () => window.removeEventListener('click', handleClickOutside);
 	}, [contextMenu]);
 
-	// Adjust canvas size on window resize.
+	// Adjust canvas size and scale on window resize.
 	useEffect(() => {
 		const handleResize = () => {
 			const parentDiv = document.getElementById('canvas-parent');
 			if (!parentDiv) return;
+
+			const newWidth = parentDiv.clientWidth;
+			const newHeight = parentDiv.clientHeight;
+
+			// Calculate new scale based on available space
+			const newScale = calculateScale(newWidth, newHeight);
+
 			setSize({
-				width: parentDiv.clientWidth,
-				height: parentDiv.clientHeight,
-				scale: SCALE,
+				width: newWidth,
+				height: newHeight,
 			});
+			setScale(newScale);
 		};
+
 		window.addEventListener("resize", handleResize);
 		handleResize();
 		return () => window.removeEventListener("resize", handleResize);
-	}, []);
+	}, [calculateScale]);
 
 	// Prevent default wheel behavior on canvas.
 	useEffect(() => {
@@ -251,8 +273,8 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 			)
 			.map((chapter: any, index: number) => {
 				const padding = 1000;
-				const centerX = (size.width / 2) * SCALE;
-				const centerY = (size.height / 2) * SCALE;
+				const centerX = (DESIGN_WIDTH / 2);
+				const centerY = (DESIGN_HEIGHT / 2);
 				const offsetX = centerX - 100;
 				const offsetY = centerY + index * padding - (chapters.length * padding) / 2;
 				const data: DraggableStateData = {
@@ -278,7 +300,7 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 		const merged = [...nonChapterNodes, ...updatedChapterNodes, ...newChapterNodes];
 		additionalElementsRef.current = merged;
 		setAdditionalElementsState(merged);
-	}, [courseStructure, size, renderDraggableNode]);
+	}, [courseStructure, renderDraggableNode]);
 
 	// Load saved state from backend (if available).
 	useEffect(() => {
@@ -298,17 +320,6 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 			console.error("Failed to parse stored map state", error);
 		}
 	}, [renderDraggableNode, courseStructure]);
-	//#endregion
-
-	//#region CALC THUMB DIM
-	const worldWidth = WORLD_LIMIT_X * 2;
-	const worldHeight = WORLD_LIMIT_Y * 2;
-	const ratioX = size.width / worldWidth;
-	const ratioY = size.height / worldHeight;
-	const thumbWidth = ratioX * size.width;
-	const thumbHeight = ratioY * size.height;
-	const thumbLeft = (1 - ((offset.x + WORLD_LIMIT_X) / worldWidth)) * (size.width - thumbWidth);
-	const thumbTop = (1 - ((offset.y + WORLD_LIMIT_Y) / worldHeight)) * (size.height - thumbHeight);
 	//#endregion
 
 	return (
@@ -332,9 +343,8 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 					const relativeY = e.clientY - canvasBounds.top;
 
 					if (containerRef.current) {
-						// Use the Container's toLocal conversion for consistent positioning
+						// Convert screen coordinates to world coordinates, accounting for scale
 						const localPos = containerRef.current.toLocal(new Point(relativeX, relativeY));
-						console.log("DRAG AND DROP >>", e.clientX, e.clientY, relativeX, relativeY)
 						handleAddAssetAtDrop(sprite, localPos.x, localPos.y);
 					}
 				}}
@@ -349,12 +359,17 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 					height={size.height}
 					options={{
 						background: 0x8da64a,
-						// autoDensity: true,
-						resolution: window.devicePixelRatio,
+						autoDensity: true,
+						resolution: window.devicePixelRatio || 1,
 						antialias: true,
 					}}
 				>
-					<Container ref={containerRef} scale={0.1} position={[offset.x, offset.y]}>
+					<Container
+						ref={containerRef}
+						position={[size.width / 2, size.height / 2]}
+						scale={scale}
+						pivot={[-offset.x, -offset.y]}
+					>
 						{additionalElements.map((sprite) => sprite.node)}
 					</Container>
 				</Stage>
@@ -418,20 +433,6 @@ export const MapEditorCanvas: React.FC<MapEditorCanvasProps> = ({
 					</div>
 				</div>
 			)}
-
-			<div className="absolute bottom-0 left-0 w-[85%] h-2">
-				<div
-					className="absolute h-full rounded-full bg-primary dark:bg-primary-foreground hover:bg-primary/80 dark:hover:bg-primary-foreground/80 transition-colors"
-					style={{ left: thumbLeft, width: thumbWidth }}
-				/>
-			</div>
-
-			<div className="absolute top-0 right-[15%] w-2 h-full">
-				<div
-					className="absolute w-full rounded-full bg-primary dark:bg-primary-foreground hover:bg-primary/80 dark:hover:bg-primary-foreground/80 transition-colors"
-					style={{ top: thumbTop, height: thumbHeight }}
-				/>
-			</div>
 		</div>
 	);
 };
