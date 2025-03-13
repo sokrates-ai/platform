@@ -111,7 +111,7 @@ function CourseOverviewPage({ params }: { params: CourseOverviewParams }) {
 					transition={{ duration: 0.1, type: 'spring', stiffness: 80 }}
 					className="h-full overflow-y-auto"
 				>
-					{params.subpage == 'map' ? (<EditCourseMap orgslug={params.orgslug} onChapterClick={(a: number) => {console.log(a)}} />) : ('')}
+					{params.subpage == 'map' ? (<EditCourseMap orgslug={params.orgslug}/>) : ('')}
 					{params.subpage == 'content' ? (<EditCourseStructure orgslug={params.orgslug} />) : ('')}
 					{params.subpage == 'general' ? (<EditCourseGeneral orgslug={params.orgslug} />) : ('')}
 					{params.subpage == 'access' ? (<EditCourseAccess orgslug={params.orgslug} />) : ('')}
