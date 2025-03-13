@@ -243,6 +243,22 @@ def get_learnhouse_config() -> LearnHouseConfig:
     workspace_api_port = yaml_config.get("workspace_config", {}).get("workspace_api_port")
     workspace_external_base_url = yaml_config.get("workspace_config", {}).get("workspace_external_base_url")
 
+    # NOTE: workspace config can be overridden using environment variables.
+    workspace_api_host_ov = os.environ.get("LEARNHOUSE_WORKSPACE_API_HOST")
+    if workspace_api_host_ov is not None:
+        print("NOTE: using environment override from 'LEARNHOUSE_WORKSPACE_API_HOST'")
+        workspace_api_host = workspace_api_host_ov
+
+    workspace_api_port_ov = os.environ.get("LEARNHOUSE_WORKSPACE_API_PORT")
+    if workspace_api_port_ov is not None:
+        print("NOTE: using environment override from 'LEARNHOUSE_WORKSPACE_API_PORT'")
+        workspace_api_port = int(workspace_api_port_ov)
+
+    workspace_external_base_url_ov = os.environ.get("LEARNHOUSE_WORKSPACE_EXTERNAL_BASE_URL")
+    if workspace_external_base_url_ov is not None:
+        print("NOTE: using environment override from 'LEARNHOUSE_WORKSPACE_EXTERNAL_BASE_URL'")
+        workspace_external_base_url = workspace_external_base_url_ov
+
     # Redis config
     env_redis_connection_string = os.environ.get("LEARNHOUSE_REDIS_CONNECTION_STRING")
     redis_connection_string = env_redis_connection_string or yaml_config.get(

@@ -1,47 +1,115 @@
 services:
-  app:
-    image: ghcr.io/sokrates-ai/sk-platform:1.0.0 
-    ports:
-      - "8091:80"
-    volumes:
-      - .:/usr/learnhouse
-    env_file:
-      - ./extra/example-learnhouse-conf.env
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-  db:
-    image: postgres:16-alpine
-    restart: always
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=learnhouse
-      - POSTGRES_PASSWORD=learnhouse
-      - POSTGRES_DB=learnhouse
-    volumes:
-      - postgres:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U learnhouse"]
-      interval: 5s
-      timeout: 4s
-      retries: 5
-  redis:
-    image: redis:7.2.3
-    restart: always
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 4s
-      retries: 5
-  chromadb:
-    image: chromadb/chroma:0.5.16
-    ports:
-      - "8000:8000"
+    #
+    #
+    #
+    #########################
+    # WORKSPACE 0
+    #########################
+    #
+    #
+    #
+    sk-workspace-redis:
+        image: redis:latest
+        container_name: sk-workspace-redis
+        restart: always
+        volumes:
+            - ./redis_data:/data
+
+
+    sk-workspace-caddy:
+        container_name: sk-workspace-caddy
+        image: ghcr.io/sokrates-ai/sk-workspace-caddy:latest
+        restart: unless-stopped
+        environment:
+            - "SK_BACKEND_HOST=http://sk-workspace-backend"
+            - "SK_BACKEND_PORT=8000"
+            - "SK_FRONTEND_HOST=http://sk-workspace-frontend"
+            - "SK_FRONTEND_PORT=3000"
+        ports:
+            - 7007:80
+        depends_on:
+            - sk-workspace-backend
+            - sk-workspace-frontend
+
+    sk-workspace-frontend:
+        container_name: sk-workspace-fe
+        image: ghcr.io/sokrates-ai/sk-workspace-fe:latest
+        restart: unless-stopped
+
+    sk-workspace-backend:
+        container_name: sk-workspace-be
+        image: ghcr.io/sokrates-ai/sk-workspace-be:latest
+        restart: unless-stopped
+        environment:
+            - OPENAI_API_KEY="${SK_OPENAI_API_KEY}"
+            - TOGETHER_API_KEY="${SK_TOGETHER_API_KEY}"
+            - JWT_KEY="${SK_JWT_KEY}"
+
+            - PLATFORM_HOST="sk-workspace-redis"
+            - PLATFORM_PORT=1338
+
+            - REDIS_HOST=""
+            - REDIS_PORT=6379
+        depends_on:
+            - sk-workspace-redis
+
+    #
+    #
+    #
+    #########################
+    # PLATFORM
+    #########################
+    #
+    #
+    #
+    app:
+      image: ghcr.io/sokrates-ai/sk-platform:latest
+      ports:
+        - "8091:80"
+      volumes:
+        - learnhouse_prod:/usr/learnhouse
+      env_file:
+        - ./extra/example-learnhouse-conf.env
+      environment:
+        - LEARNHOUSE_WORKSPACE_API_HOST=foo
+        - LEARNHOUSE_WORKSPACE_API_PORT=1234
+        - LEARNHOUSE_WORKSPACE_EXTERNAL_BASE_URL=barbar
+      depends_on:
+        db:
+          condition: service_healthy
+        redis:
+          condition: service_healthy
+    db:
+      image: postgres:16-alpine
+      restart: always
+      ports:
+        - "5432:5432"
+      environment:
+        - POSTGRES_USER=learnhouse
+        - POSTGRES_PASSWORD=learnhouse
+        - POSTGRES_DB=learnhouse
+      volumes:
+        - postgres:/var/lib/postgresql/data
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U learnhouse"]
+        interval: 5s
+        timeout: 4s
+        retries: 5
+    redis:
+      image: redis:7.2.3
+      restart: always
+      ports:
+        - "6379:6379"
+      healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 5s
+        timeout: 4s
+        retries: 5
+    chromadb:
+      image: chromadb/chroma:0.5.16
+      ports:
+        - "8000:8000"
 
 volumes:
-  postgres:
+    postgres:
+    learnhouse_prod:

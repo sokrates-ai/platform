@@ -62,6 +62,7 @@ RUN ls -lah
 WORKDIR /app/api
 COPY ./apps/api ./
 RUN ls -lah
+COPY ./production_config.yaml ./config/config.yaml
 
 WORKDIR /app/
 COPY ./extra/Caddyfile /etc/caddy/Caddyfile

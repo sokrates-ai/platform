@@ -47,3 +47,6 @@ __pycache__/
 .flyio/
 fly.toml
 fedora-notes.md
+
+# Local deployment
+redis_data
