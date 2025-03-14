@@ -67,7 +67,7 @@ export const nextAuthOptions = {
 				path: '/',
 				// When working on localhost, the cookie domain must be omitted entirely (https://stackoverflow.com/a/1188145)
 				// Possible solution: omitting the domain as well
-				domain: undefined,
+				domain: '',
 				// domain: ".localhost",
 				secure: false,
 			},
