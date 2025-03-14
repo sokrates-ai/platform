@@ -26,23 +26,16 @@ const Canvas: React.FC<CanvasProps> = ({
     onChapterClick,
     readOnly = false,
 }) => {
-    // useAssetPreloader();
-
-    // Ref for the canvas container (used for drop events and context menu positioning).
     const parentRef = useRef<HTMLDivElement>(null);
     const [contextMenu, setContextMenu] = useState<ContextMenuData | null>(null);
     const [placedAssets, setPlacedAssets] = useState<any[]>([]);
     const [viewport, setViewport] = useState<any>(null);
     const contextMenuRef = useRef<HTMLDivElement>(null);
 
-    const hasLoadedMapState = useRef(false);
-
-    // Allow dropping by preventing default dragover behavior.
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
     };
 
-    // On drop, convert the drop position to world coordinates using the viewport.
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         const data = e.dataTransfer.getData("application/json");
@@ -74,13 +67,10 @@ const Canvas: React.FC<CanvasProps> = ({
         );
     };
 
-    // Callback when an asset is right-clicked.
     const handleAssetContextMenu = (assetId: number, pos: { clientX: number; clientY: number }) => {
-        // Prevent the default browser context menu.
         if (parentRef.current) {
             parentRef.current.oncontextmenu = (e) => e.preventDefault();
         }
-        // Set context menu state with absolute positioning.
         setContextMenu({
             assetId,
             x: `${pos.clientX}px`,
@@ -88,7 +78,6 @@ const Canvas: React.FC<CanvasProps> = ({
         });
     };
 
-    // Global pointerdown listener to close the context menu if clicking outside.
     useEffect(() => {
         const handlePointerDown = (e: PointerEvent) => {
             if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
@@ -96,7 +85,6 @@ const Canvas: React.FC<CanvasProps> = ({
             }
         };
 
-        // Delay adding the listener to avoid immediate closure.
         const timer = setTimeout(() => {
             document.addEventListener("pointerdown", handlePointerDown);
         }, 100);
@@ -107,76 +95,8 @@ const Canvas: React.FC<CanvasProps> = ({
         };
     }, [contextMenu]);
 
-    // Load saved state from backend (if available)
-    /*useEffect(() => {
-        if (!courseStructure?.map_state || hasLoadedMapState.current) {
-            return;
-        }
-        const objects = courseStructure.map_state.objects;
-        try {
-            setPlacedAssets(objects);
-            hasLoadedMapState.current = true;
-        } catch (error) {
-            console.error("Failed to parse stored map state", error);
-        }
-    }, [courseStructure]);
-    */
-
-    // merge chapter nodes into current assets
-    /*useEffect(() => {
-        if (!courseStructure?.chapters) return;
-        setPlacedAssets((prevAssets) => {
-            // Find chapter nodes already present.
-            const currentChapterNodes = prevAssets.filter(
-                (asset) => asset.associatedWithChapterID != null
-            );
-            // Only add chapters that are not already represented.
-            const missingChapters = courseStructure.chapters.filter(
-                (chapter: any) =>
-                    !currentChapterNodes.some(
-                        (asset: any) => asset.associatedWithChapterID === chapter.id
-                    )
-            );
-            if (missingChapters.length === 0) {
-                // No new chapter nodes to add.
-                return prevAssets;
-            }
-            const newChapterNodes = missingChapters.map((chapter: any, index: number) => {
-                const padding = 1000;
-                const centerX = WORLD_WIDTH / 2;
-                const centerY = WORLD_HEIGHT / 2;
-                const offsetX = centerX - 100;
-                const offsetY =
-                    centerY + index * padding - (courseStructure.chapters.length * padding) / 2;
-                const spriteFile = SPRITES[119 + index]?.file || SPRITES[100]?.file;
-                return {
-                    id: -chapter.id, // Negative ID to indicate a chapter node.
-                    file: spriteFile,
-                    label: `${chapter.id}`,
-                    scale: 0.2,
-                    x: offsetX,
-                    y: offsetY,
-                    associatedWithChapterID: chapter.id,
-                };
-            });
-            return [...prevAssets, ...newChapterNodes];
-        });
-    }, [courseStructure?.chapters]);
-    */
-
-    // serialize and send out current map state
-    /*useEffect(() => {
-        if (onMapUpdateCallback) {
-            onMapUpdateCallback(placedAssets);
-        } else {
-            console.warn("map update is not ready: ", onMapUpdateCallback);
-        }
-    }, [placedAssets, onMapUpdateCallback]);
-    */
-
     return (
         <div style={{ width: "100%", height: "100%", display: "flex" }}>
-            {/* Canvas area with drop handlers */}
             <div
                 ref={parentRef}
                 id="canvas-parent"
@@ -184,20 +104,17 @@ const Canvas: React.FC<CanvasProps> = ({
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
             >
-                <Application
-                    backgroundColor={0x8da64a}
-                    autoDensity={true}
-                    resizeTo={parentRef}
-                >
+                <Application backgroundColor={0x8da64a} autoDensity={true} resizeTo={parentRef}>
                     <CanvasViewport
                         placedAssets={placedAssets}
                         onViewportReady={setViewport}
                         onAssetPositionChange={handleAssetPositionChange}
                         onAssetContextMenu={handleAssetContextMenu}
+                        onChapterClick={onChapterClick}
+                        readOnly={readOnly}
                     />
                 </Application>
             </div>
-            {/* Asset library panel */}
             {!readOnly && (
                 <div className="border-l bg-card h-full overflow-y-auto w-80">
                     <div className="p-3 border-b">
@@ -231,7 +148,6 @@ const Canvas: React.FC<CanvasProps> = ({
                     </div>
                 </div>
             )}
-            {/* Context Menu */}
             {contextMenu && (
                 <div
                     ref={contextMenuRef}

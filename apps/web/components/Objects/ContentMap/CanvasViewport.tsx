@@ -11,6 +11,8 @@ interface CanvasViewportProps {
     onViewportReady?: (viewport: Viewport) => void;
     onAssetPositionChange: (id: number, x: number, y: number) => void;
     onAssetContextMenu?: (assetId: number, pos: { clientX: number; clientY: number }) => void;
+    onChapterClick?: (chapterID: number) => void;
+    readOnly: boolean;
 }
 
 const CanvasViewport: React.FC<CanvasViewportProps> = ({
@@ -18,13 +20,13 @@ const CanvasViewport: React.FC<CanvasViewportProps> = ({
     onViewportReady,
     onAssetPositionChange,
     onAssetContextMenu,
+    onChapterClick,
+    readOnly,
 }) => {
     const { app } = useApplication();
     const [viewport, setViewport] = useState<Viewport | null>(null);
-    // Use a ref to hold current drag data.
     const dragDataRef = useRef<{ assetId: number } | null>(null);
 
-    // Callback ref to store the viewport instance.
     const viewportRef = useCallback(
         (node: Viewport | null) => {
             if (node) {
@@ -42,7 +44,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = ({
         }
     }, [viewport]);
 
-    // Update asset's position during a global pointer move.
+    // Global pointer move to update asset position
     const onGlobalMove = useCallback(
         (e: PointerEvent) => {
             if (!dragDataRef.current || !viewport || !onAssetPositionChange) return;
@@ -58,7 +60,6 @@ const CanvasViewport: React.FC<CanvasViewportProps> = ({
         [viewport, onAssetPositionChange]
     );
 
-    // End dragging on pointer up.
     const onGlobalUp = useCallback(
         (e: PointerEvent) => {
             if (viewport && viewport.plugins) {
@@ -71,36 +72,44 @@ const CanvasViewport: React.FC<CanvasViewportProps> = ({
         [viewport, onGlobalMove]
     );
 
-    // Handle pointer down on an asset.
     const handlePointerDown = (e: any, asset: any) => {
+        if (readOnly) return;
+
         e.stopPropagation();
-        const originalEvent = e.data?.originalEvent;
-        if (originalEvent?.button === 2) {
-            // Right-click: show context menu.
+
+        const originalEvent = e.data?.originalEvent || e.nativeEvent || e;
+        if (!originalEvent) return;
+
+        if (asset.type === "chapter") {
+            if (originalEvent.button === 0) {
+                onChapterClick && onChapterClick(asset.id);
+            }
+            return;
+        }
+
+        if (originalEvent.button === 2) {
             originalEvent.preventDefault();
-            if (onAssetContextMenu) {
+            onAssetContextMenu &&
                 onAssetContextMenu(asset.id, {
                     clientX: originalEvent.clientX,
                     clientY: originalEvent.clientY,
                 });
-            }
             return;
         }
-        // Left-click: start dragging.
-        if (viewport && viewport.plugins) {
-            viewport.plugins.pause("drag");
+
+        if (originalEvent.button === 0) {
+            if (viewport && viewport.plugins) {
+                viewport.plugins.pause("drag");
+            }
+            dragDataRef.current = { assetId: asset.id };
+            window.addEventListener("pointermove", onGlobalMove);
+            window.addEventListener("pointerup", onGlobalUp);
         }
-        dragDataRef.current = { assetId: asset.id };
-        window.addEventListener("pointermove", onGlobalMove);
-        window.addEventListener("pointerup", onGlobalUp);
     };
 
     if (!app || !app.renderer) return null;
 
-    // Helper to build the sprite URL.
-    const spriteURL = useCallback((file: string) => {
-        return `/contentMap/${file}`;
-      }, []);
+    const spriteURL = useCallback((file: string) => `/contentMap/${file}`, []);
 
     return (
         <viewport

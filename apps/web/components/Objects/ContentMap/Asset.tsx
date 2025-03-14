@@ -13,6 +13,7 @@ interface AssetProps {
         scale: number;
         file: string;
         label: string;
+        type: string;
     };
     spriteURL: (file: string) => string;
     onPointerDown: (e: any, asset: any) => void;
@@ -21,7 +22,6 @@ interface AssetProps {
 const Asset: React.FC<AssetProps> = ({ asset, spriteURL, onPointerDown }) => {
     const [texture, setTexture] = useState<PIXI.Texture | null>(null);
     const hasLoaded = useRef(false);
-
     const { file } = asset;
 
     useEffect(() => {
@@ -38,11 +38,11 @@ const Asset: React.FC<AssetProps> = ({ asset, spriteURL, onPointerDown }) => {
     }, [file, spriteURL]);
 
     if (!texture) {
-        // Optionally return a placeholder while loading.
         return null;
     }
 
     return (
+        // TODO: Add "special rendering logic" if the asset is of a specific type -> maybe solve this with a subcomponent?
         <pixiSprite
             texture={texture}
             x={asset.x}
