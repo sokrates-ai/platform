@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef, memo } from "react";
 import { Viewport } from "pixi-viewport";
 import { useApplication, extend } from "@pixi/react";
 import { WORLD_WIDTH, WORLD_HEIGHT } from "./constants";
@@ -15,7 +15,7 @@ interface CanvasViewportProps {
     readOnly: boolean;
 }
 
-const CanvasViewport: React.FC<CanvasViewportProps> = ({
+const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     placedAssets,
     onViewportReady,
     onAssetPositionChange,
@@ -26,15 +26,20 @@ const CanvasViewport: React.FC<CanvasViewportProps> = ({
     const { app } = useApplication();
     const [viewport, setViewport] = useState<Viewport | null>(null);
     const dragDataRef = useRef<{ assetId: number, offsetX: number, offsetY: number } | null>(null);
+    const canvasElementRef = useRef<HTMLElement | null>(null);
+
+    useEffect(() => {
+        canvasElementRef.current = document.getElementById("canvas-parent");
+    }, []);
 
     const viewportRef = useCallback(
         (node: Viewport | null) => {
-            if (node) {
+            if (node && node !== viewport) {
                 setViewport(node);
                 onViewportReady && onViewportReady(node);
             }
         },
-        [onViewportReady]
+        [viewport, onViewportReady]
     );
 
     useEffect(() => {
@@ -44,17 +49,15 @@ const CanvasViewport: React.FC<CanvasViewportProps> = ({
         }
     }, [viewport]);
 
-    // Global pointer move to update asset position
     const onGlobalMove = useCallback(
         (e: PointerEvent) => {
             if (!dragDataRef.current || !viewport || !onAssetPositionChange) return;
-            const canvasElement = document.getElementById("canvas-parent");
+            const canvasElement = canvasElementRef.current;
             if (canvasElement) {
                 const rect = canvasElement.getBoundingClientRect();
                 const localX = e.clientX - rect.left;
                 const localY = e.clientY - rect.top;
                 const worldPos = viewport.toWorld(localX, localY);
-                // Subtract the initial offset so the asset stays relative to the click position
                 onAssetPositionChange(
                     dragDataRef.current.assetId,
                     worldPos.x - dragDataRef.current.offsetX,
@@ -64,7 +67,6 @@ const CanvasViewport: React.FC<CanvasViewportProps> = ({
         },
         [viewport, onAssetPositionChange]
     );
-
 
     const onGlobalUp = useCallback(
         (e: PointerEvent) => {
@@ -78,7 +80,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = ({
         [viewport, onGlobalMove]
     );
 
-    const handlePointerDown = (e: any, asset: any) => {
+    const handlePointerDown = useCallback((e: any, asset: any) => {
         if (readOnly) return;
 
         e.stopPropagation();
@@ -107,8 +109,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = ({
             if (viewport && viewport.plugins) {
                 viewport.plugins.pause("drag");
             }
-            // Calculate the offset between the pointer and asset's position
-            const canvasElement = document.getElementById("canvas-parent");
+            const canvasElement = canvasElementRef.current;
             let offsetX = 0;
             let offsetY = 0;
             if (canvasElement && viewport) {
@@ -123,12 +124,11 @@ const CanvasViewport: React.FC<CanvasViewportProps> = ({
             window.addEventListener("pointermove", onGlobalMove);
             window.addEventListener("pointerup", onGlobalUp);
         }
-    };
-
-
-    if (!app || !app.renderer) return null;
+    }, [viewport, onGlobalMove, onGlobalUp, onAssetContextMenu, onChapterClick, readOnly]);
 
     const spriteURL = useCallback((file: string) => `/contentMap/${file}`, []);
+
+    if (!app || !app.renderer) return null;
 
     return (
         <viewport
@@ -147,6 +147,6 @@ const CanvasViewport: React.FC<CanvasViewportProps> = ({
             ))}
         </viewport>
     );
-};
+});
 
 export default CanvasViewport;

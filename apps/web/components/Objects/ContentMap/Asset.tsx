@@ -19,7 +19,7 @@ interface AssetProps {
     onPointerDown: (e: any, asset: any) => void;
 }
 
-const Asset: React.FC<AssetProps> = ({ asset, spriteURL, onPointerDown }) => {
+const Asset: React.FC<AssetProps> = React.memo(({ asset, spriteURL, onPointerDown }) => {
     const [texture, setTexture] = useState<PIXI.Texture | null>(null);
     const hasLoaded = useRef(false);
     const { file } = asset;
@@ -52,6 +52,6 @@ const Asset: React.FC<AssetProps> = ({ asset, spriteURL, onPointerDown }) => {
             onPointerDown={(e: PIXI.FederatedPointerEvent) => onPointerDown(e, asset)}
         />
     );
-};
+});
 
 export default Asset;

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import { Application } from "@pixi/react";
 import CanvasViewport from "./CanvasViewport";
 import { SPRITES } from "./spriteIndex";
@@ -61,13 +61,13 @@ const Canvas: React.FC<CanvasProps> = ({
         }
     };
 
-    const handleAssetPositionChange = (id: number, newX: number, newY: number) => {
+    const handleAssetPositionChange = useCallback((id: number, newX: number, newY: number) => {
         setPlacedAssets((assets) =>
             assets.map((asset) => (asset.id === id ? { ...asset, x: newX, y: newY } : asset))
         );
-    };
+    }, []);
 
-    const handleAssetContextMenu = (assetId: number, pos: { clientX: number; clientY: number }) => {
+    const handleAssetContextMenu = useCallback((assetId: number, pos: { clientX: number; clientY: number }) => {
         if (parentRef.current) {
             parentRef.current.oncontextmenu = (e) => e.preventDefault();
         }
@@ -76,7 +76,7 @@ const Canvas: React.FC<CanvasProps> = ({
             x: `${pos.clientX}px`,
             y: `${pos.clientY}px`,
         });
-    };
+    }, []);
 
     useEffect(() => {
         const handlePointerDown = (e: PointerEvent) => {
