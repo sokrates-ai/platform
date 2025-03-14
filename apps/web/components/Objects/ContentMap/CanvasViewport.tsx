@@ -25,7 +25,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = ({
 }) => {
     const { app } = useApplication();
     const [viewport, setViewport] = useState<Viewport | null>(null);
-    const dragDataRef = useRef<{ assetId: number } | null>(null);
+    const dragDataRef = useRef<{ assetId: number, offsetX: number, offsetY: number } | null>(null);
 
     const viewportRef = useCallback(
         (node: Viewport | null) => {
@@ -54,11 +54,17 @@ const CanvasViewport: React.FC<CanvasViewportProps> = ({
                 const localX = e.clientX - rect.left;
                 const localY = e.clientY - rect.top;
                 const worldPos = viewport.toWorld(localX, localY);
-                onAssetPositionChange(dragDataRef.current.assetId, worldPos.x, worldPos.y);
+                // Subtract the initial offset so the asset stays relative to the click position
+                onAssetPositionChange(
+                    dragDataRef.current.assetId,
+                    worldPos.x - dragDataRef.current.offsetX,
+                    worldPos.y - dragDataRef.current.offsetY
+                );
             }
         },
         [viewport, onAssetPositionChange]
     );
+
 
     const onGlobalUp = useCallback(
         (e: PointerEvent) => {
@@ -101,11 +107,24 @@ const CanvasViewport: React.FC<CanvasViewportProps> = ({
             if (viewport && viewport.plugins) {
                 viewport.plugins.pause("drag");
             }
-            dragDataRef.current = { assetId: asset.id };
+            // Calculate the offset between the pointer and asset's position
+            const canvasElement = document.getElementById("canvas-parent");
+            let offsetX = 0;
+            let offsetY = 0;
+            if (canvasElement && viewport) {
+                const rect = canvasElement.getBoundingClientRect();
+                const localX = originalEvent.clientX - rect.left;
+                const localY = originalEvent.clientY - rect.top;
+                const worldPos = viewport.toWorld(localX, localY);
+                offsetX = worldPos.x - asset.x;
+                offsetY = worldPos.y - asset.y;
+            }
+            dragDataRef.current = { assetId: asset.id, offsetX, offsetY };
             window.addEventListener("pointermove", onGlobalMove);
             window.addEventListener("pointerup", onGlobalUp);
         }
     };
+
 
     if (!app || !app.renderer) return null;
 
