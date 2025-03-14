@@ -39,6 +39,7 @@ ENV NEXT_PUBLIC_LEARNHOUSE_BASE_URL=http://localhost
 ENV NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL=http://localhost/
 # TODO: this could also be completely fucked?
 ENV NEXT_PUBLIC_LEARNHOUSE_DOMAIN=http://localhost:8091
+ENV NEXT_PUBLIC_LEARNHOUSE_HTTPS=true
 
 COPY ./apps/web/ /app/web
 WORKDIR /app/web
