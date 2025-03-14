@@ -8,6 +8,7 @@ import {
 } from './services/config/config'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { DEFAULT_CIPHERS } from 'tls'
 
 export const config = {
   matcher: [
@@ -139,7 +140,26 @@ export default async function middleware(req: NextRequest) {
       }
       return NextResponse.redirect(redirectUrl)
     } else {
-      return 'Did not find the orgslug in the cookie'
+      const orgslug = getDefaultOrg()
+
+      if (!orgslug) {
+        throw("This is broken")
+      }
+
+      const searchParams = req.nextUrl.searchParams
+      const queryString = searchParams.toString()
+      const redirectPathname = '/'
+      const redirectUrl = new URL(
+        getUriWithOrg(orgslug, redirectPathname),
+        req.url
+      )
+
+      if (queryString) {
+        redirectUrl.search = queryString
+      }
+      return NextResponse.redirect(redirectUrl)
+
+      // return 'Did not find the orgslug in the cookie'
     }
   }
 
