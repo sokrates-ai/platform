@@ -62,4 +62,6 @@ const Asset: React.FC<AssetProps> = React.memo(({ asset, spriteURL, onPointerDow
     );
 });
 
+Asset.displayName = 'Asset';
+
 export default Asset;

@@ -30,8 +30,6 @@ import { useCourse } from '@components/Contexts/CourseContext'
 import toast from 'react-hot-toast'
 import { useMediaQuery } from 'usehooks-ts'
 import ToolTip from '@components/Objects/StyledElements/Tooltip/Tooltip'
-import { DisplayObject } from 'pixi.js'
-import { getDisplayName } from 'next/dist/shared/lib/utils'
 
 type ActivitiyElementProps = {
   orgslug: string

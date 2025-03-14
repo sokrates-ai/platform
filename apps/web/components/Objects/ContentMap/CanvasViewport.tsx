@@ -136,6 +136,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     if (!app || !app.renderer) return null;
 
     return (
+        // @ts-expect-error: This is not being recognized by typescript, though it is registered in global.d.ts
         <viewport
             ref={viewportRef}
             worldWidth={WORLD_WIDTH}
@@ -150,8 +151,11 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
                     onPointerDown={handlePointerDown}
                 />
             ))}
+        {/* @ts-expect-error: This is not being recognized by typescript, though it is registered in global.d.ts */}
         </viewport>
     );
 });
+
+CanvasViewport.displayName = 'CanvasViewport';
 
 export default CanvasViewport;
