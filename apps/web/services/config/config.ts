@@ -59,8 +59,7 @@ export const getAPIUrl = () => {
         url = LEARNHOUSE_API_URL
     } else {
         const fullhost = window.location.host;
-        const proto = window.location.protocol;
-        url = `${proto}//${fullhost}/api/v1/`
+        url = `${LEARNHOUSE_HTTP_PROTOCOL}//${fullhost}/api/v1/`
     }
 
     return url
