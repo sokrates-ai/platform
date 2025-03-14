@@ -9,6 +9,12 @@ import { getResponseMetadata } from '@services/utils/ts/requests'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
 
+const domain = `.${LEARNHOUSE_TOP_DOMAIN()}`
+
+function getDomain(): string {
+	console.log(`DOMAIN: ${domain}`)
+	return domain
+}
 
 export const nextAuthOptions = {
 	debug: true,
@@ -59,7 +65,8 @@ export const nextAuthOptions = {
 				sameSite: 'lax',
 				path: '/',
 				// When working on localhost, the cookie domain must be omitted entirely (https://stackoverflow.com/a/1188145)
-				domain: `.${LEARNHOUSE_TOP_DOMAIN()}`,
+				// Possible solution: omitting the domain as well
+				domain: '',
 				// domain: ".localhost",
 				secure: false,
 			},
