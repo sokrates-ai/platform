@@ -78,8 +78,8 @@ export default async function middleware(req: NextRequest) {
         // domain: window.location.hostname // LEARNHOUSE_TOP_DOMAIN == 'localhost' ? '' : LEARNHOUSE_TOP_DOMAIN,
         // TODO: this is also completely fucked rn
         // domain: '.localhost'
-        // domain: `.${LEARNHOUSE_TOP_DOMAIN()}`
-        domain: undefined
+        domain: `.${LEARNHOUSE_TOP_DOMAIN()}`
+        // domain: undefined
       })
     }
     return response
