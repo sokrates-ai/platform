@@ -55,7 +55,7 @@ export const nextAuthOptions = {
 			// name: `${!isDevEnv ? '__Secure-' : ''}next-auth.session-token`,
 			name: `next-auth.session-token`,
 			options: {
-				httpOnly: true,
+				httpOnly: false,
 				sameSite: 'lax',
 				path: '/',
 				// When working on localhost, the cookie domain must be omitted entirely (https://stackoverflow.com/a/1188145)
