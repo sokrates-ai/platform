@@ -5,12 +5,11 @@ import { useSearchParams } from 'next/navigation'
 import GeneralWrapperStyled from '@components/Objects/StyledElements/Wrappers/GeneralWrapper'
 import TypeOfContentTitle from '@components/Objects/StyledElements/Titles/TypeOfContentTitle'
 import AuthenticatedClientElement from '@components/Security/AuthenticatedClientElement'
-import CourseThumbnail from '@components/Objects/Thumbnails/CourseThumbnail'
 import useAdminStatus from '@components/Hooks/useAdminStatus'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardContent } from "@components/ui/card"
-import { Alert, AlertDescription, AlertTitle } from "@components/ui/alert"
+import CourseCard from '@components/Objects/StyledElements/Cards/CourseCard'
+import NoCoursesAlert from '@components/Objects/StyledElements/Alerts/NoCourseAlert'
 
 interface CourseProps {
   orgslug: string
@@ -62,26 +61,11 @@ function Courses(props: CourseProps) {
 
 					<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 						{courses.map((course: any) => (
-							<Card key={course.course_uuid}>
-                <CardHeader>
-                  <CardTitle>{course.name}</CardTitle>
-                </CardHeader>
-                  <CardContent>
-                    <CourseThumbnail course={course} orgslug={orgslug} />
-                  </CardContent>
-							</Card>
+                  <CourseCard key={course.course_uuid} course={course} orgslug={orgslug} />
 						))}
 
-                  {courses.length === 0 && (
-                    <div className="col-span-full flex justify-center">
-                      <Alert variant="default" className="max-w-md">
-                        <AlertTitle>No courses yet</AlertTitle>
-                        <AlertDescription>
-                          {isUserAdmin ? "Create a course to add content." : "No courses available yet."}
-                        </AlertDescription>
-                      </Alert>
-                    </div>
-                  )}
+              {courses.length === 0
+               && <NoCoursesAlert isUserAdmin={isUserAdmin} />}
             
           </div>
         </div>

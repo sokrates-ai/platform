@@ -2,22 +2,18 @@
 import React from 'react'
 import Link from 'next/link'
 import { getUriWithOrg } from '@services/config/config'
-import { HeaderProfileBox } from '@components/Security/HeaderProfileBox'
-
 import { getOrgLogoMediaDirectory } from '@services/media/media'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
-
-import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet"
 import { Button } from '@components/ui/button'
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink } from "@/components/ui/navigation-menu"
 import { Tooltip, TooltipContent,TooltipProvider,TooltipTrigger } from '@components/ui/tooltip'
-
-import { Backpack, BookCopy, Home,School,  Users } from 'lucide-react'
-
+import { Backpack, Home,School,  Users } from 'lucide-react'
 import logo_black from '@public/black_logo.svg'
 import Image from 'next/image'
 import MenuLinks from '@components/Objects/Menus/OrgMenuLinks'
+import useAdminStatus from '@components/Hooks/useAdminStatus'
+import { NewHeaderProfileBox } from '@components/Security/NewHeaderProfileBox'
 
 
 
@@ -26,6 +22,7 @@ export const DashLeftMenu = (props: any) => {
   const session = useLHSession() as any
   const org = useOrg() as any
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
+  const isUserAdmin = useAdminStatus() as any
 
 
   return (
@@ -69,35 +66,10 @@ export const DashLeftMenu = (props: any) => {
                           </Link>
                     </TooltipTrigger>
                     <TooltipContent
-                    >Home</TooltipContent>
+                    >Dashboard</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-
-                <TooltipProvider>
-                  <Tooltip> 
-                    <TooltipTrigger>
-                        <Link href={'/dash/courses'} >
-                            <Button variant="ghost" size="icon">
-                            <BookCopy size={18} />
-                            </Button>
-                          </Link>
-                    </TooltipTrigger>
-                    <TooltipContent
-                    >Courses</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                {/* <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                            <Button variant="ghost" size="icon" onClick={logout}>
-                              <Logout size={18} />
-                            </Button>
-                    </TooltipTrigger>
-                    <TooltipContent
-                    >Exercises</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider> */}
+                
 
                 <TooltipProvider>
                   <Tooltip>
@@ -142,46 +114,15 @@ export const DashLeftMenu = (props: any) => {
                 </TooltipProvider>
 
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="hidden md:flex">
-              <HeaderProfileBox />
-            </div>
-                  
-            
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left">
-                <div className="flex flex-col space-y-4">
-                  <MenuLinks orgslug={orgslug} />
-                  <div className="border-t border-gray-200 pt-4">
-                    <HeaderProfileBox />
-                  </div>
-                </div>
-              </SheetContent>
-            </Sheet>
 
-          </div>
+
+          <NewHeaderProfileBox></NewHeaderProfileBox>
+         
+                  
         </div>
       </div>
-      <div
-        className={`fixed inset-x-0 z-40 bg-white/80 backdrop-blur-lg md:hidden shadow-lg transition-all duration-300 ease-in-out ${isMenuOpen ? 'top-[60px] opacity-100' : '-top-full opacity-0'
-          }`}
-      >
-        <div className="flex flex-col px-4 py-3 space-y-4 justify-center items-center">
-          <div className="py-4">
-            <MenuLinks orgslug={orgslug} />
-          </div>menu
-          <div className="border-t border-gray-200menu">
-            <HeaderProfileBox />
-          </div>
-        </div>
-      </div>
+      
+      
     </>
   )
 }

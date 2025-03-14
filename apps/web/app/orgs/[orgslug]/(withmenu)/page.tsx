@@ -7,15 +7,12 @@ import { getOrganizationContextInfo } from '@services/organizations/orgs'
 import GeneralWrapperStyled from '@components/Objects/StyledElements/Wrappers/GeneralWrapper'
 import { Button } from '@components/ui/button'
 import TypeOfContentTitle from '@components/Objects/StyledElements/Titles/TypeOfContentTitle'
-import CourseThumbnail from '@components/Objects/Thumbnails/CourseThumbnail'
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import AuthenticatedClientElement from '@components/Security/AuthenticatedClientElement'
-import ContentPlaceHolderIfUserIsNotAdmin from '@components/Objects/ContentPlaceHolder'
 import { getServerSession } from 'next-auth'
 import { nextAuthOptions } from 'app/auth/options'
 import { getOrgThumbnailMediaDirectory } from '@services/media/media'
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-
+import CourseCard from '@components/Objects/StyledElements/Cards/CourseCard'
+import NoCoursesAlert from '@components/Objects/StyledElements/Alerts/NoCourseAlert'
 
 
 
@@ -101,30 +98,12 @@ const OrgHomePage = async (params: any) => {
 
 					<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 						{courses.map((course: any) => (
-							<Card key={course.course_uuid}>
-							<CardHeader>
-							<CardTitle>{course.name}</CardTitle>
-							</CardHeader>
-							<CardContent>
-							<CourseThumbnail course={course} orgslug={orgslug} />
-							</CardContent>
-							</Card>
+						
+						<CourseCard key={course.course_uuid} course={course} orgslug={orgslug} />
 						))}
 
 
-						{courses.length === 0 && (
-							<div className="col-span-full flex justify-center">
-							
-							<Alert variant="default" className='max-w-md' >
-							<AlertTitle>No courses yet</AlertTitle>
-							<AlertDescription>
-								<ContentPlaceHolderIfUserIsNotAdmin text="Create courses to add content" />
-							</AlertDescription>
-							</Alert>
-
-
-							</div>
-						)}
+						{courses.length === 0 && courses.length === 0 && <NoCoursesAlert text="Create courses to add content" />}
 					</div>
 				</div>
 			</GeneralWrapperStyled>

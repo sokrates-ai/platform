@@ -33,7 +33,7 @@ function DashMobileMenu() {
           <ToolTip content={'Courses'} slateBlack sideOffset={8} side="top">
             <Link href={`/dash/courses`} className="flex flex-col items-center p-2">
               <BookCopy size={20} />
-              <span className="text-xs mt-1">Courses</span>
+              <span className="text-xs mt-1">Courses</span> 
             </Link>
           </ToolTip>
           <ToolTip content={'Assignments'} slateBlack sideOffset={8} side="top">

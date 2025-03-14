@@ -51,6 +51,7 @@ export const HeaderProfileBox = () => {
                   <Package2 size={14} />
                 </Link>
               </Tooltip>
+              
               <Tooltip 
                 content={"Your Settings"}
                 sideOffset={15}

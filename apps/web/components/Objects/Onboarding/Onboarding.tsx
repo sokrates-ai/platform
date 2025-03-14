@@ -8,7 +8,7 @@ import OnBoardAI from '@public/onboarding/OnBoardAI.png';
 import OnBoardUGs from '@public/onboarding/OnBoardUGs.png';
 import OnBoardAccess from '@public/onboarding/OnBoardAccess.png';
 import OnBoardMore from '@public/onboarding/OnBoardMore.png';
-import { ArrowRight, Book, Check, Globe, Info, PictureInPicture, Sparkle, Sprout, SquareUser, ArrowRightLeft } from 'lucide-react';
+import { ArrowRight, Book, Check, Globe, Info, PictureInPicture, Sparkle, Sprout, SquareUser, ArrowRightLeft, ArrowLeftRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getUriWithOrg } from '@services/config/config';
 import { useOrg } from '@components/Contexts/OrgContext';
@@ -166,7 +166,8 @@ const Onboarding: React.FC = () => {
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen} >
           <DialogTrigger asChild>
             <div className=' fixed pb-10 w-full bottom-0 bg-gradient-to-t from-1% from-gray-950/25 to-transparent'>
-              <div className='bg-gray-950 flex space-x-2 font-bold cursor-pointer hover:bg-gray-900 shadow-md items-center text-gray-200 px-5 py-2 w-fit rounded-full mx-auto'>
+              <div className='bg-gray-950 flex space-x-1 font-bold cursor-pointer hover:bg-gray-900 shadow-md items-center text-gray-200 px-5 py-2 w-fit rounded-full mx-auto'>
+                <ArrowLeftRight size={20} />
                 <ArrowRightLeft size={20} />
                 <p>Onboarding</p>
                 <div className='h-2 w-2 bg-blue-500 animate-pulse rounded-full'></div>
@@ -241,7 +242,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
           <div className='utils_buttons flex flex-row space-x-2'>
 
             <Button
-              variant='secondary'
+              variant='destructive'
               onClick={() => setIsModalOpen(false)}
             >
               <PictureInPicture size={16} />

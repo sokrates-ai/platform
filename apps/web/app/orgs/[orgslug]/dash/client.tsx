@@ -3,11 +3,11 @@ import BreadCrumbs from '@components/Dashboard/Misc/BreadCrumbs'
 import CreateCourseModal from '@components/Objects/Modals/Course/Create/CreateCourse'
 import CourseThumbnail, { removeCoursePrefix } from '@components/Objects/Thumbnails/CourseThumbnail'
 import AuthenticatedClientElement from '@components/Security/AuthenticatedClientElement'
-import NewCourseButton from '@components/Objects/StyledElements/Buttons/NewCourseButton'
-import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import { useSearchParams } from 'next/navigation'
 import React from 'react'
 import useAdminStatus from '@components/Hooks/useAdminStatus'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 type CourseProps = {
   orgslug: string
@@ -39,24 +39,19 @@ function CoursesHome(params: CourseProps) {
             ressourceType="courses"
             orgId={params.org_id}
           >
-            <Modal
-              isDialogOpen={newCourseModal}
-              onOpenChange={setNewCourseModal}
-              minHeight="md"
-              dialogContent={
-                <CreateCourseModal
-                  closeModal={closeNewCourseModal}
-                  orgslug={orgslug}
-                />
-              }
-              dialogTitle="Create Course"
-              dialogDescription="Create a new course"
-              dialogTrigger={
-                <button>
-                  <NewCourseButton />
-                </button>
-              }
-            />
+               <Dialog open={newCourseModal} onOpenChange={setNewCourseModal}>
+                    <DialogTrigger asChild>
+                        <Button variant="default">Create Course</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                        <DialogTitle>Create Course</DialogTitle>
+                        </DialogHeader>
+                        <CreateCourseModal closeModal={closeNewCourseModal} orgslug={orgslug} />
+                    </DialogContent>
+                  </Dialog>
+         
+
           </AuthenticatedClientElement>
         </div>
       </div>
@@ -67,6 +62,7 @@ function CoursesHome(params: CourseProps) {
             <CourseThumbnail customLink={`/dash/courses/course/${removeCoursePrefix(course.course_uuid)}/general`} course={course} orgslug={orgslug} />
           </div>
         ))}
+
         {courses.length === 0 && (
           <div className="col-span-full flex justify-center items-center py-8">
             <div className="text-center">
@@ -100,24 +96,20 @@ function CoursesHome(params: CourseProps) {
                     checkMethod="roles"
                     orgId={params.org_id}
                   >
-                    <Modal
-                      isDialogOpen={newCourseModal}
-                      onOpenChange={setNewCourseModal}
-                      minHeight="md"
-                      dialogContent={
-                        <CreateCourseModal
-                          closeModal={closeNewCourseModal}
-                          orgslug={orgslug}
-                        />
-                      }
-                      dialogTitle="Create Course"
-                      dialogDescription="Create a new course"
-                      dialogTrigger={
-                        <button>
-                          <NewCourseButton />
-                        </button>
-                      }
-                    />
+
+
+                    <Dialog open={newCourseModal} onOpenChange={setNewCourseModal}>
+                    <DialogTrigger asChild>
+                        <Button variant="default">Create Course</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                        <DialogTitle>Create Course</DialogTitle>
+                        </DialogHeader>
+                        <CreateCourseModal closeModal={closeNewCourseModal} orgslug={orgslug} />
+                    </DialogContent>
+                    </Dialog>
+
                   </AuthenticatedClientElement>
                 </div>
               )}
