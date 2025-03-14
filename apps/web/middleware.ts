@@ -142,8 +142,6 @@ export default async function middleware(req: NextRequest) {
       }
       return NextResponse.redirect(redirectUrl)
     } else {
-      throw("BROKEN")
-
       const orgslug = getDefaultOrg()
 
       if (!orgslug) {
@@ -163,6 +161,7 @@ export default async function middleware(req: NextRequest) {
       }
       return NextResponse.redirect(redirectUrl)
 
+      // TODO: fix this in the next months
       // return 'Did not find the orgslug in the cookie'
     }
   }
