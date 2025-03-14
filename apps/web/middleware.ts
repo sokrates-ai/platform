@@ -154,7 +154,7 @@ export default async function middleware(req: NextRequest) {
       const queryString = searchParams.toString()
       const redirectPathname = '/'
       const redirectUrl = new URL(
-        getUriWithOrg(orgslug, redirectPathname),
+        getUriWithOrg(orgslug!, redirectPathname),
         req.url
       )
 
