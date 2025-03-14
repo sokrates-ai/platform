@@ -3,14 +3,15 @@ import { Viewport } from "pixi-viewport";
 import { useApplication, extend } from "@pixi/react";
 import { WORLD_WIDTH, WORLD_HEIGHT } from "./constants";
 import Asset from "./Asset"
-import type { AssetData, AssetType } from "./Asset"
+import type { AssetData, AssetTypeData, AssetTypeDataKind } from "./Asset"
 
 extend({ Viewport });
 
 interface CanvasViewportProps {
-    placedAssets: any[];
+    placedAssets: AssetData[];
     onViewportReady?: (viewport: Viewport) => void;
     onAssetPositionChange: (id: number, x: number, y: number) => void;
+    // onPointerRelease: () => void;
     onAssetContextMenu?: (assetId: number, pos: { clientX: number; clientY: number }) => void;
     onChapterClick?: (chapterID: number) => void;
     readOnly: boolean;
@@ -20,6 +21,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     placedAssets,
     onViewportReady,
     onAssetPositionChange,
+    // onPointerRelease,
     onAssetContextMenu,
     onChapterClick,
     readOnly,
@@ -77,24 +79,26 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
             dragDataRef.current = null;
             window.removeEventListener("pointermove", onGlobalMove);
             window.removeEventListener("pointerup", onGlobalUp);
+
+            // onPointerRelease()
         },
         [viewport, onGlobalMove]
     );
 
     const handlePointerDown = useCallback((e: any, asset: AssetData) => {
-        if (readOnly) return;
-
         e.stopPropagation();
 
         const originalEvent = e.data?.originalEvent || e.nativeEvent || e;
         if (!originalEvent) return;
 
-        if (asset.type === "chapter") {
+        if (asset.type.kind === "chapter" && readOnly) {
             if (originalEvent.button === 0) {
-                onChapterClick && onChapterClick(asset.id);
+                onChapterClick && onChapterClick(asset.type.associatedChapterID!);
             }
             return;
         }
+
+        if (readOnly) return;
 
         if (originalEvent.button === 2) {
             originalEvent.preventDefault();

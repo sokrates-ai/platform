@@ -1,26 +1,28 @@
 export function isChapterLocked(chapterID: number, course: any) {
-    // Get chapter index
-    const chapterIndex = course.chapters.findIndex((c: any) => c.id === chapterID)
+    const chapter = course.chapters.find((c: any) => c.id === chapterID)
 
-    if (chapterIndex === 0) {
+    const predecessorChapters = chapter.predecessors
+
+    console.log(predecessorChapters)
+
+    if (predecessorChapters.length === 0) {
         return false
     }
 
+    for (let predecessorID of predecessorChapters) {
+        const pred = course.chapters.find((c: any) => c.id === predecessorID)
 
-    // Get previous chapter index.
-    const previousChapterIndex = chapterIndex - 1
-    const previousChapter = course.chapters[previousChapterIndex]
+        if (pred.activities.length === 0) {
+            return true
+        }
 
-    if (previousChapter.activities.length === 0) {
-        return false
+        const lastActivity = pred.activities[pred.activities.length - 1]
+        if (!isActivityDone(course, lastActivity.id)) {
+            return true
+        }
     }
 
-    const lastActivity = previousChapter.activities[previousChapter.activities.length - 1]
-    if (isActivityDone(course, lastActivity.id)) {
-        return false
-    }
-
-    return true
+    return false
 }
 
 export function isActivityLocked(course: any, chapter: any, activityID: number) {

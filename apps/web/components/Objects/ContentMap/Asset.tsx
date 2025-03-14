@@ -5,7 +5,12 @@ import { extend } from "@pixi/react";
 
 extend({ Sprite });
 
-export type AssetType = "default" | "chapter" 
+export type AssetTypeDataKind = "default" | "chapter" 
+
+export interface AssetTypeData {
+    kind: AssetTypeDataKind;
+    associatedChapterID?: number
+}
 
 export interface AssetData {
     id: number;
@@ -14,7 +19,7 @@ export interface AssetData {
     scale: number;
     file: string;
     label: string;
-    type: AssetType;
+    type: AssetTypeData
 };
 
 export interface AssetProps {
@@ -33,7 +38,6 @@ const Asset: React.FC<AssetProps> = React.memo(({ asset, spriteURL, onPointerDow
             console.log("useEffect Triggered");
             PIXI.Assets.load(spriteURL(file))
                 .then((tex) => {
-                    console.log("Load texture");
                     setTexture(tex);
                     hasLoaded.current = true;
                 })

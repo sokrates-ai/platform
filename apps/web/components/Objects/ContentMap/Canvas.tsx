@@ -6,13 +6,8 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-export interface CanvasProps {
-    courseStructure: any;
-    onMapUpdateCallback?: Function;
-    onChapterClick: (chapterID: number) => void;
-    readOnly?: boolean;
-}
+import { AssetData } from "./Asset";
+import { SPRITE_SCALE_FACTOR } from "./constants";
 
 interface ContextMenuData {
     assetId: number;
@@ -20,17 +15,35 @@ interface ContextMenuData {
     y: string;
 }
 
+export interface LayoutState {
+    layout: AssetData[] | null
+    updateOriginator: 'user' | 'initial'
+}
+
+export interface CanvasProps {
+    layout: LayoutState,
+    setLayout: Function,
+    // triggerLayoutSync: Function,
+    // courseStructure: any;
+    onMapUpdateCallback?: Function;
+    onChapterClick: (chapterID: number) => void;
+    readOnly?: boolean;
+}
+
 const Canvas: React.FC<CanvasProps> = ({
-    courseStructure,
-    onMapUpdateCallback,
+    layout,
+    setLayout,
+    // triggerLayoutSync,
+    // onMapUpdateCallback,
     onChapterClick,
     readOnly = false,
 }) => {
     const parentRef = useRef<HTMLDivElement>(null);
     const [contextMenu, setContextMenu] = useState<ContextMenuData | null>(null);
-    const [placedAssets, setPlacedAssets] = useState<any[]>([]);
     const [viewport, setViewport] = useState<any>(null);
     const contextMenuRef = useRef<HTMLDivElement>(null);
+
+    // const [layout, setLayout] = useState(layoutExternal);
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -46,25 +59,45 @@ const Canvas: React.FC<CanvasProps> = ({
                 const localX = e.clientX - targetRect.left;
                 const localY = e.clientY - targetRect.top;
                 const worldPosition = viewport.toWorld(localX, localY);
-                const newAsset = {
+                const newAsset: AssetData = {
                     id: Date.now(),
                     file: spriteData.file,
                     label: spriteData.label,
-                    scale: spriteData.scale * 0.2,
+                    scale: spriteData.scale * SPRITE_SCALE_FACTOR,
                     x: worldPosition.x,
                     y: worldPosition.y,
+                    type: {
+                        kind: "default",
+                        associatedChapterID: undefined,
+                    }
                 };
-                setPlacedAssets((prev) => [...prev, newAsset]);
+
+                setLayout((old: LayoutState) => {
+                    const newData = [...old.layout!, newAsset] 
+                    return {
+                        layout: newData,
+                        updateOriginator: 'user',
+                    } as LayoutState
+                });
             } catch (error) {
                 console.error("Error parsing dropped data", error);
             }
         }
     };
 
+    // const onMouseUp = () => {
+    //     console.log('set external', layout)
+    //     setLayoutExternal(layout)
+    // }
+
     const handleAssetPositionChange = useCallback((id: number, newX: number, newY: number) => {
-        setPlacedAssets((assets) =>
-            assets.map((asset) => (asset.id === id ? { ...asset, x: newX, y: newY } : asset))
-        );
+        setLayout((old: LayoutState) => {
+            const newLayout = old.layout!.map((asset) => (asset.id === id ? { ...asset, x: newX, y: newY } : asset))
+            return {
+                layout: newLayout,
+                updateOriginator: 'user'
+            } as LayoutState
+        });
     }, []);
 
     const handleAssetContextMenu = useCallback((assetId: number, pos: { clientX: number; clientY: number }) => {
@@ -106,9 +139,10 @@ const Canvas: React.FC<CanvasProps> = ({
             >
                 <Application backgroundColor={0x8da64a} autoDensity={true} resizeTo={parentRef}>
                     <CanvasViewport
-                        placedAssets={placedAssets}
+                        placedAssets={layout.layout!}
                         onViewportReady={setViewport}
                         onAssetPositionChange={handleAssetPositionChange}
+                        // onPointerRelease={onMouseUp}
                         onAssetContextMenu={handleAssetContextMenu}
                         onChapterClick={onChapterClick}
                         readOnly={readOnly}
@@ -157,6 +191,16 @@ const Canvas: React.FC<CanvasProps> = ({
                 >
                     <div className="p-2">
                         <div className="grid gap-2">
+                            {function() {
+                                const asset = layout.layout!.find((a) => a.id === contextMenu.assetId)
+
+                                if (asset?.type.kind === 'chapter') {
+                                    return (<span>Chapter ID: {asset.type.associatedChapterID}</span>)
+                                } else {
+                                    return <></>
+                                }
+                            }()}
+
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="layer" className="text-xs font-medium">
                                     Layer

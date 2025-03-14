@@ -19,15 +19,16 @@ import { CourseProvider } from '@components/Contexts/CourseContext'
 import { useMediaQuery } from 'usehooks-ts'
 import CoursesActions, { courseIsStarted } from '@components/Objects/Courses/CourseActions/CoursesActions'
 // import ChapterActivities from '@components/Pages/Courses/ChapterActivities'
-import Canvas from '@components/Objects/ContentMap/Canvas'
+import Canvas, { LayoutState } from '@components/Objects/ContentMap/Canvas'
 import ChapterActivities from '@components/Pages/Courses/ChapterActivities'
 import CourseChapter from '@components/Pages/Courses/CourseChapter'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
+import { AssetData } from '@components/Objects/ContentMap/Asset'
 
 const CourseClient = (props: any) => {
 	const [learnings, setLearnings] = useState<any>([])
 	const courseuuid = props.courseuuid
-  	const courseid = courseuuid.replace('course_', '')
+	const courseid = courseuuid.replace('course_', '')
 	const orgslug = props.orgslug
 	const course = props.course
 	const org = useOrg() as any
@@ -47,73 +48,45 @@ const CourseClient = (props: any) => {
 	const isStarted = courseIsStarted(course)
 	console.log(isStarted)
 
-  	const [chapterDialogOpen, setChapterDialogOpen] = useState(false)
+	const [chapterDialogOpen, setChapterDialogOpen] = useState(false)
 	const [selectedChapter, setSelectedChapter] = useState(0)
+
+	const layout: LayoutState = {
+		layout: course.map_state.objects,
+		updateOriginator: 'initial',
+	}
 
 	if (isStarted) {
 		return (
-			// <div>
-			// 	<h2 className="py-3 text-xl md:text-2xl font-bold">Course Lessons</h2>
-			// 	<div className="bg-white shadow-md shadow-gray-300/25 outline outline-1 outline-neutral-200/40 rounded-lg overflow-hidden flex flex-col gap-4">
-			// 		{course.chapters.map((chapter: any) => {
-			// 			return (
-			// 				<div key={chapter} className="">
-			// 					<div className="flex text-lg py-4 px-4 outline outline-1 outline-neutral-200/40 font-bold bg-neutral-50 text-neutral-600 items-center">
-			// 						<h3 className="grow">{chapter.name}</h3>
-			// 						<p className="text-sm font-normal text-neutral-400 px-3 py-[2px] outline-1 outline outline-neutral-200 rounded-full ">
-			// 							{chapter.activities.length} Activities
-			// 						</p>
-			// 					</div>
+			<div style={{ width: '100vw', height: 'calc(100vh - 60px)' }}>
+				<Modal
+					isDialogOpen={chapterDialogOpen}
+					onOpenChange={setChapterDialogOpen}
+					minHeight="md"
+					dialogContent={
+						<CourseChapter
+							course={course}
+							courseId={courseid}
+							orgslug={orgslug}
+							chapterID={selectedChapter}
+						></CourseChapter>
+					}
+					dialogTitle="Foo-bar-title"
+					dialogDescription="Foo-bar-desc"
+				/>
 
-			// 					<div className='flex flex-col justify-center ml-10 p-5'>
-			// 						<ChapterActivities
-			// 							course={course}
-			// 							currentChapterID={chapter.id}
-			// 							orgslug={orgslug}
-			// 							course_uuid={courseuuid}
-			// 						>
-			// 						</ChapterActivities>
-			// 					</div>
-			// 				</div>
-			// 			)
-			// 		})}
-			// 	</div>
-
-				<div style={{width: '100vw', height: 'calc(100vh - 60px)'}}>
-						<Modal
-						isDialogOpen={chapterDialogOpen}
-						onOpenChange={setChapterDialogOpen}
-						minHeight="md"
-						dialogContent={
-							<CourseChapter
-								course={course}
-								courseId={courseid}
-								orgslug={orgslug}
-								chapterID={selectedChapter}
-							></CourseChapter>
-						}
-						dialogTitle="Foo-bar-title"
-						dialogDescription="Foo-bar-desc"
-						// dialogTrigger={
-						// 	<button>
-						// 		<NewCourseButton />
-						// 	</button>
-						// }
-						/>
-
-					{/* <div className='flex flex-col gap-5'>
-					</div> */}
-					<Canvas
-						courseStructure={course}
-						readOnly={true}
-						onChapterClick={(chapter: number) => {
-							console.log(chapter)
-							setSelectedChapter(chapter)
-							setChapterDialogOpen(true)
-						}}
-					>
-					</Canvas>
-				</div>
+				<Canvas
+					layout={layout}
+					setLayout={() => { throw ("BUG: This cannot be called from here.") }}
+					readOnly={true}
+					onChapterClick={(chapter: number) => {
+						console.log(chapter)
+						setSelectedChapter(chapter)
+						setChapterDialogOpen(true)
+					}}
+				>
+				</Canvas>
+			</div>
 			// </div>
 		)
 	} else {
@@ -156,12 +129,6 @@ const CourseClient = (props: any) => {
 							></div>
 						)}
 
-						{/* TODO: move this to the bottom */}
-						{/* <ActivityIndicators
-						course_uuid={props.course.course_uuid}
-						orgslug={orgslug}
-						course={course}
-					/> */}
 
 						<div className="flex flex-col md:flex-row md:space-x-10 space-y-6 md:space-y-0 pt-10">
 							<div className="course_metadata_left w-full md:basis-3/4 space-y-2">

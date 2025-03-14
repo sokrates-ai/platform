@@ -50,3 +50,6 @@ fedora-notes.md
 
 # Local deployment
 redis_data
+
+.workspace.env
+platform_postgres
