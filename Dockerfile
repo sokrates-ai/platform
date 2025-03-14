@@ -37,6 +37,7 @@ FROM base AS deps
 ENV NEXT_PUBLIC_LEARNHOUSE_API_URL=http://localhost:9000/api/v1/
 ENV NEXT_PUBLIC_LEARNHOUSE_BASE_URL=http://localhost
 ENV NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL=http://localhost/
+# TODO: this could also be completely fucked?
 ENV NEXT_PUBLIC_LEARNHOUSE_DOMAIN=http://localhost:8091
 
 COPY ./apps/web/ /app/web

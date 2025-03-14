@@ -76,7 +76,9 @@ export default async function middleware(req: NextRequest) {
         name: 'learnhouse_current_orgslug',
         value: orgslug,
         // domain: window.location.hostname // LEARNHOUSE_TOP_DOMAIN == 'localhost' ? '' : LEARNHOUSE_TOP_DOMAIN,
-        domain: '.localhost'
+        // TODO: this is also completely fucked rn
+        // domain: '.localhost'
+        domain: `.${LEARNHOUSE_TOP_DOMAIN()}`
       })
     }
     return response
@@ -140,6 +142,8 @@ export default async function middleware(req: NextRequest) {
       }
       return NextResponse.redirect(redirectUrl)
     } else {
+      throw("BROKEN")
+
       const orgslug = getDefaultOrg()
 
       if (!orgslug) {
