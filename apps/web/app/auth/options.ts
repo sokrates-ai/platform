@@ -51,7 +51,9 @@ export const nextAuthOptions = {
 	},
 	cookies: {
 		sessionToken: {
-			name: `${!isDevEnv ? '__Secure-' : ''}next-auth.session-token`,
+			// TODO: FIX THIS!!!!
+			// name: `${!isDevEnv ? '__Secure-' : ''}next-auth.session-token`,
+			name: `next-auth.session-token`,
 			options: {
 				httpOnly: true,
 				sameSite: 'lax',
@@ -59,7 +61,7 @@ export const nextAuthOptions = {
 				// When working on localhost, the cookie domain must be omitted entirely (https://stackoverflow.com/a/1188145)
 				domain: `.${LEARNHOUSE_TOP_DOMAIN()}`,
 				// domain: ".localhost",
-				secure: !isDevEnv,
+				secure: false,
 			},
 		},
 	},
