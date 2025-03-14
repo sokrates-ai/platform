@@ -5,16 +5,20 @@ import { extend } from "@pixi/react";
 
 extend({ Sprite });
 
-interface AssetProps {
-    asset: {
-        id: number;
-        x: number;
-        y: number;
-        scale: number;
-        file: string;
-        label: string;
-        type: string;
-    };
+export type AssetType = "default" | "chapter" 
+
+export interface AssetData {
+    id: number;
+    x: number;
+    y: number;
+    scale: number;
+    file: string;
+    label: string;
+    type: AssetType;
+};
+
+export interface AssetProps {
+    asset: AssetData;
     spriteURL: (file: string) => string;
     onPointerDown: (e: any, asset: any) => void;
 }

@@ -2,7 +2,8 @@ import React, { useEffect, useState, useCallback, useRef, memo } from "react";
 import { Viewport } from "pixi-viewport";
 import { useApplication, extend } from "@pixi/react";
 import { WORLD_WIDTH, WORLD_HEIGHT } from "./constants";
-import Asset from "./Asset";
+import Asset from "./Asset"
+import type { AssetData, AssetType } from "./Asset"
 
 extend({ Viewport });
 
@@ -80,7 +81,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
         [viewport, onGlobalMove]
     );
 
-    const handlePointerDown = useCallback((e: any, asset: any) => {
+    const handlePointerDown = useCallback((e: any, asset: AssetData) => {
         if (readOnly) return;
 
         e.stopPropagation();

@@ -19,7 +19,7 @@ import { CourseProvider } from '@components/Contexts/CourseContext'
 import { useMediaQuery } from 'usehooks-ts'
 import CoursesActions, { courseIsStarted } from '@components/Objects/Courses/CourseActions/CoursesActions'
 // import ChapterActivities from '@components/Pages/Courses/ChapterActivities'
-import { MapEditorCanvas } from '@components/Dashboard/Pages/Course/EditCourseMap/MapEditorCanvas'
+import Canvas from '@components/Objects/ContentMap/Canvas'
 import ChapterActivities from '@components/Pages/Courses/ChapterActivities'
 import CourseChapter from '@components/Pages/Courses/CourseChapter'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
@@ -103,16 +103,16 @@ const CourseClient = (props: any) => {
 
 					{/* <div className='flex flex-col gap-5'>
 					</div> */}
-					<MapEditorCanvas
+					<Canvas
 						courseStructure={course}
 						readOnly={true}
-						onChapterClick={(chapter) => {
+						onChapterClick={(chapter: number) => {
 							console.log(chapter)
 							setSelectedChapter(chapter)
 							setChapterDialogOpen(true)
 						}}
 					>
-					</MapEditorCanvas>
+					</Canvas>
 				</div>
 			// </div>
 		)
