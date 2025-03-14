@@ -3,11 +3,25 @@ export const LEARNHOUSE_HTTP_PROTOCOL =
 const LEARNHOUSE_API_URL = `${process.env.NEXT_PUBLIC_LEARNHOUSE_API_URL}`
 export const LEARNHOUSE_BACKEND_URL = `${process.env.NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL}`
 export const LEARNHOUSE_DOMAIN = process.env.NEXT_PUBLIC_LEARNHOUSE_DOMAIN
-export const LEARNHOUSE_TOP_DOMAIN =
-  process.env.NEXT_PUBLIC_LEARNHOUSE_TOP_DOMAIN
+// export const LEARNHOUSE_TOP_DOMAIN =
+//   process.env.NEXT_PUBLIC_LEARNHOUSE_TOP_DOMAIN
 
 export const isDevEnv = process.env.NODE_ENV != 'production'
 
+
+export function LEARNHOUSE_TOP_DOMAIN(): string {
+    // NOTE: This is stupid because nextJS will try to fetch environment variables at build time!!!
+    let N = 'N'
+    let domain = process.env['NEXT_PUBLIC_LEARNHOUSE_BASE_TOP_DOMAI' + N]
+
+    if (!domain) {
+        return "error"
+    }
+
+    console.log('got learnhouse top domain: ', domain)
+
+    return domain
+}
 
 export function LEARNHOUSE_BASE_URL(): string {
     // NOTE: This is stupid because nextJS will try to fetch environment variables at build time!!!
