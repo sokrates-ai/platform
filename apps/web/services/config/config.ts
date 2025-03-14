@@ -6,7 +6,7 @@ export const LEARNHOUSE_DOMAIN = process.env.NEXT_PUBLIC_LEARNHOUSE_DOMAIN
 // export const LEARNHOUSE_TOP_DOMAIN =
 //   process.env.NEXT_PUBLIC_LEARNHOUSE_TOP_DOMAIN
 
-export const isDevEnv = process.env.NODE_ENV != 'production'
+export const isDevEnv = true // process.env.NODE_ENV != 'production'
 
 
 export function LEARNHOUSE_TOP_DOMAIN(): string {
