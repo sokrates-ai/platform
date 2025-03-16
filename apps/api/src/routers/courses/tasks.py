@@ -260,7 +260,7 @@ async def api_get_task_list(
 
 
 @router.delete("/id/{id}")
-async def api_get_task_list(
+async def api_delete_task(
     request: Request,
     id: int,
     # org_slug: str,
