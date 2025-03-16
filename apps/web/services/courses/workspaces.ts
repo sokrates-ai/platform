@@ -33,16 +33,16 @@ export async function createExercise(
 
   const result = await fetch(
     url,
-    RequestBodyWithAuthHeader('POST', data, null, access_token)
+    RequestBodyWithAuthHeader('POST', data, { revalidate: 0, tags: ['tasks'] }, access_token)
   )
   const res = await result.json()
   return res
 }
 
-export async function deleteExerciseFromBE(exercise_id: number, access_token:any) {
+export async function deleteExerciseFromBE(exercise_id: number, access_token: any) {
   const result: any = await fetch(
     `${getAPIUrl()}tasks/id/${exercise_id}`,
-    RequestBodyWithAuthHeader('DELETE', null, null,access_token)
+    RequestBodyWithAuthHeader('DELETE', null, { revalidate: 0, tags: ['tasks'] }, access_token)
   )
   const res = await result.json()
   return res

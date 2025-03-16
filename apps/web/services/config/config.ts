@@ -91,7 +91,7 @@ export const getUriWithoutOrg = (path: string) => {
   const multi_org = isMultiOrgModeEnabled()
 
   console.warn("THIS IS OBSOLETE; remove this")
-    return `${path}`
+  return `${path}`
 
   if (multi_org) {
     return `${LEARNHOUSE_HTTP_PROTOCOL}${LEARNHOUSE_DOMAIN}${path}`
