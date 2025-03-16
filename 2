@@ -1,0 +1,35 @@
+14
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Committer: Mik <mik@MacBook-Pro-von-Mik.local>
+#
+# On branch PROD_EXP
+# Changes to be committed:
+#	modified:   apps/web/app/layout.tsx
+#
+# ------------------------ >8 ------------------------
+# Do not modify or remove the line above.
+# Everything below it will be ignored.
+diff --git a/apps/web/app/layout.tsx b/apps/web/app/layout.tsx
+index 867704b..5240e11 100755
+--- a/apps/web/app/layout.tsx
++++ b/apps/web/app/layout.tsx
+@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
+ import { SessionProvider } from 'next-auth/react'
+ import LHSessionProvider from '@components/Contexts/LHSessionContext'
+ import Script from 'next/script'
+-import { isDevEnv } from '@services/config/config'
++// import { isDevEnv } from '@services/config/config'
+ 
+ export default function RootLayout({
+   children,
+@@ -21,7 +21,7 @@ export default function RootLayout({
+     <html className="" lang="en">
+       <head />
+       <body>
+-        {isDevEnv ? '' : <Script data-website-id="a1af6d7a-9286-4a1f-8385-ddad2a29fcbb" src="/umami/script.js" />}
++        {/* {isDevEnv ? '' : <Script data-website-id="a1af6d7a-9286-4a1f-8385-ddad2a29fcbb" src="/umami/script.js" />} */}
+         <SessionProvider>
+           <LHSessionProvider>
+             <StyledComponentsRegistry>

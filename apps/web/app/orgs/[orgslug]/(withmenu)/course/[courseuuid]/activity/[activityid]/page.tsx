@@ -5,7 +5,7 @@ import { getOrganizationContextInfo } from '@services/organizations/orgs'
 import { Metadata } from 'next'
 import { getServerSession } from 'next-auth'
 import { nextAuthOptions } from 'app/auth/options'
-import { LEARNHOUSE_BASE_URL } from '@services/config/config'
+// import { LEARNHOUSE_BASE_URL } from '@services/config/config'
 
 type MetadataProps = {
   params: { orgslug: string; courseuuid: string; activityid: string }
@@ -67,7 +67,8 @@ const ActivityPage = async (params: any) => {
 
   let backlink = "/"
   if (typeof window === 'undefined') {
-      backlink = `${LEARNHOUSE_BASE_URL()}/course/${courseuuid}`
+      // TODO: illegal
+      backlink = `/course/${courseuuid}`
   } else {
     const searchParams = new URLSearchParams(window.location.search)
     let backlinkT = searchParams.get('backlink')
