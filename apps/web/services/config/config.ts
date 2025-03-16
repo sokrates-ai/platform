@@ -57,7 +57,7 @@ export const getAPIUrl = () => {
     if (isDevEnv || typeof window === 'undefined') {
         // TODO: i need to fix this
         url = LEARNHOUSE_API_URL
-        console.log("API_URL_FROM BE")
+        console.log("API_URL_FROM BE", url)
     } else {
         const fullhost = window.location.host;
         url = `${LEARNHOUSE_HTTP_PROTOCOL}${fullhost}/api/v1/`
