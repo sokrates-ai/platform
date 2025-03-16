@@ -28,8 +28,11 @@ export async function createExercise(
   data: any,
   access_token: string,
 ) {
+  const url = `${getAPIUrl()}tasks`
+  console.log('create exercise url, ', url)
+
   const result = await fetch(
-    `${getAPIUrl()}tasks`,
+    url,
     RequestBodyWithAuthHeader('POST', data, null, access_token)
   )
   const res = await result.json()
