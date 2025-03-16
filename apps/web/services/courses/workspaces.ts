@@ -28,7 +28,7 @@ export async function createExercise(
   data: any,
   access_token: string,
 ) {
-  const urlComplete = `${getAPIUrl()}ex`
+  const urlComplete = `${getAPIUrl()}ex/`
   const newURL = new URL(urlComplete)
   const url = newURL.pathname
   console.log('create exercise url, ', url)
