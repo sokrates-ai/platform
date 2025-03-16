@@ -1,0 +1,47 @@
+services:
+  # app:
+  #   image: ghcr.io/sokrates-ai/sk-platform:1.0.0 
+  #   ports:
+  #     - "8091:80"
+  #   volumes:
+  #     - .:/usr/learnhouse
+  #   env_file:
+  #     - ./extra/example-learnhouse-conf.env
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  db:
+    image: postgres:16-alpine
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=learnhouse
+      - POSTGRES_PASSWORD=learnhouse
+      - POSTGRES_DB=learnhouse
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U learnhouse"]
+      interval: 5s
+      timeout: 4s
+      retries: 5
+  redis:
+    image: redis:7.2.3
+    restart: always
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 4s
+      retries: 5
+  chromadb:
+    image: chromadb/chroma:0.5.16
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres:
