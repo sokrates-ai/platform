@@ -1,4 +1,4 @@
-import { getAPIUrl } from '@services/config/config'
+import { getAPIUrl, isDevEnv } from '@services/config/config'
 import {
   RequestBodyWithAuthHeader,
 } from '@services/utils/ts/requests'
@@ -30,11 +30,11 @@ export async function createExercise(
 ) {
   const urlComplete = `${getAPIUrl()}ex/`
   const newURL = new URL(urlComplete)
-  const url = newURL.pathname
-  console.log('create exercise url, ', url)
+  // const url = newURL.pathname
+  // console.log('create exercise url, ', url)
 
   const result = await fetch(
-    url,
+    urlComplete,
     RequestBodyWithAuthHeader('POST', data, { revalidate: 0, tags: ['tasks'] }, access_token)
   )
   const res = await result.json()
