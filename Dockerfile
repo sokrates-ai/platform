@@ -18,7 +18,7 @@ FROM base AS deps
 ENV NEXT_PUBLIC_LEARNHOUSE_API_URL=http://localhost/api/v1/
 ENV NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL=http://localhost/
 ENV NEXT_PUBLIC_LEARNHOUSE_DOMAIN=localhost
-# ENV NEXT_PUBLIC_LEARNHOUSE_HTTPS=true
+ENV NEXT_PUBLIC_LEARNHOUSE_COLLABORATION_WS_URL=ws://localhost:1998
 
 WORKDIR /app/web
 COPY ./apps/web/package.json ./apps/web/pnpm-lock.yaml* ./
@@ -40,11 +40,12 @@ COPY --from=deps --chown=app:system /app/web/.next/static ./app/web/.next/static
 
 # Backend Build
 WORKDIR /app/api
-COPY ./apps/api/uv.lock ./
+COPY ./apps/api/poetry.lock* ./
 COPY ./apps/api/pyproject.toml ./
 RUN pip install --upgrade pip \
-    && pip install uv \
-    && uv sync
+    && pip install poetry \
+    && poetry config virtualenvs.create false \
+    && poetry install --no-interaction --no-ansi
 COPY ./apps/api ./
 
 # Run the backend
