@@ -1,7 +1,6 @@
 from typing import Literal
 from fastapi import HTTPException, Request
 from sqlmodel import Session, select
-import stripe
 import logging
 from src.db.payments.payments_users import PaymentStatusEnum
 from src.db.users import InternalUser
