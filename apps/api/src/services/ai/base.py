@@ -1,5 +1,5 @@
-# from typing import Optional
-# from uuid import uuid4
+from typing import Optional
+from uuid import uuid4
 # from langchain.agents import AgentExecutor
 # from langchain_text_splitters import CharacterTextSplitter
 # from langchain_community.vectorstores import Chroma
@@ -31,14 +31,15 @@
 # chat_history = []
 
 
-# def ask_ai(
-#     question: str,
-#     message_history,
-#     text_reference: str,
-#     message_for_the_prompt: str,
-#     embedding_model_name: str,
-#     openai_model_name: str,
-# ):
+def ask_ai(
+    question: str,
+    message_history,
+    text_reference: str,
+    message_for_the_prompt: str,
+    embedding_model_name: str,
+    openai_model_name: str,
+):
+    return
 #     # Get API Keys
 #     LH_CONFIG = get_learnhouse_config()
 #     openai_api_key = LH_CONFIG.ai_config.openai_api_key
@@ -105,7 +106,8 @@
 #     return agent_executor({"input": question})
 
 
-# def get_chat_session_history(aichat_uuid: Optional[str] = None):
+def get_chat_session_history(aichat_uuid: Optional[str] = None):
+    return
 #     # Init Message History
 #     session_id = aichat_uuid if aichat_uuid else f"aichat_{uuid4()}"
 
