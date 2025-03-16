@@ -28,7 +28,7 @@ export async function createExercise(
   data: any,
   access_token: string,
 ) {
-  const urlComplete = `${getAPIUrl()}tasks`
+  const urlComplete = `${getAPIUrl()}ex`
   const newURL = new URL(urlComplete)
   const url = newURL.pathname
   console.log('create exercise url, ', url)
@@ -43,8 +43,8 @@ export async function createExercise(
 
 export async function deleteExerciseFromBE(exercise_id: number, access_token: any) {
   const result: any = await fetch(
-    `${getAPIUrl()}tasks/id/${exercise_id}`,
-    RequestBodyWithAuthHeader('DELETE', null, { revalidate: 0, tags: ['tasks'] }, access_token)
+    `${getAPIUrl()}ex/id/${exercise_id}`,
+    RequestBodyWithAuthHeader('DELETE', null, { revalidate: 0, tags: ['ex'] }, access_token)
   )
   const res = await result.json()
   return res

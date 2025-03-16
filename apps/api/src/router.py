@@ -35,7 +35,7 @@ v1_router.include_router(
 v1_router.include_router(trail.router, prefix="/trail", tags=["trail"])
 v1_router.include_router(ai.router, prefix="/ai", tags=["ai"])
 v1_router.include_router(payments.router, prefix="/payments", tags=["payments"])
-v1_router.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
+v1_router.include_router(tasks.router, prefix="/ex", tags=["ex"])
 
 if os.environ.get("CLOUD_INTERNAL_KEY"):
     v1_router.include_router(
