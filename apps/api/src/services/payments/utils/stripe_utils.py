@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from sqlmodel import Session, select
-import stripe
+# import stripe
 import logging
 
 from src.db.payments.payments_products import PaymentsProduct
