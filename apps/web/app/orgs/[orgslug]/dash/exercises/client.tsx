@@ -20,7 +20,7 @@ type ExerciseProps = {
 }
 
 function ExerciseHome(params: ExerciseProps) {
-  const TASKS_URL = `${getAPIUrl()}tasks/list/page/1/limit/50`;
+  const TASKS_URL = `${getAPIUrl()}ex/list/page/1/limit/50`;
 
   const searchParams = useSearchParams()
   const isCreatingExercise = searchParams.get('new') ? true : false

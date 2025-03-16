@@ -21,7 +21,7 @@ import toast from 'react-hot-toast'
 import { swrFetcher } from '@services/utils/ts/requests'
 
 function NewAssignment({ submitActivity, chapterId, course, closeModal, access_token }: any) {
-    const TASKS_URL = `${getAPIUrl()}tasks/list/page/1/limit/50`;
+    const TASKS_URL = `${getAPIUrl()}ex/list/page/1/limit/50`;
 
     const org = useOrg() as any;
     const session = useLHSession() as any
