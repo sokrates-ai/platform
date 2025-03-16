@@ -70,6 +70,7 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=learnhouse_config.hosting_config.port,
         reload=learnhouse_config.general_config.development_mode,
+        forwarded_allow_ips='*'
     )
 
 
