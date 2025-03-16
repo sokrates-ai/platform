@@ -3,71 +3,10 @@ export const LEARNHOUSE_HTTP_PROTOCOL =
 const LEARNHOUSE_API_URL = `${process.env.NEXT_PUBLIC_LEARNHOUSE_API_URL}`
 export const LEARNHOUSE_BACKEND_URL = `${process.env.NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL}`
 export const LEARNHOUSE_DOMAIN = process.env.NEXT_PUBLIC_LEARNHOUSE_DOMAIN
-// export const LEARNHOUSE_TOP_DOMAIN =
-//   process.env.NEXT_PUBLIC_LEARNHOUSE_TOP_DOMAIN
+export const LEARNHOUSE_TOP_DOMAIN =
+  process.env.NEXT_PUBLIC_LEARNHOUSE_TOP_DOMAIN
 
-export const isDevEnv = process.env.NODE_ENV != 'production'
-
-
-export function LEARNHOUSE_TOP_DOMAIN(): string {
-    // NOTE: This is stupid because nextJS will try to fetch environment variables at build time!!!
-    let N = 'N'
-    let domain = process.env['NEXT_PUBLIC_LEARNHOUSE_BASE_TOP_DOMAI' + N]
-
-    if (!domain) {
-        return "error"
-    }
-
-    console.log('got learnhouse top domain: ', domain)
-
-    return domain
-}
-
-export function LEARNHOUSE_BASE_URL(): string {
-    // NOTE: This is stupid because nextJS will try to fetch environment variables at build time!!!
-    let L = 'L'
-    let url = process.env['NEXT_PUBLIC_LEARNHOUSE_BASE_UR' + L]
-
-    if (!url) {
-        // console.error("NEXT_PUBLIC_LEARNHOUSE_BASE_URL undefined")
-        return "error"
-    }
-    return url
-}
-
-function getLearnhouseBaseURL(): string {
-    let url: string | null = null
-
-    if (isDevEnv || typeof window === 'undefined') {
-        // TODO: i need to fix this
-        url = LEARNHOUSE_BASE_URL()
-        // console.error("RUNNING IN SERVER MODE: " + url)
-    } else {
-        const fullhost = window.location.host;
-        const proto = window.location.protocol;
-        url = `${proto}//${fullhost}`
-    }
-
-    return url
-}
-
-export const getAPIUrl = () => {
-    let url: string | null = null
-
-    if (isDevEnv || typeof window === 'undefined') {
-        // TODO: i need to fix this
-        url = LEARNHOUSE_API_URL
-        console.log("API_URL_FROM BE", url)
-    } else {
-        const fullhost = window.location.host;
-        const proto = window.location.protocol;
-        url = `${proto}//${fullhost}/api/v1/`
-        console.log("API URL real", url, LEARNHOUSE_HTTP_PROTOCOL)
-    }
-
-    return url
-}
-
+export const getAPIUrl = () => LEARNHOUSE_API_URL
 export const getBackendUrl = () => LEARNHOUSE_BACKEND_URL
 
 // Multi Organization Mode
@@ -76,24 +15,14 @@ export const isMultiOrgModeEnabled = () =>
 
 export const getUriWithOrg = (orgslug: string, path: string) => {
   const multi_org = isMultiOrgModeEnabled()
-  const baseURL = getLearnhouseBaseURL()
-
   if (multi_org) {
-      console.log("ERROR: is multi ORG")
-    // HACK: this is probably not supported.
     return `${LEARNHOUSE_HTTP_PROTOCOL}${orgslug}.${LEARNHOUSE_DOMAIN}${path}`
   }
-
-  const completePath = `${baseURL}${path}`
-  return completePath
+  return `${LEARNHOUSE_HTTP_PROTOCOL}${LEARNHOUSE_DOMAIN}${path}`
 }
 
 export const getUriWithoutOrg = (path: string) => {
   const multi_org = isMultiOrgModeEnabled()
-
-  console.warn("THIS IS OBSOLETE; remove this")
-  return `${path}`
-
   if (multi_org) {
     return `${LEARNHOUSE_HTTP_PROTOCOL}${LEARNHOUSE_DOMAIN}${path}`
   }
@@ -116,3 +45,6 @@ export const getOrgFromUri = () => {
 export const getDefaultOrg = () => {
   return process.env.NEXT_PUBLIC_LEARNHOUSE_DEFAULT_ORG
 }
+
+
+
