@@ -18,7 +18,7 @@ import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { createActivity, deleteActivity } from '@services/courses/activities'
 import toast from 'react-hot-toast'
 import { createWorkspace } from '@services/courses/workspaces'
-import { TASKS_URL } from '@/app/orgs/[orgslug]/dash/exercises/client'
+// import { TASKS_URL } from '@/app/orgs/[orgslug]/dash/exercises/client'
 import { swrFetcher } from '@services/utils/ts/requests'
 
 function NewWorkspace({ submitActivity, chapterId, course, closeModal, access_token }: any) {
@@ -29,6 +29,7 @@ function NewWorkspace({ submitActivity, chapterId, course, closeModal, access_to
     const [activityTaskID, setActivityTaskID] = React.useState(-1)
 
     // Fetch exercise library here.
+    const TASKS_URL = `${getAPIUrl()}tasks/list/page/1/limit/50`;
     const { data: exercises } = useSWR(TASKS_URL, (url: string) => swrFetcher(url, access_token))
     console.log(exercises)
 

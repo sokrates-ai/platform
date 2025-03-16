@@ -19,9 +19,9 @@ type ExerciseProps = {
   org_id: string
 }
 
-export const TASKS_URL = `${getAPIUrl()}tasks/list/page/1/limit/50`;
-
 function ExerciseHome(params: ExerciseProps) {
+  const TASKS_URL = `${getAPIUrl()}tasks/list/page/1/limit/50`;
+
   const searchParams = useSearchParams()
   const isCreatingExercise = searchParams.get('new') ? true : false
   // TODO: rename this in create-exercise!
