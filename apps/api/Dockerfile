@@ -1,31 +1,56 @@
-# Use an official Python runtime as a parent image
-FROM python:3.12.3-slim
+# Base image
+FROM python:3.12.3-slim-bookworm as base
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=off \
-    PIP_DISABLE_PIP_VERSION_CHECK=on 
-
-# Set work directory
-WORKDIR /usr/learnhouse-api
-
-# Install system dependencies and Poetry
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    build-essential \
+# Install Nginx, curl, and build-essential
+RUN apt update && apt install -y nginx curl build-essential \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && pip install --no-cache-dir poetry \
-    && poetry config virtualenvs.create false
+    && rm /etc/nginx/sites-enabled/default
 
-# Copy only requirements to cache them in docker layer
-COPY poetry.lock pyproject.toml ./
+# Install Node tools
+RUN curl -fsSL https://deb.nodesource.com/setup_21.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g corepack pm2
 
-# Install dependencies
-RUN poetry install --no-interaction --no-ansi --no-root --only main
+# Frontend Build
+FROM base AS deps
 
-# Copy the current directory contents into the container
-COPY . .
+ENV NEXT_PUBLIC_LEARNHOUSE_API_URL=http://localhost/api/v1/
+ENV NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL=http://localhost/
+ENV NEXT_PUBLIC_LEARNHOUSE_DOMAIN=localhost
+ENV NEXT_PUBLIC_LEARNHOUSE_COLLABORATION_WS_URL=ws://localhost:1998
 
-# Run the application
-CMD ["python", "app.py"]
+WORKDIR /app/web
+COPY ./apps/web/package.json ./apps/web/pnpm-lock.yaml* ./
+COPY ./apps/web /app/web
+RUN rm -f .env* 
+RUN if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile && pnpm run build; \
+    else echo "Lockfile not found." && exit 1; \
+    fi
+
+# Final image
+FROM base as runner 
+RUN addgroup --system --gid 1001 system \
+    && adduser --system --uid 1001 app \
+    && mkdir .next \
+    && chown app:system .next
+COPY --from=deps /app/web/public ./app/web/public
+COPY --from=deps --chown=app:system /app/web/.next/standalone ./app/web/
+COPY --from=deps --chown=app:system /app/web/.next/static ./app/web/.next/static
+
+# Backend Build
+WORKDIR /app/api
+COPY ./apps/api/poetry.lock* ./
+COPY ./apps/api/pyproject.toml ./
+RUN pip install --upgrade pip \
+    && pip install poetry \
+    && poetry config virtualenvs.create false \
+    && poetry install --no-interaction --no-ansi
+COPY ./apps/api ./
+
+# Run the backend
+WORKDIR /app
+COPY ./extra/nginx.conf /etc/nginx/conf.d/default.conf
+ENV PORT=8000 LEARNHOUSE_PORT=9000 HOSTNAME=0.0.0.0
+COPY ./extra/start.sh /app/start.sh
+CMD ["sh", "start.sh"]
