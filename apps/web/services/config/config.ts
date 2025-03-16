@@ -60,7 +60,8 @@ export const getAPIUrl = () => {
         console.log("API_URL_FROM BE", url)
     } else {
         const fullhost = window.location.host;
-        url = `${LEARNHOUSE_HTTP_PROTOCOL}${fullhost}/api/v1/`
+        const proto = window.location.protocol;
+        url = `${proto}//${fullhost}/api/v1/`
         console.log("API URL real", url, LEARNHOUSE_HTTP_PROTOCOL)
     }
 
