@@ -30,3 +30,4 @@ echo "Started caddy..."
 
 # Tail Nginx error and access logs.
 pm2 logs
+#
