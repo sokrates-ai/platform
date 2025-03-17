@@ -61,7 +61,7 @@ function ActivityClient(props: ActivityClientProps) {
   const [bgColor, setBgColor] = React.useState('bg-white')
   const [assignment, setAssignment] = React.useState(null) as any;
   const [markStatusButtonActive, setMarkStatusButtonActive] = React.useState(false);
-  const [showBackLink, setShowBackLink] = React.useState(false);
+
 
   function getChapterNameByActivityId(course: any, activity_id: any) {
     for (let i = 0; i < course.chapters.length; i++) {
@@ -225,12 +225,11 @@ export function MarkStatus(props: {
   course: any
   orgslug: string
 }) {
-  const backlink = props.backlink
   const router = useRouter()
   const session = useLHSession() as any;
   const isMobile = useMediaQuery('(max-width: 768px)')
-  const [showBackLink, setShowBackLink] = React.useState(false);
 
+  // TODO: hit this route from the workspace!
   async function markActivityAsCompleteFront() {
     const trail = await markActivityAsComplete(
       props.orgslug,
@@ -238,7 +237,6 @@ export function MarkStatus(props: {
       'activity_' + props.activityid,
       session.data?.tokens?.access_token
     )
-    setShowBackLink(true);
     router.refresh()
   }
 
@@ -256,37 +254,22 @@ export function MarkStatus(props: {
   return (
     <>
       {isActivityCompleted() ? (
-        <div className="flex items-center gap-2">
-          <div className="bg-teal-600 rounded-full px-5 drop-shadow-md flex items-center space-x-2 p-2.5 text-white hover:cursor-pointer transition delay-150 duration-300 ease-in-out">
-            <i>
-              <Check size={17}></Check>
-            </i>{' '}
-            <i className="not-italic text-xs font-bold">Complete</i>
-          </div>
-          <Link href={props.backlink || "/"} passHref>
-            <Button variant="outline" size="sm" className="flex items-center gap-1">
-              <i className="not-italic text-xs">Back</i>
-            </Button>
-          </Link>
+        <div className="bg-teal-600 rounded-full px-5 drop-shadow-md flex items-center space-x-2  p-2.5  text-white hover:cursor-pointer transition delay-150 duration-300 ease-in-out">
+          <i>
+            <Check size={17}></Check>
+          </i>{' '}
+          <i className="not-italic text-xs font-bold">Complete</i>
         </div>
       ) : (
-        <div className="flex items-center gap-2">
-          <div
-            className="bg-gray-800 rounded-full px-5 drop-shadow-md flex items-center space-x-2 p-2.5 text-white hover:cursor-pointer transition delay-150 duration-300 ease-in-out"
-            onClick={markActivityAsCompleteFront}
-          >
-            <i>
-              <Check size={17}></Check>
-            </i>{' '}
-            {!isMobile && <i className="not-italic text-xs font-bold">Mark as complete</i>}
-          </div>
-          {showBackLink && (
-            <Link href={props.backlink || "/"} passHref>
-              <Button variant="outline" size="sm" className="flex items-center gap-1">
-                <i className="not-italic text-xs">Back</i>
-              </Button>
-            </Link>
-          )}
+        <div
+          className="bg-gray-800 rounded-full px-5 drop-shadow-md flex  items-center space-x-2 p-2.5  text-white hover:cursor-pointer transition delay-150 duration-300 ease-in-out"
+          onClick={markActivityAsCompleteFront}
+        >
+          {' '}
+          <i>
+            <Check size={17}></Check>
+          </i>{' '}
+          {!isMobile && <i className="not-italic text-xs font-bold">Mark as complete</i>}
         </div>
       )}
     </>
