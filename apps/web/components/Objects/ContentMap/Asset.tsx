@@ -10,7 +10,7 @@ export type AssetTypeDataKind = "default" | "chapter"
 export interface AssetTypeData {
     kind: AssetTypeDataKind;
     associatedChapterID?: number
-    label: string | null // TODO: Remove this fix thats a work around for customizable IDs
+    customChapterId: number | undefined
 }
 
 export interface AssetData {
@@ -71,7 +71,7 @@ const Asset: React.FC<AssetProps> = React.memo(({ asset, spriteURL, onPointerDow
                     anchor={0.5}
                 />
                 <IsometricChapterText 
-                    chapterID={extractChapterNumber(asset.type.label ?? "") ?? asset.type.associatedChapterID} 
+                    chapterID={asset.type.customChapterId ?? 0} 
                     width={texture.width * asset.scale}
                     height={texture.height * asset.scale}
                 />

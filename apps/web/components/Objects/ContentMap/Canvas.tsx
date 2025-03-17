@@ -144,6 +144,53 @@ const Canvas: React.FC<CanvasProps> = ({
         });
     };
 
+    const handleDecreaseAssetStoneId = () => {
+        setLayout((old: LayoutState) => {
+            const index = old.layout!.findIndex(asset => asset.id === contextMenu?.assetId);
+
+            const newLayout = [...old.layout!];
+            if(newLayout[index].type.customChapterId == undefined){
+                newLayout[index].type.customChapterId = 0;
+                return {
+                    layout: newLayout,
+                    updateOriginator: "user",
+                };
+            }
+            
+            newLayout[index].type.customChapterId -= 1;
+
+
+            return {
+                layout: newLayout,
+                updateOriginator: "user",
+            };
+        });
+    };
+
+
+    const handleIncreaseAssetStoneId = () => {
+        setLayout((old: LayoutState) => {
+            const index = old.layout!.findIndex(asset => asset.id === contextMenu?.assetId);
+
+            const newLayout = [...old.layout!];
+            if(newLayout[index].type.customChapterId == undefined){
+                newLayout[index].type.customChapterId = 0;
+                return {
+                    layout: newLayout,
+                    updateOriginator: "user",
+                };
+            }
+            
+            newLayout[index].type.customChapterId += 1;
+
+            return {
+                layout: newLayout,
+                updateOriginator: "user",
+            };
+        });
+    };
+
+
     const handleDeleteAsset = () => {
         setLayout((old: LayoutState) => {
             const newLayout = old.layout!.filter(asset => asset.id !== contextMenu?.assetId);
@@ -261,6 +308,47 @@ const Canvas: React.FC<CanvasProps> = ({
                                     >
                                         <ChevronUp className="h-3 w-3" />
                                         <span className="sr-only">Increase layer</span>
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="layer" className="text-xs font-medium">
+                                    Stone Id
+                                </Label>
+                                <div className="flex h-7 items-center">
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-7 w-7 rounded-r-none px-1"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDecreaseAssetStoneId();
+                                        }}
+                                    >
+                                        <ChevronDown className="h-3 w-3" />
+                                        <span className="sr-only">Decrease stone id</span>
+                                    </Button>
+                                    <Input
+                                        id="stoneId"
+                                        value={(() => {
+                                            const index = layout.layout!.findIndex(asset => asset.id === contextMenu?.assetId);
+                                            const chapterId = layout.layout![index]?.type.customChapterId;
+                                            return chapterId != undefined ? chapterId.toString() : "0"; 
+                                        })()}
+                                        className="h-7 w-8 rounded-none text-center text-xs"
+                                        readOnly
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-7 w-7 rounded-l-none px-1"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleIncreaseAssetStoneId();
+                                        }}
+                                    >
+                                        <ChevronUp className="h-3 w-3" />
+                                        <span className="sr-only">Increase stone id</span>
                                     </Button>
                                 </div>
                             </div>
