@@ -10,6 +10,7 @@ export type AssetTypeDataKind = "default" | "chapter"
 export interface AssetTypeData {
     kind: AssetTypeDataKind;
     associatedChapterID?: number
+    label: string | null // TODO: Remove this fix thats a work around for customizable IDs
 }
 
 export interface AssetData {
@@ -51,6 +52,12 @@ const Asset: React.FC<AssetProps> = React.memo(({ asset, spriteURL, onPointerDow
 
     // Render differently based on asset type
     if (asset.type.kind === "chapter" && asset.type.associatedChapterID !== undefined) {
+        
+    function extractChapterNumber(label: string): number | null {
+        const matches = label.match(/\((\d+)\)$/);
+        return matches ? parseInt(matches[1]) : null;
+    }
+        console.log(`Chapter Label: ${asset.type.label}`)
         return (
             <pixiContainer
                 x={asset.x}
@@ -64,7 +71,7 @@ const Asset: React.FC<AssetProps> = React.memo(({ asset, spriteURL, onPointerDow
                     anchor={0.5}
                 />
                 <IsometricChapterText 
-                    chapterID={asset.type.associatedChapterID} 
+                    chapterID={extractChapterNumber(asset.type.label ?? "") ?? asset.type.associatedChapterID} 
                     width={texture.width * asset.scale}
                     height={texture.height * asset.scale}
                 />

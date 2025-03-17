@@ -53,6 +53,7 @@ function updateChapterStonesInContentMapState(oldState: AssetData[], chapters: a
                 type: {
                     kind: "chapter",
                     associatedChapterID: chapter.id,
+                    label: chapter.name,
                 }
             };
             return data
@@ -80,7 +81,6 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
     const course = useCourse() as any
     const { isLoading, courseStructure } = course as any
     const dispatchCourse = useCourseDispatch() as any
-
     //
     // Load an initial layout.
     //
