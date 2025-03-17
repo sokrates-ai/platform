@@ -88,7 +88,9 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     );
 
     const handlePointerDown = useCallback((e: any, asset: AssetData) => {
-        e.stopPropagation();
+        if (!readOnly) {
+            e.stopPropagation();
+        }
 
         const originalEvent = e.data?.originalEvent || e.nativeEvent || e;
         if (!originalEvent) return;

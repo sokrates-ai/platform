@@ -16,16 +16,13 @@ interface ContextMenuData {
 }
 
 export interface LayoutState {
-    layout: AssetData[] | null
-    updateOriginator: 'user' | 'initial'
+    layout: AssetData[] | null;
+    updateOriginator: "user" | "initial";
 }
 
 export interface CanvasProps {
-    layout: LayoutState,
-    setLayout: Function,
-    // triggerLayoutSync: Function,
-    // courseStructure: any;
-    onMapUpdateCallback?: Function;
+    layout: LayoutState;
+    setLayout: Function;
     onChapterClick: (chapterID: number) => void;
     readOnly?: boolean;
 }
@@ -33,8 +30,6 @@ export interface CanvasProps {
 const Canvas: React.FC<CanvasProps> = ({
     layout,
     setLayout,
-    // triggerLayoutSync,
-    // onMapUpdateCallback,
     onChapterClick,
     readOnly = false,
 }) => {
@@ -42,8 +37,6 @@ const Canvas: React.FC<CanvasProps> = ({
     const [contextMenu, setContextMenu] = useState<ContextMenuData | null>(null);
     const [viewport, setViewport] = useState<any>(null);
     const contextMenuRef = useRef<HTMLDivElement>(null);
-
-    // const [layout, setLayout] = useState(layoutExternal);
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -69,15 +62,15 @@ const Canvas: React.FC<CanvasProps> = ({
                     type: {
                         kind: "default",
                         associatedChapterID: undefined,
-                    }
+                    },
                 };
 
                 setLayout((old: LayoutState) => {
-                    const newData = [...old.layout!, newAsset] 
+                    const newData = [...old.layout!, newAsset];
                     return {
                         layout: newData,
-                        updateOriginator: 'user',
-                    } as LayoutState
+                        updateOriginator: "user",
+                    } as LayoutState;
                 });
             } catch (error) {
                 console.error("Error parsing dropped data", error);
@@ -85,18 +78,15 @@ const Canvas: React.FC<CanvasProps> = ({
         }
     };
 
-    // const onMouseUp = () => {
-    //     console.log('set external', layout)
-    //     setLayoutExternal(layout)
-    // }
-
     const handleAssetPositionChange = useCallback((id: number, newX: number, newY: number) => {
         setLayout((old: LayoutState) => {
-            const newLayout = old.layout!.map((asset) => (asset.id === id ? { ...asset, x: newX, y: newY } : asset))
+            const newLayout = old.layout!.map((asset) =>
+                asset.id === id ? { ...asset, x: newX, y: newY } : asset
+            );
             return {
                 layout: newLayout,
-                updateOriginator: 'user'
-            } as LayoutState
+                updateOriginator: "user",
+            } as LayoutState;
         });
     }, []);
 
@@ -128,6 +118,40 @@ const Canvas: React.FC<CanvasProps> = ({
         };
     }, [contextMenu]);
 
+    const handleIncreaseLayer = () => {
+        setLayout((old: LayoutState) => {
+            const index = old.layout!.findIndex(asset => asset.id === contextMenu?.assetId);
+            if (index === -1 || index === old.layout!.length - 1) return old; // Already top-most
+            const newLayout = [...old.layout!];
+            [newLayout[index], newLayout[index + 1]] = [newLayout[index + 1], newLayout[index]];
+            return {
+                layout: newLayout,
+                updateOriginator: "user",
+            };
+        });
+    };
+
+    const handleDecreaseLayer = () => {
+        setLayout((old: LayoutState) => {
+            const index = old.layout!.findIndex(asset => asset.id === contextMenu?.assetId);
+            if (index <= 0) return old; // Already bottom-most
+            const newLayout = [...old.layout!];
+            [newLayout[index], newLayout[index - 1]] = [newLayout[index - 1], newLayout[index]];
+            return {
+                layout: newLayout,
+                updateOriginator: "user",
+            };
+        });
+    };
+
+    const handleDeleteAsset = () => {
+        setLayout((old: LayoutState) => {
+            const newLayout = old.layout!.filter(asset => asset.id !== contextMenu?.assetId);
+            return { layout: newLayout, updateOriginator: "user" };
+        });
+        setContextMenu(null);
+    };
+
     return (
         <div style={{ width: "100%", height: "100%", display: "flex" }}>
             <div
@@ -142,7 +166,6 @@ const Canvas: React.FC<CanvasProps> = ({
                         placedAssets={layout.layout!}
                         onViewportReady={setViewport}
                         onAssetPositionChange={handleAssetPositionChange}
-                        // onPointerRelease={onMouseUp}
                         onAssetContextMenu={handleAssetContextMenu}
                         onChapterClick={onChapterClick}
                         readOnly={readOnly}
@@ -191,16 +214,14 @@ const Canvas: React.FC<CanvasProps> = ({
                 >
                     <div className="p-2">
                         <div className="grid gap-2">
-                            {function() {
-                                const asset = layout.layout!.find((a) => a.id === contextMenu.assetId)
-
-                                if (asset?.type.kind === 'chapter') {
-                                    return (<span>Chapter ID: {asset.type.associatedChapterID}</span>)
+                            {(() => {
+                                const asset = layout.layout!.find((a) => a.id === contextMenu.assetId);
+                                if (asset?.type.kind === "chapter") {
+                                    return <span>Chapter ID: {asset.type.associatedChapterID}</span>;
                                 } else {
-                                    return <></>
+                                    return null;
                                 }
-                            }()}
-
+                            })()}
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="layer" className="text-xs font-medium">
                                     Layer
@@ -210,14 +231,22 @@ const Canvas: React.FC<CanvasProps> = ({
                                         variant="outline"
                                         size="icon"
                                         className="h-7 w-7 rounded-r-none px-1"
-                                        onClick={(e) => e.stopPropagation()}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDecreaseLayer();
+                                        }}
                                     >
                                         <ChevronDown className="h-3 w-3" />
                                         <span className="sr-only">Decrease layer</span>
                                     </Button>
                                     <Input
                                         id="layer"
-                                        value="1"
+                                        value={(() => {
+                                            const index = layout.layout!.findIndex(
+                                                (a) => a.id === contextMenu.assetId
+                                            );
+                                            return index !== -1 ? (index + 1).toString() : "";
+                                        })()}
                                         className="h-7 w-8 rounded-none text-center text-xs"
                                         readOnly
                                     />
@@ -225,14 +254,25 @@ const Canvas: React.FC<CanvasProps> = ({
                                         variant="outline"
                                         size="icon"
                                         className="h-7 w-7 rounded-l-none px-1"
-                                        onClick={(e) => e.stopPropagation()}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleIncreaseLayer();
+                                        }}
                                     >
                                         <ChevronUp className="h-3 w-3" />
                                         <span className="sr-only">Increase layer</span>
                                     </Button>
                                 </div>
                             </div>
-                            <Button variant="destructive" size="sm" className="mt-1 w-full text-xs">
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                className="mt-1 w-full text-xs"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteAsset();
+                                }}
+                            >
                                 Remove
                             </Button>
                         </div>

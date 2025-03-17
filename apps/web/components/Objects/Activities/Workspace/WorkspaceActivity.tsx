@@ -3,15 +3,18 @@ import { getAPIUrl } from '@services/config/config'
 import { getActivityMediaDirectory } from '@services/media/media'
 import { RequestBodyWithAuthHeader, swrFetcher } from '@services/utils/ts/requests'
 import React, { useEffect } from 'react'
-import { BarLoader, MoonLoader } from 'react-spinners'
 import useSWR from 'swr'
+import { Loader } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
 
-async function createSession(activity_uuid: string, access_token: string): Promise<{ token: string, workspace_url: string}> {
+async function createSession(activity_uuid: string, access_token: string): Promise<{ token: string, workspace_url: string }> {
   const ACTIVATE_SESSION_URL = `${getAPIUrl()}ex/session`;
   const result = await fetch(
     `${getAPIUrl()}ex/session`,
     RequestBodyWithAuthHeader('POST', {
-      activity_uuid 
+      activity_uuid
     }, null, access_token)
   )
   const res = await result.json()
@@ -30,46 +33,75 @@ function WorkspaceActivity({
   backlink: string,
 }) {
   const org = useOrg() as any
+  const [url, setURL] = React.useState<string | null>(null)
+  const [progress, setProgress] = React.useState(0)
 
   React.useEffect(() => {
   }, [activity, org])
 
-  const [url, setURL] = React.useState<string | null>(null)
-
-  console.dir(activity)
-
   useEffect(() => {
-    // Fetch redirect URL here.
+    // Simulate progress during loading
+    const interval = setInterval(() => {
+      setProgress(prevProgress => {
+        if (prevProgress >= 90) {
+          clearInterval(interval)
+          return prevProgress
+        }
+        return prevProgress + 10
+      })
+    }, 500)
+
+    // Fetch redirect URL here
     createSession(activity.activity_uuid, access_token).then(res => {
       const url = `${res.workspace_url}?token=${encodeURIComponent(res.token)}&backlink=${encodeURIComponent(backlink)}`
       setURL(url)
-      window.location.href = url
+      setProgress(100)
+      clearInterval(interval)
+
+      // Short delay before redirect to show 100% progress
+      setTimeout(() => {
+        window.location.href = url
+      }, 500)
     })
+
+    return () => clearInterval(interval)
   }, [])
 
-      return (<div className="m-8 rounded-md mt-14 flex flex-col justify-center items-center gap-5">
-        <h1 className='text-white'>
-          {url ? "Redirecting..." : "Creating Workspace..."}
-        </h1>
+  return (
+    <div className="py-16 bg-gray-50 flex items-center justify-center p-4 rounded-md">
+      <Card className="w-full max-w-md bg-white shadow-sm">
+        <CardContent className="pt-4 pb-4 flex flex-col items-center">
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="text-lg font-medium text-gray-800">
+              {url ? "Redirecting to Workspace..." : "Creating Your Workspace"}
+            </h2>
+          </div>
 
-        <h5>
-          {url ? (<a className='text-teal-600 underline decoration-solid' href={url}>{url}</a>) : 'please wait'}
-        </h5>
+          <Progress
+            value={progress}
+            className="w-full h-1 bg-gray-100 mb-4"
+          />
 
-        {/* <MoonLoader
-          size={60}
-          color="#ffffff"
-        /> */}
+          <p className="text-gray-500 text-sm mb-2 text-center">
+            {url
+              ? "You'll be redirected automatically in a moment"
+              : "Please wait while we set up your environment"}
+          </p>
 
-        <BarLoader
-          width={600}
-          height={10}
-          color="#ffffff"
-          cssOverride={{'borderRadius': '3rem'}}
-        >
-        </BarLoader>
-      </div>
-        )
-  }
+          {url && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-blue-500 text-blue-500 hover:bg-blue-50"
+              onClick={() => window.location.href = url}
+            >
+              Open Workspace Now
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
 
 export default WorkspaceActivity

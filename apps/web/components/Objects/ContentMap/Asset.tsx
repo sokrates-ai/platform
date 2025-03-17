@@ -164,6 +164,7 @@ const IsometricChapterText: React.FC<IsometricChapterTextProps> = ({ chapterID, 
             texture={isometricTexture}
             anchor={0.5}
             blendMode="linear-burn"
+            alpha={0.7}
             y={height * -0.05} // Offset slightly to position on the "ground"
         />
     );
