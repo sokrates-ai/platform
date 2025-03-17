@@ -1,21 +1,25 @@
 'use client'
-import learnhouseIcon from 'public/learnhouse_bigicon_1.png'
-import FormLayout, {
-  FormField,
-  FormLabelAndMessage,
-  Input,
-} from '@components/Objects/StyledElements/Form/Form'
+
+import React, { useState } from 'react'
 import Image from 'next/image'
-import * as Form from '@radix-ui/react-form'
-import { useFormik } from 'formik'
-import { getOrgLogoMediaDirectory } from '@services/media/media'
-import React from 'react'
-import { AlertTriangle, UserRoundPlus } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { signIn } from "next-auth/react"
+import { useFormik } from 'formik'
+import * as Form from '@radix-ui/react-form'
+import { AlertTriangle, UserRoundPlus, Loader2, Mail, Lock } from 'lucide-react'
+
+import whiteLogo from 'public/white_logo.svg'
+import { getOrgLogoMediaDirectory } from '@services/media/media'
 import { getUriWithOrg, getUriWithoutOrg } from '@services/config/config'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
+
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface LoginClientProps {
   org: any
@@ -40,11 +44,11 @@ const validate = (values: any) => {
 }
 
 const LoginClient = (props: LoginClientProps) => {
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter();
   const session = useLHSession() as any;
+  const [error, setError] = useState('')
 
-  const [error, setError] = React.useState('')
   const formik = useFormik({
     initialValues: {
       email: '',
@@ -53,23 +57,23 @@ const LoginClient = (props: LoginClientProps) => {
     validate,
     validateOnBlur: true,
     validateOnChange: true,
-    onSubmit: async (values, {validateForm, setErrors, setSubmitting}) => {
+    onSubmit: async (values, { validateForm, setErrors, setSubmitting }) => {
       setIsSubmitting(true)
       const errors = await validateForm(values);
       if (Object.keys(errors).length > 0) {
         setErrors(errors);
         setSubmitting(false);
+        setIsSubmitting(false);
         return;
       }
 
-      console.log(`FORM IS SUBMITTING: ${values}`)
-      
       const res = await signIn('credentials', {
         redirect: false,
         email: values.email,
         password: values.password,
         callbackUrl: '/redirect_from_auth'
       });
+
       if (res && res.error) {
         setError("Wrong Email or password");
         setIsSubmitting(false);
@@ -84,122 +88,152 @@ const LoginClient = (props: LoginClientProps) => {
   })
 
   return (
-    <div className="grid grid-flow-col justify-stretch h-screen">
+    <div className="grid md:grid-cols-2 min-h-screen">
+      {/* Left side (dark background) */}
       <div
-        className="right-login-part"
-        style={{
-          background:
-            'linear-gradient(041.61deg, #202020 7.15%, #000000 90.96%)',
-        }}
+        className="bg-gradient-to-br from-gray-800 to-black flex flex-col justify-between p-6 md:p-10"
       >
-        <div className="login-topbar m-10">
+        <div className="login-topbar flex justify-center md:justify-start">
           <Link prefetch href={getUriWithOrg(props.org.slug, '/')}>
             <Image
               quality={100}
-              width={30}
-              height={30}
-              src={learnhouseIcon}
-              alt=""
+              width={120}
+              height={120}
+              src={whiteLogo}
+              alt="Logo"
+              className="hover:opacity-80 transition-opacity"
             />
           </Link>
         </div>
-        <div className="ml-10 h-4/6 flex flex-row text-white">
-          <div className="m-auto flex space-x-4 items-center flex-wrap">
-            <div>Login to </div>
-            <div className="shadow-[0px_4px_16px_rgba(0,0,0,0.02)]">
-              {props.org?.logo_image ? (
-                <img
-                  src={`${getOrgLogoMediaDirectory(
-                    props.org.org_uuid,
-                    props.org?.logo_image
-                  )}`}
-                  alt="Learnhouse"
-                  style={{ width: 'auto', height: 70 }}
-                  className="rounded-xl shadow-xl inset-0 ring-1 ring-inset ring-black/10 bg-white"
-                />
-              ) : (
-                <Image
-                  quality={100}
-                  width={70}
-                  height={70}
-                  src={learnhouseIcon}
-                  alt=""
-                />
-              )}
+        <div className="flex flex-col items-center justify-center text-white py-10 md:py-0">
+          <div className="text-center">
+            <h1 className="font-bold text-3xl md:text-6xl mb-3">Welcome!</h1>
+            <Separator className="my-4 opacity-25"/>
+            <div className="flex items-center space-x-2">
+              <p className="text-lg md:text-xl">Login to your</p>
+              <Image
+                quality={100}
+                width={100}
+                height={100}
+                src={whiteLogo}
+                alt="Logo"
+                className="hover:opacity-80 transition-opacity"
+              />
+              <p className="text-lg md:text-xl">Account</p>
             </div>
-            <div className="font-bold text-xl">{props.org?.name}</div>
           </div>
+        </div>
+        <div className="hidden md:block"> {/* Spacer for desktop layout */}
         </div>
       </div>
-      <div className="left-login-part bg-white flex flex-row">
-        <div className="login-form m-auto w-72">
-          {error && (
-            <div className="flex justify-center bg-red-200 rounded-md text-red-950 space-x-2 items-center p-4 transition-all shadow-sm">
-              <AlertTriangle size={18} />
-              <div className="font-bold text-sm">{error}</div>
-            </div>
-          )}
-          <FormLayout onSubmit={formik.handleSubmit}>
-            <FormField name="email">
-              <FormLabelAndMessage
-                label="Email"
-                message={formik.errors.email}
-              />
-              <Form.Control asChild>
-                <Input
-                  onChange={formik.handleChange}
-                  value={formik.values.email}
-                  type="email"
-                  
-                />
-              </Form.Control>
-            </FormField>
-            {/* for password  */}
-            <FormField name="password">
-              <FormLabelAndMessage
-                label="Password"
-                message={formik.errors.password}
-              />
 
-              <Form.Control asChild>
-                <Input
-                  onChange={formik.handleChange}
-                  value={formik.values.password}
-                  type="password"
-                  
-                />
-              </Form.Control>
-            </FormField>
-            <div>
-              <Link
-                href={{ pathname: getUriWithoutOrg('/forgot'), query: props.org.slug ? { orgslug: props.org.slug } : null }}
-                passHref
-                className="text-xs text-gray-500 hover:underline"
-              >
-                Forgot password?
-              </Link>
+      {/* Right side (white background) */}
+      <div className="bg-white flex items-center justify-center p-6 md:p-10">
+        <Card className="w-full max-w-md shadow-none border-none">
+          <CardHeader className="space-y-1">
+            <h2 className="text-2xl font-bold tracking-tight text-center">
+              Welcome Back!
+            </h2>
+            <p className="text-sm text-muted-foreground text-center">
+              Great to see you again. Let's get you back into your account.
+            </p>
+          </CardHeader>
+          <CardContent>
+            {error && (
+              <Alert variant="destructive" className="mb-6">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="ml-2">{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <form onSubmit={formik.handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium">
+                  Email
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    className={`pl-10 ${formik.touched.email && formik.errors.email ? 'border-red-500' : ''}`}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.email}
+                  />
+                </div>
+                {formik.touched.email && formik.errors.email && (
+                  <p className="text-xs text-red-500 mt-1">{formik.errors.email}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="password" className="text-sm font-medium">
+                    Password
+                  </Label>
+                  {/* <Link
+                    href={{
+                      pathname: getUriWithoutOrg('/forgot'),
+                      query: props.org.slug ? { orgslug: props.org.slug } : null
+                    }}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </Link> */}
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="••••••••"
+                    className={`pl-10 ${formik.touched.password && formik.errors.password ? 'border-red-500' : ''}`}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.password}
+                  />
+                </div>
+                {formik.touched.password && formik.errors.password && (
+                  <p className="text-xs text-red-500 mt-1">{formik.errors.password}</p>
+                )}
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Please wait...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
+              </Button>
+            </form>
+
+            <div className="relative my-6">
+              <Separator />
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs text-muted-foreground">
+                OR
+              </span>
             </div>
-            <div className="flex  py-4">
-              <Form.Submit asChild>
-                <button  className="w-full bg-black text-white font-bold text-center p-2 rounded-md shadow-md hover:cursor-pointer">
-                  {isSubmitting ? 'Loading...' : 'Login'}
-                </button>
-              </Form.Submit>
-            </div>
-          </FormLayout>
-          <div className='flex h-0.5 rounded-2xl bg-slate-100 mt-5  mx-10'></div>
-          <div className='flex justify-center py-5 mx-auto'>OR </div>
-          <div className='flex flex-col space-y-4'>
-            <Link href={{ pathname: getUriWithoutOrg('/signup'), query: props.org.slug ? { orgslug: props.org.slug } : null }}  className="flex justify-center items-center py-3 text-md w-full bg-gray-800 text-gray-300 space-x-3 font-semibold text-center p-2 rounded-md shadow hover:cursor-pointer">
-              <UserRoundPlus size={17} />
-              <span>Sign up</span>
+
+            <Link
+              href={{
+                pathname: getUriWithoutOrg('/signup'),
+                query: props.org.slug ? { orgslug: props.org.slug } : null
+              }}
+            >
+              <Button variant="outline" className="w-full">
+                <UserRoundPlus className="mr-2 h-4 w-4" />
+                Create an Account
+              </Button>
             </Link>
-            {/* <button onClick={() => signIn('google', { callbackUrl: '/redirect_from_auth' })} className="flex justify-center py-3 text-md w-full bg-white text-slate-600 space-x-3 font-semibold text-center p-2 rounded-md shadow hover:cursor-pointer">
-              <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" alt="" />
-              <span>Sign in with Google</span>
-            </button> */}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

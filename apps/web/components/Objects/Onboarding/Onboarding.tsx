@@ -161,20 +161,19 @@ const Onboarding: React.FC = () => {
 
   return (
     <div>
-      {isUserAdmin.isAdmin && !isUserAdmin.loading && !isOnboardingComplete && 
-      
+      {isUserAdmin.isAdmin && !isUserAdmin.loading && !isOnboardingComplete &&
+
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen} >
           <DialogTrigger asChild>
             <div className=' fixed pb-10 w-full bottom-0 bg-gradient-to-t from-1% from-gray-950/25 to-transparent'>
               <div className='bg-gray-950 flex space-x-1 font-bold cursor-pointer hover:bg-gray-900 shadow-md items-center text-gray-200 px-5 py-2 w-fit rounded-full mx-auto'>
                 <ArrowLeftRight size={20} />
-                <ArrowRightLeft size={20} />
                 <p>Onboarding</p>
                 <div className='h-2 w-2 bg-blue-500 animate-pulse rounded-full'></div>
               </div>
             </div>
           </DialogTrigger>
-          <DialogContent  className= "w-[700px] h-[600px] max-w-full max-h-[90vh] overflow-hidden">
+          <DialogContent className="w-[700px] h-[600px] max-w-full max-h-[90vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle>Onboarding</DialogTitle>
             </DialogHeader>
@@ -189,7 +188,7 @@ const Onboarding: React.FC = () => {
             />
           </DialogContent>
         </Dialog>}
-        </div>
+    </div>
   );
 };
 
@@ -213,68 +212,113 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
   setIsModalOpen,
 }) => {
   const isLastStep = currentStep === onboardingData.length - 1;
+  const [showActionMenu, setShowActionMenu] = useState(false);
 
   return (
-    <div className='flex flex-col'>
-      <div className='onboarding_screens flex-col px-4 py-4'>
-        <div className='flex-grow rounded-xl'>
-          <Image unoptimized className='mx-auto shadow-md shadow-gray-200 rounded-lg aspect-auto' alt='' priority quality={100} src={step.imageSrc} />
-        </div>
-        <div className='grid grid-flow-col justify-stretch space-x-3 mt-4'>
-        {onboardingData.map((_, index) => (
-            <Badge
-              key={index}
-              onClick={() => goToStep(index)}
-              className={cn("h-[7px] w-15 rounded-full cursor-pointer transition-all", {
-                "bg-black": index === currentStep,
-                "bg-gray-300 hover:bg-gray-500": index !== currentStep,
-              })}
-            />
-          ))}
-        </div>
-      </div>
-      <div className='onboarding_text flex flex-col h-[90px] py-2 px-4 leading-tight'>
-        <h2 className='text-xl font-bold'>{step.title}</h2>
-        <p className='text-md font-normal'>{step.description}</p>
-      </div>
-      <div className='onboarding_actions flex flex-row-reverse w-full px-4'>
-        <div className='flex flex-row justify-between w-full py-2'>
-          <div className='utils_buttons flex flex-row space-x-2'>
-
-            <Button
-              variant='destructive'
-              onClick={() => setIsModalOpen(false)}
-            >
-              <PictureInPicture size={16} />
-            </Button>
+      <div className='flex flex-col h-full'>
+        <div className='onboarding_screens flex-col px-3 sm:px-6 pt-3 sm:pt-4 pb-2'>
+          <div className='flex-grow rounded-xl'>
+            <Image unoptimized className='mx-auto shadow-md shadow-gray-200 rounded-lg aspect-auto' alt='' priority quality={100} src={step.imageSrc} />
           </div>
-
-          <div className='actions_buttons flex space-x-2'>
-            {step.buttons?.map((button, index) => (
-              <Button
+          <div className='grid grid-flow-col justify-stretch space-x-2 sm:space-x-3 mt-3 sm:mt-5'>
+          {onboardingData.map((_, index) => (
+              <Badge
                 key={index}
-                onClick={button.action}
-              >
-                <p>{button.label}</p>
-                {button.icon}
-              </Button>
+                onClick={() => goToStep(index)}
+                className={cn("h-[5px] sm:h-[7px] w-15 rounded-full cursor-pointer transition-all", {
+                  "bg-black": index === currentStep,
+                  "bg-gray-300 hover:bg-gray-500": index !== currentStep,
+                })}
+              />
             ))}
-            {isLastStep ? (
-              <Button onClick={nextStep}>
-                <p>Finish Onboarding</p>
-                <Check size={16} />
+          </div>
+        </div>
+        <div className='onboarding_text flex flex-col px-3 sm:px-6 py-2 sm:py-3'>
+          <h2 className='text-lg sm:text-xl font-bold mb-1'>{step.title}</h2>
+          <p className='text-sm sm:text-md font-normal text-gray-700'>{step.description}</p>
+        </div>
+        <div className='onboarding_actions mt-auto border-t border-gray-100 px-3 sm:px-6 py-3 sm:py-4'>
+          <div className='flex flex-row justify-between items-center w-full'>
+            <div className='utils_buttons'>
+              <Button
+                variant='secondary'
+                onClick={() => setIsModalOpen(false)}
+                size="sm"
+                className="text-xs sm:text-sm h-8 w-8 sm:w-auto sm:h-9 p-0 sm:px-3"
+              >
+                <PictureInPicture size={14} className="sm:mr-1" />
+                <span className="hidden sm:inline">Minimize</span>
               </Button>
-            ) : (
+            </div>
+  
+            <div className='actions_buttons flex items-center space-x-2 sm:space-x-3'>
+              {/* Mobile Action Buttons */}
+              {step.buttons && step.buttons.length > 0 && (
+                <div className="relative sm:hidden">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-8 px-2"
+                    onClick={() => setShowActionMenu(!showActionMenu)}
+                  >
+                    Actions
+                  </Button>
+                  {showActionMenu && (
+                    <div className="absolute right-0 bottom-full mb-2 bg-white shadow-lg rounded-md py-1 w-40 z-10">
+                      {step.buttons.map((button, index) => (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            button.action();
+                            setShowActionMenu(false);
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs hover:bg-gray-100 flex items-center"
+                        >
+                          <span className="mr-2">{button.label}</span>
+                          {button.icon}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               
-              <Button onClick={nextStep}>
-                Next
-                <ArrowRight size={16} />
-              </Button>
-            )}
+              {/* Desktop Action Buttons */}
+              {step.buttons?.map((button, index) => (
+                <Button
+                  key={index}
+                  onClick={button.action}
+                  size="sm"
+                  className="text-xs sm:text-sm hidden sm:flex h-9"
+                >
+                  <span className="mr-1">{button.label}</span>
+                  {button.icon}
+                </Button>
+              ))}
+              
+              {isLastStep ? (
+                <Button 
+                  onClick={nextStep} 
+                  size="sm"
+                  className="text-xs sm:text-sm h-8 sm:h-9"
+                >
+                  <span className="mr-1">Finish</span>
+                  <Check size={14} />
+                </Button>
+              ) : (
+                <Button 
+                  onClick={nextStep} 
+                  size="sm"
+                  className="text-xs sm:text-sm h-8 sm:h-9"
+                >
+                  <span className="mr-1">Next</span>
+                  <ArrowRight size={14} />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
   );
 };
 

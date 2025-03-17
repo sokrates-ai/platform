@@ -1,69 +1,59 @@
 'use client'
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { getUriWithOrg } from '@services/config/config'
 import { getOrgLogoMediaDirectory } from '@services/media/media'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem } from "@/components/ui/navigation-menu"
 import logo_black from '@public/black_logo.svg'
-import Image from 'next/image'
 import MenuLinks from './OrgMenuLinks'
 import useAdminStatus from '@components/Hooks/useAdminStatus'
 import { NewHeaderProfileBox } from '@components/Security/NewHeaderProfileBox'
-
 
 export const OrgMenu = (props: any) => {
   const { orgslug } = props
   const session = useLHSession() as any
   const org = useOrg() as any
-  const [isMenuOpen] = React.useState(false)
   const isUserAdmin = useAdminStatus() as any
-
   
   return (
     <>
-      <div className="backdrop-blur-lg h-[60px] blur-3adminxl -z-10"></div>
-      <div className="backdrop-blur-lg bg-white/90 fixed top-0 left-0 right-0 h-[60px] ring-1 ring-inset ring-gray-500/10 shadow-[0px_4px_16px_rgba(0,0,0,0.03)] z-50">
-        <div className="flex items-center justify-between w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-16 h-full">
-          <div className="flex items-center space-x-5 md:w-auto w-full">
-            <div className="logo flex md:w-auto w-full justify-center">
-              <Link href={getUriWithOrg(orgslug, '/')}>
-                <div className="flex w-auto h-9 rounded-md items-center m-auto py-1 justify-center">
-                  {org?.logo_image ? (
-                    <img
-                      src={`${getOrgLogoMediaDirectory(org.org_uuid, org?.logo_image)}`}
-                      alt="Learnhouse"
-                      style={{ width: 'auto', height: '100%' }}
-                      className="rounded-md"
-                    />
-                  ) : (
-                    <LearnHouseLogo />
-                  )}
-                </div>
-              </Link>
-            </div>
-
-            <NavigationMenu className="hidden md:flex">
-                <NavigationMenuList>
-                  <NavigationMenuItem>
-                    <MenuLinks orgslug={orgslug} />
-                  </NavigationMenuItem>
-                </NavigationMenuList>
-              </NavigationMenu>
+      <div className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200/30 bg-white/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-6">
+            <Link href={getUriWithOrg(orgslug, "/")} className="flex items-center">
+              <div className="flex h-9 w-auto items-center justify-center rounded-md">
+                {org?.logo_image ? (
+                  <img
+                    src={`${getOrgLogoMediaDirectory(org.org_uuid, org?.logo_image)}`}
+                    alt="Organization logo"
+                    style={{ width: "auto", height: "100%" }}
+                    className="rounded-md"
+                  />
+                ) : (
+                  <LearnHouseLogo />
+                )}
+              </div>
+            </Link>
           </div>
-      <NewHeaderProfileBox></NewHeaderProfileBox>
+
+          <div className="flex items-center">
+            <NewHeaderProfileBox />
+          </div>
         </div>
       </div>
+      <div className="h-16"></div>
     </>
   )
 }
 
 const LearnHouseLogo = () => (
   <Image
-    width={40}
+    width={120}
     className="mx-auto"
-    src={logo_black}
+    src={logo_black || "/placeholder.svg"}
     alt="HPI Sokrates"
   />
 )

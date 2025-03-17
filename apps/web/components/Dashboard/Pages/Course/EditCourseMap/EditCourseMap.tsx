@@ -24,8 +24,9 @@ export interface EditCourseMapProps {
 
 function updateChapterStonesInContentMapState(oldState: AssetData[], chapters: any[]): AssetData[] {
     // if (!courseStructure || !courseStructure.chapters) return;
-    const currentChapterNodes = oldState.filter(el => el.type.kind === 'chapter');
-    const nonChapterNodes = oldState.filter(el => el.type.kind !== 'chapter');
+    
+    const currentChapterNodes = oldState.filter(el => el.type && el.type.kind === 'chapter');
+    const nonChapterNodes = oldState.filter(el => !el.type || el.type.kind !== 'chapter');
 
     const CHAPTER_SPRITE_LABEL = 'Stein blockiert.webp'
     const chapterSprite = SPRITES.find((sprite) => sprite.file === CHAPTER_SPRITE_LABEL)

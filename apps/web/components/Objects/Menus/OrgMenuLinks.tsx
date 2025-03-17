@@ -15,16 +15,17 @@ function MenuLinks({ orgslug }: { orgslug: string }) {
 
 const LinkItem = ({ link, orgslug, type }: { link: string; orgslug: string; type: string }) => {
   return (
-    <Link href={getUriWithOrg(orgslug, link)}>
-      <li className="flex space-x-2 items-center text-[#909192] font-medium">
-        {type === 'courses' && (
-          <>
-            <BookCopy size={20} />
-            <span>Courses</span>
-          </>
-        )}
-      </li>
-    </Link>
+    <div></div>
+    // <Link href={getUriWithOrg(orgslug, link)}>
+    //   <li className="flex space-x-2 items-center text-[#909192] font-medium">
+    //     {type === 'courses' && (
+    //       <>
+    //         <BookCopy size={20} />
+    //         <span>Courses</span>
+    //       </>
+    //     )}
+    //   </li>
+    // </Link>
   )
 }
 

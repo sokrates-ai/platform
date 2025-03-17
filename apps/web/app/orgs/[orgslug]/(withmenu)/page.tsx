@@ -14,9 +14,6 @@ import { getOrgThumbnailMediaDirectory } from '@services/media/media'
 import CourseCard from '@components/Objects/StyledElements/Cards/CourseCard'
 import NoCoursesAlert from '@components/Objects/StyledElements/Alerts/NoCourseAlert'
 
-
-
-
 type MetadataProps = {
 	params: { orgslug: string }
 	searchParams: { [key: string]: string | string[] | undefined }

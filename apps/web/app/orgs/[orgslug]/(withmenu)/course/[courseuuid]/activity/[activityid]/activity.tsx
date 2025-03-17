@@ -21,13 +21,23 @@ import { getAssignmentFromActivityUUID, getFinalGrade, submitAssignmentForGradin
 import AssignmentStudentActivity from '@components/Objects/Activities/Assignment/AssignmentStudentActivity'
 import { AssignmentProvider } from '@components/Contexts/Assignments/AssignmentContext'
 import { AssignmentsTaskProvider } from '@components/Contexts/Assignments/AssignmentsTaskContext'
-import AssignmentSubmissionProvider, {  useAssignmentSubmission } from '@components/Contexts/Assignments/AssignmentSubmissionContext'
+import AssignmentSubmissionProvider, { useAssignmentSubmission } from '@components/Contexts/Assignments/AssignmentSubmissionContext'
 import toast from 'react-hot-toast'
 import { mutate } from 'swr'
 import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationModal/ConfirmationModal'
 import { useMediaQuery } from 'usehooks-ts'
 import PaidCourseActivityDisclaimer from '@components/Objects/Courses/CourseActions/PaidCourseActivityDisclaimer'
 import WorkspaceActivity from '@components/Objects/Activities/Workspace/WorkspaceActivity'
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem
+} from "@/components/ui/dropdown-menu";
 
 interface ActivityClientProps {
   activityid: string
@@ -51,7 +61,7 @@ function ActivityClient(props: ActivityClientProps) {
   const [bgColor, setBgColor] = React.useState('bg-white')
   const [assignment, setAssignment] = React.useState(null) as any;
   const [markStatusButtonActive, setMarkStatusButtonActive] = React.useState(false);
- 
+  const [showBackLink, setShowBackLink] = React.useState(false);
 
   function getChapterNameByActivityId(course: any, activity_id: any) {
     for (let i = 0; i < course.chapters.length; i++) {
@@ -89,55 +99,34 @@ function ActivityClient(props: ActivityClientProps) {
   return (
     <>
       <CourseProvider courseuuid={course?.course_uuid}>
-        <AIChatBotProvider>
-          <GeneralWrapperStyled>
-            <div className="space-y-4 pt-4">
-              <div className="flex space-x-6">
-                <div className="flex">
-                  <Link
-                    href={getUriWithOrg(orgslug, '') + `/course/${courseuuid}`}
-                  >
-                    <img
-                      className="w-[100px] h-[57px] rounded-md drop-shadow-md"
-                      src={`${getCourseThumbnailMediaDirectory(
-                        org?.org_uuid,
-                        course.course_uuid,
-                        course.thumbnail_image
-                      )}`}
-                      alt=""
-                    />
-                  </Link>
-                </div>
-                <div className="flex flex-col -space-y-1">
-                  <p className="font-bold text-gray-700 text-md">Course </p>
-                  <h1 className="font-bold text-gray-950 text-2xl first-letter:uppercase">
-                    {course.name}
-                  </h1>
-                </div>
-              </div>
-              <ActivityIndicators
-                course_uuid={courseuuid}
-                current_activity={activityid}
-                orgslug={orgslug}
-                course={course}
-              />
+        <div className="container max-w-6xl mx-auto py-6 px-4 space-y-6 mt-10">
+          <ActivityIndicators
+            course_uuid={courseuuid}
+            current_activity={activityid}
+            orgslug={orgslug}
+            course={course}
+          />
 
+          <Separator className="my-4" />
+
+          {/* Activity Content */}
+          <Card className="">
+            <CardHeader className="pb-2">
               <div className="flex justify-between items-center">
-                <div className="flex flex-col -space-y-1">
-                  <p className="font-bold text-gray-700 text-md">
-                    Chapter : {getChapterNameByActivityId(course, activity.id)}
-                  </p>
-                  <h1 className="font-bold text-gray-950 text-2xl first-letter:uppercase">
+                <div className="space-y-1">
+                  <Badge variant="outline" className="font-medium">
+                    Chapter: {getChapterNameByActivityId(course, activity.id)}
+                  </Badge>
+                  <h1 className="text-2xl font-bold first-letter:uppercase">
                     {activity.name}
                   </h1>
                 </div>
-                <div className="flex space-x-1 items-center">
-                  {activity && activity.published == true && activity.content.paid_access != false && (
-                    <AuthenticatedClientElement checkMethod="authentication">
-                      {activity.activity_type != 'TYPE_ASSIGNMENT' &&
+
+                {activity && activity.published === true && activity.content.paid_access !== false && (
+                  <AuthenticatedClientElement checkMethod="authentication">
+                    <div className="flex items-center gap-2">
+                      {activity.activity_type !== 'TYPE_ASSIGNMENT' && (
                         <>
-                          <AIActivityAsk activity={activity} />
-                          <MoreVertical size={17} className="text-gray-300 " />
                           <MarkStatus
                             activity={activity}
                             activityid={activityid}
@@ -145,88 +134,86 @@ function ActivityClient(props: ActivityClientProps) {
                             orgslug={orgslug}
                           />
                         </>
-                      }
-                      {activity.activity_type == 'TYPE_ASSIGNMENT' &&
-                        <>
-                          <MoreVertical size={17} className="text-gray-300 " />
-                          <AssignmentSubmissionProvider assignment_uuid={assignment?.assignment_uuid}>
-                            <AssignmentTools
-                              assignment={assignment}
-                              activity={activity}
-                              activityid={activityid}
-                              course={course}
-                              orgslug={orgslug}
-                            />
-                          </AssignmentSubmissionProvider>
-                        </>
-                      }
-
-                    </AuthenticatedClientElement>
-                  )}
-                </div>
-              </div>
-              {activity && activity.published == false && (
-                <div className="p-7 drop-shadow-sm rounded-lg bg-gray-800">
-                  <div className="text-white">
-                    <h1 className="font-bold text-2xl">
-                      This activity is not published yet
-                    </h1>
-                  </div>
-                </div>
-              )}
-
-              {activity && activity.published == true && (
-                <>
-                  {activity.content.paid_access == false ? (
-                    <PaidCourseActivityDisclaimer course={course} />
-                  ) : (
-                    <div className={`p-7 drop-shadow-sm rounded-lg ${bgColor}`}>
-                      {/* Activity Types */}
-                      <div>
-                        {activity.activity_type == 'TYPE_DYNAMIC' && (
-                          <Canva content={activity.content} activity={activity} />
-                        )}
-                        {activity.activity_type == 'TYPE_VIDEO' && (
-                          <VideoActivity course={course} activity={activity} />
-                        )}
-                        {activity.activity_type == 'TYPE_DOCUMENT' && (
-                          <DocumentPdfActivity
-                            course={course}
+                      )}
+                      {activity.activity_type === 'TYPE_ASSIGNMENT' && (
+                        <AssignmentSubmissionProvider assignment_uuid={assignment?.assignment_uuid}>
+                          <AssignmentTools
+                            assignment={assignment}
                             activity={activity}
-                          />
-                        )}
-                        {activity.activity_type == 'TYPE_WORKSPACE' && (
-                          <WorkspaceActivity
+                            activityid={activityid}
                             course={course}
-                            activity={activity}
-                            access_token={access_token}
-                            backlink={props.backlink}
+                            orgslug={orgslug}
                           />
-                        )}
-                        {activity.activity_type == 'TYPE_ASSIGNMENT' && (
-                          <div>
-                            {assignment ? (
-                              <AssignmentProvider assignment_uuid={assignment?.assignment_uuid}>
-                                <AssignmentsTaskProvider>
-                                  <AssignmentSubmissionProvider assignment_uuid={assignment?.assignment_uuid}>
-                                    <AssignmentStudentActivity />
-                                  </AssignmentSubmissionProvider>
-                                </AssignmentsTaskProvider>
-                              </AssignmentProvider>
-                            ) : (
-                              <div></div>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                        </AssignmentSubmissionProvider>
+                      )}
                     </div>
+                  </AuthenticatedClientElement>
+                )}
+              </div>
+            </CardHeader>
+
+            <CardContent className="pt-4">
+              {activity && activity.published === false ? (
+                <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-6 text-center">
+                  <h3 className="font-semibold text-lg text-destructive">
+                    This activity is not published yet
+                  </h3>
+                </div>
+              ) : (
+                <>
+                  {activity && activity.published === true && (
+                    <>
+                      {activity.content.paid_access === false ? (
+                        <PaidCourseActivityDisclaimer course={course} />
+                      ) : (
+                        <div className="rounded-lg bg-card p-6">
+                          {activity.activity_type === 'TYPE_DYNAMIC' && (
+                            <Canva content={activity.content} activity={activity} />
+                          )}
+                          {activity.activity_type === 'TYPE_VIDEO' && (
+                            <VideoActivity course={course} activity={activity} />
+                          )}
+                          {activity.activity_type === 'TYPE_DOCUMENT' && (
+                            <DocumentPdfActivity
+                              course={course}
+                              activity={activity}
+                            />
+                          )}
+                          {activity.activity_type === 'TYPE_WORKSPACE' && (
+                            <WorkspaceActivity
+                              course={course}
+                              activity={activity}
+                              access_token={access_token}
+                              backlink={props.backlink}
+                            />
+                          )}
+                          {activity.activity_type === 'TYPE_ASSIGNMENT' && (
+                            <>
+                              {assignment ? (
+                                <AssignmentProvider assignment_uuid={assignment?.assignment_uuid}>
+                                  <AssignmentsTaskProvider>
+                                    <AssignmentSubmissionProvider assignment_uuid={assignment?.assignment_uuid}>
+                                      <AssignmentStudentActivity />
+                                    </AssignmentSubmissionProvider>
+                                  </AssignmentsTaskProvider>
+                                </AssignmentProvider>
+                              ) : (
+                                <div></div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </>
                   )}
                 </>
               )}
-              {<div style={{ height: '100px' }}></div>}
-            </div>
-          </GeneralWrapperStyled>
-        </AIChatBotProvider>
+            </CardContent>
+          </Card>
+
+          {/* Bottom spacing */}
+          <div className="h-24"></div>
+        </div>
       </CourseProvider>
     </>
   )
@@ -238,11 +225,12 @@ export function MarkStatus(props: {
   course: any
   orgslug: string
 }) {
+  const backlink = props.backlink
   const router = useRouter()
   const session = useLHSession() as any;
   const isMobile = useMediaQuery('(max-width: 768px)')
+  const [showBackLink, setShowBackLink] = React.useState(false);
 
-  // TODO: hit this route from the workspace!
   async function markActivityAsCompleteFront() {
     const trail = await markActivityAsComplete(
       props.orgslug,
@@ -250,6 +238,7 @@ export function MarkStatus(props: {
       'activity_' + props.activityid,
       session.data?.tokens?.access_token
     )
+    setShowBackLink(true);
     router.refresh()
   }
 
@@ -267,22 +256,37 @@ export function MarkStatus(props: {
   return (
     <>
       {isActivityCompleted() ? (
-        <div className="bg-teal-600 rounded-full px-5 drop-shadow-md flex items-center space-x-2  p-2.5  text-white hover:cursor-pointer transition delay-150 duration-300 ease-in-out">
-          <i>
-            <Check size={17}></Check>
-          </i>{' '}
-          <i className="not-italic text-xs font-bold">Complete</i>
+        <div className="flex items-center gap-2">
+          <div className="bg-teal-600 rounded-full px-5 drop-shadow-md flex items-center space-x-2 p-2.5 text-white hover:cursor-pointer transition delay-150 duration-300 ease-in-out">
+            <i>
+              <Check size={17}></Check>
+            </i>{' '}
+            <i className="not-italic text-xs font-bold">Complete</i>
+          </div>
+          <Link href={props.backlink || "/"} passHref>
+            <Button variant="outline" size="sm" className="flex items-center gap-1">
+              <i className="not-italic text-xs">Back</i>
+            </Button>
+          </Link>
         </div>
       ) : (
-        <div
-          className="bg-gray-800 rounded-full px-5 drop-shadow-md flex  items-center space-x-2 p-2.5  text-white hover:cursor-pointer transition delay-150 duration-300 ease-in-out"
-          onClick={markActivityAsCompleteFront}
-        >
-          {' '}
-          <i>
-            <Check size={17}></Check>
-          </i>{' '}
-          {!isMobile && <i className="not-italic text-xs font-bold">Mark as complete</i>}
+        <div className="flex items-center gap-2">
+          <div
+            className="bg-gray-800 rounded-full px-5 drop-shadow-md flex items-center space-x-2 p-2.5 text-white hover:cursor-pointer transition delay-150 duration-300 ease-in-out"
+            onClick={markActivityAsCompleteFront}
+          >
+            <i>
+              <Check size={17}></Check>
+            </i>{' '}
+            {!isMobile && <i className="not-italic text-xs font-bold">Mark as complete</i>}
+          </div>
+          {showBackLink && (
+            <Link href={props.backlink || "/"} passHref>
+              <Button variant="outline" size="sm" className="flex items-center gap-1">
+                <i className="not-italic text-xs">Back</i>
+              </Button>
+            </Link>
+          )}
         </div>
       )}
     </>
@@ -359,7 +363,7 @@ function AssignmentTools(props: {
   }
 
   useEffect(() => {
-    if ( submission && submission.length > 0 && submission[0].submission_status === 'GRADED') {
+    if (submission && submission.length > 0 && submission[0].submission_status === 'GRADED') {
       getGradingBasedOnMethod();
     }
   }

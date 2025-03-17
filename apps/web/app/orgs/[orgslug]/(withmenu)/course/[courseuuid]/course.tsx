@@ -18,15 +18,16 @@ import CourseUpdates from '@components/Objects/Courses/CourseUpdates/CourseUpdat
 import { CourseProvider } from '@components/Contexts/CourseContext'
 import { useMediaQuery } from 'usehooks-ts'
 import CoursesActions, { courseIsStarted } from '@components/Objects/Courses/CourseActions/CoursesActions'
-// import ChapterActivities from '@components/Pages/Courses/ChapterActivities'
 import Canvas, { LayoutState } from '@components/Objects/ContentMap/Canvas'
 import ChapterActivities from '@components/Pages/Courses/ChapterActivities'
 import CourseChapter from '@components/Pages/Courses/CourseChapter'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import { AssetData } from '@components/Objects/ContentMap/Asset'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 
 const CourseClient = (props: any) => {
-	const [learnings, setLearnings] = useState<any>([])
+	const [learnings, setLearnings] = useState<string[]>([])
 	const courseuuid = props.courseuuid
 	const courseid = courseuuid.replace('course_', '')
 	const orgslug = props.orgslug
@@ -37,8 +38,8 @@ const CourseClient = (props: any) => {
 
 	function getLearningTags() {
 		// create array of learnings from a string object (comma separated)
-		let learnings = course?.learnings ? course?.learnings.split(',') : []
-		setLearnings(learnings)
+		const learningItems = course?.learnings ? course?.learnings.split(',') : []
+		setLearnings(learningItems)
 	}
 
 	useEffect(() => {
@@ -46,33 +47,35 @@ const CourseClient = (props: any) => {
 	}, [org, course])
 
 	const isStarted = courseIsStarted(course)
-	console.log(isStarted)
 
 	const [chapterDialogOpen, setChapterDialogOpen] = useState(false)
 	const [selectedChapter, setSelectedChapter] = useState(0)
 
 	const layout: LayoutState = {
-		layout: course.map_state.objects,
+		layout: course?.map_state?.objects || [],
 		updateOriginator: 'initial',
+	}
+
+	if (!course || !org) {
+		return <PageLoading />
 	}
 
 	if (isStarted) {
 		return (
-			<div style={{ width: '100vw', height: 'calc(100vh - 60px)' }}>
+			<div className="w-full h-[calc(100vh-60px)] max-w-full overflow-hidden">
 				<Modal
 					isDialogOpen={chapterDialogOpen}
 					onOpenChange={setChapterDialogOpen}
 					minHeight="md"
+					minWidth='md'
 					dialogContent={
 						<CourseChapter
 							course={course}
 							courseId={courseid}
 							orgslug={orgslug}
 							chapterID={selectedChapter}
-						></CourseChapter>
+						/>
 					}
-					dialogTitle="Foo-bar-title"
-					dialogDescription="Foo-bar-desc"
 				/>
 
 				<Canvas
@@ -80,99 +83,87 @@ const CourseClient = (props: any) => {
 					setLayout={() => { throw ("BUG: This cannot be called from here.") }}
 					readOnly={true}
 					onChapterClick={(chapter: number) => {
-						console.log(chapter)
 						setSelectedChapter(chapter)
 						setChapterDialogOpen(true)
 					}}
-				>
-				</Canvas>
+				/>
 			</div>
-			// </div>
-		)
-	} else {
-		return (
-			<>
-				{!course && !org ? (
-					<PageLoading></PageLoading>
-				) : (
-					<GeneralWrapperStyled>
-						<div className="pb-3 flex flex-col md:flex-row justify-between items-start md:items-center">
-							<div>
-								<p className="text-md font-bold text-gray-400 pb-2">Course</p>
-								<h1 className="text-3xl md:text-3xl -mt-3 font-bold">{course.name}</h1>
-							</div>
-							<div className="mt-4 md:mt-0">
-								{!isMobile && <CourseProvider courseuuid={course.course_uuid}>
-									<CourseUpdates />
-								</CourseProvider>}
-							</div>
-						</div>
-
-						{props.course?.thumbnail_image && org ? (
-							<div
-								className="inset-0 ring-1 ring-inset ring-black/10 rounded-lg shadow-xl relative w-auto h-[200px] md:h-[400px] bg-cover bg-center mb-4"
-								style={{
-									backgroundImage: `url(${getCourseThumbnailMediaDirectory(
-										org?.org_uuid,
-										course?.course_uuid,
-										course?.thumbnail_image
-									)})`,
-								}}
-							></div>
-						) : (
-							<div
-								className="inset-0 ring-1 ring-inset ring-black/10 rounded-lg shadow-xl relative w-auto h-[400px] bg-cover bg-center mb-4"
-								style={{
-									backgroundImage: `url('../empty_thumbnail.png')`,
-									backgroundSize: 'auto',
-								}}
-							></div>
-						)}
-
-
-						<div className="flex flex-col md:flex-row md:space-x-10 space-y-6 md:space-y-0 pt-10">
-							<div className="course_metadata_left w-full md:basis-3/4 space-y-2">
-								<h2 className="py-3 text-2xl font-bold">About</h2>
-								<div className="bg-white shadow-md shadow-gray-300/25 outline outline-1 outline-neutral-200/40 rounded-lg overflow-hidden">
-									<p className="py-5 px-5 whitespace-pre-wrap">{course.about}</p>
-								</div>
-
-								{learnings.length > 0 && learnings[0] !== 'null' && (
-									<div>
-										<h2 className="py-3 text-2xl font-bold">
-											What you will learn
-										</h2>
-										<div className="bg-white shadow-md shadow-gray-300/25 outline outline-1 outline-neutral-200/40 rounded-lg overflow-hidden px-5 py-5 space-y-2">
-											{learnings.map((learning: any) => {
-												return (
-													<div
-														key={learning}
-														className="flex space-x-2 items-center font-semibold text-gray-500"
-													>
-														<div className="px-2 py-2 rounded-full">
-															<Check className="text-gray-400" size={15} />
-														</div>
-														<p>{learning}</p>
-													</div>
-												)
-											})}
-										</div>
-									</div>
-								)}
-
-								<h1>
-									Started: {isStarted ? 'YUP' : 'NOPE'}
-								</h1>
-							</div>
-							<div className='course_metadata_right basis-1/4'>
-								<CoursesActions courseuuid={courseuuid} orgslug={orgslug} course={course} />
-							</div>
-						</div>
-					</GeneralWrapperStyled>
-				)}
-			</>
 		)
 	}
+
+	return (
+		<GeneralWrapperStyled>
+			<div className="pb-3 flex flex-col md:flex-row justify-between items-start md:items-center">
+				<div>
+					<Badge variant="outline" className="mb-2">Course</Badge>
+					<h1 className="text-2xl md:text-3xl font-bold">{course.name}</h1>
+				</div>
+				<div className="mt-4 md:mt-0 w-full md:w-auto">
+					<CourseProvider courseuuid={course.course_uuid}>
+						<CourseUpdates />
+					</CourseProvider>
+				</div>
+			</div>
+
+			<Card className="mb-6 overflow-hidden border-none">
+				{course?.thumbnail_image && org ? (
+					<div
+						className="w-full h-[200px] md:h-[400px] bg-cover bg-center rounded-lg shadow-md"
+						style={{
+							backgroundImage: `url(${getCourseThumbnailMediaDirectory(
+								org?.org_uuid,
+								course?.course_uuid,
+								course?.thumbnail_image
+							)})`,
+						}}
+					/>
+				) : (
+					<div
+						className="w-full h-[200px] md:h-[400px] bg-cover bg-center rounded-lg shadow-md"
+						style={{
+							backgroundImage: `url('../empty_thumbnail.png')`,
+							backgroundSize: 'auto',
+						}}
+					/>
+				)}
+			</Card>
+
+			<div className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-6">
+				<div className="col-span-1 md:col-span-3 space-y-6">
+					<Card>
+						<CardContent className="pt-6">
+							<h2 className="text-xl font-bold mb-3">About</h2>
+							<p className="whitespace-pre-wrap text-gray-700">{course.about}</p>
+						</CardContent>
+					</Card>
+
+					{learnings.length > 0 && learnings[0] !== 'null' && (
+						<Card>
+							<CardContent className="pt-6">
+								<h2 className="text-xl font-bold mb-3">What you will learn</h2>
+								<div className="space-y-2">
+									{learnings.map((learning: string, index: number) => (
+										<div
+											key={index}
+											className="flex space-x-3 items-start"
+										>
+											<div className="mt-0.5 bg-primary/10 p-1.5 rounded-full">
+												<Check className="text-primary" size={14} />
+											</div>
+											<p className="text-gray-700">{learning}</p>
+										</div>
+									))}
+								</div>
+							</CardContent>
+						</Card>
+					)}
+				</div>
+				<div className="col-span-1">
+					<CoursesActions courseuuid={courseuuid} orgslug={orgslug} course={course} />
+				</div>
+			</div>
+		</GeneralWrapperStyled>
+	)
 }
 
 export default CourseClient

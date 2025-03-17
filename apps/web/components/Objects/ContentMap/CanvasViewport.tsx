@@ -48,6 +48,8 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     useEffect(() => {
         if (viewport) {
             viewport.drag().decelerate();
+            viewport.clamp({direction: "all"});
+            viewport.moveCenter(WORLD_WIDTH / 2, WORLD_HEIGHT / 2)
             viewport.setZoom(1);
         }
     }, [viewport]);
