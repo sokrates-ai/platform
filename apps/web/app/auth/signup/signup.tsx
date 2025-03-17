@@ -18,6 +18,9 @@ import Toast from '@components/Objects/StyledElements/Toast/Toast'
 import toast from 'react-hot-toast'
 import { BarLoader } from 'react-spinners'
 import { joinOrg } from '@services/organizations/orgs'
+import whiteLogo from 'public/white_logo.svg'
+import { Separator } from "@/components/ui/separator"
+
 
 interface SignUpClientProps {
   org: any
@@ -44,51 +47,42 @@ function SignUpClient(props: SignUpClientProps) {
   return (
     <div className="grid grid-flow-col justify-stretch h-screen">
       <div
-        className="right-login-part"
-        style={{
-          background:
-            'linear-gradient(041.61deg, #202020 7.15%, #000000 90.96%)',
-        }}
+        className="bg-gradient-to-br from-gray-800 to-black flex flex-col justify-between p-6 md:p-10"
       >
-        <div className="login-topbar m-10">
+        <div className="login-topbar flex justify-center md:justify-start">
           <Link prefetch href={getUriWithOrg(props.org.slug, '/')}>
             <Image
               quality={100}
-              width={30}
-              height={30}
-              src={learnhouseIcon}
-              alt=""
+              width={120}
+              height={120}
+              src={whiteLogo}
+              alt="Logo"
+              className="hover:opacity-80 transition-opacity"
             />
           </Link>
         </div>
-        <div className="ml-10 h-3/4 flex flex-row text-white">
-          <div className="m-auto flex space-x-4 items-center flex-wrap">
-            <div>You've been invited to join </div>
-            <div className="shadow-[0px_4px_16px_rgba(0,0,0,0.02)]">
-              {props.org?.logo_image ? (
-                <img
-                  src={`${getOrgLogoMediaDirectory(
-                    props.org.org_uuid,
-                    props.org?.logo_image
-                  )}`}
-                  alt="LearnHouse"
-                  style={{ width: 'auto', height: 70 }}
-                  className="rounded-xl shadow-xl inset-0 ring-1 ring-inset ring-black/10 bg-white"
-                />
-              ) : (
-                <Image
-                  quality={100}
-                  width={70}
-                  height={70}
-                  src={learnhouseIcon}
-                  alt=""
-                />
-              )}
+        <div className="flex flex-col items-center justify-center text-white py-10 md:py-0">
+          <div className="text-center">
+            <h1 className="font-bold text-3xl md:text-6xl mb-3">Welcome!</h1>
+            <Separator className="my-4 opacity-25" />
+            <div className="flex items-center space-x-2">
+              <p className="text-lg md:text-xl">Create your</p>
+              <Image
+                quality={100}
+                width={100}
+                height={100}
+                src={whiteLogo}
+                alt="Logo"
+                className="hover:opacity-80 transition-opacity"
+              />
+              <p className="text-lg md:text-xl">Account</p>
             </div>
-            <div className="font-bold text-xl">{props.org?.name}</div>
           </div>
         </div>
+        <div className="hidden md:block"> {/* Spacer for desktop layout */}
+        </div>
       </div>
+
       <div className="left-join-part bg-white flex flex-row">
         {joinMethod == 'open' &&
           (session.status == 'authenticated' ? (
@@ -128,7 +122,7 @@ const LoggedInJoinScreen = (props: any) => {
         res.data
       )
       setTimeout(() => {
-        router.push(getUriWithOrg(org.slug,'/'))
+        router.push(getUriWithOrg(org.slug, '/'))
       }, 2000)
       setIsSubmitting(false)
     } else {
@@ -147,7 +141,7 @@ const LoggedInJoinScreen = (props: any) => {
 
   return (
     <div className="flex flex-row  items-center mx-auto">
-       <Toast />
+      <Toast />
       <div className="flex space-y-7 flex-col justify-center items-center">
         <p className="pt-3 text-2xl font-semibold text-black/70 flex justify-center space-x-2 items-center">
           <span className="items-center">Hi</span>
