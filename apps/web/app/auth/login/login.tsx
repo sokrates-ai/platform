@@ -106,20 +106,18 @@ const LoginClient = (props: LoginClientProps) => {
           </Link>
         </div>
         <div className="flex flex-col items-center justify-center text-white py-10 md:py-0">
-          <div className="text-center">
-            <h1 className="font-bold text-3xl md:text-6xl mb-3">Welcome!</h1>
-            <Separator className="my-4 opacity-25"/>
+          <div className="text-center hidden md:block">
             <div className="flex items-center space-x-2">
-              <p className="text-lg md:text-xl">Login to your</p>
+              <p className="text-lg md:text-2xl">Login to your</p>
               <Image
                 quality={100}
-                width={100}
-                height={100}
+                width={120}
+                height={120}
                 src={whiteLogo}
                 alt="Logo"
                 className="hover:opacity-80 transition-opacity"
               />
-              <p className="text-lg md:text-xl">Account</p>
+              <p className="text-lg md:text-2xl">Account</p>
             </div>
           </div>
         </div>
