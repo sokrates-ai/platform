@@ -100,14 +100,14 @@ function ActivityClient(props: ActivityClientProps) {
     <>
       <CourseProvider courseuuid={course?.course_uuid}>
         <div className="container max-w-6xl mx-auto py-6 px-4 space-y-6 mt-10">
-          <ActivityIndicators
+          {/* <ActivityIndicators
             course_uuid={courseuuid}
             current_activity={activityid}
             orgslug={orgslug}
             course={course}
           />
 
-          <Separator className="my-4" />
+          <Separator className="my-4" /> */}
 
           {/* Activity Content */}
           <Card className="">
