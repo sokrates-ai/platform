@@ -148,19 +148,19 @@ const Canvas: React.FC<CanvasProps> = ({
 
     const handleDecreaseAssetStoneId = () => {
         setLayout((old: LayoutState) => {
-            const index = old.layout!.findIndex(asset => asset.id === contextMenu?.assetId);
+            if (!old.layout) return old;
 
-            const newLayout = [...old.layout!];
-            if(newLayout[index].type.customChapterId == undefined){
-                newLayout[index].type.customChapterId = 0;
-                return {
-                    layout: newLayout,
-                    updateOriginator: "user",
-                };
+            const index = old.layout.findIndex(asset => asset.id === contextMenu?.assetId);
+            if (index === -1) return old;
+
+            const newLayout = [...old.layout];
+            const asset = newLayout[index];
+
+            if (asset.type.customChapterId === undefined) {
+                asset.type.customChapterId = 0;
+            } else {
+                asset.type.customChapterId -= 1;
             }
-            
-            newLayout[index].type.customChapterId -= 1;
-
 
             return {
                 layout: newLayout,
@@ -168,22 +168,22 @@ const Canvas: React.FC<CanvasProps> = ({
             };
         });
     };
-
 
     const handleIncreaseAssetStoneId = () => {
         setLayout((old: LayoutState) => {
-            const index = old.layout!.findIndex(asset => asset.id === contextMenu?.assetId);
+            if (!old.layout) return old;
 
-            const newLayout = [...old.layout!];
-            if(newLayout[index].type.customChapterId == undefined){
-                newLayout[index].type.customChapterId = 0;
-                return {
-                    layout: newLayout,
-                    updateOriginator: "user",
-                };
+            const index = old.layout.findIndex(asset => asset.id === contextMenu?.assetId);
+            if (index === -1) return old;
+
+            const newLayout = [...old.layout];
+            const asset = newLayout[index];
+
+            if (asset.type.customChapterId === undefined) {
+                asset.type.customChapterId = 0;
+            } else {
+                asset.type.customChapterId += 1;
             }
-            
-            newLayout[index].type.customChapterId += 1;
 
             return {
                 layout: newLayout,
@@ -191,6 +191,8 @@ const Canvas: React.FC<CanvasProps> = ({
             };
         });
     };
+
+
 
 
     const handleDeleteAsset = () => {
@@ -265,7 +267,7 @@ const Canvas: React.FC<CanvasProps> = ({
                         <div className="grid gap-2">
                             {(() => {
                                 const asset = layout.layout!.find((a) => a.id === contextMenu.assetId);
-                                if (asset?.type.kind === "chapter") {
+                                if (asset && asset?.type.kind === "chapter") {
                                     return <span>Chapter ID: {asset.type.associatedChapterID}</span>;
                                 } else {
                                     return null;
@@ -335,7 +337,7 @@ const Canvas: React.FC<CanvasProps> = ({
                                         value={(() => {
                                             const index = layout.layout!.findIndex(asset => asset.id === contextMenu?.assetId);
                                             const chapterId = layout.layout![index]?.type.customChapterId;
-                                            return chapterId != undefined ? chapterId.toString() : "0"; 
+                                            return chapterId != undefined ? chapterId.toString() : "0";
                                         })()}
                                         className="h-7 w-8 rounded-none text-center text-xs"
                                         readOnly

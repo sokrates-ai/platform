@@ -10,8 +10,8 @@ export type AssetTypeDataKind = "default" | "chapter"
 export interface AssetTypeData {
     kind: AssetTypeDataKind;
     associatedChapterID?: number
-    customChapterId: number | undefined;
-    label: string;
+    customChapterId?: number | undefined;
+    label?: string;
 }
 
 export interface AssetData {
@@ -20,7 +20,7 @@ export interface AssetData {
     y: number;
     scale: number;
     file: string;
-    label: string;
+    label?: string;
     type: AssetTypeData
 };
 
@@ -51,12 +51,13 @@ const Asset: React.FC<AssetProps> = React.memo(({ asset, spriteURL, onPointerDow
         return null;
     }
 
+    function extractChapterNumber(label: string): number | null {
+        const matches = label.match(/\((\d+)\)$/);
+        return matches ? parseInt(matches[1]) : null;
+    }
+
     // Render differently based on asset type
     if (asset.type.kind === "chapter" && asset.type.associatedChapterID !== undefined) {
-        function extractChapterNumber(label: string): number | null {
-            const matches = label.match(/\((\d+)\)$/);
-            return matches ? parseInt(matches[1]) : null;
-        }
         console.log(`Chapter Label: ${asset.type.label}`)
         return (
             <pixiContainer
