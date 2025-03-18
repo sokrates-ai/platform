@@ -62,6 +62,8 @@ const Canvas: React.FC<CanvasProps> = ({
                     type: {
                         kind: "default",
                         associatedChapterID: undefined,
+                        label: "",
+                        customChapterId: 0
                     },
                 };
 
