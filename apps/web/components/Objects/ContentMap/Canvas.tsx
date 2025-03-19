@@ -122,10 +122,17 @@ const Canvas: React.FC<CanvasProps> = ({
 
     const handleIncreaseLayer = () => {
         setLayout((old: LayoutState) => {
-            const index = old.layout!.findIndex(asset => asset.id === contextMenu?.assetId);
-            if (index === -1 || index === old.layout!.length - 1) return old; // Already top-most
-            const newLayout = [...old.layout!];
-            [newLayout[index], newLayout[index + 1]] = [newLayout[index + 1], newLayout[index]];
+            if (!old.layout) return old;
+
+            const index = old.layout.findIndex(asset => asset.id === contextMenu?.assetId);
+            if (index === -1 || index === old.layout.length - 1) return old; // Already top-most
+
+            const newLayout = [...old.layout];
+            // Correctly swap the elements
+            const temp = newLayout[index];
+            newLayout[index] = newLayout[index + 1];
+            newLayout[index + 1] = temp;
+
             return {
                 layout: newLayout,
                 updateOriginator: "user",
@@ -135,10 +142,17 @@ const Canvas: React.FC<CanvasProps> = ({
 
     const handleDecreaseLayer = () => {
         setLayout((old: LayoutState) => {
-            const index = old.layout!.findIndex(asset => asset.id === contextMenu?.assetId);
+            if (!old.layout) return old;
+
+            const index = old.layout.findIndex(asset => asset.id === contextMenu?.assetId);
             if (index <= 0) return old; // Already bottom-most
-            const newLayout = [...old.layout!];
-            [newLayout[index], newLayout[index - 1]] = [newLayout[index - 1], newLayout[index]];
+
+            const newLayout = [...old.layout];
+            // Correctly swap the elements
+            const temp = newLayout[index];
+            newLayout[index] = newLayout[index - 1];
+            newLayout[index - 1] = temp;
+
             return {
                 layout: newLayout,
                 updateOriginator: "user",

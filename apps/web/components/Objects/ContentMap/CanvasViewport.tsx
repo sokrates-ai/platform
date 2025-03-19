@@ -48,9 +48,9 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     useEffect(() => {
         if (viewport) {
             viewport.drag().decelerate();
-            viewport.clamp({direction: "all"});
+            viewport.clamp({ direction: "all" });
             viewport.moveCenter((WORLD_WIDTH / 4) * 1.8, (WORLD_HEIGHT / 4) * 3)
-            viewport.setZoom(1);
+            viewport.setZoom(1.2);
         }
     }, [viewport]);
 
@@ -155,7 +155,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
                     onPointerDown={handlePointerDown}
                 />
             ))}
-        {/* @ts-expect-error: This is not being recognized by typescript, though it is registered in global.d.ts */}
+            {/* @ts-expect-error: This is not being recognized by typescript, though it is registered in global.d.ts */}
         </viewport>
     );
 });
