@@ -6,12 +6,13 @@ import { getUriWithOrg } from '@services/config/config'
 import { deleteCourseFromBackend } from '@services/courses/courses'
 import { getCourseThumbnailMediaDirectory } from '@services/media/media'
 import { revalidateTags } from '@services/utils/ts/requests'
-import { BookMinus, FilePenLine, Settings2, MoreVertical } from 'lucide-react'
+import { BookMinus, FilePenLine, Settings2, MoreVertical, Pencil } from 'lucide-react'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React from 'react'
 import toast from 'react-hot-toast'
+import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,8 +21,10 @@ import {
 } from "@components/ui/dropdown-menu"
 import { deleteExerciseFromBE } from '@services/courses/workspaces'
 import { mutate } from 'swr'
+import CreateExerciseModal from '../Modals/Exercise/Create/CreateExercise'
+import ModifyExerciseModal from '../Modals/Exercise/Create/ModifyExercise'
 
-type Exercise = {
+export type Exercise = {
   id: number
   title: string
   description: string
@@ -40,7 +43,7 @@ type PropsType = {
 // export const removeCoursePrefix = (course_uuid: string) => course_uuid.replace('course_', '')
 
 function ExerciseThumbnail(props: PropsType) {
-  const router = useRouter() 
+  const router = useRouter()
   const org = useOrg() as any
   const session = useLHSession() as any
 
@@ -70,6 +73,7 @@ function ExerciseThumbnail(props: PropsType) {
         exercise={props.exercise}
         orgSlug={props.orgslug}
         orgId={props.orgId}
+        mutateURL={props.mutateURL}
         deleteExercise={deleteExercise}
       />
       {/* <Link prefetch href={customLink ? customLink : getUriWithOrg(orgslug, `/course/${removeCoursePrefix(course.course_uuid)}`)}>
@@ -86,12 +90,16 @@ function ExerciseThumbnail(props: PropsType) {
   )
 }
 
-const AdminEditOptions = ({ exercise, orgId, orgSlug, deleteExercise }: {
+const AdminEditOptions = ({ exercise, orgId, orgSlug, mutateURL, deleteExercise }: {
   exercise: Exercise,
   orgId: string,
-  orgSlug: string
+  orgSlug: string,
+  mutateURL: string,
   deleteExercise: () => Promise<void>
 }) => {
+  const [modifyExerciseModal, setModifyExerciseModal] = React.useState(false)
+  const [dropdownOpen, setDropdownOpen] = React.useState(false)
+
   return (
     <AuthenticatedClientElement
       action="update"
@@ -100,7 +108,7 @@ const AdminEditOptions = ({ exercise, orgId, orgSlug, deleteExercise }: {
       orgId={orgId}
     >
       <div className="absolute top-2 right-2 z-20">
-        <DropdownMenu>
+        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <button className="p-1 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-md">
               <MoreVertical size={20} className="text-gray-700" />
@@ -117,6 +125,45 @@ const AdminEditOptions = ({ exercise, orgId, orgSlug, deleteExercise }: {
                 <Settings2 className="mr-2 h-4 w-4" /> Settings
               </Link>
             </DropdownMenuItem> */}
+
+
+            <DropdownMenuItem asChild>
+              <Modal
+                isDialogOpen={modifyExerciseModal}
+                onOpenChange={setModifyExerciseModal}
+                minHeight="md"
+                dialogContent={
+                  <ModifyExerciseModal
+                    orgslug={orgSlug}
+                    mutateURL={mutateURL}
+                    exercise={exercise}
+                    closeModal={() => { setModifyExerciseModal(false); setDropdownOpen(false) }}
+                  >
+                  </ModifyExerciseModal>
+
+                  // <CreateExerciseModal
+                  //   // closeModal={closeNewCourseModal}
+                  //   orgslug={orgSlug}
+                  //   mutateURL={mutateURL}
+                  // />
+                }
+                dialogTitle="Modify Exercise"
+                dialogDescription="Modify this exercise"
+                dialogTrigger={
+                  // <button>
+                  // <button className="rounded-lg bg-black hover:scale-105 transition-all duration-100 ease-linear antialiased ring-offset-purple-800 p-2 px-5 my-auto font text-xs font-bold text-white drop-shadow-lg flex space-x-2 items-center">
+                  //   Modify Exercise
+                  //   {/* <div className="text-md bg-neutral-800 px-1 rounded-full">+</div> */}
+                  // </button>
+                  <button className="w-full text-left flex items-center px-2 py-1 rounded-md text-sm bg-gray-500/10 hover:bg-gray-500/20 transition-colors text-white-600">
+                    <Pencil className="mr-4 h-4 w-4" /> Modify Exercise
+                  </button>
+                  // </button>
+                }
+              />
+            </DropdownMenuItem>
+
+
             <DropdownMenuItem asChild>
               <ConfirmationModal
                 confirmationButtonText="Delete Exercise"
@@ -131,6 +178,9 @@ const AdminEditOptions = ({ exercise, orgId, orgSlug, deleteExercise }: {
                 status="warning"
               />
             </DropdownMenuItem>
+
+
+
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -35,15 +35,15 @@ v1_router.include_router(
 v1_router.include_router(trail.router, prefix="/trail", tags=["trail"])
 v1_router.include_router(ai.router, prefix="/ai", tags=["ai"])
 v1_router.include_router(payments.router, prefix="/payments", tags=["payments"])
-v1_router.include_router(tasks.router, prefix="/ex", tags=["ex"])
+v1_router.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
 
-if os.environ.get("CLOUD_INTERNAL_KEY"):
-    v1_router.include_router(
-        cloud_internal.router,
-        prefix="/cloud_internal",
-        tags=["cloud_internal"],
-        dependencies=[Depends(cloud_internal.check_internal_cloud_key)],
-    )
+# if os.environ.get("CLOUD_INTERNAL_KEY"):
+#     v1_router.include_router(
+#         cloud_internal.router,
+#         prefix="/cloud_internal",
+#         tags=["cloud_internal"],
+#         dependencies=[Depends(cloud_internal.check_internal_cloud_key)],
+#     )
 
 v1_router.include_router(health.router, prefix="/health", tags=["health"])
 

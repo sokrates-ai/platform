@@ -7,7 +7,7 @@ from config.config import WorkspaceConfig
 from src.security.rbac.rbac import authorization_verify_based_on_roles_and_authorship
 from src.db.courses.activities import Activity, ActivityTypeEnum
 from src.services.courses.activities.activities import get_activity, rbac_check
-from src.services.courses.activities.workspaces import Task, TaskBase, TaskCreate, create_task, delete_task, get_task, get_tasks
+from src.services.courses.activities.workspaces import Task, TaskBase, TaskCreate, TaskModify, create_task, delete_task, get_task, get_tasks, modify_task
 from fastapi import APIRouter, Depends, UploadFile, Form, Request, HTTPException, status
 from sqlmodel import Session
 from pydantic import BaseModel
@@ -154,6 +154,29 @@ async def api_create_task(
     # )
 
     return await create_task(
+        request, current_user, task_obj, db_session
+    )
+
+@router.put("/")
+async def api_modify_task(
+    request: Request,
+    # org_id: int,
+    task_obj: TaskModify,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+    # thumbnail: UploadFile | None = None,
+) -> Task:
+    """
+    Modify task
+    """
+    # task = TaskCreate(
+    #     title=title,
+    #     description=description,
+    #     task=task,
+    #     solution=solution,
+    # )
+
+    return await modify_task(
         request, current_user, task_obj, db_session
     )
 

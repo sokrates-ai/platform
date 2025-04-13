@@ -34,6 +34,10 @@ class TaskBase(SQLModel):
 class Task(TaskBase, table=True):
     id: int = Field(default=None, primary_key=True)
 
+class TaskModify(TaskBase):
+    id: int = 0
+    pass
+
 class TaskCreate(TaskBase):
     pass
 #
@@ -78,6 +82,40 @@ async def create_task(
     return task
 
 
+async def modify_task(
+    request: Request,
+    current_user: PublicUser | AnonymousUser,
+    data: TaskModify,
+    db_session: Session,
+):
+    # RBAC check
+    await rbac_check(request, "activity_x", current_user, "update", db_session)
+
+    # create activity
+    task = Task.model_validate(data)
+
+    statement = select(Task).where(Task.id == data.id)
+    task = db_session.exec(statement).first()
+    print(f"task={task}")
+
+    if not task:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Unprocessable entity: task does not exist",
+        )
+
+    # Update fields
+    for key, value in data.dict(exclude_unset=True).items():
+        if key == "id":
+            continue
+        setattr(task, key, value)
+
+    db_session.commit()
+    db_session.refresh(task)
+
+    return task
+
+
 async def delete_task(
     request: Request,
     db_session: Session,
@@ -88,7 +126,10 @@ async def delete_task(
     task = db_session.exec(statement).first()
     if not Task:
         # TODO: raise an unprocessable entiry
-        return
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Unprocessable entity: task does not exist",
+        )
 
     print(f"task={task}")
 
