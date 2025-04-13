@@ -3,7 +3,7 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - prod2  # Change this if needed
+      - prod_real  # Change this if needed
 
 permissions:
   contents: read
