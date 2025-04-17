@@ -207,7 +207,7 @@ async def get_tasks(
 
     for task, cid in results:
         # Get tags belonging to this task.
-        a
+        # a
 
         tasks_with_course_id.append(
             TaskWithCourseIDAndTags(
@@ -240,7 +240,7 @@ async def create_task(
         await add_course_task_association(db_session, data.course_id, task.id)
 
     # Create tags.
-    statement = 
+    # statement = 
 
     return task
 
