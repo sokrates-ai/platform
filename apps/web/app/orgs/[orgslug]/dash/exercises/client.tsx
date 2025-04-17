@@ -15,11 +15,17 @@ import ExerciseThumbnail from '@components/Objects/Thumbnails/ExerciseThumbnail'
 
 type ExerciseProps = {
   orgslug: string
-  org_id: string
+  org_id: string,
 }
 
 function ExerciseHome(params: ExerciseProps) {
-  const TASKS_URL = `${getAPIUrl()}tasks/list/page/1/limit/50`;
+  const tasks_page = 1;
+  const tasks_limit = 100;
+  const TASKS_URL = `${getAPIUrl()}tasks/list/page/${tasks_page}/limit/${tasks_limit}`;
+
+  const course_page = 1;
+  const course_limit = 100;
+  const COURSES_URL = `${getAPIUrl()}courses/org_slug/${params.orgslug}/page/${course_page}/limit/${course_limit}`
 
   const searchParams = useSearchParams()
   const isCreatingExercise = searchParams.get('new') ? true : false
@@ -34,8 +40,14 @@ function ExerciseHome(params: ExerciseProps) {
   const access_token = session?.data?.tokens?.access_token;
   const org = useOrg() as any;
 
+  const { data: courses, isLoading: coursesLoading } = useSWR(COURSES_URL, (url: string) => swrFetcher(url, access_token))
+
   // TODO: set limit?
-  const { data: exercises } = useSWR(TASKS_URL, (url: string) => swrFetcher(url, access_token))
+  const { data: exercises, isLoading: exercisesLoading } = useSWR(TASKS_URL, (url: string) => swrFetcher(url, access_token))
+
+  if (coursesLoading || exercisesLoading) {
+    return;
+  }
 
   return (
     <div className="h-full w-full bg-[#f8f8f8] pl-10 pr-10">
@@ -58,6 +70,7 @@ function ExerciseHome(params: ExerciseProps) {
                   closeModal={closeNewCourseModal}
                   orgslug={params.orgslug}
                   mutateURL={TASKS_URL}
+                  courses={courses}
                 />
               }
               dialogTitle="Create Exercise"
@@ -130,6 +143,7 @@ function ExerciseHome(params: ExerciseProps) {
                           closeModal={closeNewCourseModal}
                           orgslug={params.orgslug}
                           mutateURL={TASKS_URL}
+                          courses={courses}
                         />
                       }
                       dialogTitle="Create Exercise"

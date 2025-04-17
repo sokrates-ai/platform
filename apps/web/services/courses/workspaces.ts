@@ -36,6 +36,12 @@ export async function createExercise(
 
   console.log('create exercise url, ', urlComplete)
 
+  if (data.course_id == '') {
+    data.course_id = null
+  } else {
+    data.course_id = parseInt(data.course_id)
+  }
+
   const result = await fetch(
     urlComplete,
     RequestBodyWithAuthHeader('POST', data, { revalidate: 0, tags: ['tasks'] }, access_token)

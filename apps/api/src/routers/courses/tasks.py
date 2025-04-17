@@ -7,8 +7,8 @@ from config.config import WorkspaceConfig
 from src.security.rbac.rbac import authorization_verify_based_on_roles_and_authorship
 from src.db.courses.activities import Activity, ActivityTypeEnum
 from src.services.courses.activities.activities import get_activity, rbac_check
-from src.services.courses.activities.workspaces import Task, TaskBase, TaskCreate, TaskModify, create_task, delete_task, get_task, get_tasks, modify_task
-from fastapi import APIRouter, Depends, UploadFile, Form, Request, HTTPException, status
+from src.services.courses.activities.workspaces import Task, TaskBase, TaskCreate, TaskModify, TaskWithCourseID, create_task, delete_task, get_task, get_tasks, modify_task
+from fastapi import APIRouter, Depends, UploadFile, Form, Request, HTTPException, status, Query
 from sqlmodel import Session
 from pydantic import BaseModel
 from fastapi import FastAPI
@@ -161,7 +161,7 @@ async def api_create_task(
 async def api_modify_task(
     request: Request,
     # org_id: int,
-    task_obj: TaskModify,
+    task_obj: TaskWithCourseID,
     current_user: PublicUser = Depends(get_current_user),
     db_session: Session = Depends(get_db_session),
     # thumbnail: UploadFile | None = None,
@@ -271,6 +271,7 @@ async def api_get_task_list(
     page: int,
     limit: int,
     # org_slug: str,
+    course_id: Optional[int] = Query(default=None),
     db_session: Session = Depends(get_db_session),
     # current_user: PublicUser = Depends(get_current_user),
 ) -> List[Task]:
@@ -278,7 +279,11 @@ async def api_get_task_list(
     Get tasks based on page and limit
     """
     return await get_tasks(
-        request, db_session, page, limit
+        request,
+        db_session,
+        course_id,
+        page,
+        limit
     )
 
 

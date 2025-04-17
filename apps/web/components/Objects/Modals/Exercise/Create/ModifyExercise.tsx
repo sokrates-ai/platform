@@ -17,7 +17,7 @@ import { useLHSession } from '@components/Contexts/LHSessionContext'
 import toast from 'react-hot-toast'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
-import { UploadCloud, Image as ImageIcon } from 'lucide-react'
+import { UploadCloud, Image as ImageIcon, X } from 'lucide-react'
 import UnsplashImagePicker from "@components/Dashboard/Pages/Course/EditCourseGeneral/UnsplashImagePicker"
 import { createExercise, modifyExercise } from "@services/courses/workspaces"
 import { mutate } from "swr"
@@ -31,6 +31,7 @@ const validationSchema = Yup.object().shape({
     .max(1000, 'Must be 1000 characters or less'),
   task: Yup.string(),
   solution: Yup.string(),
+  tags: Yup.array().of(Yup.string())
 })
 
 function ModifyExerciseModal({ closeModal, orgslug, mutateURL, exercise }: { closeModal: any, orgslug: string, mutateURL: string, exercise: Exercise }) {
@@ -39,6 +40,7 @@ function ModifyExerciseModal({ closeModal, orgslug, mutateURL, exercise }: { clo
   const [orgId, setOrgId] = React.useState(null) as any
   const [showUnsplashPicker, setShowUnsplashPicker] = React.useState(false)
   const [isUploading, setIsUploading] = React.useState(false)
+  const [tagInput, setTagInput] = React.useState('')
 
   const formik = useFormik({
     initialValues: {
@@ -46,6 +48,7 @@ function ModifyExerciseModal({ closeModal, orgslug, mutateURL, exercise }: { clo
       description: exercise.description,
       task: exercise.task,
       solution: exercise.solution,
+      tags: exercise.tags || [],
     },
     validationSchema,
     onSubmit: async (values, { setSubmitting }) => {
@@ -53,29 +56,22 @@ function ModifyExerciseModal({ closeModal, orgslug, mutateURL, exercise }: { clo
 
       try {
         const res = await modifyExercise(
-          // orgId,
           {
             id: exercise.id,
             title: values.title,
             description: values.description,
             task: values.task,
-            solution: values.solution
+            solution: values.solution,
+            tags: values.tags,
           },
           session.data?.tokens?.access_token
         )
 
         if (res.success || res.success === undefined) {
-          // await revalidateTags(['courses'], orgslug)
           toast.dismiss(toast_loading)
           toast.success('Exercise modified successfully')
-          // await revalidateTags(['tasks'], orgslug)
-          // router.push(router.asPath)
-
           closeModal()
           mutate(mutateURL)
-
-          // router.refresh()
-          // router.refresh()
         } else {
           console.log(res)
           toast.error(res.data.detail)
@@ -88,6 +84,23 @@ function ModifyExerciseModal({ closeModal, orgslug, mutateURL, exercise }: { clo
       }
     }
   })
+
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && tagInput.trim()) {
+      e.preventDefault()
+      if (!formik.values.tags.includes(tagInput.trim())) {
+        formik.setFieldValue('tags', [...formik.values.tags, tagInput.trim()])
+      }
+      setTagInput('')
+    }
+  }
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    formik.setFieldValue(
+      'tags',
+      formik.values.tags.filter((tag: string) => tag !== tagToRemove)
+    )
+  }
 
   const getOrgMetadata = async () => {
     const org = await getOrganizationContextInfoWithoutCredentials(orgslug, {
@@ -149,9 +162,43 @@ function ModifyExerciseModal({ closeModal, orgslug, mutateURL, exercise }: { clo
           <Textarea
             onChange={formik.handleChange}
             value={formik.values.description}
-
           />
         </Form.Control>
+      </FormField>
+
+      <FormField name="tags">
+        <FormLabelAndMessage
+          label="Tags"
+          message="Press Enter to add a tag"
+        />
+        <div className="space-y-2">
+          <Form.Control asChild>
+            <Input
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={handleAddTag}
+              type="text"
+              placeholder="Add tags..."
+            />
+          </Form.Control>
+          <div className="flex flex-wrap gap-2">
+            {formik.values.tags.map((tag: string) => (
+              <div
+                key={tag}
+                className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-sm"
+              >
+                <span>{tag}</span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTag(tag)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       </FormField>
 
       <FormField name="task">
@@ -163,7 +210,6 @@ function ModifyExerciseModal({ closeModal, orgslug, mutateURL, exercise }: { clo
           <Textarea
             onChange={formik.handleChange}
             value={formik.values.task}
-
           />
         </Form.Control>
       </FormField>

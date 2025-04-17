@@ -30,6 +30,7 @@ export type Exercise = {
   description: string
   task: string
   solution: string
+  tags?: string[] // Optional array of tags
 }
 
 type PropsType = {
@@ -85,6 +86,18 @@ function ExerciseThumbnail(props: PropsType) {
       <div className='flex flex-col w-full pt-3 space-y-2'>
         <h2 className="font-bold text-gray-800 line-clamp-2 leading-tight text-lg capitalize">{props.exercise.title}</h2>
         <p className='text-sm text-gray-700 leading-normal line-clamp-3'>{props.exercise.description}</p>
+        {props.exercise.tags && props.exercise.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {props.exercise.tags.map((tag) => (
+              <span
+                key={tag}
+                className="bg-gray-100 px-2 py-0.5 rounded-full text-xs text-gray-600"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

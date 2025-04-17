@@ -5,4 +5,8 @@
 -- SELECT * from course;
 
 -- SELECT map_state from COURSE;
-update COURSE set map_state = '{ "objects": [] }';
+--update COURSE set map_state = '{ "objects": [] }';
+--select * from course;
+select * from task;
+-- select * from course_task;
+-- select * from course;
