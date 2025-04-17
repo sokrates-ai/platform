@@ -46,6 +46,7 @@ class TaskModify(TaskBase):
 
 class TaskCreate(TaskBase):
     course_id: Optional[int] = None
+    tags: List[str] = []
     pass
 
 
@@ -55,7 +56,7 @@ class TaskCreate(TaskBase):
 
 
 class Tasks_Tags(SQLModel, table=True):
-    tag_value: str = Field(foreign_key="tag.value", primary_key=True)
+    tag_value: str = Field(foreign_key="tags.value", primary_key=True)
     task_id: int = Field(foreign_key="task.id", primary_key=True)
 
 
@@ -173,6 +174,32 @@ async def get_task_tags(
     )
     tags = db_session.exec(statement).all()
     tags = [t.value for t in tags]
+    return tags
+
+
+async def create_task_tag(
+    db_session: Session,
+    task_id: int,
+    tag_value: str,
+) -> List[str]:
+    link = Tasks_Tags.model_validate(Tasks_Tags(tag_value=tag_value, task_id=task_id))
+    db_session.add(link)
+    db_session.commit()
+    db_session.refresh(link)
+
+
+async def delete_task_tag(
+    db_session: Session,
+    task_id: int,
+    tag_value: str,
+) -> List[str]:
+    statement = select(Tasks_Tags).where(
+        (Tasks_Tags.tag_value == tag_value) & Tasks_Tags.task_id == task_id
+    )
+    link = db_session.exec(statement).first()
+    if link:
+        db_session.delete(link)
+        db_session.commit()
 
 
 async def get_tasks(
@@ -208,10 +235,11 @@ async def get_tasks(
 
     for task, cid in results:
         # Get tags belonging to this task.
-        # a
+        tags = await get_task_tags(db_session=db_session, task_id=task.id)
+        print(tags)
 
         tasks_with_course_id.append(
-            TaskWithCourseIDAndTags(**task.model_dump(), course_id=cid, tags=tags)
+            TaskWithCourseIDAndTags(**task.model_dump(), course_id=cid)
         )
 
     return tasks_with_course_id
@@ -238,8 +266,8 @@ async def create_task(
     if data.course_id:
         await add_course_task_association(db_session, data.course_id, task.id)
 
-    # Create tags.
-    # statement =
+    for tag in data.tags:
+        await create_task_tag(db_session=db_session, task_id=task.id, tag_value=tag)
 
     return task
 
@@ -287,6 +315,17 @@ async def modify_task(
     if data.course_id:
         await add_course_task_association(db_session, data.course_id, data.id)
 
+    # Update tags.
+    current_tags = await get_task_tags(db_session=db_session, task_id=task.id)
+
+    for tag in data.tags:
+        if tag not in current_tags:
+            await create_task_tag(db_session=db_session, task_id=task.id, tag_value=tag)
+
+    for tag in current_tags:
+        if tag not in data.tags:
+            await delete_task_tag(db_session=db_session, task_id=task.id, tag_value=tag)
+
     return task
 
 
@@ -318,9 +357,14 @@ async def delete_task(
         db_session.delete(association)
         db_session.commit()
 
-    # Delete Assignment
+    # Delete Task
     db_session.delete(task)
     db_session.commit()
+
+    # Delete all tags
+    tags = await get_task_tags(db_session=db_session, task_id=task.id)
+    for tag in tags:
+        await delete_task_tag(db_session=db_session, task_id=task.id, tag_value=tag)
 
 
 async def rbac_check(

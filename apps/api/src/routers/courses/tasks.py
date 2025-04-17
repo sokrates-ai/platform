@@ -300,7 +300,7 @@ async def api_get_task_list(
     course_id: Optional[int] = Query(default=None),
     db_session: Session = Depends(get_db_session),
     # current_user: PublicUser = Depends(get_current_user),
-) -> List[Task]:
+) -> List[TaskWithCourseIDAndTags]:
     """
     Get tasks based on page and limit
     """
