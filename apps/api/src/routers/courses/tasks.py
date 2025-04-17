@@ -7,8 +7,28 @@ from config.config import WorkspaceConfig
 from src.security.rbac.rbac import authorization_verify_based_on_roles_and_authorship
 from src.db.courses.activities import Activity, ActivityTypeEnum
 from src.services.courses.activities.activities import get_activity, rbac_check
-from src.services.courses.activities.workspaces import Task, TaskBase, TaskCreate, TaskModify, TaskWithCourseID, create_task, delete_task, get_task, get_tasks, modify_task
-from fastapi import APIRouter, Depends, UploadFile, Form, Request, HTTPException, status, Query
+from src.services.courses.activities.workspaces import (
+    Task,
+    TaskBase,
+    TaskCreate,
+    TaskModify,
+    TaskWithCourseIDAndTags,
+    create_task,
+    delete_task,
+    get_task,
+    get_tasks,
+    modify_task,
+)
+from fastapi import (
+    APIRouter,
+    Depends,
+    UploadFile,
+    Form,
+    Request,
+    HTTPException,
+    status,
+    Query,
+)
 from sqlmodel import Session
 from pydantic import BaseModel
 from fastapi import FastAPI
@@ -50,13 +70,17 @@ router = APIRouter()
 class SessionCreate(BaseModel):
     activity_uuid: str
 
+
 class SessionResponse(BaseModel):
     token: str
     workspace_url: str
 
-async def workspace_system_obtain_token(user: PublicUser, task_id: int, activity_uuid: str, config: WorkspaceConfig) -> str:
-    url=f"http://{config.workspace_api_host}:{config.workspace_api_port}/api/createSession"
-    body={
+
+async def workspace_system_obtain_token(
+    user: PublicUser, task_id: int, activity_uuid: str, config: WorkspaceConfig
+) -> str:
+    url = f"http://{config.workspace_api_host}:{config.workspace_api_port}/api/createSession"
+    body = {
         "activity_uuid": activity_uuid,
         "exercise_id": task_id,
         "user_uuid": user.user_uuid,
@@ -64,21 +88,21 @@ async def workspace_system_obtain_token(user: PublicUser, task_id: int, activity
     # print(f"CREATING WS SESSION FOR USER={user} and TASK={task_id}...", url, body)
     print(f"user={user.user_uuid}")
     async with httpx.AsyncClient() as client:
-        res=await client.post(url, json=body)
+        res = await client.post(url, json=body)
         # print(res)
 
         if res.status_code != 200:
             raise Exception(res.text)
 
-
-        parsed=res.json()
+        parsed = res.json()
 
         if "token" not in parsed:
-            raise("Illegal response: " + res.text)
+            raise ("Illegal response: " + res.text)
 
-        token=parsed["token"]
+        token = parsed["token"]
 
         return token
+
 
 @router.post("/session")
 async def api_create_session(
@@ -97,7 +121,7 @@ async def api_create_session(
     print(f"create new session: {current_user} | {session_obj}")
 
     # Get task-id based on the activity.
-    activity: Activity =await get_activity(
+    activity: Activity = await get_activity(
         request=request,
         activity_uuid=session_obj.activity_uuid,
         current_user=current_user,
@@ -119,13 +143,18 @@ async def api_create_session(
     if "task_id" not in activity.content:
         raise "BUG: illegal content in activity"
 
-    task_id=activity.content["task_id"]
+    task_id = activity.content["task_id"]
     print(f"task ID={task_id}")
 
     print(f"LEARNHOUSE={request.app.learnhouse_config.workspace_config}")
 
-    workspace_config: WorkspaceConfig =request.app.learnhouse_config.workspace_config
-    token=await workspace_system_obtain_token(user=current_user, task_id=task_id, activity_uuid=activity.activity_uuid, config=workspace_config)
+    workspace_config: WorkspaceConfig = request.app.learnhouse_config.workspace_config
+    token = await workspace_system_obtain_token(
+        user=current_user,
+        task_id=task_id,
+        activity_uuid=activity.activity_uuid,
+        config=workspace_config,
+    )
 
     print(f"token={token}")
 
@@ -133,6 +162,7 @@ async def api_create_session(
         token=token,
         workspace_url=workspace_config.workspace_external_base_url,
     )
+
 
 @router.post("/")
 async def api_create_task(
@@ -153,15 +183,14 @@ async def api_create_task(
     #     solution=solution,
     # )
 
-    return await create_task(
-        request, current_user, task_obj, db_session
-    )
+    return await create_task(request, current_user, task_obj, db_session)
+
 
 @router.put("/")
 async def api_modify_task(
     request: Request,
     # org_id: int,
-    task_obj: TaskWithCourseID,
+    task_obj: TaskWithCourseIDAndTags,
     current_user: PublicUser = Depends(get_current_user),
     db_session: Session = Depends(get_db_session),
     # thumbnail: UploadFile | None = None,
@@ -176,9 +205,7 @@ async def api_modify_task(
     #     solution=solution,
     # )
 
-    return await modify_task(
-        request, current_user, task_obj, db_session
-    )
+    return await modify_task(request, current_user, task_obj, db_session)
 
 
 # @router.put("/{course_uuid}/thumbnail")
@@ -241,6 +268,7 @@ async def api_modify_task(
 #         request, course_uuid, current_user=current_user, db_session=db_session
 #     )
 
+
 @router.get("/id/{id}")
 async def api_get_task_single(
     request: Request,
@@ -252,9 +280,7 @@ async def api_get_task_single(
     """
     Get tasks based on ID
     """
-    task = await get_task(
-        request, db_session, id
-    )
+    task = await get_task(request, db_session, id)
 
     if not task:
         raise HTTPException(
@@ -263,7 +289,7 @@ async def api_get_task_single(
         )
 
     return task
-        
+
 
 @router.get("/list/page/{page}/limit/{limit}")
 async def api_get_task_list(
@@ -278,13 +304,7 @@ async def api_get_task_list(
     """
     Get tasks based on page and limit
     """
-    return await get_tasks(
-        request,
-        db_session,
-        course_id,
-        page,
-        limit
-    )
+    return await get_tasks(request, db_session, course_id, page, limit)
 
 
 @router.delete("/id/{id}")

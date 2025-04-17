@@ -55,12 +55,12 @@ class TaskCreate(TaskBase):
 
 
 class Tasks_Tags(SQLModel, table=True):
-    tag_value: str
-    task_id: int
+    tag_value: str = Field(foreign_key="tag.value", primary_key=True)
+    task_id: int = Field(foreign_key="task.id", primary_key=True)
 
 
 class Tags(SQLModel, table=True):
-    value: str
+    value: str = Field(primary_key=True)
     color: int
 
 
@@ -161,6 +161,7 @@ async def get_task(
 #     return tasks
 # from sqlmodel import col
 
+
 async def get_task_tags(
     db_session: Session,
     task_id: int,
@@ -210,9 +211,7 @@ async def get_tasks(
         # a
 
         tasks_with_course_id.append(
-            TaskWithCourseIDAndTags(
-                **task.model_dump(), course_id=cid, tags=tags
-            )
+            TaskWithCourseIDAndTags(**task.model_dump(), course_id=cid, tags=tags)
         )
 
     return tasks_with_course_id
@@ -240,7 +239,7 @@ async def create_task(
         await add_course_task_association(db_session, data.course_id, task.id)
 
     # Create tags.
-    # statement = 
+    # statement =
 
     return task
 
@@ -248,7 +247,7 @@ async def create_task(
 async def modify_task(
     request: Request,
     current_user: PublicUser | AnonymousUser,
-    data: TaskWithCourseID,
+    data: TaskWithCourseIDAndTags,
     db_session: Session,
 ):
     # RBAC check
