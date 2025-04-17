@@ -36,6 +36,15 @@ docker_setup() {
     }
 }
 
+teardown() {
+    check
+
+    (docker compose -f docker-compose-dev.yml down -v) || {
+        echo "[ERROR]: Could not tear down development containers"
+        exit 1
+    }
+}
+
 setup() {
     check
 
@@ -44,6 +53,11 @@ setup() {
     docker_setup
 
     echo "[DONE]: Development environment ready"
+}
+
+reset() {
+    teardown
+    setup
 }
 
 #
@@ -71,6 +85,8 @@ elif [ "${ARG}" = "web-dev" ]; then
     dev_web
 elif [ "${ARG}" = "api-dev" ]; then
     dev_backend
+elif [ "${ARG}" = "reset" ]; then
+    reset
 else
     echo -e "[ERROR]: Unknown argument <${ARG}>"
     exit 1

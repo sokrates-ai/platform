@@ -22,7 +22,7 @@ services:
       - POSTGRES_PASSWORD=learnhouse
       - POSTGRES_DB=learnhouse
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - sk-postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U learnhouse"]
       interval: 5s
@@ -44,4 +44,4 @@ services:
       - "8000:8000"
 
 volumes:
-  postgres:
+  sk-postgres:

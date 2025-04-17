@@ -8,6 +8,9 @@ docker-nuke:
 setup:
 	./dev.sh setup
 
+reset:
+	./dev.sh reset
+
 web-dev:
 	./dev.sh web-dev
 
