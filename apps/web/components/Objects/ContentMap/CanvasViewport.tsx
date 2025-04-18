@@ -50,7 +50,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
             viewport.drag().decelerate();
             viewport.clamp({ direction: "all" });
             viewport.moveCenter((WORLD_WIDTH / 4) * 1.8, (WORLD_HEIGHT / 4) * 3)
-            
+
             if (readOnly) {
                 viewport.setZoom(1);
             }
@@ -145,6 +145,10 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
 
     if (!app || !app.renderer) return null;
 
+    useEffect(() => {
+        viewport?.sortChildren();
+    }, [placedAssets, viewport]);
+
     return (
         // @ts-expect-error: This is not being recognized by typescript, though it is registered in global.d.ts
         <viewport
@@ -152,11 +156,13 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
             worldWidth={WORLD_WIDTH}
             worldHeight={WORLD_HEIGHT}
             events={app.renderer.events}
+            sortableChildren={true}
         >
-            {placedAssets.map((asset) => (
+            {placedAssets.map((asset, idx) => (
                 <Asset
                     key={asset.id}
                     asset={asset}
+                    layer={idx}
                     spriteURL={spriteURL}
                     onPointerDown={handlePointerDown}
                 />

@@ -26,11 +26,12 @@ export interface AssetData {
 
 export interface AssetProps {
     asset: AssetData;
+    layer: number;
     spriteURL: (file: string) => string;
     onPointerDown: (e: any, asset: any) => void;
 }
 
-const Asset: React.FC<AssetProps> = React.memo(({ asset, spriteURL, onPointerDown }) => {
+const Asset: React.FC<AssetProps> = React.memo(({ asset, spriteURL, onPointerDown, layer }) => {
     const [texture, setTexture] = useState<PIXI.Texture | null>(null);
     const hasLoaded = useRef(false);
     const { file } = asset;
@@ -51,11 +52,6 @@ const Asset: React.FC<AssetProps> = React.memo(({ asset, spriteURL, onPointerDow
         return null;
     }
 
-    function extractChapterNumber(label: string): number | null {
-        const matches = label.match(/\((\d+)\)$/);
-        return matches ? parseInt(matches[1]) : null;
-    }
-
     // Render differently based on asset type
     if (asset.type.kind === "chapter" && asset.type.associatedChapterID !== undefined) {
         console.log(`Chapter Label: ${asset.type.label}`)
@@ -63,6 +59,7 @@ const Asset: React.FC<AssetProps> = React.memo(({ asset, spriteURL, onPointerDow
             <pixiContainer
                 x={asset.x}
                 y={asset.y}
+                zIndex={layer}
                 interactive
                 onPointerDown={(e: PIXI.FederatedPointerEvent) => onPointerDown(e, asset)}
             >
@@ -86,6 +83,7 @@ const Asset: React.FC<AssetProps> = React.memo(({ asset, spriteURL, onPointerDow
             texture={texture}
             x={asset.x}
             y={asset.y}
+            zIndex={layer}
             scale={asset.scale}
             interactive
             onPointerDown={(e: PIXI.FederatedPointerEvent) => onPointerDown(e, asset)}
