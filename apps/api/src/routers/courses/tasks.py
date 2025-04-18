@@ -8,15 +8,21 @@ from src.security.rbac.rbac import authorization_verify_based_on_roles_and_autho
 from src.db.courses.activities import Activity, ActivityTypeEnum
 from src.services.courses.activities.activities import get_activity, rbac_check
 from src.services.courses.activities.workspaces import (
+    DeleteTag,
+    Tags,
     Task,
     TaskBase,
     TaskCreate,
     TaskModify,
     TaskWithCourseIDAndTags,
+    create_tag,
     create_task,
+    delete_tag,
     delete_task,
+    get_tags,
     get_task,
     get_tasks,
+    modify_tag,
     modify_task,
 )
 from fastapi import (
@@ -106,13 +112,10 @@ async def workspace_system_obtain_token(
 
 @router.post("/session")
 async def api_create_session(
-    # app: FastAPI,
     request: Request,
-    # org_id: int,
     session_obj: SessionCreate,
     current_user: PublicUser = Depends(get_current_user),
     db_session: Session = Depends(get_db_session),
-    # thumbnail: UploadFile | None = None,
 ) -> SessionResponse:
     """
     Create new exercise session
@@ -167,115 +170,34 @@ async def api_create_session(
 @router.post("/")
 async def api_create_task(
     request: Request,
-    # org_id: int,
     task_obj: TaskCreate,
     current_user: PublicUser = Depends(get_current_user),
     db_session: Session = Depends(get_db_session),
-    # thumbnail: UploadFile | None = None,
 ) -> Task:
     """
     Create new task
     """
-    # task = TaskCreate(
-    #     title=title,
-    #     description=description,
-    #     task=task,
-    #     solution=solution,
-    # )
-
     return await create_task(request, current_user, task_obj, db_session)
 
 
 @router.put("/")
 async def api_modify_task(
     request: Request,
-    # org_id: int,
     task_obj: TaskWithCourseIDAndTags,
     current_user: PublicUser = Depends(get_current_user),
     db_session: Session = Depends(get_db_session),
-    # thumbnail: UploadFile | None = None,
 ) -> Task:
     """
     Modify task
     """
-    # task = TaskCreate(
-    #     title=title,
-    #     description=description,
-    #     task=task,
-    #     solution=solution,
-    # )
-
     return await modify_task(request, current_user, task_obj, db_session)
-
-
-# @router.put("/{course_uuid}/thumbnail")
-# async def api_create_course_thumbnail(
-#     request: Request,
-#     course_uuid: str,
-#     thumbnail: UploadFile | None = None,
-#     db_session: Session = Depends(get_db_session),
-#     current_user: PublicUser = Depends(get_current_user),
-# ) -> CourseRead:
-#     """
-#     Update new Course Thumbnail
-#     """
-#     return await update_course_thumbnail(
-#         request, course_uuid, current_user, db_session, thumbnail
-#     )
-
-
-# @router.get("/{course_uuid}")
-# async def api_get_course(
-#     request: Request,
-#     course_uuid: str,
-#     db_session: Session = Depends(get_db_session),
-#     current_user: PublicUser = Depends(get_current_user),
-# ) -> CourseRead:
-#     """
-#     Get single Course by course_uuid
-#     """
-#     return await get_course(
-#         request, course_uuid, current_user=current_user, db_session=db_session
-#     )
-
-
-# @router.get("/id/{course_id}")
-# async def api_get_course_by_id(
-#     request: Request,
-#     course_id: str,
-#     db_session: Session = Depends(get_db_session),
-#     current_user: PublicUser = Depends(get_current_user),
-# ) -> CourseRead:
-#     """
-#     Get single Course by id
-#     """
-#     return await get_course_by_id(
-#         request, course_id, current_user=current_user, db_session=db_session
-#     )
-
-
-# @router.get("/{course_uuid}/meta")
-# async def api_get_course_meta(
-#     request: Request,
-#     course_uuid: str,
-#     db_session: Session = Depends(get_db_session),
-#     current_user: PublicUser = Depends(get_current_user),
-# ) -> FullCourseReadWithTrail:
-#     """
-#     Get single Course Metadata (chapters, activities) by course_uuid
-#     """
-#     return await get_course_meta(
-#         request, course_uuid, current_user=current_user, db_session=db_session
-#     )
 
 
 @router.get("/id/{id}")
 async def api_get_task_single(
     request: Request,
     id: int,
-    # org_slug: str,
     db_session: Session = Depends(get_db_session),
-    # current_user: PublicUser = Depends(get_current_user),
 ) -> Task:
     """
     Get tasks based on ID
@@ -296,10 +218,8 @@ async def api_get_task_list(
     request: Request,
     page: int,
     limit: int,
-    # org_slug: str,
     course_id: Optional[int] = Query(default=None),
     db_session: Session = Depends(get_db_session),
-    # current_user: PublicUser = Depends(get_current_user),
 ) -> List[TaskWithCourseIDAndTags]:
     """
     Get tasks based on page and limit
@@ -311,7 +231,6 @@ async def api_get_task_list(
 async def api_delete_task(
     request: Request,
     id: int,
-    # org_slug: str,
     db_session: Session = Depends(get_db_session),
     current_user: PublicUser = Depends(get_current_user),
 ) -> None:
@@ -326,97 +245,58 @@ async def api_delete_task(
     )
 
 
-# @router.put("/{course_uuid}")
-# async def api_update_course(
-#     request: Request,
-#     course_object: CourseUpdate,
-#     course_uuid: str,
-#     db_session: Session = Depends(get_db_session),
-#     current_user: PublicUser = Depends(get_current_user),
-# ) -> CourseRead:
-#     """
-#     Update Course by course_uuid
-#     """
-#     return await update_course(
-#         request, course_object, course_uuid, current_user, db_session
-#     )
+#
+# Tags
+#
 
 
-# @router.delete("/{course_uuid}")
-# async def api_delete_course(
-#     request: Request,
-#     course_uuid: str,
-#     db_session: Session = Depends(get_db_session),
-#     current_user: PublicUser = Depends(get_current_user),
-# ):
-#     """
-#     Delete Course by ID
-#     """
-
-#     return await delete_course(request, course_uuid, current_user, db_session)
+@router.get("/tag")
+async def api_get_tags_list(
+    db_session: Session = Depends(get_db_session),
+) -> List[Tags]:
+    """
+    Get task tags
+    """
+    return await get_tags(db_session)
 
 
-# @router.get("/{course_uuid}/updates")
-# async def api_get_course_updates(
-#     request: Request,
-#     course_uuid: str,
-#     db_session: Session = Depends(get_db_session),
-#     current_user: PublicUser = Depends(get_current_user),
-# ) -> List[CourseUpdateRead]:
-#     """
-#     Get Course Updates by course_uuid
-#     """
-
-#     return await get_updates_by_course_uuid(
-#         request, course_uuid, current_user, db_session
-#     )
+@router.post("/tag")
+async def api_create_tag(
+    request: Request,
+    tag: Tags,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+) -> None:
+    """
+    Create new task tag
+    """
+    return await create_tag(db_session=db_session, tag_value=tag.value, color=tag.color)
 
 
-# @router.post("/{course_uuid}/updates")
-# async def api_create_course_update(
-#     request: Request,
-#     course_uuid: str,
-#     update_object: CourseUpdateCreate,
-#     db_session: Session = Depends(get_db_session),
-#     current_user: PublicUser = Depends(get_current_user),
-# ) -> CourseUpdateRead:
-#     """
-#     Create new Course Update
-#     """
-
-#     return await create_update(
-#         request, course_uuid, update_object, current_user, db_session
-#     )
+@router.put("/tag")
+async def api_modify_tag(
+    request: Request,
+    tag: Tags,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+) -> None:
+    """
+    Modify task tag
+    """
+    return await modify_tag(
+        db_session=db_session, tag_value=tag.value, new_color=tag.color
+    )
 
 
-# @router.put("/{course_uuid}/update/{courseupdate_uuid}")
-# async def api_update_course_update(
-#     request: Request,
-#     course_uuid: str,
-#     courseupdate_uuid: str,
-#     update_object: CourseUpdateUpdate,
-#     db_session: Session = Depends(get_db_session),
-#     current_user: PublicUser = Depends(get_current_user),
-# ) -> CourseUpdateRead:
-#     """
-#     Update Course Update by courseupdate_uuid
-#     """
-
-#     return await update_update(
-#         request, courseupdate_uuid, update_object, current_user, db_session
-#     )
-
-
-# @router.delete("/{course_uuid}/update/{courseupdate_uuid}")
-# async def api_delete_course_update(
-#     request: Request,
-#     course_uuid: str,
-#     courseupdate_uuid: str,
-#     db_session: Session = Depends(get_db_session),
-#     current_user: PublicUser = Depends(get_current_user),
-# ):
-#     """
-#     Delete Course Update by courseupdate_uuid
-#     """
-
-#     return await delete_update(request, courseupdate_uuid, current_user, db_session)
+@router.delete("/tag")
+async def api_delete_tag(
+    request: Request,
+    tag: DeleteTag,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+) -> None:
+    """
+    Modify task tag
+    """
+    return await delete_tag(db_session=db_session, tag_value=tag.value)
+    # return await modify_task(request, current_user, task_obj, db_session)

@@ -65,6 +65,10 @@ class Tags(SQLModel, table=True):
     color: int
 
 
+class DeleteTag(BaseModel):
+    value: str
+
+
 #
 # Course task / tag mapping.
 #
@@ -161,6 +165,74 @@ async def get_task(
 #     print(f"tasks={tasks}")
 #     return tasks
 # from sqlmodel import col
+
+
+async def get_tags(
+    db_session: Session,
+) -> List[Tags]:
+    statement = select(Tags)
+    tags = db_session.exec(statement).all()
+    return tags
+
+
+async def create_tag(
+    db_session: Session,
+    tag_value: str,
+    color: int,
+):
+    tag = Tags.model_validate(Tags(value=tag_value, color=color))
+    db_session.add(tag)
+    db_session.commit()
+    db_session.refresh(tag)
+
+
+async def modify_tag(
+    db_session: Session,
+    tag_value: str,
+    new_color: int,
+):
+    statement = select(Tags).where((Tags.value == tag_value))
+    tag = db_session.exec(statement).first()
+
+    if not tag:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Tag not found",
+        )
+
+    setattr(tag, "color", new_color)
+
+    db_session.commit()
+
+
+async def delete_tag(
+    db_session: Session,
+    tag_value: str,
+) -> List[str]:
+    statement = select(Tags).where((Tags.value == tag_value))
+    tag = db_session.exec(statement).first()
+    if not tag:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Tag not found",
+        )
+
+    #
+    # Remove associations.
+    #
+
+    statement = select(Tasks_Tags).where(Tasks_Tags.tag_value == tag_value)
+    tags = db_session.exec(statement).all()
+    for t in tags:
+        db_session.delete(t)
+
+    db_session.delete(tag)
+    db_session.commit()
+
+
+#
+# Task tags
+#
 
 
 async def get_task_tags(

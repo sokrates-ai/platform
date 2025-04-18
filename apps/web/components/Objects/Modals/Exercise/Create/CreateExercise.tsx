@@ -34,10 +34,13 @@ const validationSchema = Yup.object().shape({
   task: Yup.string(),
   solution: Yup.string(),
   course_id: Yup.mixed().nullable(),
-  tags: Yup.array().of(Yup.string())
+  tags: Yup.array().of(Yup.object().shape({
+    value: Yup.string(),
+    color: Yup.number(),
+  }))
 })
 
-function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses }: any) {
+function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses, tags }: any) {
   console.log('CSR', courses)
 
   const router = useRouter()
@@ -46,6 +49,7 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses }: any) {
   const [showUnsplashPicker, setShowUnsplashPicker] = React.useState(false)
   const [isUploading, setIsUploading] = React.useState(false)
   const [tagInput, setTagInput] = React.useState('')
+  const [internalTags, setInternalTags] = React.useState<string[]>([])
 
   const formik = useFormik({
     initialValues: {
@@ -54,7 +58,6 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses }: any) {
       task: '',
       solution: '',
       course_id: '',
-      tags: [] as string[],
     },
     validationSchema,
     onSubmit: async (values, { setSubmitting }) => {
@@ -68,7 +71,6 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses }: any) {
             task: values.task,
             solution: values.solution,
             course_id: values.course_id,
-            tags: values.tags,
           },
           session.data?.tokens?.access_token
         )
@@ -91,20 +93,18 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses }: any) {
     }
   })
 
-  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && tagInput.trim()) {
-      e.preventDefault()
-      if (!formik.values.tags.includes(tagInput.trim())) {
-        formik.setFieldValue('tags', [...formik.values.tags, tagInput.trim()])
-      }
-      setTagInput('')
+  function handleAddTag() {
+    if (!internalTags.includes(tagInput.trim())) {
+      formik.setFieldValue('tags', [...internalTags,
+      tags.find((t: any) => t.value == tagInput)
+      ])
     }
+    setTagInput('')
   }
 
   const handleRemoveTag = (tagToRemove: string) => {
-    formik.setFieldValue(
-      'tags',
-      formik.values.tags.filter((tag: string) => tag !== tagToRemove)
+    setInternalTags(
+      internalTags.filter((tag: string) => tag !== tagToRemove)
     )
   }
 
@@ -212,6 +212,36 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses }: any) {
         />
         <div className="space-y-2">
           <Form.Control asChild>
+            <select className='bg-gray-100/40 rounded-lg px-1 py-2 outline outline-1 outline-gray-100'
+              onChange={(e) => setTagInput(e.target.value)}
+              value={tagInput}
+              type="text"
+              placeholder="Add tags..."
+            >
+              {tags.map((c: any) => {
+                // TODO: filter
+                const color = `#${c.color?.toString(16).padStart(6, '0')}`;
+
+                return (
+                  <option
+                    key={c.value}
+                    value={c.value}
+                    className="w-10 h-6 rounded-full border-0 p-0 cursor-pointer bg-transparent"
+                    style={{ backgroundColor: color }}
+                  >
+                    {c.value}
+                  </option>
+                )
+              })}
+            </select>
+          </Form.Control>
+
+          <button
+            className="px-4 py-2 bg-black text-white text-sm font-bold rounded-md"
+          >
+            Add Tag
+          </button>
+          {/* <Form.Control asChild>
             <Input
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
@@ -219,23 +249,30 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses }: any) {
               type="text"
               placeholder="Add tags..."
             />
-          </Form.Control>
+          </Form.Control> */}
           <div className="flex flex-wrap gap-2">
-            {formik.values.tags.map((tag: string) => (
-              <div
-                key={tag}
-                className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-sm"
-              >
-                <span>{tag}</span>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTag(tag)}
-                  className="text-gray-500 hover:text-gray-700"
+            {internalTags.map((tag: any) => {
+              const color = `#${tag.color?.toString(16).padStart(6, '0')}`;
+
+              return (
+                <div
+                  key={tag}
+                  className="flex items-center gap-1 px-2 py-1 rounded-full text-sm"
+                  style={{
+                    backgroundColor: color
+                  }}
                 >
-                  <X size={14} />
-                </button>
-              </div>
-            ))}
+                  <span>{tag}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(tag)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )
+            })}
           </div>
         </div>
       </FormField>

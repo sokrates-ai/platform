@@ -12,6 +12,7 @@ import { getAPIUrl } from '@services/config/config'
 import { swrFetcher } from '@services/utils/ts/requests'
 import CreateExerciseModal from '@components/Objects/Modals/Exercise/Create/CreateExercise'
 import ExerciseThumbnail from '@components/Objects/Thumbnails/ExerciseThumbnail'
+import EditTagsModal from '@components/Objects/Modals/Exercise/Create/EditTags'
 
 type ExerciseProps = {
   orgslug: string
@@ -27,9 +28,12 @@ function ExerciseHome(params: ExerciseProps) {
   const course_limit = 100;
   const COURSES_URL = `${getAPIUrl()}courses/org_slug/${params.orgslug}/page/${course_page}/limit/${course_limit}`
 
+  const TAGS_URL = `${getAPIUrl()}tasks/tag`
+
   const searchParams = useSearchParams()
   const isCreatingExercise = searchParams.get('new') ? true : false
   const [newExerciseModal, setNewExerciseModal] = React.useState(isCreatingExercise)
+  const [editTagsModalOpen, setEditTagsModalOpen] = React.useState(false)
   const isUserAdmin = useAdminStatus() as any
 
   async function closeNewCourseModal() {
@@ -45,7 +49,9 @@ function ExerciseHome(params: ExerciseProps) {
   // TODO: set limit?
   const { data: exercises, isLoading: exercisesLoading } = useSWR(TASKS_URL, (url: string) => swrFetcher(url, access_token))
 
-  if (coursesLoading || exercisesLoading) {
+  const { data: tags, isLoading: tagsLoading } = useSWR(TAGS_URL, (url: string) => swrFetcher(url, access_token))
+
+  if (coursesLoading || exercisesLoading || tagsLoading) {
     return;
   }
 
@@ -71,6 +77,7 @@ function ExerciseHome(params: ExerciseProps) {
                   orgslug={params.orgslug}
                   mutateURL={TASKS_URL}
                   courses={courses}
+                  tags={tags}
                 />
               }
               dialogTitle="Create Exercise"
@@ -80,6 +87,30 @@ function ExerciseHome(params: ExerciseProps) {
                           <button className="rounded-lg bg-black hover:scale-105 transition-all duration-100 ease-linear antialiased ring-offset-purple-800 p-2 px-5 my-auto font text-xs font-bold text-white drop-shadow-lg flex space-x-2 items-center">
                             <div>New Exercise</div>
                             <div className="text-md bg-neutral-800 px-1 rounded-full">+</div>
+                          </button>
+                </button>
+              }
+            />
+
+            <Modal
+              isDialogOpen={editTagsModalOpen}
+              onOpenChange={setEditTagsModalOpen}
+              minHeight="md"
+              dialogContent={
+                <EditTagsModal
+                  closeModal={() => setEditTagsModalOpen(false)}
+                  orgslug={params.orgslug}
+                  mutateURL={TAGS_URL}
+                  tags={tags}
+                />
+              }
+              dialogTitle="Edit Tags"
+              dialogDescription="Edit task tags"
+              dialogTrigger={
+                <button>
+                          <button className="rounded-lg bg-black hover:scale-105 transition-all duration-100 ease-linear antialiased ring-offset-purple-800 p-2 px-5 my-auto font text-xs font-bold text-white drop-shadow-lg flex space-x-2 items-center">
+                            <div>Edit Tags</div>
+                            {/* <div className="text-md bg-neutral-800 px-1 rounded-full">+</div> */}
                           </button>
                 </button>
               }
@@ -144,6 +175,7 @@ function ExerciseHome(params: ExerciseProps) {
                           orgslug={params.orgslug}
                           mutateURL={TASKS_URL}
                           courses={courses}
+                          tags={tags}
                         />
                       }
                       dialogTitle="Create Exercise"
