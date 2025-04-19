@@ -54,9 +54,13 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
 
     const viewportRef = useCallback((node: Viewport | null) => {
         if (!node || node === viewport) return;
-
         node.resize(app.renderer.width, app.renderer.height, worldWidth, worldHeight);
-        node.drag();
+        node.drag({ clampWheel: true });
+        node.decelerate({
+            friction: 0.9,
+            bounce: 0,
+            minSpeed: 0.02
+        });
         node.moveCenter(worldWidth / 2, worldHeight / 2);
         node.clamp({ direction: 'all', underflow: 'center' });
 
@@ -226,7 +230,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
                             g.clear();
                             g.circle((worldWidth) / 2,
                                 (worldHeight) / 2, 10)
-                            g.fill({color: 0xffffff, alpha: 0.8});
+                            g.fill({ color: 0xffffff, alpha: 0.8 });
                         }}
                     />
                 </>
