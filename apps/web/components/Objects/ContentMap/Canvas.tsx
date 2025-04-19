@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from "react";
+import React, { useRef, useState, useEffect, useCallback, Dispatch, SetStateAction } from "react";
 import { Application } from "@pixi/react";
 import CanvasViewport from "./CanvasViewport";
 import { SPRITES } from "./spriteIndex";
@@ -22,7 +22,7 @@ export interface LayoutState {
 
 export interface CanvasProps {
     layout: LayoutState;
-    setLayout: Function;
+    setLayout: Dispatch<SetStateAction<LayoutState>>;
     onChapterClick: (chapterID: number) => void;
     readOnly?: boolean;
 }
@@ -34,9 +34,87 @@ const Canvas: React.FC<CanvasProps> = ({
     readOnly = false,
 }) => {
     const parentRef = useRef<HTMLDivElement>(null);
-    const [contextMenu, setContextMenu] = useState<ContextMenuData | null>(null);
-    const [viewport, setViewport] = useState<any>(null);
+    const copiedRef = useRef<AssetData[]>([]);
     const contextMenuRef = useRef<HTMLDivElement>(null);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [contextMenu, setContextMenu] = useState<ContextMenuData | null>(null);
+    const [lastMousePos, setLastMousePos] = useState<{ x: number; y: number } | null>(null);
+    const [viewport, setViewport] = useState<any>(null);
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        setLastMousePos({ x: e.clientX, y: e.clientY });
+    };
+
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (!e.ctrlKey && !e.metaKey) return;
+            const key = e.key.toLowerCase();
+
+            if (key === "c" && selectedIds.length) {
+                e.preventDefault();
+                copiedRef.current = layout.layout!
+                    .filter(a => selectedIds.includes(a.id))
+                    .map(a => ({ ...a }));
+            }
+            else if (key === "x" && selectedIds.length) {
+                e.preventDefault();
+                copiedRef.current = layout.layout!
+                    .filter(a => selectedIds.includes(a.id))
+                    .map(a => ({ ...a }));
+                setLayout(old => ({
+                    layout: old.layout!.filter(a => !selectedIds.includes(a.id)),
+                    updateOriginator: "user",
+                }));
+                setSelectedIds([]);
+            }
+            else if (key === "v" && copiedRef.current.length) {
+                e.preventDefault();
+                // compute target world‐coords
+                let targetWorld = null;
+                if (viewport && parentRef.current && lastMousePos) {
+                    const rect = parentRef.current.getBoundingClientRect();
+                    const localX = lastMousePos.x - rect.left;
+                    const localY = lastMousePos.y - rect.top;
+                    targetWorld = viewport.toWorld(localX, localY);
+                }
+                // compute centroid of copied group
+                const copied = copiedRef.current;
+                const cx = copied.reduce((sum, a) => sum + a.x, 0) / copied.length;
+                const cy = copied.reduce((sum, a) => sum + a.y, 0) / copied.length;
+
+                const pasted = copied.map(a => {
+                    // delta: either to grid‐offset or to cursor center
+                    let dx = MINOR_GRID_SIZE, dy = MINOR_GRID_SIZE;
+                    if (targetWorld) {
+                        dx = targetWorld.x - cx;
+                        dy = targetWorld.y - cy;
+                    }
+                    const rawX = a.x + dx;
+                    const rawY = a.y + dy;
+                    // snap to grid
+                    const snappedX = Math.round(rawX / MINOR_GRID_SIZE) * MINOR_GRID_SIZE;
+                    const snappedY = Math.round(rawY / MINOR_GRID_SIZE) * MINOR_GRID_SIZE;
+
+                    return {
+                        ...a,
+                        id: Date.now() + Math.random(),
+                        x: snappedX,
+                        y: snappedY,
+                    };
+                });
+
+                setLayout(old => ({
+                    layout: [...old.layout!, ...pasted],
+                    updateOriginator: "user",
+                }));
+                setSelectedIds(pasted.map(a => a.id));
+            }
+        };
+
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, [layout.layout, selectedIds, viewport, lastMousePos, setLayout]);
+
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -228,10 +306,13 @@ const Canvas: React.FC<CanvasProps> = ({
                 style={{ flex: "1", height: "100%", position: "relative", overflow: "auto", overscrollBehavior: "none" }}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
+                onMouseMove={handleMouseMove}
             >
                 <Application backgroundColor={0x8da64a} autoDensity={true} resizeTo={parentRef}>
                     <CanvasViewport
                         placedAssets={layout.layout!}
+                        selectedIds={selectedIds}
+                        onSelectIds={setSelectedIds as Dispatch<SetStateAction<number[]>>}
                         onViewportReady={setViewport}
                         onAssetPositionChange={handleAssetPositionChange}
                         onAssetContextMenu={handleAssetContextMenu}

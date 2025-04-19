@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef, memo } from "react";
+import React, { useEffect, useState, useCallback, useRef, memo, Dispatch, SetStateAction } from "react";
 import { Viewport } from "pixi-viewport";
 import { useApplication, extend } from "@pixi/react";
 import { WORLD_WIDTH, WORLD_HEIGHT, GRID_SIZE, EDIT_SCALE_FACTOR, MINOR_SUBDIVISIONS, MINOR_GRID_SIZE } from "./constants";
@@ -14,6 +14,8 @@ const snapToGrid = (value: number, gridSize: number) =>
 
 interface CanvasViewportProps {
     placedAssets: AssetData[];
+    selectedIds: number[];
+    onSelectIds: Dispatch<SetStateAction<number[]>>;
     onViewportReady?: (viewport: Viewport) => void;
     onAssetPositionChange: (id: number, x: number, y: number) => void;
     onAssetContextMenu?: (assetId: number, pos: { clientX: number; clientY: number }) => void;
@@ -23,6 +25,8 @@ interface CanvasViewportProps {
 
 const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     placedAssets,
+    selectedIds,
+    onSelectIds,
     onViewportReady,
     onAssetPositionChange,
     onAssetContextMenu,
@@ -104,7 +108,18 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     }, [onAssetPositionChange, onGlobalMove, viewport]);
 
     const handlePointerDown = useCallback((e: any, asset: AssetData, sprite: PIXI.Sprite) => {
-        if (!readOnly) e.stopPropagation();
+        const orig = e.data?.originalEvent as MouseEvent;
+        if (orig.button !== 0 || readOnly) return;
+
+        if (orig.shiftKey) {
+            onSelectIds(ids =>
+                ids.includes(asset.id)
+                    ? ids.filter(id => id !== asset.id)
+                    : [...ids, asset.id]
+            );
+        } else {
+            onSelectIds([asset.id]);
+        }
 
         const originalEvent = e.data?.originalEvent || e.nativeEvent || e;
         if (!originalEvent) return;
@@ -146,7 +161,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
             window.addEventListener("pointermove", onGlobalMove);
             window.addEventListener("pointerup", onGlobalUp);
         }
-    }, [onAssetContextMenu, onChapterClick, onGlobalMove, onGlobalUp, readOnly, viewport]);
+    }, [onAssetContextMenu, onChapterClick, onGlobalMove, onGlobalUp, readOnly, onSelectIds]);
 
     const spriteURL = useCallback((file: string) => `/contentMap/${file}`, []);
 
@@ -160,6 +175,13 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
             worldHeight={worldHeight}
             events={app.renderer.events}
             sortableChildren={true}
+            onPointerDown={(e: PIXI.FederatedPointerEvent) => {
+                const orig = e as MouseEvent;
+                if (e.target === e.currentTarget && !readOnly && !orig.shiftKey) {
+                    onSelectIds([]);
+                }
+            }}
+
         >
             {!readOnly && (
                 <>
@@ -207,6 +229,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
                     layer={idx}
                     spriteURL={spriteURL}
                     onPointerDown={handlePointerDown}
+                    selected={selectedIds.includes(asset.id)}
                 />
             ))}
 

@@ -29,15 +29,22 @@ export interface AssetProps {
     layer: number;
     spriteURL: (file: string) => string;
     onPointerDown: (e: any, asset: AssetData, sprite: PIXI.Sprite) => void;
+    selected: boolean;
 }
 
-const Asset = React.memo(React.forwardRef<PIXI.Sprite, AssetProps>(({ asset, spriteURL, onPointerDown, layer }, ref) => {
+const Asset = React.memo(React.forwardRef<PIXI.Sprite, AssetProps>(({ asset, spriteURL, onPointerDown, layer, selected }, ref) => {
     const [texture, setTexture] = useState<PIXI.Texture | null>(null);
     const hasLoaded = useRef(false);
     const spriteRef = useRef<PIXI.Sprite>(null);
     const { file } = asset;
 
     useImperativeHandle(ref, () => spriteRef.current!, []);
+
+    useEffect(() => {
+        if (spriteRef.current) {
+            spriteRef.current.alpha = selected ? 0.8 : 1.0;
+        }
+    }, [selected]);
 
     useEffect(() => {
         if (!hasLoaded.current) {
