@@ -1,12 +1,16 @@
 import React, { useEffect, useState, useCallback, useRef, memo } from "react";
 import { Viewport } from "pixi-viewport";
 import { useApplication, extend } from "@pixi/react";
-import { WORLD_WIDTH, WORLD_HEIGHT } from "./constants";
+import { WORLD_WIDTH, WORLD_HEIGHT, GRID_SIZE, EDIT_SCALE_FACTOR, MINOR_SUBDIVISIONS, MINOR_GRID_SIZE } from "./constants";
 import Asset from "./Asset";
 import type { AssetData } from "./Asset";
 import * as PIXI from "pixi.js";
+import { Graphics } from "pixi.js"
 
-extend({ Viewport });
+extend({ Viewport, Graphics });
+
+const snapToGrid = (value: number, gridSize: number) =>
+    Math.round(value / gridSize) * gridSize;
 
 interface CanvasViewportProps {
     placedAssets: AssetData[];
@@ -26,6 +30,15 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     readOnly,
 }) => {
     const { app } = useApplication();
+
+    const paddingFactor = readOnly ? 1 : EDIT_SCALE_FACTOR;
+
+    const baseWorldWidth = WORLD_WIDTH;
+    const baseWorldHeight = WORLD_HEIGHT;
+
+    const worldWidth = baseWorldWidth * paddingFactor;
+    const worldHeight = baseWorldHeight * paddingFactor;
+
     const [viewport, setViewport] = useState<Viewport | null>(null);
     const dragDataRef = useRef<{
         id: number;
@@ -40,63 +53,60 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     }, [app?.renderer]);
 
     const viewportRef = useCallback((node: Viewport | null) => {
-        if (node && node !== viewport) {
-            setViewport(node);
-            onViewportReady?.(node);
-        }
-    }, [viewport, onViewportReady]);
+        if (!node || node === viewport) return;
 
-    useEffect(() => {
-        if (viewport) {
-            viewport.drag();
-            viewport.clamp({ direction: "all" });
-            viewport.moveCenter((WORLD_WIDTH / 4) * 1.8, (WORLD_HEIGHT / 4) * 3);
-            viewport.setZoom(readOnly ? 1 : 0.8);
-        }
-    }, [viewport, readOnly]);
+        node.resize(app.renderer.width, app.renderer.height, worldWidth, worldHeight);
+        node.drag();
+        node.moveCenter(worldWidth / 2, worldHeight / 2);
+        node.clamp({ direction: 'all', underflow: 'center' });
+
+        setViewport(node);
+        onViewportReady?.(node);
+    }, [viewport, app?.renderer, worldWidth, worldHeight, baseWorldWidth, baseWorldHeight, onViewportReady]);
 
     const onGlobalMove = useCallback((e: PointerEvent) => {
         if (!dragDataRef.current || !viewport) return;
         const canvasElement = canvasElementRef.current;
-        if (canvasElement) {
-            const rect = canvasElement.getBoundingClientRect();
-            const localX = e.clientX - rect.left;
-            const localY = e.clientY - rect.top;
-            const worldPos = viewport.toWorld(localX, localY);
+        if (!canvasElement) return;
 
-            const { assetRef, offsetX, offsetY } = dragDataRef.current;
-            assetRef.x = worldPos.x - offsetX;
-            assetRef.y = worldPos.y - offsetY;
-        }
+        const rect = canvasElement.getBoundingClientRect();
+        const localX = e.clientX - rect.left;
+        const localY = e.clientY - rect.top;
+        const worldPos = viewport.toWorld(localX, localY);
+
+        const { assetRef, offsetX, offsetY } = dragDataRef.current;
+        const rawX = worldPos.x - offsetX;
+        const rawY = worldPos.y - offsetY;
+        assetRef.x = snapToGrid(rawX, MINOR_GRID_SIZE);
+        assetRef.y = snapToGrid(rawY, MINOR_GRID_SIZE);
     }, [viewport]);
 
     const onGlobalUp = useCallback(() => {
         if (!dragDataRef.current) return;
         const { id, assetRef } = dragDataRef.current;
 
-        onAssetPositionChange(id, assetRef.x, assetRef.y);
+        // snap to nearest GRID_SIZE
+        const snappedX = snapToGrid(assetRef.x, MINOR_GRID_SIZE);
+        const snappedY = snapToGrid(assetRef.y, MINOR_GRID_SIZE);
+        assetRef.x = snappedX;
+        assetRef.y = snappedY;
+        onAssetPositionChange(id, snappedX, snappedY);
 
         dragDataRef.current = null;
         window.removeEventListener("pointermove", onGlobalMove);
         window.removeEventListener("pointerup", onGlobalUp);
 
-        if (viewport && viewport.plugins) {
-            viewport.plugins.resume("drag");
-        }
+        viewport?.plugins?.resume("drag");
     }, [onAssetPositionChange, onGlobalMove, viewport]);
 
     const handlePointerDown = useCallback((e: any, asset: AssetData, sprite: PIXI.Sprite) => {
-        if (!readOnly) {
-            e.stopPropagation();
-        }
+        if (!readOnly) e.stopPropagation();
 
         const originalEvent = e.data?.originalEvent || e.nativeEvent || e;
         if (!originalEvent) return;
 
         if (asset.type.kind === "chapter" && readOnly) {
-            if (originalEvent.button === 0) {
-                onChapterClick?.(asset.type.associatedChapterID!);
-            }
+            if (originalEvent.button === 0) onChapterClick?.(asset.type.associatedChapterID!);
             return;
         }
 
@@ -112,28 +122,21 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
         }
 
         if (originalEvent.button === 0) {
-            if (viewport?.plugins) {
-                viewport.plugins.pause("drag");
-            }
+            viewport?.plugins?.pause("drag");
 
             const canvasElement = canvasElementRef.current;
-            let offsetX = 0;
-            let offsetY = 0;
+            if (!canvasElement || !viewport) return;
 
-            if (canvasElement && viewport) {
-                const rect = canvasElement.getBoundingClientRect();
-                const localX = originalEvent.clientX - rect.left;
-                const localY = originalEvent.clientY - rect.top;
-                const worldPos = viewport.toWorld(localX, localY);
-                offsetX = worldPos.x - asset.x;
-                offsetY = worldPos.y - asset.y;
-            }
+            const rect = canvasElement.getBoundingClientRect();
+            const localX = originalEvent.clientX - rect.left;
+            const localY = originalEvent.clientY - rect.top;
+            const worldPos = viewport.toWorld(localX, localY);
 
             dragDataRef.current = {
                 id: asset.id,
                 assetRef: sprite,
-                offsetX,
-                offsetY,
+                offsetX: worldPos.x - asset.x,
+                offsetY: worldPos.y - asset.y,
             };
 
             window.addEventListener("pointermove", onGlobalMove);
@@ -146,14 +149,53 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     if (!app || !app.renderer) return null;
 
     return (
-        // @ts-expect-error Viewport type not recognized by TS
+        // @ts-expect-error
         <viewport
             ref={viewportRef}
-            worldWidth={WORLD_WIDTH}
-            worldHeight={WORLD_HEIGHT}
+            worldWidth={worldWidth}
+            worldHeight={worldHeight}
             events={app.renderer.events}
             sortableChildren={true}
         >
+            {!readOnly && (
+                <>
+                    {/* minor grid */}
+                    < graphics
+                        draw={(g) => {
+                            g.clear();
+                            for (let x = 0; x <= worldWidth; x += MINOR_GRID_SIZE) {
+                                const px = Math.round(x) + 0.5;
+                                g.moveTo(px, 0);
+                                g.lineTo(px, worldHeight);
+                            }
+                            for (let y = 0; y <= worldHeight; y += MINOR_GRID_SIZE) {
+                                const py = Math.round(y) + 0.5;
+                                g.moveTo(0, py);
+                                g.lineTo(worldWidth, py);
+                            }
+                            g.stroke({ color: 0xffffff, alpha: 0.2, pixelLine: true });
+                        }}
+                    />
+                    {/* major grid */}
+                    <graphics
+                        draw={(g) => {
+                            g.clear();
+                            for (let x = 0; x <= worldWidth; x += GRID_SIZE) {
+                                const px = Math.round(x) + 0.5;
+                                g.moveTo(px, 0);
+                                g.lineTo(px, worldHeight);
+                            }
+                            for (let y = 0; y <= worldHeight; y += GRID_SIZE) {
+                                const py = Math.round(y) + 0.5;
+                                g.moveTo(0, py);
+                                g.lineTo(worldWidth, py);
+                            }
+                            g.stroke({ color: 0xffffff, alpha: 0.8, pixelLine: true });
+                        }}
+                    />
+                </>
+            )}
+
             {placedAssets.map((asset, idx) => (
                 <Asset
                     key={asset.id}
@@ -163,11 +205,37 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
                     onPointerDown={handlePointerDown}
                 />
             ))}
+
+            {!readOnly && (
+                <>
+                    {/* Boundary */}
+                    <graphics
+                        draw={(g) => {
+                            g.clear();
+                            g.rect((worldWidth - baseWorldWidth) / 2,
+                                (worldHeight - baseWorldHeight) / 2,
+                                baseWorldWidth,
+                                baseWorldHeight)
+                            g.stroke({ width: 4, color: 0xffffff, alpha: 0.8 });
+                        }}
+                    />
+
+                    {/* Origin */}
+                    <graphics
+                        draw={(g) => {
+                            g.clear();
+                            g.circle((worldWidth) / 2,
+                                (worldHeight) / 2, 10)
+                            g.fill({color: 0xffffff, alpha: 0.8});
+                        }}
+                    />
+                </>
+            )}
             {/* @ts-expect-error Custom component render */}
         </viewport>
     );
 });
 
-CanvasViewport.displayName = 'CanvasViewport';
+CanvasViewport.displayName = "CanvasViewport";
 
 export default CanvasViewport;

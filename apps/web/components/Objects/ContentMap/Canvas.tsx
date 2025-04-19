@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AssetData } from "./Asset";
-import { SPRITE_SCALE_FACTOR } from "./constants";
+import { SPRITE_SCALE_FACTOR, MINOR_GRID_SIZE } from "./constants";
 
 interface ContextMenuData {
     assetId: number;
@@ -52,13 +52,16 @@ const Canvas: React.FC<CanvasProps> = ({
                 const localX = e.clientX - targetRect.left;
                 const localY = e.clientY - targetRect.top;
                 const worldPosition = viewport.toWorld(localX, localY);
+                // snap the drop position too
+                const snappedX = Math.round(worldPosition.x / MINOR_GRID_SIZE) * MINOR_GRID_SIZE;
+                const snappedY = Math.round(worldPosition.y / MINOR_GRID_SIZE) * MINOR_GRID_SIZE;
                 const newAsset: AssetData = {
                     id: Date.now(),
                     file: spriteData.file,
                     label: spriteData.label,
                     scale: spriteData.scale * SPRITE_SCALE_FACTOR,
-                    x: worldPosition.x,
-                    y: worldPosition.y,
+                    x: snappedX,
+                    y: snappedY,
                     type: {
                         kind: "default",
                         associatedChapterID: undefined,
@@ -222,7 +225,7 @@ const Canvas: React.FC<CanvasProps> = ({
             <div
                 ref={parentRef}
                 id="canvas-parent"
-                style={{ flex: "1", height: "100%", position: "relative" }}
+                style={{ flex: "1", height: "100%", position: "relative", overflow: "auto", overscrollBehavior: "none" }}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
             >
