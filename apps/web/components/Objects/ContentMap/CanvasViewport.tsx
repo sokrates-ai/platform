@@ -109,6 +109,17 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
 
     const handlePointerDown = useCallback((e: any, asset: AssetData, sprite: PIXI.Sprite) => {
         const orig = e.data?.originalEvent as MouseEvent;
+
+        if (orig.button === 2 && !readOnly) {
+            orig.preventDefault();
+            onAssetContextMenu?.(asset.id, {
+                clientX: orig.clientX,
+                clientY: orig.clientY,
+            });
+            return;
+        }
+
+
         if (orig.button !== 0 || readOnly) return;
 
         if (orig.shiftKey) {
@@ -124,19 +135,9 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
         const originalEvent = e.data?.originalEvent || e.nativeEvent || e;
         if (!originalEvent) return;
 
+        // handle chapter‐click in readOnly
         if (asset.type.kind === "chapter" && readOnly) {
-            if (originalEvent.button === 0) onChapterClick?.(asset.type.associatedChapterID!);
-            return;
-        }
-
-        if (readOnly) return;
-
-        if (originalEvent.button === 2) {
-            originalEvent.preventDefault();
-            onAssetContextMenu?.(asset.id, {
-                clientX: originalEvent.clientX,
-                clientY: originalEvent.clientY,
-            });
+            onChapterClick?.(asset.type.associatedChapterID!);
             return;
         }
 
