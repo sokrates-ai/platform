@@ -41,8 +41,6 @@ const validationSchema = Yup.object().shape({
 })
 
 function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses, tags }: any) {
-  console.log('CSR', courses)
-
   const router = useRouter()
   const session = useLHSession() as any
   const [orgId, setOrgId] = React.useState(null) as any
@@ -81,7 +79,6 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses, tags }: 
           closeModal()
           mutate(mutateURL)
         } else {
-          console.log(res)
           toast.error(res.data.detail)
         }
       } catch (error) {
@@ -94,12 +91,18 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses, tags }: 
   })
 
   function handleAddTag() {
-    if (!internalTags.includes(tagInput.trim())) {
-      formik.setFieldValue('tags', [...internalTags,
-      tags.find((t: any) => t.value == tagInput)
-      ])
+    const newInput = tags.find((t: any) => t.value == tagInput)
+    if (!newInput) {
+      throw (`${newInput} not found in tags`)
     }
-    setTagInput('')
+
+    const newInputVal = newInput.value
+
+    if (!internalTags.find((t: any) => t.value === newInputVal)) {
+      setInternalTags([...internalTags, newInputVal])
+    }
+
+    // setTagInput("")
   }
 
   const handleRemoveTag = (tagToRemove: string) => {
@@ -140,6 +143,18 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses, tags }: 
   //     toast.error('Failed to load image from Unsplash')
   //   }
   //   setIsUploading(false)
+  // }
+  const availableTags = tags.filter((t: any) => {
+    const foundItem = internalTags.find((t2: any) => {
+      return t2 === t.value
+    })
+    const found = foundItem !== undefined
+    return !found
+  })
+
+  const addButtonDisabled = tagInput.trim() === "" || availableTags.length === 0
+  // if (availableTags.length === 0) {
+  //   setTagInput("")
   // }
 
   return (
@@ -208,48 +223,49 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses, tags }: 
       <FormField name="tags">
         <FormLabelAndMessage
           label="Tags"
-          message="Press Enter to add a tag"
+          message=""
         />
         <div className="space-y-2">
-          <Form.Control asChild>
-            <select className='bg-gray-100/40 rounded-lg px-1 py-2 outline outline-1 outline-gray-100'
-              onChange={(e) => setTagInput(e.target.value)}
-              value={tagInput}
-              type="text"
-              placeholder="Add tags..."
+          <div className="flex justify-between">
+            <Form.Control asChild>
+              <select className='bg-gray-100/40 rounded-lg px-1 py-2 outline outline-1 outline-gray-100'
+                onChange={(e) => { setTagInput(e.target.value); }}
+                value={tagInput}
+                type="text"
+                placeholder="Add tags..."
+                defaultValue={""}
+              >
+                <option value="">
+                  - None -
+                </option>
+                {availableTags.map((c: any) => {
+                  // TODO: filter
+                  const color = `#${c.color?.toString(16).padStart(6, '0')}`;
+
+                  return (
+                    <option
+                      key={c.value}
+                      value={c.value}
+                      className="w-10 h-6 rounded-full border-0 p-0 cursor-pointer bg-transparent"
+                      style={{ backgroundColor: color }}
+                    >
+                      {c.value}
+                    </option>
+                  )
+                })}
+              </select>
+            </Form.Control>
+
+            <button
+              className={`px-4 py-2 ${!addButtonDisabled ? 'bg-black' : 'bg-gray-600'} text-white text-sm font-bold rounded-md`}
+              onClick={handleAddTag}
+              disabled={addButtonDisabled}
+              type="button"
             >
-              {tags.map((c: any) => {
-                // TODO: filter
-                const color = `#${c.color?.toString(16).padStart(6, '0')}`;
+              Add Tag
+            </button>
+          </div>
 
-                return (
-                  <option
-                    key={c.value}
-                    value={c.value}
-                    className="w-10 h-6 rounded-full border-0 p-0 cursor-pointer bg-transparent"
-                    style={{ backgroundColor: color }}
-                  >
-                    {c.value}
-                  </option>
-                )
-              })}
-            </select>
-          </Form.Control>
-
-          <button
-            className="px-4 py-2 bg-black text-white text-sm font-bold rounded-md"
-          >
-            Add Tag
-          </button>
-          {/* <Form.Control asChild>
-            <Input
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={handleAddTag}
-              type="text"
-              placeholder="Add tags..."
-            />
-          </Form.Control> */}
           <div className="flex flex-wrap gap-2">
             {internalTags.map((tag: any) => {
               const color = `#${tag.color?.toString(16).padStart(6, '0')}`;
@@ -328,7 +344,7 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses, tags }: 
           onClose={() => setShowUnsplashPicker(false)}
         />
       )} */}
-    </FormLayout>
+    </FormLayout >
   )
 }
 
