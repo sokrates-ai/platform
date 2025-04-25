@@ -18,6 +18,8 @@ interface ContextMenuData {
 export interface LayoutState {
     layout: AssetData[] | null;
     updateOriginator: "user" | "initial";
+    worldWidth?: number;
+    worldHeight?: number;
 }
 
 export interface CanvasProps {
@@ -25,6 +27,9 @@ export interface CanvasProps {
     setLayout: Dispatch<SetStateAction<LayoutState>>;
     onChapterClick: (chapterID: number) => void;
     readOnly?: boolean;
+    showGrid?: boolean;
+    snapToGrid?: boolean;
+    gridGranularity?: number;
 }
 
 const Canvas: React.FC<CanvasProps> = ({
@@ -32,6 +37,9 @@ const Canvas: React.FC<CanvasProps> = ({
     setLayout,
     onChapterClick,
     readOnly = false,
+    showGrid = true,
+    snapToGrid = true,
+    gridGranularity = 5,
 }) => {
     const parentRef = useRef<HTMLDivElement>(null);
     const copiedRef = useRef<AssetData[]>([]);
@@ -40,6 +48,9 @@ const Canvas: React.FC<CanvasProps> = ({
     const [contextMenu, setContextMenu] = useState<ContextMenuData | null>(null);
     const [lastMousePos, setLastMousePos] = useState<{ x: number; y: number } | null>(null);
     const [viewport, setViewport] = useState<any>(null);
+
+    // Calculate effective grid size based on granularity
+    const effectiveGridSize = MINOR_GRID_SIZE * (11 - gridGranularity);
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         setLastMousePos({ x: e.clientX, y: e.clientY });
@@ -61,10 +72,10 @@ const Canvas: React.FC<CanvasProps> = ({
                 copiedRef.current = layout.layout!
                     .filter(a => selectedIds.includes(a.id))
                     .map(a => ({ ...a }));
-                setLayout(old => ({
-                    layout: old.layout!.filter(a => !selectedIds.includes(a.id)),
+                setLayout({
+                    layout: layout.layout!.filter(a => !selectedIds.includes(a.id)),
                     updateOriginator: "user",
-                }));
+                });
                 setSelectedIds([]);
             }
             else if (key === "v" && copiedRef.current.length) {
@@ -84,16 +95,16 @@ const Canvas: React.FC<CanvasProps> = ({
 
                 const pasted = copied.map(a => {
                     // delta: either to grid‐offset or to cursor center
-                    let dx = MINOR_GRID_SIZE, dy = MINOR_GRID_SIZE;
+                    let dx = effectiveGridSize, dy = effectiveGridSize;
                     if (targetWorld) {
                         dx = targetWorld.x - cx;
                         dy = targetWorld.y - cy;
                     }
                     const rawX = a.x + dx;
                     const rawY = a.y + dy;
-                    // snap to grid
-                    const snappedX = Math.round(rawX / MINOR_GRID_SIZE) * MINOR_GRID_SIZE;
-                    const snappedY = Math.round(rawY / MINOR_GRID_SIZE) * MINOR_GRID_SIZE;
+                    // snap to grid if enabled
+                    const snappedX = snapToGrid ? Math.round(rawX / effectiveGridSize) * effectiveGridSize : rawX;
+                    const snappedY = snapToGrid ? Math.round(rawY / effectiveGridSize) * effectiveGridSize : rawY;
 
                     return {
                         ...a,
@@ -103,17 +114,17 @@ const Canvas: React.FC<CanvasProps> = ({
                     };
                 });
 
-                setLayout(old => ({
-                    layout: [...old.layout!, ...pasted],
+                setLayout({
+                    layout: [...layout.layout!, ...pasted],
                     updateOriginator: "user",
-                }));
+                });
                 setSelectedIds(pasted.map(a => a.id));
             }
         };
 
         window.addEventListener("keydown", onKeyDown);
         return () => window.removeEventListener("keydown", onKeyDown);
-    }, [layout.layout, selectedIds, viewport, lastMousePos, setLayout]);
+    }, [layout.layout, selectedIds, viewport, lastMousePos, setLayout, effectiveGridSize, snapToGrid]);
 
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -130,9 +141,9 @@ const Canvas: React.FC<CanvasProps> = ({
                 const localX = e.clientX - targetRect.left;
                 const localY = e.clientY - targetRect.top;
                 const worldPosition = viewport.toWorld(localX, localY);
-                // snap the drop position too
-                const snappedX = Math.round(worldPosition.x / MINOR_GRID_SIZE) * MINOR_GRID_SIZE;
-                const snappedY = Math.round(worldPosition.y / MINOR_GRID_SIZE) * MINOR_GRID_SIZE;
+                // snap the drop position too if enabled
+                const snappedX = snapToGrid ? Math.round(worldPosition.x / effectiveGridSize) * effectiveGridSize : worldPosition.x;
+                const snappedY = snapToGrid ? Math.round(worldPosition.y / effectiveGridSize) * effectiveGridSize : worldPosition.y;
                 const newAsset: AssetData = {
                     id: Date.now(),
                     file: spriteData.file,
@@ -148,12 +159,9 @@ const Canvas: React.FC<CanvasProps> = ({
                     },
                 };
 
-                setLayout((old: LayoutState) => {
-                    const newData = [...old.layout!, newAsset];
-                    return {
-                        layout: newData,
-                        updateOriginator: "user",
-                    } as LayoutState;
+                setLayout({
+                    layout: [...layout.layout!, newAsset],
+                    updateOriginator: "user",
                 });
             } catch (error) {
                 console.error("Error parsing dropped data", error);
@@ -162,16 +170,13 @@ const Canvas: React.FC<CanvasProps> = ({
     };
 
     const handleAssetPositionChange = useCallback((id: number, newX: number, newY: number) => {
-        setLayout((old: LayoutState) => {
-            const newLayout = old.layout!.map((asset) =>
+        setLayout({
+            layout: layout.layout!.map((asset) =>
                 asset.id === id ? { ...asset, x: newX, y: newY } : asset
-            );
-            return {
-                layout: newLayout,
-                updateOriginator: "user",
-            } as LayoutState;
+            ),
+            updateOriginator: "user",
         });
-    }, []);
+    }, [layout.layout, setLayout]);
 
     const handleAssetContextMenu = useCallback((assetId: number, pos: { clientX: number; clientY: number }) => {
         if (parentRef.current) {
@@ -202,101 +207,83 @@ const Canvas: React.FC<CanvasProps> = ({
     }, [contextMenu]);
 
     const handleIncreaseLayer = () => {
-        setLayout((old: LayoutState) => {
-            if (!old.layout) return old;
-
-            const index = old.layout.findIndex(asset => asset.id === contextMenu?.assetId);
-            if (index === -1 || index === old.layout.length - 1) return old; // Already top-most
-
-            const newLayout = [...old.layout];
-            // Correctly swap the elements
-            const temp = newLayout[index];
-            newLayout[index] = newLayout[index + 1];
-            newLayout[index + 1] = temp;
-
-            return {
-                layout: newLayout,
-                updateOriginator: "user",
-            };
+        if (!layout.layout) return;
+        const index = layout.layout.findIndex(asset => asset.id === contextMenu?.assetId);
+        if (index === -1 || index === layout.layout.length - 1) return; // Already top-most
+        const newLayout = [...layout.layout];
+        // Correctly swap the elements
+        const temp = newLayout[index];
+        newLayout[index] = newLayout[index + 1];
+        newLayout[index + 1] = temp;
+        setLayout({
+            layout: newLayout,
+            updateOriginator: "user",
         });
     };
 
     const handleDecreaseLayer = () => {
-        setLayout((old: LayoutState) => {
-            if (!old.layout) return old;
-
-            const index = old.layout.findIndex(asset => asset.id === contextMenu?.assetId);
-            if (index <= 0) return old; // Already bottom-most
-
-            const newLayout = [...old.layout];
-            // Correctly swap the elements
-            const temp = newLayout[index];
-            newLayout[index] = newLayout[index - 1];
-            newLayout[index - 1] = temp;
-
-            return {
-                layout: newLayout,
-                updateOriginator: "user",
-            };
+        if (!layout.layout) return;
+        const index = layout.layout.findIndex(asset => asset.id === contextMenu?.assetId);
+        if (index <= 0) return; // Already bottom-most
+        const newLayout = [...layout.layout];
+        // Correctly swap the elements
+        const temp = newLayout[index];
+        newLayout[index] = newLayout[index - 1];
+        newLayout[index - 1] = temp;
+        setLayout({
+            layout: newLayout,
+            updateOriginator: "user",
         });
     };
 
     const handleDecreaseAssetStoneId = () => {
-        setLayout((old: LayoutState) => {
-            if (!old.layout) return old;
-
-            const index = old.layout.findIndex(asset => asset.id === contextMenu?.assetId);
-            if (index === -1) return old;
-
-            const newLayout = [...old.layout];
-            const asset = newLayout[index];
-
-            if (asset.type.customChapterId === undefined) {
-                asset.type.customChapterId = 0;
-            } else {
-                asset.type.customChapterId -= 1;
-            }
-
-            return {
-                layout: newLayout,
-                updateOriginator: "user",
-            };
+        if (!layout.layout) return;
+        const index = layout.layout.findIndex(asset => asset.id === contextMenu?.assetId);
+        if (index === -1) return;
+        const newLayout = [...layout.layout];
+        const asset = newLayout[index];
+        if (asset.type.customChapterId === undefined) {
+            asset.type.customChapterId = 0;
+        } else {
+            asset.type.customChapterId -= 1;
+        }
+        setLayout({
+            layout: newLayout,
+            updateOriginator: "user",
         });
     };
 
     const handleIncreaseAssetStoneId = () => {
-        setLayout((old: LayoutState) => {
-            if (!old.layout) return old;
-
-            const index = old.layout.findIndex(asset => asset.id === contextMenu?.assetId);
-            if (index === -1) return old;
-
-            const newLayout = [...old.layout];
-            const asset = newLayout[index];
-
-            if (asset.type.customChapterId === undefined) {
-                asset.type.customChapterId = 0;
-            } else {
-                asset.type.customChapterId += 1;
-            }
-
-            return {
-                layout: newLayout,
-                updateOriginator: "user",
-            };
+        if (!layout.layout) return;
+        const index = layout.layout.findIndex(asset => asset.id === contextMenu?.assetId);
+        if (index === -1) return;
+        const newLayout = [...layout.layout];
+        const asset = newLayout[index];
+        if (asset.type.customChapterId === undefined) {
+            asset.type.customChapterId = 0;
+        } else {
+            asset.type.customChapterId += 1;
+        }
+        setLayout({
+            layout: newLayout,
+            updateOriginator: "user",
         });
     };
 
-
-
-
     const handleDeleteAsset = () => {
-        setLayout((old: LayoutState) => {
-            const newLayout = old.layout!.filter(asset => asset.id !== contextMenu?.assetId);
-            return { layout: newLayout, updateOriginator: "user" };
+        setLayout({
+            layout: layout.layout!.filter(asset => asset.id !== contextMenu?.assetId),
+            updateOriginator: "user"
         });
         setContextMenu(null);
     };
+
+    const handleContextMenuClose = () => {
+        setContextMenu(null);
+    };
+
+    const defaultWorldWidth = 2000;
+    const defaultWorldHeight = 2000;
 
     return (
         <div style={{ width: "100%", height: "100%", display: "flex" }}>
@@ -304,22 +291,36 @@ const Canvas: React.FC<CanvasProps> = ({
                 ref={parentRef}
                 id="canvas-parent"
                 style={{ flex: "1", height: "100%", position: "relative", overflow: "auto", overscrollBehavior: "none" }}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onMouseMove={handleMouseMove}
+                // className="w-full h-full bg-emerald-950/80 overflow-hidden"
+                onDragOver={readOnly ? undefined : handleDragOver}
+                onDrop={readOnly ? undefined : handleDrop}
             >
-                <Application backgroundColor={0x8da64a} autoDensity={true} resizeTo={parentRef}>
-                    <CanvasViewport
-                        placedAssets={layout.layout!}
-                        selectedIds={selectedIds}
-                        onSelectIds={setSelectedIds as Dispatch<SetStateAction<number[]>>}
-                        onViewportReady={setViewport}
-                        onAssetPositionChange={handleAssetPositionChange}
-                        onAssetContextMenu={handleAssetContextMenu}
-                        onChapterClick={onChapterClick}
-                        readOnly={readOnly}
-                    />
-                </Application>
+                    <Application
+                        backgroundColor={0x8da64a} 
+                        // width={parentRef.current?.clientWidth ?? 800}
+                        // height={parentRef.current?.clientHeight ?? 600}
+                        antialias={true}
+                        resolution={window.devicePixelRatio || 1}
+                        autoDensity={true}
+                        resizeTo={parentRef}
+                    >
+                        <CanvasViewport
+                            placedAssets={layout.layout || []}
+                            selectedIds={selectedIds}
+                            onSelectIds={setSelectedIds}
+                            onViewportReady={setViewport}
+                            onAssetPositionChange={handleAssetPositionChange}
+                            onAssetContextMenu={handleAssetContextMenu}
+                            onChapterClick={onChapterClick}
+                            readOnly={!!readOnly}
+                            worldWidth={layout.worldWidth || defaultWorldWidth}
+                            worldHeight={layout.worldHeight || defaultWorldHeight}
+                            showGrid={showGrid}
+                            snapToGrid={snapToGrid}
+                            gridGranularity={gridGranularity}
+                            effectiveGridSize={effectiveGridSize}
+                        />
+                    </Application>
             </div>
             {!readOnly && (
                 <div className="border-l bg-card h-full overflow-y-auto w-80">
@@ -362,6 +363,30 @@ const Canvas: React.FC<CanvasProps> = ({
                     style={{ position: "fixed", top: contextMenu.y, left: contextMenu.x }}
                 >
                     <div className="p-2">
+                        {/* Row for Remove button and asset type label */}
+                        <div className="flex flex-row justify-between items-center mb-2">
+                            <span className="text-xs font-medium text-muted-foreground">
+                                {(() => {
+                                    const asset = layout.layout!.find((a) => a.id === contextMenu.assetId);
+                                    if (asset && asset.type.kind === "chapter") {
+                                        return "Chapter Stone";
+                                    } else {
+                                        return "Asset";
+                                    }
+                                })()}
+                            </span>
+                            <button
+                                className="p-1 rounded-full bg-primary text-white hover:bg-primary/80 transition-colors text-xs shadow-lg"
+                                style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                title="Remove"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteAsset();
+                                }}
+                            >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                            </button>
+                        </div>
                         <div className="grid gap-2">
                             {(() => {
                                 const asset = layout.layout!.find((a) => a.id === contextMenu.assetId);
@@ -396,7 +421,7 @@ const Canvas: React.FC<CanvasProps> = ({
                                             );
                                             return index !== -1 ? (index + 1).toString() : "";
                                         })()}
-                                        className="h-7 w-8 rounded-none text-center text-xs"
+                                        className="h-7 w-14 rounded-none text-center text-base font-semibold px-1"
                                         readOnly
                                     />
                                     <Button
@@ -413,58 +438,56 @@ const Canvas: React.FC<CanvasProps> = ({
                                     </Button>
                                 </div>
                             </div>
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="layer" className="text-xs font-medium">
-                                    Stone Id
-                                </Label>
-                                <div className="flex h-7 items-center">
-                                    <Button
-                                        variant="outline"
-                                        size="icon"
-                                        className="h-7 w-7 rounded-r-none px-1"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDecreaseAssetStoneId();
-                                        }}
-                                    >
-                                        <ChevronDown className="h-3 w-3" />
-                                        <span className="sr-only">Decrease stone id</span>
-                                    </Button>
-                                    <Input
-                                        id="stoneId"
-                                        value={(() => {
-                                            const index = layout.layout!.findIndex(asset => asset.id === contextMenu?.assetId);
-                                            const chapterId = layout.layout![index]?.type.customChapterId;
-                                            return chapterId != undefined ? chapterId.toString() : "0";
-                                        })()}
-                                        className="h-7 w-8 rounded-none text-center text-xs"
-                                        readOnly
-                                    />
-                                    <Button
-                                        variant="outline"
-                                        size="icon"
-                                        className="h-7 w-7 rounded-l-none px-1"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleIncreaseAssetStoneId();
-                                        }}
-                                    >
-                                        <ChevronUp className="h-3 w-3" />
-                                        <span className="sr-only">Increase stone id</span>
-                                    </Button>
-                                </div>
-                            </div>
-                            <Button
-                                variant="destructive"
-                                size="sm"
-                                className="mt-1 w-full text-xs"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteAsset();
-                                }}
-                            >
-                                Remove
-                            </Button>
+                            {/* Only show stone id controls for chapter/lesson objects */}
+                            {(() => {
+                                const asset = layout.layout!.find((a) => a.id === contextMenu.assetId);
+                                if (asset && asset.type.kind === "chapter") {
+                                    return (
+                                        <div className="flex items-center justify-between">
+                                            <Label htmlFor="stoneId" className="text-xs font-medium">
+                                                Stone Id
+                                            </Label>
+                                            <div className="flex h-7 items-center">
+                                                <Button
+                                                    variant="outline"
+                                                    size="icon"
+                                                    className="h-7 w-7 rounded-r-none px-1"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDecreaseAssetStoneId();
+                                                    }}
+                                                >
+                                                    <ChevronDown className="h-3 w-3" />
+                                                    <span className="sr-only">Decrease stone id</span>
+                                                </Button>
+                                                <Input
+                                                    id="stoneId"
+                                                    value={(() => {
+                                                        const index = layout.layout!.findIndex(asset => asset.id === contextMenu?.assetId);
+                                                        const chapterId = layout.layout![index]?.type.customChapterId;
+                                                        return chapterId != undefined ? chapterId.toString() : "0";
+                                                    })()}
+                                                    className="h-7 w-14 rounded-none text-center text-base font-semibold px-1"
+                                                    readOnly
+                                                />
+                                                <Button
+                                                    variant="outline"
+                                                    size="icon"
+                                                    className="h-7 w-7 rounded-l-none px-1"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleIncreaseAssetStoneId();
+                                                    }}
+                                                >
+                                                    <ChevronUp className="h-3 w-3" />
+                                                    <span className="sr-only">Increase stone id</span>
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    );
+                                }
+                                return null;
+                            })()}
                         </div>
                     </div>
                 </div>

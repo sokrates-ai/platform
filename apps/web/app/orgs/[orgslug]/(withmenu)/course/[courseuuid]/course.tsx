@@ -37,7 +37,6 @@ const CourseClient = (props: any) => {
 	const isMobile = useMediaQuery('(max-width: 768px)')
 
 	function getLearningTags() {
-		// create array of learnings from a string object (comma separated)
 		const learningItems = course?.learnings ? course?.learnings.split(',') : []
 		setLearnings(learningItems)
 	}
@@ -54,6 +53,8 @@ const CourseClient = (props: any) => {
 	const layout: LayoutState = {
 		layout: course?.map_state?.objects || [],
 		updateOriginator: 'initial',
+		worldWidth: course?.map_state?.worldWidth || 2000,
+		worldHeight: course?.map_state?.worldHeight || 2000,
 	}
 
 	if (!course || !org) {

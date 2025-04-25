@@ -9,7 +9,7 @@ import { Graphics } from "pixi.js"
 
 extend({ Viewport, Graphics });
 
-const snapToGrid = (value: number, gridSize: number) =>
+const snapValueToGrid = (value: number, gridSize: number) =>
     Math.round(value / gridSize) * gridSize;
 
 interface CanvasViewportProps {
@@ -21,6 +21,12 @@ interface CanvasViewportProps {
     onAssetContextMenu?: (assetId: number, pos: { clientX: number; clientY: number }) => void;
     onChapterClick?: (chapterID: number) => void;
     readOnly: boolean;
+    worldWidth?: number;
+    worldHeight?: number;
+    showGrid?: boolean;
+    snapToGrid?: boolean;
+    gridGranularity?: number;
+    effectiveGridSize?: number;
 }
 
 const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
@@ -32,13 +38,19 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     onAssetContextMenu,
     onChapterClick,
     readOnly,
+    worldWidth: customWorldWidth,
+    worldHeight: customWorldHeight,
+    showGrid = true,
+    snapToGrid = true,
+    gridGranularity = 5,
+    effectiveGridSize,
 }) => {
     const { app } = useApplication();
 
     const paddingFactor = readOnly ? 1 : EDIT_SCALE_FACTOR;
 
-    const baseWorldWidth = WORLD_WIDTH;
-    const baseWorldHeight = WORLD_HEIGHT;
+    const baseWorldWidth = customWorldWidth || WORLD_WIDTH;
+    const baseWorldHeight = customWorldHeight || WORLD_HEIGHT;
 
     const worldWidth = baseWorldWidth * paddingFactor;
     const worldHeight = baseWorldHeight * paddingFactor;
@@ -51,6 +63,9 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
         offsetY: number;
     } | null>(null);
     const canvasElementRef = useRef<HTMLElement | null>(null);
+
+    // Use the provided effectiveGridSize or calculate based on gridGranularity
+    const gridSize = effectiveGridSize || (MINOR_GRID_SIZE * (11 - gridGranularity));
 
     useEffect(() => {
         canvasElementRef.current = document.getElementById("canvas-parent");
@@ -85,27 +100,40 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
         const { assetRef, offsetX, offsetY } = dragDataRef.current;
         const rawX = worldPos.x - offsetX;
         const rawY = worldPos.y - offsetY;
-        assetRef.x = snapToGrid(rawX, MINOR_GRID_SIZE);
-        assetRef.y = snapToGrid(rawY, MINOR_GRID_SIZE);
-    }, [viewport]);
+        
+        // Apply snapping only if enabled
+        if (snapToGrid) {
+            assetRef.x = snapValueToGrid(rawX, gridSize);
+            assetRef.y = snapValueToGrid(rawY, gridSize);
+        } else {
+            assetRef.x = rawX;
+            assetRef.y = rawY;
+        }
+    }, [viewport, snapToGrid, gridSize]);
 
     const onGlobalUp = useCallback(() => {
         if (!dragDataRef.current) return;
         const { id, assetRef } = dragDataRef.current;
 
-        // snap to nearest GRID_SIZE
-        const snappedX = snapToGrid(assetRef.x, MINOR_GRID_SIZE);
-        const snappedY = snapToGrid(assetRef.y, MINOR_GRID_SIZE);
-        assetRef.x = snappedX;
-        assetRef.y = snappedY;
-        onAssetPositionChange(id, snappedX, snappedY);
+        let finalX = assetRef.x;
+        let finalY = assetRef.y;
+
+        // snap to nearest grid size if enabled
+        if (snapToGrid) {
+            finalX = snapValueToGrid(assetRef.x, gridSize);
+            finalY = snapValueToGrid(assetRef.y, gridSize);
+            assetRef.x = finalX;
+            assetRef.y = finalY;
+        }
+
+        onAssetPositionChange(id, finalX, finalY);
 
         dragDataRef.current = null;
         window.removeEventListener("pointermove", onGlobalMove);
         window.removeEventListener("pointerup", onGlobalUp);
 
         viewport?.plugins?.resume("drag");
-    }, [onAssetPositionChange, onGlobalMove, viewport]);
+    }, [onAssetPositionChange, onGlobalMove, viewport, snapToGrid, gridSize]);
 
     const handlePointerDown = useCallback((e: any, asset: AssetData, sprite: PIXI.Sprite) => {
         const orig = e.data?.originalEvent as MouseEvent;
@@ -184,18 +212,18 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
             }}
 
         >
-            {!readOnly && (
+            {!readOnly && showGrid && (
                 <>
                     {/* minor grid */}
                     < graphics
                         draw={(g) => {
                             g.clear();
-                            for (let x = 0; x <= worldWidth; x += MINOR_GRID_SIZE) {
+                            for (let x = 0; x <= worldWidth; x += gridSize) {
                                 const px = Math.round(x) + 0.5;
                                 g.moveTo(px, 0);
                                 g.lineTo(px, worldHeight);
                             }
-                            for (let y = 0; y <= worldHeight; y += MINOR_GRID_SIZE) {
+                            for (let y = 0; y <= worldHeight; y += gridSize) {
                                 const py = Math.round(y) + 0.5;
                                 g.moveTo(0, py);
                                 g.lineTo(worldWidth, py);
