@@ -285,20 +285,43 @@ const Canvas: React.FC<CanvasProps> = ({
     const defaultWorldWidth = 2000;
     const defaultWorldHeight = 2000;
 
+    useEffect(() => {
+        const parent = parentRef.current;
+        if (!parent) return;
+
+        // Prevent overscroll and navigation gestures
+        const prevent = (e: Event) => {
+            e.preventDefault();
+        };
+        // For wheel events (trackpad, mouse)
+        parent.addEventListener('wheel', prevent, { passive: false });
+        // For touch events (mobile, trackpad)
+        parent.addEventListener('touchmove', prevent, { passive: false });
+        // For gesture events (Safari, Mac)
+        parent.addEventListener('gesturestart', prevent, { passive: false });
+        parent.addEventListener('gesturechange', prevent, { passive: false });
+        parent.addEventListener('gestureend', prevent, { passive: false });
+
+        return () => {
+            parent.removeEventListener('wheel', prevent);
+            parent.removeEventListener('touchmove', prevent);
+            parent.removeEventListener('gesturestart', prevent);
+            parent.removeEventListener('gesturechange', prevent);
+            parent.removeEventListener('gestureend', prevent);
+        };
+    }, []);
+
     return (
         <div style={{ width: "100%", height: "100%", display: "flex" }}>
             <div
                 ref={parentRef}
                 id="canvas-parent"
                 style={{ flex: "1", height: "100%", position: "relative", overflow: "auto", overscrollBehavior: "none" }}
-                // className="w-full h-full bg-emerald-950/80 overflow-hidden"
                 onDragOver={readOnly ? undefined : handleDragOver}
                 onDrop={readOnly ? undefined : handleDrop}
             >
                     <Application
-                        backgroundColor={0x8da64a} 
-                        // width={parentRef.current?.clientWidth ?? 800}
-                        // height={parentRef.current?.clientHeight ?? 600}
+                        backgroundColor={0x8da64a}
                         antialias={true}
                         resolution={window.devicePixelRatio || 1}
                         autoDensity={true}

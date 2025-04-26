@@ -47,13 +47,11 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
 }) => {
     const { app } = useApplication();
 
-    const paddingFactor = readOnly ? 1 : EDIT_SCALE_FACTOR;
-
     const baseWorldWidth = customWorldWidth || WORLD_WIDTH;
     const baseWorldHeight = customWorldHeight || WORLD_HEIGHT;
 
-    const worldWidth = baseWorldWidth * paddingFactor;
-    const worldHeight = baseWorldHeight * paddingFactor;
+    const worldWidth = baseWorldWidth;
+    const worldHeight = baseWorldHeight;
 
     const [viewport, setViewport] = useState<Viewport | null>(null);
     const dragDataRef = useRef<{
@@ -81,11 +79,24 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
             minSpeed: 0.02
         });
         node.moveCenter(worldWidth / 2, worldHeight / 2);
-        node.clamp({ direction: 'all', underflow: 'center' });
+        if (readOnly) {
+            node.clamp({ direction: 'all', underflow: 'center' });
+        } else {
+            // Allow 20% panning beyond each edge in edit mode
+            const padX = worldWidth * 0.2;
+            const padY = worldHeight * 0.2;
+            node.clamp({
+                left: -padX,
+                right: worldWidth + padX,
+                top: -padY,
+                bottom: worldHeight + padY,
+                underflow: 'none',
+            });
+        }
 
         setViewport(node);
         onViewportReady?.(node);
-    }, [viewport, app?.renderer, worldWidth, worldHeight, baseWorldWidth, baseWorldHeight, onViewportReady]);
+    }, [viewport, app?.renderer, worldWidth, worldHeight, baseWorldWidth, baseWorldHeight, onViewportReady, readOnly]);
 
     const onGlobalMove = useCallback((e: PointerEvent) => {
         if (!dragDataRef.current || !viewport) return;
@@ -262,7 +273,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
                 />
             ))}
 
-            {!readOnly && (
+            {/* {!readOnly && ( */}
                 <>
                     {/* Boundary */}
                     <graphics
@@ -286,7 +297,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
                         }}
                     />
                 </>
-            )}
+            {/* )} */}
             {/* @ts-expect-error Custom component render */}
         </viewport>
     );
