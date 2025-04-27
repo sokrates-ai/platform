@@ -18,8 +18,12 @@ interface ContextMenuData {
 export interface LayoutState {
     layout: AssetData[] | null;
     updateOriginator: "user" | "initial";
-    worldWidth?: number;
-    worldHeight?: number;
+    boundaries?: {
+        left: number;
+        right: number;
+        top: number;
+        bottom: number;
+    };
 }
 
 export interface CanvasProps {
@@ -75,6 +79,7 @@ const Canvas: React.FC<CanvasProps> = ({
                 setLayout({
                     layout: layout.layout!.filter(a => !selectedIds.includes(a.id)),
                     updateOriginator: "user",
+                    boundaries: layout.boundaries
                 });
                 setSelectedIds([]);
             }
@@ -117,6 +122,7 @@ const Canvas: React.FC<CanvasProps> = ({
                 setLayout({
                     layout: [...layout.layout!, ...pasted],
                     updateOriginator: "user",
+                    boundaries: layout.boundaries
                 });
                 setSelectedIds(pasted.map(a => a.id));
             }
@@ -124,7 +130,7 @@ const Canvas: React.FC<CanvasProps> = ({
 
         window.addEventListener("keydown", onKeyDown);
         return () => window.removeEventListener("keydown", onKeyDown);
-    }, [layout.layout, selectedIds, viewport, lastMousePos, setLayout, effectiveGridSize, snapToGrid]);
+    }, [layout.layout, layout.boundaries, selectedIds, viewport, lastMousePos, setLayout, effectiveGridSize, snapToGrid]);
 
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -162,6 +168,7 @@ const Canvas: React.FC<CanvasProps> = ({
                 setLayout({
                     layout: [...layout.layout!, newAsset],
                     updateOriginator: "user",
+                    boundaries: layout.boundaries
                 });
             } catch (error) {
                 console.error("Error parsing dropped data", error);
@@ -175,8 +182,9 @@ const Canvas: React.FC<CanvasProps> = ({
                 asset.id === id ? { ...asset, x: newX, y: newY } : asset
             ),
             updateOriginator: "user",
+            boundaries: layout.boundaries
         });
-    }, [layout.layout, setLayout]);
+    }, [layout.layout, layout.boundaries, setLayout]);
 
     const handleAssetContextMenu = useCallback((assetId: number, pos: { clientX: number; clientY: number }) => {
         if (parentRef.current) {
@@ -218,6 +226,7 @@ const Canvas: React.FC<CanvasProps> = ({
         setLayout({
             layout: newLayout,
             updateOriginator: "user",
+            boundaries: layout.boundaries
         });
     };
 
@@ -233,6 +242,7 @@ const Canvas: React.FC<CanvasProps> = ({
         setLayout({
             layout: newLayout,
             updateOriginator: "user",
+            boundaries: layout.boundaries
         });
     };
 
@@ -250,6 +260,7 @@ const Canvas: React.FC<CanvasProps> = ({
         setLayout({
             layout: newLayout,
             updateOriginator: "user",
+            boundaries: layout.boundaries
         });
     };
 
@@ -267,6 +278,7 @@ const Canvas: React.FC<CanvasProps> = ({
         setLayout({
             layout: newLayout,
             updateOriginator: "user",
+            boundaries: layout.boundaries
         });
     };
 
@@ -336,8 +348,7 @@ const Canvas: React.FC<CanvasProps> = ({
                             onAssetContextMenu={handleAssetContextMenu}
                             onChapterClick={onChapterClick}
                             readOnly={!!readOnly}
-                            worldWidth={layout.worldWidth || defaultWorldWidth}
-                            worldHeight={layout.worldHeight || defaultWorldHeight}
+                            boundaries={layout.boundaries}
                             showGrid={showGrid}
                             snapToGrid={snapToGrid}
                             gridGranularity={gridGranularity}

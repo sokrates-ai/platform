@@ -53,8 +53,12 @@ const CourseClient = (props: any) => {
 	const layout: LayoutState = {
 		layout: course?.map_state?.objects || [],
 		updateOriginator: 'initial',
-		worldWidth: course?.map_state?.worldWidth || 2000,
-		worldHeight: course?.map_state?.worldHeight || 2000,
+		boundaries: course?.map_state?.boundaries || {
+			left: -1000,
+			right: 1000,
+			top: -1000,
+			bottom: 1000
+		}
 	}
 
 	if (!course || !org) {

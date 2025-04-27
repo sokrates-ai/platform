@@ -75,13 +75,21 @@ function createInitialLayout(courseStructure: any): AssetData[] {
     return updateChapterStonesInContentMapState(layout, courseStructure.chapters)
 }
 
+// Default boundaries
+const DEFAULT_BOUNDARIES = {
+    left: -1000,
+    right: 1000,
+    top: -1000,
+    bottom: 1000
+};
+
 // Reducer actions
 const ACTIONS = {
     SET_LAYOUT: 'set_layout',
     UNDO: 'undo',
     REDO: 'redo',
     RESET: 'reset',
-    SET_WORLD_SIZE: 'set_world_size',
+    SET_BOUNDARIES: 'set_boundaries',
     INIT: 'init',
 };
 
@@ -89,15 +97,21 @@ const ACTIONS = {
 interface LayoutHistoryState extends LayoutState {
     history: AssetData[][];
     historyIndex: number;
+    boundaries?: {
+        left: number;
+        right: number;
+        top: number;
+        bottom: number;
+    };
 }
 
 type LayoutAction =
-    | { type: 'init'; payload: { layout: AssetData[]; worldWidth: number; worldHeight: number } }
+    | { type: 'init'; payload: { layout: AssetData[]; boundaries?: { left: number; right: number; top: number; bottom: number } } }
     | { type: 'set_layout'; payload: LayoutState }
     | { type: 'undo' }
     | { type: 'redo' }
     | { type: 'reset'; payload: AssetData[] }
-    | { type: 'set_world_size'; payload: { width: number; height: number } };
+    | { type: 'set_boundaries'; payload: { left: number; right: number; top: number; bottom: number } };
 
 function layoutReducer(state: LayoutHistoryState, action: LayoutAction): LayoutHistoryState {
     switch (action.type) {
@@ -105,8 +119,7 @@ function layoutReducer(state: LayoutHistoryState, action: LayoutAction): LayoutH
             return {
                 ...state,
                 layout: action.payload.layout,
-                worldWidth: action.payload.worldWidth,
-                worldHeight: action.payload.worldHeight,
+                boundaries: action.payload.boundaries || DEFAULT_BOUNDARIES,
                 history: [action.payload.layout],
                 historyIndex: 0,
             };
@@ -126,6 +139,21 @@ function layoutReducer(state: LayoutHistoryState, action: LayoutAction): LayoutH
                 ...action.payload,
                 history: newHistory,
                 historyIndex: newHistory.length - 1,
+            };
+        }
+        case 'set_boundaries': {
+            if (state.boundaries && 
+                state.boundaries.left === action.payload.left &&
+                state.boundaries.right === action.payload.right &&
+                state.boundaries.top === action.payload.top &&
+                state.boundaries.bottom === action.payload.bottom) {
+                return state;
+            }
+            
+            return {
+                ...state,
+                boundaries: action.payload,
+                updateOriginator: 'user',
             };
         }
         case 'undo': {
@@ -174,8 +202,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
     const [state, dispatch] = useReducer(layoutReducer, {
         layout: null,
         updateOriginator: 'initial',
-        worldWidth: 2000,
-        worldHeight: 2000,
+        boundaries: DEFAULT_BOUNDARIES,
         history: [],
         historyIndex: -1,
     } as LayoutHistoryState);
@@ -198,12 +225,26 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
                 dispatchCourse({ type: 'setCourseStructure', payload: updatedCourse })
             }
             const initialLayout = createInitialLayout(courseStructure)
+            
+            // Extract boundaries from map_state, fall back to legacy worldWidth/worldHeight if needed
+            let boundaries = courseStructure.map_state.boundaries;
+            
+            if (!boundaries && (courseStructure.map_state.worldWidth || courseStructure.map_state.worldHeight)) {
+                const width = courseStructure.map_state.worldWidth || 2000;
+                const height = courseStructure.map_state.worldHeight || 2000;
+                boundaries = {
+                    left: -width / 2,
+                    right: width / 2,
+                    top: -height / 2,
+                    bottom: height / 2
+                };
+            }
+
             dispatch({
                 type: 'init',
                 payload: {
                     layout: initialLayout,
-                    worldWidth: courseStructure.map_state.worldWidth || 2000,
-                    worldHeight: courseStructure.map_state.worldHeight || 2000,
+                    boundaries: boundaries || DEFAULT_BOUNDARIES,
                 }
             })
         }
@@ -216,6 +257,32 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
         }
     }, [state.layout, state.updateOriginator])
 
+    // Call update callback when boundaries change (for saving)
+    React.useEffect(() => {
+        if (state.boundaries && state.updateOriginator === 'user' && courseStructure) {
+            // Check if boundaries are actually different from what's in course structure
+            const currentBoundaries = courseStructure.map_state.boundaries;
+            if (currentBoundaries && 
+                currentBoundaries.left === state.boundaries.left &&
+                currentBoundaries.right === state.boundaries.right &&
+                currentBoundaries.top === state.boundaries.top &&
+                currentBoundaries.bottom === state.boundaries.bottom) {
+                // Skip update if boundaries are the same
+                return;
+            }
+
+            dispatchCourse({ type: 'setIsNotSaved' })
+            const updatedCourse = {
+                ...courseStructure,
+                map_state: {
+                    ...courseStructure.map_state,
+                    boundaries: state.boundaries
+                }
+            }
+            dispatchCourse({ type: 'setCourseStructure', payload: updatedCourse })
+        }
+    }, [state.boundaries, state.updateOriginator, courseStructure, dispatchCourse])
+
     // Custom setLayout function to be passed to Canvas
     const setLayout = (updater: LayoutState | ((prev: LayoutState) => LayoutState)) => {
         if (typeof updater === 'function') {
@@ -225,8 +292,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
                 payload: updater({
                     layout: state.layout,
                     updateOriginator: 'user',
-                    worldWidth: state.worldWidth,
-                    worldHeight: state.worldHeight,
+                    boundaries: state.boundaries,
                 })
             })
         } else {
@@ -243,28 +309,15 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
         setLayout({
             layout: resetted,
             updateOriginator: 'user',
-            worldWidth: state.worldWidth,
-            worldHeight: state.worldHeight,
+            boundaries: state.boundaries,
         })
     }
 
-    const handleWorldSizeChange = (width: number, height: number) => {
-        dispatchCourse({ type: 'setIsNotSaved' })
-        const updatedCourse = {
-            ...courseStructure,
-            map_state: {
-                ...courseStructure.map_state,
-                worldWidth: width,
-                worldHeight: height
-            }
-        }
-        dispatchCourse({ type: 'setCourseStructure', payload: updatedCourse })
-        setLayout({
-            layout: state.layout,
-            updateOriginator: 'user',
-            worldWidth: width,
-            worldHeight: height,
-        })
+    const handleBoundariesChange = (newBoundaries: { left: number; right: number; top: number; bottom: number }) => {
+        dispatch({ 
+            type: 'set_boundaries', 
+            payload: newBoundaries 
+        });
     }
 
     const handleUndo = () => dispatch({ type: 'undo' })
@@ -291,9 +344,8 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
                         undo={handleUndo}
                         redo={handleRedo}
                         reset={resetLayout}
-                        worldWidth={state.worldWidth}
-                        worldHeight={state.worldHeight}
-                        onWorldSizeChange={handleWorldSizeChange}
+                        boundaries={state.boundaries}
+                        onBoundariesChange={handleBoundariesChange}
                         showGrid={showGrid}
                         onShowGridChange={handleGridToggle}
                         snapToGrid={snapToGrid}

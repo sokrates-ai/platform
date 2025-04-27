@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef, memo, Dispatch, SetStateAction } from "react";
 import { Viewport } from "pixi-viewport";
 import { useApplication, extend } from "@pixi/react";
-import { WORLD_WIDTH, WORLD_HEIGHT, GRID_SIZE, EDIT_SCALE_FACTOR, MINOR_SUBDIVISIONS, MINOR_GRID_SIZE } from "./constants";
+import { WORLD_WIDTH, WORLD_HEIGHT, GRID_SIZE, MINOR_GRID_SIZE } from "./constants";
 import Asset from "./Asset";
 import type { AssetData } from "./Asset";
 import * as PIXI from "pixi.js";
@@ -21,13 +21,25 @@ interface CanvasViewportProps {
     onAssetContextMenu?: (assetId: number, pos: { clientX: number; clientY: number }) => void;
     onChapterClick?: (chapterID: number) => void;
     readOnly: boolean;
-    worldWidth?: number;
-    worldHeight?: number;
+    boundaries?: {
+        left: number;
+        right: number;
+        top: number;
+        bottom: number;
+    };
     showGrid?: boolean;
     snapToGrid?: boolean;
     gridGranularity?: number;
     effectiveGridSize?: number;
 }
+
+// Default boundaries
+const DEFAULT_BOUNDARIES = {
+    left: -1000,
+    right: 1000,
+    top: -1000,
+    bottom: 1000
+};
 
 const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     placedAssets,
@@ -38,8 +50,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     onAssetContextMenu,
     onChapterClick,
     readOnly,
-    worldWidth: customWorldWidth,
-    worldHeight: customWorldHeight,
+    boundaries,
     showGrid = true,
     snapToGrid = true,
     gridGranularity = 5,
@@ -47,11 +58,10 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
 }) => {
     const { app } = useApplication();
 
-    const baseWorldWidth = customWorldWidth || WORLD_WIDTH;
-    const baseWorldHeight = customWorldHeight || WORLD_HEIGHT;
+    const { left, right, top, bottom } = boundaries || DEFAULT_BOUNDARIES;
 
-    const worldWidth = baseWorldWidth;
-    const worldHeight = baseWorldHeight;
+    const worldWidth = Math.abs(right - left);
+    const worldHeight = Math.abs(bottom - top);
 
     const [viewport, setViewport] = useState<Viewport | null>(null);
     const dragDataRef = useRef<{
@@ -62,7 +72,6 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     } | null>(null);
     const canvasElementRef = useRef<HTMLElement | null>(null);
 
-    // Use the provided effectiveGridSize or calculate based on gridGranularity
     const gridSize = effectiveGridSize || (MINOR_GRID_SIZE * (11 - gridGranularity));
 
     useEffect(() => {
@@ -70,33 +79,60 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     }, [app?.renderer]);
 
     const viewportRef = useCallback((node: Viewport | null) => {
-        if (!node || node === viewport) return;
+        if (!node) return;
+
+        const isNewViewport = node !== viewport;
+
         node.resize(app.renderer.width, app.renderer.height, worldWidth, worldHeight);
-        node.drag({ clampWheel: true });
-        node.decelerate({
-            friction: 0.9,
-            bounce: 0,
-            minSpeed: 0.02
-        });
-        node.moveCenter(worldWidth / 2, worldHeight / 2);
+
+        if (isNewViewport) {
+
+            const FRACTION = 0.12;
+            const shortestSide = Math.min(app.renderer.width, app.renderer.height);
+            const pixelsWanted = shortestSide * FRACTION;
+            const scale = pixelsWanted / worldWidth;
+
+
+            node
+                .drag({ clampWheel: true, mouseButtons: "left" })
+                .decelerate({ friction: 0.9, bounce: 0, minSpeed: 0.02 })
+                .pinch()
+                .wheel({ percent: 0.15 })
+                .setZoom(scale, true)
+                .clampZoom({
+                    minWidth: worldWidth * 0.5,
+                    maxWidth: worldWidth * 1
+                });
+
+            node.fit();
+            node.moveCenter(0, 0);
+
+            // expose to parent
+            setViewport(node);
+            onViewportReady?.(node);
+        }
+
         if (readOnly) {
-            node.clamp({ direction: 'all', underflow: 'center' });
+            node.clamp({
+                left: left,
+                right: right,
+                top: top,
+                bottom: bottom,
+                underflow: 'none',
+            });
         } else {
-            // Allow 20% panning beyond each edge in edit mode
             const padX = worldWidth * 0.2;
             const padY = worldHeight * 0.2;
             node.clamp({
-                left: -padX,
-                right: worldWidth + padX,
-                top: -padY,
-                bottom: worldHeight + padY,
+                left: left - padX,
+                right: right + padX,
+                top: top - padY,
+                bottom: bottom + padY,
                 underflow: 'none',
             });
         }
 
-        setViewport(node);
-        onViewportReady?.(node);
-    }, [viewport, app?.renderer, worldWidth, worldHeight, baseWorldWidth, baseWorldHeight, onViewportReady, readOnly]);
+    }, [viewport, app?.renderer, worldWidth, worldHeight, left, right, top, bottom, onViewportReady, readOnly]);
 
     const onGlobalMove = useCallback((e: PointerEvent) => {
         if (!dragDataRef.current || !viewport) return;
@@ -111,7 +147,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
         const { assetRef, offsetX, offsetY } = dragDataRef.current;
         const rawX = worldPos.x - offsetX;
         const rawY = worldPos.y - offsetY;
-        
+
         // Apply snapping only if enabled
         if (snapToGrid) {
             assetRef.x = snapValueToGrid(rawX, gridSize);
@@ -225,38 +261,37 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
         >
             {!readOnly && showGrid && (
                 <>
-                    {/* minor grid */}
+                    {/* Combined Grid (Minor + Major Emphasis) */}
                     < graphics
                         draw={(g) => {
                             g.clear();
-                            for (let x = 0; x <= worldWidth; x += gridSize) {
+                            const majorGridInterval = GRID_SIZE; // Interval for emphasis
+
+                            // Draw vertical lines
+                            for (let x = Math.ceil(left / gridSize) * gridSize; x <= right; x += gridSize) {
+                                const roundedX = snapValueToGrid(x, gridSize);
+                                // Check if the snapped coordinate is close to a multiple of the major interval
+                                const isMajorLine = Math.abs(roundedX % majorGridInterval) < 1e-6 || Math.abs(roundedX % majorGridInterval - majorGridInterval) < 1e-6;
+                                const alpha = isMajorLine ? 0.8 : 0.2;
                                 const px = Math.round(x) + 0.5;
-                                g.moveTo(px, 0);
-                                g.lineTo(px, worldHeight);
+
+                                g.moveTo(px, top);
+                                g.lineTo(px, bottom);
+                                g.stroke({ color: 0xffffff, alpha: alpha, pixelLine: true });
                             }
-                            for (let y = 0; y <= worldHeight; y += gridSize) {
+
+                            // Draw horizontal lines
+                            for (let y = Math.ceil(top / gridSize) * gridSize; y <= bottom; y += gridSize) {
+                                const roundedY = snapValueToGrid(y, gridSize);
+                                // Check if the snapped coordinate is close to a multiple of the major interval
+                                const isMajorLine = Math.abs(roundedY % majorGridInterval) < 1e-6 || Math.abs(roundedY % majorGridInterval - majorGridInterval) < 1e-6;
+                                const alpha = isMajorLine ? 0.8 : 0.2;
                                 const py = Math.round(y) + 0.5;
-                                g.moveTo(0, py);
-                                g.lineTo(worldWidth, py);
+
+                                g.moveTo(left, py);
+                                g.lineTo(right, py);
+                                g.stroke({ color: 0xffffff, alpha: alpha, pixelLine: true });
                             }
-                            g.stroke({ color: 0xffffff, alpha: 0.2, pixelLine: true });
-                        }}
-                    />
-                    {/* major grid */}
-                    <graphics
-                        draw={(g) => {
-                            g.clear();
-                            for (let x = 0; x <= worldWidth; x += GRID_SIZE) {
-                                const px = Math.round(x) + 0.5;
-                                g.moveTo(px, 0);
-                                g.lineTo(px, worldHeight);
-                            }
-                            for (let y = 0; y <= worldHeight; y += GRID_SIZE) {
-                                const py = Math.round(y) + 0.5;
-                                g.moveTo(0, py);
-                                g.lineTo(worldWidth, py);
-                            }
-                            g.stroke({ color: 0xffffff, alpha: 0.8, pixelLine: true });
                         }}
                     />
                 </>
@@ -274,29 +309,25 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
             ))}
 
             {/* {!readOnly && ( */}
-                <>
-                    {/* Boundary */}
-                    <graphics
-                        draw={(g) => {
-                            g.clear();
-                            g.rect((worldWidth - baseWorldWidth) / 2,
-                                (worldHeight - baseWorldHeight) / 2,
-                                baseWorldWidth,
-                                baseWorldHeight)
-                            g.stroke({ width: 4, color: 0xffffff, alpha: 0.8 });
-                        }}
-                    />
+            <>
+                {/* Boundary */}
+                <graphics
+                    draw={(g) => {
+                        g.clear();
+                        g.rect(left, top, worldWidth, worldHeight)
+                        g.stroke({ width: 4, color: 0xffffff, alpha: 0.8 });
+                    }}
+                />
 
-                    {/* Origin */}
-                    <graphics
-                        draw={(g) => {
-                            g.clear();
-                            g.circle((worldWidth) / 2,
-                                (worldHeight) / 2, 10)
-                            g.fill({ color: 0xffffff, alpha: 0.8 });
-                        }}
-                    />
-                </>
+                {/* Origin */}
+                <graphics
+                    draw={(g) => {
+                        g.clear();
+                        g.circle(0, 0, 10)
+                        g.fill({ color: 0xffffff, alpha: 0.8 });
+                    }}
+                />
+            </>
             {/* )} */}
             {/* @ts-expect-error Custom component render */}
         </viewport>
