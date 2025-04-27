@@ -28,23 +28,31 @@ export interface AssetProps {
     asset: AssetData;
     layer: number;
     spriteURL: (file: string) => string;
-    onPointerDown: (e: any, asset: AssetData, sprite: PIXI.Sprite) => void;
+    onPointerDown: (e: any, asset: AssetData, target: PIXI.Container | PIXI.Sprite) => void;
     selected: boolean;
 }
 
-const Asset = React.memo(React.forwardRef<PIXI.Sprite, AssetProps>(({ asset, spriteURL, onPointerDown, layer, selected }, ref) => {
+const Asset = React.memo(React.forwardRef<PIXI.Container | PIXI.Sprite, AssetProps>(({ asset, spriteURL, onPointerDown, layer, selected }, ref) => {
     const [texture, setTexture] = useState<PIXI.Texture | null>(null);
     const hasLoaded = useRef(false);
     const spriteRef = useRef<PIXI.Sprite>(null);
+    const containerRef = useRef<PIXI.Container>(null);
     const { file } = asset;
 
-    useImperativeHandle(ref, () => spriteRef.current!, []);
+    useImperativeHandle(
+        ref,
+        () =>
+            asset.type.kind === "chapter"
+                ? (containerRef.current as PIXI.Container)
+                : (spriteRef.current as PIXI.Sprite),
+        [asset.type.kind]
+    );
 
     useEffect(() => {
-        if (spriteRef.current) {
-            spriteRef.current.alpha = selected ? 0.8 : 1.0;
-        }
-    }, [selected]);
+        const target =
+            asset.type.kind === "chapter" ? containerRef.current : spriteRef.current;
+        if (target) target.alpha = selected ? 0.8 : 1;
+    }, [selected, asset.type.kind]);
 
     useEffect(() => {
         if (!hasLoaded.current) {
@@ -66,11 +74,12 @@ const Asset = React.memo(React.forwardRef<PIXI.Sprite, AssetProps>(({ asset, spr
         console.log(`Chapter Label: ${asset.type.label}`)
         return (
             <pixiContainer
+                ref={containerRef}
                 x={asset.x}
                 y={asset.y}
                 zIndex={layer}
                 interactive
-                onPointerDown={(e: PIXI.FederatedPointerEvent) => onPointerDown(e, asset, spriteRef.current!)}
+                onPointerDown={(e: PIXI.FederatedPointerEvent) => onPointerDown(e, asset, containerRef.current!)}
             >
                 <pixiSprite
                     ref={spriteRef}

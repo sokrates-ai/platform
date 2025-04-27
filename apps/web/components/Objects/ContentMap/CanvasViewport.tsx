@@ -12,6 +12,13 @@ extend({ Viewport, Graphics });
 const snapValueToGrid = (value: number, gridSize: number) =>
     Math.round(value / gridSize) * gridSize;
 
+interface DragData {
+    id: number;
+    assetRef: PIXI.Container | PIXI.Sprite;
+    offsetX: number;
+    offsetY: number;
+}
+
 interface CanvasViewportProps {
     placedAssets: AssetData[];
     selectedIds: number[];
@@ -64,12 +71,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     const worldHeight = Math.abs(bottom - top);
 
     const [viewport, setViewport] = useState<Viewport | null>(null);
-    const dragDataRef = useRef<{
-        id: number;
-        assetRef: PIXI.Sprite;
-        offsetX: number;
-        offsetY: number;
-    } | null>(null);
+    const dragDataRef = useRef<DragData | null>(null);
     const canvasElementRef = useRef<HTMLElement | null>(null);
 
     const gridSize = effectiveGridSize || (MINOR_GRID_SIZE * (11 - gridGranularity));
@@ -182,41 +184,42 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
         viewport?.plugins?.resume("drag");
     }, [onAssetPositionChange, onGlobalMove, viewport, snapToGrid, gridSize]);
 
-    const handlePointerDown = useCallback((e: any, asset: AssetData, sprite: PIXI.Sprite) => {
-        const orig = e.data?.originalEvent as MouseEvent;
+    const handlePointerDown = useCallback(
+        (e: any, asset: AssetData, target: PIXI.Container | PIXI.Sprite) => {
+            const orig = e.data?.originalEvent as MouseEvent;
 
-        if (orig.button === 2 && !readOnly) {
-            orig.preventDefault();
-            onAssetContextMenu?.(asset.id, {
-                clientX: orig.clientX,
-                clientY: orig.clientY,
-            });
-            return;
-        }
+            // Handle right click first
+            if (orig.button === 2 && !readOnly) {
+                orig.preventDefault();
+                onAssetContextMenu?.(asset.id, {
+                    clientX: orig.clientX,
+                    clientY: orig.clientY,
+                });
+                return;
+            }
 
+            // Handle chapter click in readOnly mode
+            if (asset.type.kind === "chapter" && readOnly && orig.button === 0) {
+                onChapterClick?.(asset.type.associatedChapterID!);
+                return;
+            }
 
-        if (orig.button !== 0 || readOnly) return;
+            // Skip if not left click or in readOnly mode
+            if (orig.button !== 0 || readOnly) return;
 
-        if (orig.shiftKey) {
-            onSelectIds(ids =>
-                ids.includes(asset.id)
-                    ? ids.filter(id => id !== asset.id)
-                    : [...ids, asset.id]
-            );
-        } else {
-            onSelectIds([asset.id]);
-        }
+            if (orig.shiftKey) {
+                onSelectIds(ids =>
+                    ids.includes(asset.id)
+                        ? ids.filter(id => id !== asset.id)
+                        : [...ids, asset.id]
+                );
+            } else {
+                onSelectIds([asset.id]);
+            }
 
-        const originalEvent = e.data?.originalEvent || e.nativeEvent || e;
-        if (!originalEvent) return;
+            const originalEvent = e.data?.originalEvent || e.nativeEvent || e;
+            if (!originalEvent) return;
 
-        // handle chapter‐click in readOnly
-        if (asset.type.kind === "chapter" && readOnly) {
-            onChapterClick?.(asset.type.associatedChapterID!);
-            return;
-        }
-
-        if (originalEvent.button === 0) {
             viewport?.plugins?.pause("drag");
 
             const canvasElement = canvasElementRef.current;
@@ -229,15 +232,16 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
 
             dragDataRef.current = {
                 id: asset.id,
-                assetRef: sprite,
+                assetRef: target,
                 offsetX: worldPos.x - asset.x,
                 offsetY: worldPos.y - asset.y,
             };
 
             window.addEventListener("pointermove", onGlobalMove);
             window.addEventListener("pointerup", onGlobalUp);
-        }
-    }, [onAssetContextMenu, onChapterClick, onGlobalMove, onGlobalUp, readOnly, onSelectIds]);
+        },
+        [onAssetContextMenu, onChapterClick, onGlobalMove, onGlobalUp, readOnly, onSelectIds]
+    );
 
     const spriteURL = useCallback((file: string) => `/contentMap/${file}`, []);
 
@@ -308,7 +312,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
                 />
             ))}
 
-            {/* {!readOnly && ( */}
+            {!readOnly && (
             <>
                 {/* Boundary */}
                 <graphics
@@ -328,7 +332,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
                     }}
                 />
             </>
-            {/* )} */}
+            )}
             {/* @ts-expect-error Custom component render */}
         </viewport>
     );
