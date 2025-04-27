@@ -69,6 +69,7 @@ dev_web() {
         NEXT_PUBLIC_LEARNHOUSE_API_URL=http://localhost:1338/api/v1/ \
         NEXT_PUBLIC_LEARNHOUSE_BASE_URL=http://localhost:3000 \
         NEXT_PUBLIC_LEARNHOUSE_DEFAULT_ORG=default \
+        NEXT_PUBLIC_LEARNHOUSE_MEDIA_URL=http://localhost:1338/ \
         NEXTAUTH_SECRET=changeme \
         bash -c 'cd ./apps/web/ && pnpm run dev'
 }

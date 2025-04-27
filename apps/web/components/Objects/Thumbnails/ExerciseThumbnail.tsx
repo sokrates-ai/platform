@@ -38,6 +38,8 @@ type PropsType = {
   orgslug: string
   orgId: string
   mutateURL: string
+  tags: any[],
+  courses: any[],
   // customLink?: string
 }
 
@@ -76,38 +78,41 @@ function ExerciseThumbnail(props: PropsType) {
         orgId={props.orgId}
         mutateURL={props.mutateURL}
         deleteExercise={deleteExercise}
+        tags={props.tags}
+        courses={props.courses}
       />
-      {/* <Link prefetch href={customLink ? customLink : getUriWithOrg(orgslug, `/course/${removeCoursePrefix(course.course_uuid)}`)}>
-        <div
-          className="inset-0 ring-1 ring-inset ring-black/10 rounded-xl shadow-xl w-full aspect-video bg-cover bg-center"
-          style={{ backgroundImage: `url(${thumbnailImage})` }}
-        />
-      </Link> */}
       <div className='flex flex-col w-full pt-3 space-y-2'>
         <h2 className="font-bold text-gray-800 line-clamp-2 leading-tight text-lg capitalize">{props.exercise.title}</h2>
         <p className='text-sm text-gray-700 leading-normal line-clamp-3'>{props.exercise.description}</p>
         {props.exercise.tags && props.exercise.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-2">
-            {props.exercise.tags.map((tag) => (
-              <span
-                key={tag}
-                className="bg-gray-100 px-2 py-0.5 rounded-full text-xs text-gray-600"
+            {props.tags.map((tag: any) => {
+              const color = `#${tag.color?.toString(16).padStart(6, '0')}`;
+              console.log(tag)
+              return (<span
+                key={tag.value}
+                className="px-2 py-0.5 rounded-full text-xs text-gray-600"
+                style={{
+                  backgroundColor: color
+                }}
               >
-                {tag}
-              </span>
-            ))}
+                {tag.value}
+              </span>)
+            })}
           </div>
         )}
       </div>
-    </div>
+    </div >
   )
 }
 
-const AdminEditOptions = ({ exercise, orgId, orgSlug, mutateURL, deleteExercise }: {
+const AdminEditOptions = ({ exercise, orgId, orgSlug, mutateURL, deleteExercise, tags, courses }: {
   exercise: Exercise,
   orgId: string,
   orgSlug: string,
   mutateURL: string,
+  tags: any[],
+  courses: any[],
   deleteExercise: () => Promise<void>
 }) => {
   const [modifyExerciseModal, setModifyExerciseModal] = React.useState(false)
@@ -151,6 +156,8 @@ const AdminEditOptions = ({ exercise, orgId, orgSlug, mutateURL, deleteExercise 
                     mutateURL={mutateURL}
                     exercise={exercise}
                     closeModal={() => { setModifyExerciseModal(false); setDropdownOpen(false) }}
+                    tags={tags}
+                    courses={courses}
                   >
                   </ModifyExerciseModal>
 

@@ -36,9 +36,11 @@ FROM base AS deps
 
 ENV NEXT_PUBLIC_LEARNHOUSE_API_URL=https://app.sokrates.ae.org/api/v1/
 ENV NEXT_PUBLIC_LEARNHOUSE_BASE_URL=https://app.sokrates.ae.org
-ENV NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL=http://localhost/
+# ENV NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL=http://localhost/
+ENV NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL=https://app.sokrates.ae.org
 # TODO: this could also be completely fucked?
 ENV NEXT_PUBLIC_LEARNHOUSE_DOMAIN=https://app.sokrates.ae.org
+ENV NEXT_PUBLIC_LEARNHOUSE_MEDIA_URL=https://app.sokrates.ae.org
 ENV NEXT_PUBLIC_LEARNHOUSE_HTTPS=true
 
 COPY ./apps/web/ /app/web

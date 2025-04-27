@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Settings, LogOut, Home } from "lucide-react"
 import useAdminStatus from "@components/Hooks/useAdminStatus"
 import { logout } from "@services/auth/auth"
+import UserAvatar from "@components/Objects/UserAvatar"
 
 export const NewHeaderProfileBox = () => {
   const session = useLHSession() as any
@@ -44,7 +45,8 @@ export const NewHeaderProfileBox = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Avatar className="cursor-pointer h-8 w-8 sm:h-10 sm:w-10">
-                <AvatarImage src="/path-to-avatar.jpg" alt="User Avatar" />
+                {/* <AvatarImage src="/path-to-avatar.jpg" alt="User Avatar" /> */}
+                <UserAvatar use_with_session={true}></UserAvatar>
                 <AvatarFallback>
                   {session.data.user.username ? session.data.user.username.charAt(0).toUpperCase() : "U"}
                 </AvatarFallback>

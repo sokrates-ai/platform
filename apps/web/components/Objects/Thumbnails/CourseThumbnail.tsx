@@ -36,7 +36,7 @@ type PropsType = {
 export const removeCoursePrefix = (course_uuid: string) => course_uuid.replace('course_', '')
 
 function CourseThumbnail({ course, orgslug, customLink }: PropsType) {
-  const router = useRouter() 
+  const router = useRouter()
   const org = useOrg() as any
   const session = useLHSession() as any
 
@@ -57,6 +57,8 @@ function CourseThumbnail({ course, orgslug, customLink }: PropsType) {
   const thumbnailImage = course.thumbnail_image
     ? getCourseThumbnailMediaDirectory(org?.org_uuid, course.course_uuid, course.thumbnail_image)
     : '../empty_thumbnail.png'
+
+  console.log(thumbnailImage)
 
   return (
     <div className="relative">

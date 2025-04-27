@@ -308,10 +308,10 @@ async def get_tasks(
     for task, cid in results:
         # Get tags belonging to this task.
         tags = await get_task_tags(db_session=db_session, task_id=task.id)
-        print(tags)
+        print(f"task: {task} | tags={tags}")
 
         tasks_with_course_id.append(
-            TaskWithCourseIDAndTags(**task.model_dump(), course_id=cid)
+            TaskWithCourseIDAndTags(**task.model_dump(), course_id=cid, tags=tags)
         )
 
     return tasks_with_course_id
@@ -334,11 +334,13 @@ async def create_task(
 
     print("new task id: ", task.id, data)
 
-    # Create association
+    # Create course association
     if data.course_id:
         await add_course_task_association(db_session, data.course_id, task.id)
 
+    # Create tags.
     for tag in data.tags:
+        print(f"Create tag: {tag}")
         await create_task_tag(db_session=db_session, task_id=task.id, tag_value=tag)
 
     return task
@@ -368,14 +370,14 @@ async def modify_task(
 
     # Update fields
     for key, value in data.dict(exclude_unset=True).items():
-        if key == "id":
+        if key == "id" or key == "tags" or key == "course_id":
             continue
         setattr(task, key, value)
 
     db_session.commit()
     db_session.refresh(task)
 
-    # Update association.
+    # Update course association.
     # Delete everything by default.
     statement = select(Course_Task).where(Course_Task.task_id == data.id)
     association = db_session.exec(statement).first()

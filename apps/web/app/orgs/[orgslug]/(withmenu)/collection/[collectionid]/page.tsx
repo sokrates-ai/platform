@@ -76,8 +76,16 @@ const CollectionPage = async (params: any) => {
       <h1 className="text-3xl font-bold">{col.name}</h1>
       <br />
       <div className="home_courses flex flex-wrap">
-        {col.courses.map((course: any) => (
-          <div className="pr-8" key={course.course_uuid}>
+        {col.courses.map((course: any) => {
+          const imageUrl = getCourseThumbnailMediaDirectory(
+            org.org_uuid,
+            course.course_uuid,
+            course.thumbnail_image
+          )
+
+          console.log(imageUrl)
+
+          return (<div className="pr-8" key={course.course_uuid}>
             <Link
               href={getUriWithOrg(
                 orgslug,
@@ -87,17 +95,14 @@ const CollectionPage = async (params: any) => {
               <div
                 className="inset-0 ring-1 ring-inset ring-black/10 rounded-lg shadow-xl relative w-[249px] h-[131px] bg-cover"
                 style={{
-                  backgroundImage: `url(${getCourseThumbnailMediaDirectory(
-                    org.org_uuid,
-                    course.course_uuid,
-                    course.thumbnail_image
-                  )})`,
+                  backgroundImage: `url(${imageUrl})`,
                 }}
               ></div>
             </Link>
             <h2 className="font-bold text-lg w-[250px] py-2">{course.name}</h2>
           </div>
-        ))}
+          )
+        })}
       </div>
     </GeneralWrapperStyled>
   )
