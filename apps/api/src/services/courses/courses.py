@@ -251,7 +251,13 @@ async def create_course(
     course.creation_date = str(datetime.now())
     course.update_date = str(datetime.now())
     course.map_state = {
-        "objects": [],
+        "objects": [], 
+        "boundaries": {
+            "left": -1000, 
+            "right": 1000, 
+            "top": -1000, 
+            "bottom": 1000
+        }
     }
 
     # Upload thumbnail

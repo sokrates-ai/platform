@@ -240,15 +240,11 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courseID, tags }:
                   - None -
                 </option>
                 {availableTags.map((c: any) => {
-                  // TODO: filter
-                  const color = `#${c.color?.toString(16).padStart(6, '0')}`;
-
                   return (
                     <option
                       key={c.value}
                       value={c.value}
                       className="w-10 h-6 rounded-full border-0 p-0 cursor-pointer bg-transparent"
-                      style={{ backgroundColor: color }}
                     >
                       {c.value}
                     </option>
@@ -269,14 +265,15 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courseID, tags }:
 
           <div className="flex flex-wrap gap-2">
             {internalTags.map((tag: any) => {
-              const color = `#${tag.color?.toString(16).padStart(6, '0')}`;
+              const tagObj = tags.find((t: any) => t.value === tag)
+              const color = `#${tagObj.color?.toString(16).padStart(6, '0')}`;
 
               return (
                 <div
                   key={tag}
                   className="flex items-center gap-1 px-2 py-1 rounded-full text-sm"
                   style={{
-                    backgroundColor: color
+                    backgroundColor: color,
                   }}
                 >
                   <span>{tag}</span>

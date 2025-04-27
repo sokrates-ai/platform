@@ -88,7 +88,6 @@ function ExerciseThumbnail(props: PropsType) {
           <div className="flex flex-wrap gap-1.5 mt-2">
             {props.tags.map((tag: any) => {
               const color = `#${tag.color?.toString(16).padStart(6, '0')}`;
-              console.log(tag)
               return (<span
                 key={tag.value}
                 className="px-2 py-0.5 rounded-full text-xs text-gray-600"

@@ -83,8 +83,6 @@ const CollectionPage = async (params: any) => {
             course.thumbnail_image
           )
 
-          console.log(imageUrl)
-
           return (<div className="pr-8" key={course.course_uuid}>
             <Link
               href={getUriWithOrg(

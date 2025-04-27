@@ -15,6 +15,7 @@ import ExerciseThumbnail from '@components/Objects/Thumbnails/ExerciseThumbnail'
 import EditTagsModal from '@components/Objects/Modals/Exercise/Create/EditTags'
 import { Divide } from 'lucide-react'
 import CourseCard from './courseCard'
+import { getCourseThumbnailMediaDirectory } from '@services/media/media'
 
 type ExerciseProps = {
   orgslug: string
@@ -138,12 +139,16 @@ function ExerciseHome(params: ExerciseProps) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {courses.map((course: any) => {
-          console.log("COURSE_IMAGE_URL", course.image_url)
-          return(<div key={course.course_uuid}>
+          const thumbnailImage = course.thumbnail_image
+            ? getCourseThumbnailMediaDirectory(org?.org_uuid, course.course_uuid, course.thumbnail_image)
+            : '../empty_thumbnail.png'
+
+          console.log("COURSE_IMAGE_URL", thumbnailImage)
+          return (<div key={course.course_uuid}>
             <CourseCard
               title={course.name}
               description={course.description}
-              imageUrl={course.image_url}
+              imageUrl={thumbnailImage}
               onClick={() => { window.location.href = `/dash/exercises/${course.id}` }}
             >
             </CourseCard>

@@ -58,8 +58,6 @@ function CourseThumbnail({ course, orgslug, customLink }: PropsType) {
     ? getCourseThumbnailMediaDirectory(org?.org_uuid, course.course_uuid, course.thumbnail_image)
     : '../empty_thumbnail.png'
 
-  console.log(thumbnailImage)
-
   return (
     <div className="relative">
       <AdminEditOptions
