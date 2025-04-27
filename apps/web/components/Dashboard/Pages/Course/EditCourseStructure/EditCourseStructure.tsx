@@ -1,7 +1,7 @@
 'use client'
 import { getAPIUrl } from '@services/config/config'
 import { revalidateTags } from '@services/utils/ts/requests'
-import React, { useEffect, useState, FC, useCallback } from 'react'
+import React, { useEffect, useState, FC, useCallback, useRef, useMemo } from 'react'
 import { DragDropContext, Droppable } from 'react-beautiful-dnd'
 import { mutate } from 'swr'
 import ChapterElement from './DraggableElements/ChapterElement'
@@ -12,13 +12,14 @@ import {
   useCourse,
   useCourseDispatch,
 } from '@components/Contexts/CourseContext'
-import { Hexagon, MousePointer } from 'lucide-react'
+import { Hexagon, MousePointer, Cross, X } from 'lucide-react'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import NewChapterModal from '@components/Objects/Modals/Chapters/NewChapter'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { AnimatePresence, motion } from 'framer-motion'
 
 import dagre from 'dagre';
-import { Background, BackgroundVariant, Controls, Handle, MiniMap, NodeProps, Position, addEdge, useEdgesState, useNodesState } from '@xyflow/react';
+import { Background, BackgroundVariant, Controls, Handle, MarkerType, MiniMap, NodeProps, Position, addEdge, useEdgesState, useNodesState, Node, Edge } from '@xyflow/react';
 const ReactFlow = dynamic(() => import('@xyflow/react').then((mod) => mod.ReactFlow), {
   ssr: false,
 });
@@ -29,17 +30,16 @@ import styled from 'styled-components'
 import dynamic from 'next/dynamic'
 import classNames from 'classnames';
 
+// -----------------------------------------------------------------------------
+// TYPE DEFINITIONS
+// -----------------------------------------------------------------------------
+
 type DisplayGraphProps = {
     chapters: any[]
     setChapterID: Function
     chapterID: number,
 }
 
-
-type EditCourseStructureProps = {
-  orgslug: string
-  course_uuid?: string
-}
 
 export type OrderPayload =
   | {
@@ -63,6 +63,10 @@ export type ChapterEdgeModification =
         delete: boolean,
     }
   | undefined
+
+// -----------------------------------------------------------------------------
+// STYLED COMPONENTS
+// -----------------------------------------------------------------------------
 
 const BlurVignette = styled.div`
   --radius: 44px;
@@ -100,544 +104,442 @@ const BlurVignette = styled.div`
   -webkit-mask-repeat: no-repeat;
 `;
 
-const EditCourseStructure = (props: EditCourseStructureProps) => {
-  // TODO: typing?
-  const [chapterID, setChapterID] = useState(-1);
+// -----------------------------------------------------------------------------
+// MAIN COMPONENT
+// -----------------------------------------------------------------------------
 
-  const router = useRouter()
+const EditCourseStructure = (props: { orgslug: string; course_uuid?: string }) => {
+  // Local state management ----------------------------------------------------
+  const [chapterID, setChapterID] = useState(-1);
+  const [winReady, setWinReady] = useState(false);
+  const [newChapterModal, setNewChapterModal] = useState(false);
+  const [order, setOrder] = useState<OrderPayload>();
+  const [triggerAutoLayout, setTriggerAutoLayout] = useState(false);
+
+  // External hooks ------------------------------------------------------------
+  const router = useRouter();
   const session = useLHSession() as any;
   const access_token = session?.data?.tokens?.access_token;
-  // Check window availability
-  const [winReady, setwinReady] = useState(false)
 
-  const dispatchCourse = useCourseDispatch() as any
+  const course = useCourse() as any;
+  const course_structure = course ? course.courseStructure : {};
+  const course_uuid = course ? course.courseStructure.course_uuid : '';
+  const dispatchCourse = useCourseDispatch() as any;
 
-  const [order, setOrder] = useState<OrderPayload>()
-  const course = useCourse() as any
-  const course_structure = course ? course.courseStructure : {}
-  const course_uuid = course ? course.courseStructure.course_uuid : ''
+  // Refs for ReactFlow instance and container
+  const reactFlowRef = React.useRef<HTMLDivElement>(null) as React.MutableRefObject<HTMLDivElement | null>;
+  const reactFlowInstanceRef = React.useRef<any>(null) as React.MutableRefObject<any>;
 
-  // New Chapter creation
-  const [newChapterModal, setNewChapterModal] = useState(false)
+  // ---------------------------------------------------------------------------
+  // CHAPTER CRUD OPERATIONS
+  // ---------------------------------------------------------------------------
 
-  const closeNewChapterModal = async () => {
-    setNewChapterModal(false)
-  }
+  const closeNewChapterModal = async () => setNewChapterModal(false);
 
-  // Submit new chapter.
   const submitChapter = async (chapter: any) => {
-    const res = await createChapter(chapter,access_token)
-    mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
-    await revalidateTags(['courses'], props.orgslug)
-    router.refresh()
-    setNewChapterModal(false)
-    course_structure.chapters.push(chapter)
-  }
+    await createChapter(chapter, access_token);
+    mutate(`${getAPIUrl()}courses/${course_uuid}/meta`);
+    await revalidateTags(['courses'], props.orgslug);
+    router.refresh();
+    setNewChapterModal(false);
+    // Optimistic UI update so the node appears immediately
+    course_structure.chapters.push(chapter);
+  };
 
-  // Add / remove chapter edges.
-  // TODO: use this.
-  const modifyChapterEdge = async (fromChapterID: number, toChapterID: number, deleteEdge: boolean) => {
-    const res = await updateChapterEdge(course_uuid, {
+  const modifyChapterEdge = async (
+    fromChapterID: number,
+    toChapterID: number,
+    deleteEdge: boolean,
+  ) => {
+    await updateChapterEdge(
+      course_uuid,
+      {
         from_chapter_id: fromChapterID,
         to_chapter_id: toChapterID,
         delete: deleteEdge,
-    },access_token)
+      },
+      access_token,
+    );
 
-    console.log(res)
+    mutate(`${getAPIUrl()}courses/${course_uuid}/meta`);
+    await revalidateTags(['courses'], props.orgslug);
+    router.refresh();
 
-    mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
-    await revalidateTags(['courses'], props.orgslug)
-    router.refresh()
-    setNewChapterModal(false)
-
-    const thisChapterIndex = course_structure.chapters.findIndex((c: any) => c.id === toChapterID)
+    const chapterIdx = course_structure.chapters.findIndex((c: any) => c.id === toChapterID);
     if (!deleteEdge) {
-        course_structure.chapters[thisChapterIndex].predecessors.push(fromChapterID)
+      course_structure.chapters[chapterIdx].predecessors.push(fromChapterID);
     } else {
-        course_structure.chapters[thisChapterIndex].predecessors = course_structure.chapters[thisChapterIndex].predecessors.filter((p: number) => p != fromChapterID)
+      course_structure.chapters[chapterIdx].predecessors = course_structure.chapters[chapterIdx].predecessors.filter((p: number) => p !== fromChapterID);
     }
-  }
+  };
 
-  // TODO: refactor this -> remove old, redundant chapter reordering.
+  // ---------------------------------------------------------------------------
+  // LEGACY DRAG‑AND‑DROP ORDERING (kept for list view)
+  // ---------------------------------------------------------------------------
+
   const updateStructure = (result: any) => {
-    const { destination, source, draggableId, type } = result
-    if (!destination) return
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    )
-      return
+    const { destination, source, draggableId, type } = result;
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+
     if (type === 'chapter') {
-      const newChapterOrder = Array.from(course_structure.chapters)
-      newChapterOrder.splice(source.index, 1)
-      newChapterOrder.splice(
-        destination.index,
-        0,
-        course_structure.chapters[source.index]
-      )
-      dispatchCourse({
-        type: 'setCourseStructure',
-        payload: { ...course_structure, chapters: newChapterOrder },
-      })
-      dispatchCourse({ type: 'setIsNotSaved' })
+      const newChapterOrder = [...course_structure.chapters];
+      newChapterOrder.splice(source.index, 1);
+      newChapterOrder.splice(destination.index, 0, course_structure.chapters[source.index]);
+      dispatchCourse({ type: 'setCourseStructure', payload: { ...course_structure, chapters: newChapterOrder } });
+      dispatchCourse({ type: 'setIsNotSaved' });
     }
+
     if (type === 'activity') {
-      const newChapterOrder = Array.from(course_structure.chapters)
-      const sourceChapter = newChapterOrder.find(
-        (chapter: any) => chapter.chapter_uuid === source.droppableId
-      ) as any
-      const destinationChapter = newChapterOrder.find(
-        (chapter: any) => chapter.chapter_uuid === destination.droppableId
-      )
-        ? newChapterOrder.find(
-            (chapter: any) => chapter.chapter_uuid === destination.droppableId
-          )
-        : sourceChapter
-      const activity = sourceChapter.activities.find(
-        (activity: any) => activity.activity_uuid === draggableId
-      )
-      sourceChapter.activities.splice(source.index, 1)
-      destinationChapter.activities.splice(destination.index, 0, activity)
-      dispatchCourse({
-        type: 'setCourseStructure',
-        payload: { ...course_structure, chapters: newChapterOrder },
-      })
-      dispatchCourse({ type: 'setIsNotSaved' })
+      const newChapterOrder = [...course_structure.chapters];
+      const sourceChapter = newChapterOrder.find((c: any) => c.chapter_uuid === source.droppableId) as any;
+      const destinationChapter = newChapterOrder.find((c: any) => c.chapter_uuid === destination.droppableId) ?? sourceChapter;
+      const activity = sourceChapter.activities.find((a: any) => a.activity_uuid === draggableId);
+      sourceChapter.activities.splice(source.index, 1);
+      destinationChapter.activities.splice(destination.index, 0, activity);
+      dispatchCourse({ type: 'setCourseStructure', payload: { ...course_structure, chapters: newChapterOrder } });
+      dispatchCourse({ type: 'setIsNotSaved' });
     }
-  }
+  };
 
-//
-// GRAPH.
-//
+  // ---------------------------------------------------------------------------
+  // GRAPH COMPONENT (ReactFlow + Dagre)
+  // ---------------------------------------------------------------------------
 
-const CustomNode: React.FC<NodeProps> = (props: any) => {
+  const CustomNode: React.FC<NodeProps> = (props: any) => (
+    <div
+      className={`flex flex-col items-center bg-white shadow-md rounded-lg p-4 transform -translate-x-1/2 hover:shadow-lg transition-shadow ${props.selected ? 'border-indigo-600 ring-4 ring-indigo-200 selected-node' : 'border-gray-200'} border`}
+      style={{ minWidth: '180px', backdropFilter: 'blur(8px)', backgroundColor: 'rgba(255, 255, 255, 0.9)' }}
+    >
+      <p className="font-medium text-center text-gray-800">{props.data.label}</p>
+      <Handle type="source" position={Position.Bottom} className="w-8 h-8 bg-indigo-500 border-2 border-white" style={{ bottom: '-16px' }} />
+      <Handle type="target" position={Position.Top} className="w-8 h-8 bg-gray-400 border-2 border-white" style={{ top: '-16px' }} />
+    </div>
+  );
+
+  const NewGraph = ({ chapters, setChapterID, chapterID, reactFlowRef, reactFlowInstanceRef, triggerAutoLayout }: DisplayGraphProps & { reactFlowRef: React.MutableRefObject<HTMLDivElement | null>, reactFlowInstanceRef: React.MutableRefObject<any>, triggerAutoLayout: boolean }) => {
+    // ----------------------- Local state ------------------------------------
+    const [nodes, setNodes, onNodesChange] = useNodesState<Node<any>>([]);
+    const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<any>>([]);
+    const [graphError, setGraphError] = useState<string | null>(null);
+    const [isAnimating, setIsAnimating] = useState(false);
+    const [layoutApplied, setLayoutApplied] = useState(false);
+
+    // ----------------------- Dagre helpers ----------------------------------
+    const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+    const nodeWidth = 180;
+    const nodeHeight = 80;
+
+    const getLayouted = (n: any[], e: any[]) => {
+      dagreGraph.setGraph({ rankdir: 'TB', nodesep: 100, ranksep: 150, edgesep: 80 });
+      n.forEach((node: any) => dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight }));
+      e.forEach((edge: any) => dagreGraph.setEdge(edge.source, edge.target));
+      dagre.layout(dagreGraph);
+      const layoutedNodes = n.map((node: any) => {
+        const { x, y } = dagreGraph.node(node.id);
+        return {
+          ...node,
+          targetPosition: Position.Top,
+          sourcePosition: Position.Bottom,
+          position: { x: x - nodeWidth / 2, y: y - nodeHeight / 2 },
+        };
+      });
+      return { nodes: layoutedNodes, edges: e };
+    };
+
+    const onLayoutInternal = () => {
+      if (!nodes.length) return;
+      const { nodes: lNodes, edges: lEdges } = getLayouted(nodes, edges);
+      setIsAnimating(true);
+      setNodes(lNodes);
+      setEdges(lEdges);
+      setLayoutApplied(true);
+      setTimeout(() => setIsAnimating(false), 500);
+    };
+
+    // ----------------------- Effects ----------------------------------------
+
+    // (re)build graph elements whenever chapter data changes
+    useEffect(() => {
+      const newNodes = chapters.map((c: any) => ({
+        id: `${c.id}`,
+        type: 'customNode',
+        position: { x: 0, y: 0 },
+        data: { label: c.name, id: c.id },
+        draggable: true,
+      }));
+
+      const newEdges: any = [];
+      chapters.forEach((c: any) => {
+        (c.predecessors || []).forEach((p: number) =>
+          newEdges.push({
+            id: `${p}:${c.id}`,
+            source: `${p}`,
+            target: `${c.id}`,
+            markerEnd: { type: MarkerType.ArrowClosed, width: 20, height: 20, color: '#6366f1' },
+            style: { strokeWidth: 3, stroke: '#6366f1' },
+            animated: true,
+          }),
+        );
+      });
+
+      setNodes(newNodes);
+      setEdges(newEdges);
+    }, [chapters]);
+
+    // Highlight selected node without rebuilding layout
+    const highlightedNodes = useMemo(() =>
+      nodes.map((n) => ({
+        ...n,
+        selected: n.id === String(chapterID),
+        className: `${isAnimating ? 'position-transition' : ''} ${n.id === String(chapterID) ? 'selected-node' : ''}`,
+      })),
+      [nodes, chapterID, isAnimating]
+    );
+
+    // trigger auto‑layout only once after nodes are ready OR after chapters changed
+    useEffect(() => {
+      if (!layoutApplied && nodes.length) onLayoutInternal();
+    }, [layoutApplied, nodes]);
+
+    // trigger auto-layout when requested by parent (button click)
+    useEffect(() => {
+      if (triggerAutoLayout) {
+        setLayoutApplied(false);
+      }
+    }, [triggerAutoLayout]);
+
+    // ----------------------- ReactFlow handlers -----------------------------
+
+    const hasRunRef = useRef(false);
+
+    const onInit = (instance: any) => {
+      (reactFlowInstanceRef as any).current = instance;
+      // expose helpers for external toolbar
+      if (reactFlowRef.current) {
+        (reactFlowRef.current as any).onLayoutInternal = onLayoutInternal;
+        (reactFlowRef.current as any).reactFlowInstanceRef = reactFlowInstanceRef;
+      }
+      // Only fitView on very first mount
+      if (!hasRunRef.current) {
+        instance.fitView({ duration: 400, padding: 0.2 });
+        hasRunRef.current = true;
+      }
+    };
+
+    const onNodeClick = (_: any, node: any) => setChapterID(Number(node.id));
+
+    const onEdgesChangeWrapped = useCallback(
+      async (params: any) => {
+        const action = params[0];
+        if (action.type !== 'remove') {
+          onEdgesChange(params);
+          return;
+        }
+        const [from, to] = action.id.split(':').map((v: string) => Number(v));
+        await modifyChapterEdge(from, to, true);
+        onEdgesChange(params);
+      },
+      [onEdgesChange],
+    );
+
+    const onConnect = useCallback(
+      async (params: any) => {
+        const fromID = Number(params.source);
+        const toID = Number(params.target);
+        try {
+          await modifyChapterEdge(fromID, toID, false);
+          setEdges((eds) =>
+            addEdge(
+              {
+                ...params,
+                markerEnd: { type: MarkerType.ArrowClosed, width: 20, height: 20, color: '#6366f1' },
+                animated: true,
+                style: { strokeWidth: 3, stroke: '#6366f1' },
+              },
+              eds,
+            ),
+          );
+        } catch (e: any) {
+          if (e.message === 'Unprocessable Entity') {
+            setGraphError('Cyclic dependency');
+            setTimeout(() => setGraphError(null), 1000);
+          }
+        }
+      },
+      [setEdges],
+    );
+
+    const onNodesDelete = () => {} // prevent node deletion completely
+
+    // ----------------------- Render -----------------------------------------
+
+    return (
+      <div className="h-full w-full" ref={reactFlowRef} data-graph-autolayout>
+        <ReactFlow
+          nodes={highlightedNodes}
+          edges={edges}
+          nodeTypes={useMemo(() => ({ customNode: CustomNode }), [])}
+          onNodesChange={onNodesChange}
+          onNodesDelete={onNodesDelete}
+          onEdgesChange={onEdgesChangeWrapped}
+          onConnect={onConnect}
+          onNodeClick={onNodeClick}
+          onInit={onInit}
+          nodesDraggable
+          maxZoom={4}
+          minZoom={1}
+          style={{ borderRadius: '1rem', boxShadow: '0 4px 24px rgba(0,0,0,0.07)' }}
+          proOptions={{ hideAttribution: true }}
+        >
+          {/* mini status indicator */}
+          <div
+            className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-3 py-2 shadow-sm border border-gray-100"
+            title={graphError ?? 'Graph semantics are valid'}
+          >
+            <div
+              className={`w-3 h-3 rounded-full ${graphError ? 'bg-red-500' : 'bg-emerald-500'}`}
+              style={{ boxShadow: graphError ? '0 0 8px rgba(239, 68, 68, 0.6)' : '0 0 8px rgba(16, 185, 129, 0.6)' }}
+            />
+            <span className="text-xs font-medium text-gray-600">{graphError ? 'Error' : 'Valid'}</span>
+          </div>
+
+          <MiniMap
+            nodeColor={() => '#6366f1'}
+            maskColor="rgba(99,102,241,0.1)"
+            style={{ bottom: 16, right: 16, top: 'auto', background: 'rgba(255,255,255,0.8)', borderRadius: '0.75rem', border: '1px solid rgba(229,231,235,1)', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}
+          />
+          <Background variant={BackgroundVariant.Dots} gap={12} size={1} color="#6366f1" />
+        </ReactFlow>
+      </div>
+    );
+  };
+
+  // ---------------------------------------------------------------------------
+  // LIFECYCLE / RENDER LOGIC FOR MAIN COMPONENT
+  // ---------------------------------------------------------------------------
+
+  useEffect(() => setWinReady(true), [props.course_uuid, course_structure, course]);
+
+  if (!course || !course_structure?.chapters) return <PageLoading />;
+
+  const currentChapter = course_structure.chapters.find((c: any) => c.id === chapterID);
+  const sidePanelOpen = winReady && currentChapter;
+
   return (
-    <div style={{ padding: '10px', border: '1px solid black', borderRadius: '5px', transform: 'translateX(-50%)' }}>
-      <p>{props.data.label}</p>
-      {/* Custom Handle with increased hitbox */}
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        style={{
-          width: '20px', // Increase the hitbox width
-          height: '20px', // Increase the hitbox height
-          background: 'black', // Optional: Change color for better visibility
-          borderRadius: '50%',
-        }}
-      />
+    <div className="relative h-full w-full overflow-hidden">
+      {/* MAIN GRID */}
+      <motion.div
+        className="grid h-full w-full"
+        animate={{ gridTemplateColumns: sidePanelOpen ? '1fr 0.6fr' : '1fr 0fr' }}
+        transition={{ type: 'spring', stiffness: 200, damping: 30 }}
+        style={{ gridTemplateColumns: sidePanelOpen ? '1fr 0.6fr' : '1fr 0fr' }}
+      >
+        {/* GRAPH AREA */}
+        <div className="relative h-full w-full bg-white">
+          <NewGraph
+            chapters={course_structure.chapters}
+            setChapterID={setChapterID}
+            chapterID={chapterID}
+            reactFlowRef={reactFlowRef}
+            reactFlowInstanceRef={reactFlowInstanceRef}
+            triggerAutoLayout={triggerAutoLayout}
+          />
 
-      <Handle
-        type="target"
-        position={Position.Top}
-        style={{
-          width: '20px', // Increase the hitbox width
-          height: '20px', // Increase the hitbox height
-          background: 'gray', // Optional: Change color for better visibility
-          borderRadius: '50%',
-        }}
+          {/* FLOATING TOOLBAR */}
+          <div className="pointer-events-none absolute left-1/2 bottom-8 z-30 -translate-x-1/2">
+            <div className="pointer-events-auto bg-white/90 backdrop-blur-md shadow-xl rounded-2xl px-6 py-3 flex items-center gap-4 border border-gray-200 transition-all">
+              {/* Zoom controls */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => reactFlowInstanceRef.current?.zoomOut?.()}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-l-md p-2 transition-all"
+                  title="Zoom Out"
+                >
+                  —
+                </button>
+                <button
+                  onClick={() => reactFlowInstanceRef.current?.zoomIn?.()}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-r-md p-2 transition-all"
+                  title="Zoom In"
+                >
+                  +
+                </button>
+              </div>
+              {/* Fit view */}
+              <button
+                onClick={() => reactFlowInstanceRef.current?.fitView?.({ duration: 300, padding: 0.2 })}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md p-2 transition-all"
+                title="Fit View"
+              >
+                ⛶
+              </button>
+              {/* Auto layout */}
+              <button
+                onClick={() => setTriggerAutoLayout((v) => !v)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded px-4 py-2 text-xs shadow transition-all"
+                title="Auto Layout"
+              >
+                Auto Layout
+              </button>
+              {/* Add chapter */}
+              <button
+                onClick={() => setNewChapterModal(true)}
+                className="bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded px-4 py-2 text-xs shadow transition-all flex items-center gap-2"
+              >
+                <Hexagon strokeWidth={2} size={14} className="text-white" />
+                Add Chapter
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* SIDE PANEL */}
+        <AnimatePresence>
+          {sidePanelOpen && (
+            <motion.div
+              key="side-panel"
+              initial={{ x: 400, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 400, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 30 }}
+              className="relative h-full w-full bg-gray-100 border-l border-gray-200 shadow-xl flex flex-col"
+              style={{ minWidth: 0 }}
+            >
+              <button
+                className="absolute top-4 right-4 z-50 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-full p-1 shadow"
+                onClick={() => setChapterID(-1)}
+              >
+                <X></X>
+              </button>
+              <div className="p-10 h-full overflow-y-auto">
+                <DragDropContext onDragEnd={updateStructure}>
+                  <ChapterElement
+                    key={currentChapter.chapter_uuid}
+                    chapterIndex={0}
+                    orgslug={props.orgslug}
+                    course_uuid={course_uuid}
+                    chapter={currentChapter}
+                  />
+                </DragDropContext>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* NEW CHAPTER MODAL */}
+      <Modal
+        isDialogOpen={newChapterModal}
+        onOpenChange={setNewChapterModal}
+        minHeight="sm"
+        dialogContent={<NewChapterModal course={course ? course.courseStructure : null} closeModal={closeNewChapterModal} submitChapter={submitChapter} />}
+        dialogTitle="Create chapter"
+        dialogDescription="Add a new chapter to the course"
+        dialogTrigger={null}
       />
     </div>
   );
 };
 
-const NewGraph = (props: DisplayGraphProps) => {
-    const initialNodes: any = []
-    const initialEdges: any = [];
-
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-
-    const [graphError, setGraphError] = useState<string | null>(null);
-
-    // State to track if layout has been applied.
-    const [isLayouted, setIsLayouted] = useState(false);
-
-    // For node position animations.
-    const [isAnimating, setIsAnimating] = useState(false);
-
-    // Prevent double animation.
-    const [layoutApplied, setLayoutApplied] = useState(false); // Track if the layout is already applied
-
-    for (let i = 0; i < props.chapters.length; i++) {
-        const current = props.chapters[i]
-
-        initialNodes.push({
-            id: `${current.id}`,
-            type: 'customNode',
-            position: {
-                x: 0,
-                y: 0
-            },
-            data: {
-                label: `${current.name} (ID=${current.id})`
-            },
-            draggable: true,
-        })
-    }
-
-    for (let chapter of props.chapters) {
-        if (!chapter.predecessors)
-            continue
-        for (let pred of chapter.predecessors) {
-            let from = pred
-            let to = chapter.id
-            initialEdges.push({
-                id: `${from}:${to}`,
-                source: `${from}`,
-                target: `${to}`,
-            })
-        }
-    }
-
-    //
-    // Auto layout with dagre.
-    //
-
-    const dagreGraph = new dagre.graphlib.Graph();
-    dagreGraph.setDefaultEdgeLabel(() => ({}));
-
-    const nodeWidth = 150;
-    const nodeHeight = 50;
-
-    const getLayoutedNodesAndEdges = (nodes: any[], edges: any[], direction = 'TB') => {
-        dagreGraph.setGraph({
-            rankdir: direction,
-            nodesep: 50,
-            ranksep: 100,
-        }); // TB (top-bottom), LR (left-right)
-
-        // Add nodes to Dagre graph
-        nodes.forEach((node: any) => {
-            dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
-        });
-
-        // Add edges to Dagre graph
-        edges.forEach((edge: any) => {
-            dagreGraph.setEdge(edge.source, edge.target);
-        });
-
-        // Run Dagre layout
-        dagre.layout(dagreGraph);
-
-        // Update node positions
-        const layoutedNodes = nodes.map((node: any) => {
-            const nodeWithPosition = dagreGraph.node(node.id);
-            node.targetPosition = Position.Top;
-            node.sourcePosition = Position.Bottom;
-            
-            return {
-            ...node,
-            position: {
-                x: nodeWithPosition.x - nodeWidth / 2, // Center the node
-                y: nodeWithPosition.y - nodeHeight / 2,
-            },
-            };
-        });
-
-        return { nodes: layoutedNodes, edges };
-    };
-
-    function onLayoutInternal() {
-        console.log("ON LAYOUT")
-
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedNodesAndEdges(
-            nodes,
-            edges,
-            'TB' // Change to 'LR' for left-to-right layout
-        );
-
-        setIsAnimating(true);
-        setNodes(layoutedNodes);
-        setEdges(layoutedEdges);
-
-        // Set layout applied.
-        setLayoutApplied(true);
-
-        // Remove animation class after animation duration.
-        setTimeout(() => {
-            setIsAnimating(false);
-        }, 500); // Match with animation duration.
-    }
-
-    const onLayout = useCallback(() => {
-        // Only apply layout if it's not already applied to avoid the animation running twice.
-        if (layoutApplied) {
-            console.log('layout was applied')
-            return
-        }
-
-        onLayoutInternal()
-    }, [nodes, edges, setLayoutApplied, setNodes, setEdges, setIsAnimating]);
-
-    //
-    // End auto layout.
-    //
-
-    // const nodeChangeWrapper = useCallback(
-    //     async (params: any[])  => {
-    //         console.log(params)
-    //
-    //         for (let event of params) {
-    //             if (event.type === 'position') {
-    //                 console.log('layout not applied')
-    //                 setLayoutApplied(false)
-    //             }
-    //         }
-    //
-    //         onNodesChange(params)
-    //     },
-    //     [setNodes]
-    // )
-
-    const onNodeClick = useCallback((event: any, node: any) => {
-        console.log('Node selected:', node);
-        props.setChapterID(parseInt(node.id))
-        // Perform additional actions here
-    }, []);
-
-    // TODO: how am I going to attach an error message in case this thing dies?
-    const onEdgesChangeWrapped = useCallback(
-        async (params: any)  => {
-            const _type = params[0].type
-            const isDelete = params[0].type === "remove"
-
-            if (!isDelete) {
-                console.warn(`EDGE CHANGE HANDLER: not called due to deletion; returning early (${_type})`)
-                onEdgesChange(params)
-                return
-            }
-
-            const id: string = params[0].id
-
-            const idSplit = id.split(':')
-
-            if (idSplit.length !== 2) {
-                throw(`Edge ID split does not contain 2 elements; giving up (${idSplit})`)
-            }
-
-            const fromID = parseInt(idSplit[0])
-            const toID = parseInt(idSplit[1])
-            console.log(`ID: ${id} | from=${fromID} | to=${toID}`)
-
-            console.log("edges wrapped", params[0], id, isDelete)
-
-            let res = await modifyChapterEdge(
-                fromID,
-                toID,
-                true,
-            )
-
-            console.log(res)
-
-
-            onEdgesChange(params)
-        },
-        [setEdges]
-    )
-
-    const onConnect = useCallback(
-        async (params: any) => {
-            console.log('on connect', params)
-
-            const fromNodeID = parseInt(params.source)
-            const toNodeID = parseInt(params.target)
-
-            try {
-                let _res = await modifyChapterEdge(
-                    fromNodeID,
-                    toNodeID,
-                    false,
-                )
-            } catch (e: any) {
-                if (e.message === "Unprocessable Entity") {
-                    setGraphError("Cyclic dependency")
-                    setTimeout(() => {
-                        setGraphError(null)
-                    }, 1000)
-                    return
-                }
-            }
-
-            setEdges((eds) => addEdge(params, eds))
-        },
-        [setEdges],
-    );
-
-    const onNodesDelete = useCallback((nodesToDelete: any) => {
-        console.log('Attempt to delete nodes:', nodesToDelete);
-        // Suppress node deletion
-    }, []);
-
-    // Run the auto-layout once the graph loads.
-    // Only run once to prevent cycle.
-    useEffect(() => {
-        if (!isLayouted) {
-            console.log("INITIAL")
-            onLayout();
-            setIsLayouted(true); // Ensure the layout is only applied once
-        }
-    }, [onLayout, setIsLayouted]);
-
-
-    return (
-        <ReactFlow
-            nodes={nodes.map((node) => ({
-                ...node,
-                className: isAnimating ? 'position-transition' : '', // Add / Remove animation class.
-            }))}
-            nodeTypes={{ customNode: CustomNode }}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onNodesDelete={onNodesDelete}
-            onEdgesChange={onEdgesChangeWrapped}
-            onConnect={onConnect}
-            onNodeClick={onNodeClick}
-            nodesDraggable={true}
-            fitView
-            defaultEdgeOptions={{
-                style: {
-                strokeWidth: 3, // Set global edge thickness
-                // stroke: '#000', // Optional: Set color
-                },
-            }}
-            maxZoom={4}
-            minZoom={1}
-            //deleteKeyCode={null} // Disable delete key
-        >
-            <Controls
-                style={{
-                    background: 'rgba(0, 0, 0, 0.1)',
-                    backdropFilter: 'blur(2px)',
-                    borderRadius: '0.4rem',
-                    border: "2px solid rgba(0, 0, 0, 0.1)",
-                    display: 'flex',
-                    flexDirection: 'column',
-                    padding: '10px',
-                    gap: '10px', // Adds spacing between controls
-                    width: '12rem'
-                }}
-            >
-                {/* Custom Auto Layout Button */}
-                <button
-                    onClick={() => {
-                        console.log('hallo')
-                        onLayoutInternal();
-                    }}
-                    style={{
-                        background: '#007BFF',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '5px 12px',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        textAlign: 'center',
-                    }}
-                >
-                    Auto Layout
-                </button>
-
-                <span className={classNames(graphError ? {
-                   'text-red-500': true,
-                   'font-bold': true,
-                   'animate-pulse': true,
-                } : {
-                   'text-teal-600': true,
-                })}>
-                    {graphError ? graphError : "Semantics Valid"}
-                </span>
-            </Controls>
-            <MiniMap />
-            <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-        </ReactFlow>
-    )
-}
-
-  //
-  // END GRAPH.
-  //
-
-  useEffect(() => {
-    setwinReady(true)
-  }, [props.course_uuid, course_structure, course])
-
-  if (!course) return <PageLoading></PageLoading>
-  if (!course_structure || !course_structure.chapters) return <PageLoading></PageLoading>
-
-  const currentChapter = course_structure.chapters.find((c: any) => {
-      const matches = c.id === chapterID
-      // console.log(typeof c.id, typeof chapterID)
-      // console.log(`c.id=${c.id}, chapterID=${chapterID} | chap=${JSON.stringify(c)} | matches=${matches}`)
-      return matches
-  })
-
-
-  return (
-    <div className="flex flex-row h-full">
-
-    <div className='flex flex-col justify-center h-full w-2/5'>
-      { /* <DisplayGraph chapters={course_structure.chapters} setChapterID={setChapterID} chapterID={chapterID}/> */}
-      <NewGraph chapters={course_structure.chapters} setChapterID={setChapterID} chapterID={chapterID} />
-
-      <div>
-        <Modal
-            isDialogOpen={newChapterModal}
-            onOpenChange={setNewChapterModal}
-            minHeight="sm"
-            dialogContent={
-            <NewChapterModal
-                course={course ? course.courseStructure : null}
-                closeModal={closeNewChapterModal}
-                submitChapter={submitChapter}
-            ></NewChapterModal>
-            }
-            dialogTitle="Create chapter"
-            dialogDescription="Add a new chapter to the course"
-            dialogTrigger={
-            <div className="w-44 mt-10 py-5 max-w-screen-2xl mx-auto bg-cyan-800 text-white rounded-xl shadow-sm px-6 items-center flex flex-row h-10">
-                <div className="mx-auto flex space-x-2 items-center hover:cursor-pointer">
-                <Hexagon
-                    strokeWidth={3}
-                    size={16}
-                    className="text-white text-sm "
-                />
-                <div className="font-bold text-sm">Add Chapter</div>
-                </div>
-            </div>
-            }
-        />
-      </div>
-    </div>
-
-       <div className='w-3/5 p-10 bg-gray-200'>
-      {winReady && currentChapter ? (
-
-        <DragDropContext onDragEnd={updateStructure}>
-        <ChapterElement
-            key={ currentChapter.chapter_uuid}
-            chapterIndex={0}
-            orgslug={props.orgslug}
-            course_uuid={course_uuid}
-            chapter={currentChapter}
-        />
-        </DragDropContext>
-      ) : (
-        <div className='flex flex-col justify-center items-center h-full'>
-
-            <MousePointer className='text-gray-400 mb-3' size={80} />
-
-            <h2 className='text-gray-500 text-4xl mb-3'>
-                No Chapter Selected
-            </h2>
-
-            <h6 className='text-gray-400 text-2xl'>
-                Use the content graph on the left to select a chapter.
-            </h6>
-        </div>
-      )}
-    </div>
-</div>
-  )
-}
-
-export default EditCourseStructure
+export default EditCourseStructure;

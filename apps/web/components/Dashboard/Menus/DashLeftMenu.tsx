@@ -129,7 +129,7 @@ export const DashLeftMenu = (props: any) => {
 
 const LearnHouseLogo = () => (
   <Image
-    width={40}
+    width={120}
     className="mx-auto"
     src={logo_black}
     alt="HPI Sokrates"

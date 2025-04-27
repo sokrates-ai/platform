@@ -324,71 +324,38 @@ const Canvas: React.FC<CanvasProps> = ({
     }, []);
 
     return (
-        <div style={{ width: "100%", height: "100%", display: "flex" }}>
+        <div style={{ width: "100%", height: "100%", display: "flex", maxHeight: '100%' }}>
             <div
                 ref={parentRef}
                 id="canvas-parent"
-                style={{ flex: "1", height: "100%", position: "relative", overflow: "auto", overscrollBehavior: "none" }}
+                style={{ flex: "1", height: "100%", maxHeight: '100%', position: "relative", overflow: "hidden", overscrollBehavior: "none" }}
                 onDragOver={readOnly ? undefined : handleDragOver}
                 onDrop={readOnly ? undefined : handleDrop}
             >
-                    <Application
-                        backgroundColor={0x8da64a}
-                        antialias={true}
-                        resolution={window.devicePixelRatio}
-                        autoDensity={true}
-                        resizeTo={parentRef}
-                    >
-                        <CanvasViewport
-                            placedAssets={layout.layout || []}
-                            selectedIds={selectedIds}
-                            onSelectIds={setSelectedIds}
-                            onViewportReady={setViewport}
-                            onAssetPositionChange={handleAssetPositionChange}
-                            onAssetContextMenu={handleAssetContextMenu}
-                            onChapterClick={onChapterClick}
-                            readOnly={!!readOnly}
-                            boundaries={layout.boundaries}
-                            showGrid={showGrid}
-                            snapToGrid={snapToGrid}
-                            gridGranularity={gridGranularity}
-                            effectiveGridSize={effectiveGridSize}
-                        />
-                    </Application>
+                <Application
+                    backgroundColor={0x8da64a}
+                    antialias={true}
+                    resolution={window.devicePixelRatio}
+                    autoDensity={true}
+                    resizeTo={parentRef}
+                >
+                    <CanvasViewport
+                        placedAssets={layout.layout || []}
+                        selectedIds={selectedIds}
+                        onSelectIds={setSelectedIds}
+                        onViewportReady={setViewport}
+                        onAssetPositionChange={handleAssetPositionChange}
+                        onAssetContextMenu={handleAssetContextMenu}
+                        onChapterClick={onChapterClick}
+                        readOnly={!!readOnly}
+                        boundaries={layout.boundaries}
+                        showGrid={showGrid}
+                        snapToGrid={snapToGrid}
+                        gridGranularity={gridGranularity}
+                        effectiveGridSize={effectiveGridSize}
+                    />
+                </Application>
             </div>
-            {!readOnly && (
-                <div className="border-l bg-card h-full overflow-y-auto w-80">
-                    <div className="p-3 border-b">
-                        <h3 className="text-sm font-medium">Asset Library</h3>
-                    </div>
-                    <div className="p-2">
-                        <div className="grid grid-cols-2 gap-2">
-                            {SPRITES.map((sprite, index) => (
-                                <div
-                                    key={index}
-                                    draggable
-                                    onDragStart={(e) => {
-                                        e.dataTransfer.setData("application/json", JSON.stringify(sprite));
-                                    }}
-                                    className="group flex flex-col items-center p-2 rounded-md border bg-background hover:border-primary transition-colors cursor-grab active:cursor-grabbing"
-                                >
-                                    <div className="relative w-full aspect-square flex items-center justify-center mb-1 bg-muted/40 rounded overflow-hidden">
-                                        <img
-                                            src={`/contentMap/${sprite.file}`}
-                                            alt={sprite.label}
-                                            className="object-contain max-h-full max-w-full group-hover:scale-105 transition-transform"
-                                            style={{ filter: "saturate(120%)" }}
-                                        />
-                                    </div>
-                                    <span className="text-xs font-medium truncate w-full text-center text-muted-foreground group-hover:text-foreground">
-                                        {sprite.label}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
             {contextMenu && (
                 <div
                     ref={contextMenuRef}

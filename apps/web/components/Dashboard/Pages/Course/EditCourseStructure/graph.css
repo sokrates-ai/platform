@@ -1,3 +1,7 @@
 .position-transition {
   transition: transform 0.5s ease; /* Smooth transition for 0.5 seconds */
 }
+
+.selected-node {
+  z-index: 2;
+}
