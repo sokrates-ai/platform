@@ -232,8 +232,6 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courseID, tags }:
               <select className='bg-gray-100/40 rounded-lg px-1 py-2 outline outline-1 outline-gray-100'
                 onChange={(e) => { setTagInput(e.target.value); }}
                 value={tagInput}
-                type="text"
-                placeholder="Add tags..."
                 defaultValue={""}
               >
                 <option value="">

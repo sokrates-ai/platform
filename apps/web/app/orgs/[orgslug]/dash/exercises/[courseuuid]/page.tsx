@@ -18,8 +18,10 @@ import CourseListing from '../courseListing'
 import { useRouter } from 'next/navigation'
 
 type ExerciseProps = {
-    orgslug: string
-    org_id: string,
+    params: {
+        orgslug: string,
+        courseuuid: string,
+    },
 }
 
 function ExerciseCourseHome(params: ExerciseProps) {
@@ -60,7 +62,7 @@ function ExerciseCourseHome(params: ExerciseProps) {
     // const course_uuid = router.query.courseuuid as string
 
     console.log(COURSES_URL)
-    const course_id = parseInt((params as any).params.courseuuid)
+    const course_id = parseInt(params.params.courseuuid)
 
     if (coursesLoading || exercisesLoading || tagsLoading) {
         return;
@@ -93,7 +95,7 @@ function ExerciseCourseHome(params: ExerciseProps) {
                         checkMethod="roles"
                         action="create"
                         ressourceType="courses"
-                        orgId={params.org_id}
+                        orgId={org.id}
                     >
                         <div className="flex gap-5">
                             <Modal
@@ -103,7 +105,7 @@ function ExerciseCourseHome(params: ExerciseProps) {
                                 dialogContent={
                                     <EditTagsModal
                                         closeModal={() => setEditTagsModalOpen(false)}
-                                        orgslug={params.orgslug}
+                                        orgslug={params.params.orgslug}
                                         mutateURL={TAGS_URL}
                                         tags={tags}
                                     />
@@ -127,7 +129,7 @@ function ExerciseCourseHome(params: ExerciseProps) {
                                 dialogContent={
                                     <CreateExerciseModal
                                         closeModal={closeNewCourseModal}
-                                        orgslug={params.orgslug}
+                                        orgslug={params.params.orgslug}
                                         mutateURL={TASKS_URL}
                                         courses={courses}
                                         tags={tags}
@@ -158,7 +160,7 @@ function ExerciseCourseHome(params: ExerciseProps) {
                 tags={tags}
                 courses={courses}
                 org={org}
-                orgslug={params.orgslug}
+                orgslug={params.params.orgslug}
                 TASKS_URL={TASKS_URL}
                 COURSES_URL={COURSES_URL}
                 TAGS_URL={TAGS_URL}

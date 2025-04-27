@@ -24,8 +24,6 @@ const CourseListing = (props: CourseListingProps) => {
     if (props.exercises.length > 0) {
         return (<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" >{
             props.exercises.filter((exercise: any) => exercise.course_id === props.course_id).map((exercise: any) => {
-                const tags = props.tags.filter((tag: any) => exercise.tags.find((tag2: any) => tag2 === tag.value))
-                console.log('tags', tags)
                 return (<div key={exercise.id}>
                     <ExerciseThumbnail
                         // customLink={`/dash/courses/course/${removeCoursePrefix(course.course_uuid)}/general`}
@@ -34,7 +32,7 @@ const CourseListing = (props: CourseListingProps) => {
                         orgslug={props.orgslug}
                         exercise={exercise}
                         mutateURL={props.TASKS_URL}
-                        tags={tags}
+                        tags={props.tags}
                         courses={props.courses}
                     />
                 </div>)

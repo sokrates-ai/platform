@@ -30,7 +30,7 @@ export type Exercise = {
   description: string
   task: string
   solution: string
-  tags?: string[] // Optional array of tags
+  tags: string[]
 }
 
 type PropsType = {
@@ -40,7 +40,6 @@ type PropsType = {
   mutateURL: string
   tags: any[],
   courses: any[],
-  // customLink?: string
 }
 
 // export const removeCoursePrefix = (course_uuid: string) => course_uuid.replace('course_', '')
@@ -86,16 +85,17 @@ function ExerciseThumbnail(props: PropsType) {
         <p className='text-sm text-gray-700 leading-normal line-clamp-3'>{props.exercise.description}</p>
         {props.exercise.tags && props.exercise.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-2">
-            {props.tags.map((tag: any) => {
-              const color = `#${tag.color?.toString(16).padStart(6, '0')}`;
+            {props.exercise.tags.map((tag: string) => {
+              const tagObj = props.tags.find((t: any) => t.value === tag)
+              const color = `#${tagObj.color?.toString(16).padStart(6, '0')}`;
               return (<span
-                key={tag.value}
+                key={tagObj.value}
                 className="px-2 py-0.5 rounded-full text-xs text-gray-600"
                 style={{
                   backgroundColor: color
                 }}
               >
-                {tag.value}
+                {tagObj.value}
               </span>)
             })}
           </div>

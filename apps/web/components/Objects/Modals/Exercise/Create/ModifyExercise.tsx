@@ -40,7 +40,7 @@ const validationSchema = Yup.object().shape({
   }))
 })
 
-function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses, tags, exercise }: any) {
+function ModifyExerciseModal({ closeModal, orgslug, mutateURL, courses, tags, exercise }: any) {
   console.log(exercise)
   const router = useRouter()
   const session = useLHSession() as any
@@ -49,6 +49,8 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses, tags, ex
   const [isUploading, setIsUploading] = React.useState(false)
   const [tagInput, setTagInput] = React.useState('')
   const [internalTags, setInternalTags] = React.useState<string[]>(exercise.tags)
+
+  console.log('internalTags', internalTags, 'tags', tags)
 
   const formik = useFormik({
     initialValues: {
@@ -198,7 +200,7 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses, tags, ex
       <FormField name="title">
         <FormLabelAndMessage
           label="Exercise Title"
-          message={formik.errors.title}
+          message={formik.errors.title as any}
         />
         <Form.Control asChild>
           <Input
@@ -213,7 +215,7 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses, tags, ex
       <FormField name="description">
         <FormLabelAndMessage
           label="Exercise Description"
-          message={formik.errors.description}
+          message={formik.errors.description as any}
         />
         <Form.Control asChild>
           <Textarea
@@ -235,8 +237,6 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses, tags, ex
               <select className='bg-gray-100/40 rounded-lg px-1 py-2 outline outline-1 outline-gray-100'
                 onChange={(e) => { setTagInput(e.target.value); }}
                 value={tagInput}
-                type="text"
-                placeholder="Add tags..."
                 defaultValue={""}
               >
                 <option value="">
@@ -297,7 +297,7 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses, tags, ex
       <FormField name="task">
         <FormLabelAndMessage
           label="Exercise Task"
-          message={formik.errors.task}
+          message={formik.errors.task as any}
         />
         <Form.Control asChild>
           <Textarea
@@ -311,7 +311,7 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses, tags, ex
       <FormField name="solution">
         <FormLabelAndMessage
           label="Exercise Solution"
-          message={formik.errors.solution}
+          message={formik.errors.solution as any}
         />
         <Form.Control asChild>
           <Textarea
@@ -349,4 +349,5 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses, tags, ex
   )
 }
 
-export default CreateExerciseModal
+export default ModifyExerciseModal
+
