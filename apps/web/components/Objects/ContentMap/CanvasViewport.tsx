@@ -89,18 +89,11 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
 
         if (isNewViewport) {
 
-            const FRACTION = 0.12;
-            const shortestSide = Math.min(app.renderer.width, app.renderer.height);
-            const pixelsWanted = shortestSide * FRACTION;
-            const scale = pixelsWanted / worldWidth;
-
-
             node
                 .drag({ clampWheel: true, mouseButtons: "left" })
                 .decelerate({ friction: 0.9, bounce: 0, minSpeed: 0.02 })
                 .pinch()
                 .wheel({ percent: 0.15 })
-                .setZoom(scale, true)
                 .clampZoom({
                     minWidth: worldWidth * 0.5,
                     maxWidth: worldWidth * 1

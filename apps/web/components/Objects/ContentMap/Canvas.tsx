@@ -335,7 +335,7 @@ const Canvas: React.FC<CanvasProps> = ({
                     <Application
                         backgroundColor={0x8da64a}
                         antialias={true}
-                        resolution={window.devicePixelRatio || 1}
+                        resolution={window.devicePixelRatio}
                         autoDensity={true}
                         resizeTo={parentRef}
                     >
