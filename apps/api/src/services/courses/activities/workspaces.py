@@ -266,7 +266,7 @@ async def delete_task_tag(
     tag_value: str,
 ) -> List[str]:
     statement = select(Tasks_Tags).where(
-        (Tasks_Tags.tag_value == tag_value) & Tasks_Tags.task_id == task_id
+        (Tasks_Tags.tag_value == tag_value) & (Tasks_Tags.task_id == task_id)
     )
     link = db_session.exec(statement).first()
     if link:
