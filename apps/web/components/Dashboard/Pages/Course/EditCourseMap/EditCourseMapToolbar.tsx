@@ -1,5 +1,5 @@
 "use client"
-import { Undo2, Redo2, Trash2, Maximize, Grid, Lock, ArrowDown, ArrowUp, ArrowLeft, ArrowRight, Plus, Minus } from "lucide-react"
+import { Undo2, Redo2, Trash2, Maximize, Grid, Lock, ArrowDown, ArrowUp, ArrowLeft, ArrowRight, Plus, Minus, Copy, Clipboard, ClipboardCopy, ClipboardPaste, Scissors, Copy as CopyIcon, HelpCircle, MousePointerClick, Info, FileDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@components/ui/separator"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -27,6 +27,8 @@ export interface CourseMapEditorToolbarProps {
 	onSnapToGridChange?: (snapToGrid: boolean) => void
 	gridGranularity?: number
 	onGridGranularityChange?: (value: number) => void
+	clampToMap?: boolean
+	onClampToMapChange?: (clampToMap: boolean) => void
 	canUndo?: boolean
 	canRedo?: boolean
 }
@@ -39,7 +41,6 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 		bottom: 1000
 	};
 	
-	// Store display values as absolute values for a cleaner UI
 	const [boundaries, setBoundaries] = useState({
 		left: props.boundaries?.left !== undefined ? Math.abs(props.boundaries.left).toString() : Math.abs(defaultBoundaries.left).toString(),
 		right: props.boundaries?.right !== undefined ? props.boundaries.right.toString() : defaultBoundaries.right.toString(),
@@ -47,10 +48,8 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 		bottom: props.boundaries?.bottom !== undefined ? props.boundaries.bottom.toString() : defaultBoundaries.bottom.toString()
 	});
 
-	// Update local state when props change
 	useEffect(() => {
 		if (props.boundaries) {
-			// Only update if values are different to avoid infinite loops
 			const newBoundaries = {
 				left: Math.abs(props.boundaries.left).toString(),
 				right: props.boundaries.right.toString(),
@@ -72,16 +71,16 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 	const adjustBoundaryValue = (boundary: keyof typeof boundaries, change: number) => {
 		const currentValue = parseInt(boundaries[boundary]);
 		if (!isNaN(currentValue)) {
-			const newValue = Math.max(0, currentValue + change); // Prevent negative values
+			const newValue = Math.max(0, currentValue + change);
 			setBoundaries({...boundaries, [boundary]: newValue.toString()});
 		}
 	};
 
 	const handleBoundariesUpdate = () => {
 		const newBoundaries = {
-			left: -parseInt(boundaries.left), // Apply negative sign for left
+			left: -parseInt(boundaries.left), 
 			right: parseInt(boundaries.right),
-			top: -parseInt(boundaries.top), // Apply negative sign for top
+			top: -parseInt(boundaries.top), 
 			bottom: parseInt(boundaries.bottom)
 		};
 
@@ -114,6 +113,12 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 		}
 	};
 
+	const handleClampToMapChange = (checked: boolean) => {
+		if (props.onClampToMapChange) {
+			props.onClampToMapChange(checked);
+		}
+	};
+
 	const getWorldWidth = () => {
 		const left = parseInt(boundaries.left);
 		const right = parseInt(boundaries.right);
@@ -127,34 +132,112 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 	};
 
 	return (
-		<div className="flex items-center space-x-2 flex-wrap">
-			<TooltipProvider delayDuration={300}>
-				<Tooltip>
-					<TooltipTrigger asChild>
-						<Button variant="outline" size="icon" className="h-8 w-8" onClick={() => props.undo()} disabled={props.canUndo === false}>
-							<Undo2 className="h-4 w-4" />
-							<span className="sr-only">Undo</span>
-						</Button>
-					</TooltipTrigger>
-					<TooltipContent>
-						<p>Undo</p>
-					</TooltipContent>
-				</Tooltip>
-			</TooltipProvider>
+		<div className="flex items-center space-x-2 flex-wrap gap-2">
+			<div className="flex items-center space-x-1">
+				<TooltipProvider delayDuration={300}>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button variant="outline" size="icon" className="h-8 w-8" onClick={() => props.undo()} disabled={props.canUndo === false}>
+								<Undo2 className="h-4 w-4" />
+								<span className="sr-only">Undo</span>
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent>
+							<p>Undo (Ctrl+Z)</p>
+						</TooltipContent>
+					</Tooltip>
+				</TooltipProvider>
 
-			<TooltipProvider delayDuration={300}>
-				<Tooltip>
-					<TooltipTrigger asChild>
-						<Button variant="outline" size="icon" className="h-8 w-8" onClick={() => props.redo()} disabled={props.canRedo === false}>
-							<Redo2 className="h-4 w-4" />
-							<span className="sr-only">Redo</span>
-						</Button>
-					</TooltipTrigger>
-					<TooltipContent>
-						<p>Redo</p>
-					</TooltipContent>
-				</Tooltip>
-			</TooltipProvider>
+				<TooltipProvider delayDuration={300}>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button variant="outline" size="icon" className="h-8 w-8" onClick={() => props.redo()} disabled={props.canRedo === false}>
+								<Redo2 className="h-4 w-4" />
+								<span className="sr-only">Redo</span>
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent>
+							<p>Redo (Ctrl+Y)</p>
+						</TooltipContent>
+					</Tooltip>
+				</TooltipProvider>
+			</div>
+
+			<Separator orientation="vertical" className="h-6" />
+
+			<div className="flex items-center space-x-1">
+				<TooltipProvider delayDuration={300}>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button variant="outline" size="icon" className="h-8 w-8" 
+								onClick={(e) => {
+									// Simulate Ctrl+C key press
+									const keyEvent = new KeyboardEvent('keydown', {
+										key: 'c',
+										code: 'KeyC',
+										ctrlKey: true,
+										bubbles: true
+									});
+									document.dispatchEvent(keyEvent);
+								}}>
+								<CopyIcon className="h-4 w-4" />
+								<span className="sr-only">Copy</span>
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent>
+							<p>Copy (Ctrl+C)</p>
+						</TooltipContent>
+					</Tooltip>
+				</TooltipProvider>
+
+				<TooltipProvider delayDuration={300}>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button variant="outline" size="icon" className="h-8 w-8"
+								onClick={(e) => {
+									// Simulate Ctrl+X key press
+									const keyEvent = new KeyboardEvent('keydown', {
+										key: 'x',
+										code: 'KeyX',
+										ctrlKey: true,
+										bubbles: true
+									});
+									document.dispatchEvent(keyEvent);
+								}}>
+								<Scissors className="h-4 w-4" />
+								<span className="sr-only">Cut</span>
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent>
+							<p>Cut (Ctrl+X)</p>
+						</TooltipContent>
+					</Tooltip>
+				</TooltipProvider>
+
+				<TooltipProvider delayDuration={300}>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button variant="outline" size="icon" className="h-8 w-8"
+								onClick={(e) => {
+									// Simulate Ctrl+V key press
+									const keyEvent = new KeyboardEvent('keydown', {
+										key: 'v',
+										code: 'KeyV',
+										ctrlKey: true,
+										bubbles: true
+									});
+									document.dispatchEvent(keyEvent);
+								}}>
+								<ClipboardPaste className="h-4 w-4" />
+								<span className="sr-only">Paste</span>
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent>
+							<p>Paste (Ctrl+V)</p>
+						</TooltipContent>
+					</Tooltip>
+				</TooltipProvider>
+			</div>
 
 			<Separator orientation="vertical" className="h-6" />
 
@@ -369,6 +452,24 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 					</Tooltip>
 				</TooltipProvider>
 
+				<TooltipProvider delayDuration={300}>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<div className="flex items-center space-x-2">
+								<Label htmlFor="clamp-map" className="text-xs font-medium">Clamp</Label>
+								<Switch 
+									id="clamp-map" 
+									checked={props.clampToMap} 
+									onCheckedChange={handleClampToMapChange}
+								/>
+							</div>
+						</TooltipTrigger>
+						<TooltipContent>
+							<p>Clamp to Map Boundaries</p>
+						</TooltipContent>
+					</Tooltip>
+				</TooltipProvider>
+
 				<div className="flex items-center space-x-2">
 					<Label htmlFor="granularity" className="text-xs font-medium">Size</Label>
 					<Slider 
@@ -382,6 +483,52 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 					/>
 				</div>
 			</div>
+
+			<Separator orientation="vertical" className="h-6" />
+
+			<Popover>
+				<PopoverTrigger asChild>
+					<Button variant="outline" size="icon" className="rounded-full h-8 w-8">
+						<HelpCircle className="h-4 w-4" />
+					</Button>
+				</PopoverTrigger>
+				<PopoverContent className="w-80">
+					<div className="space-y-2">
+						<h4 className="font-medium">Keyboard Shortcuts</h4>
+						<div className="grid grid-cols-2 gap-2">
+							<div className="text-sm text-muted-foreground">Undo</div>
+							<div className="text-sm font-semibold">Ctrl+Z</div>
+							
+							<div className="text-sm text-muted-foreground">Redo</div>
+							<div className="text-sm font-semibold">Ctrl+Y / Ctrl+Shift+Z</div>
+							
+							<div className="text-sm text-muted-foreground">Select All</div>
+							<div className="text-sm font-semibold">Ctrl+A</div>
+							
+							<div className="text-sm text-muted-foreground">Copy</div>
+							<div className="text-sm font-semibold">Ctrl+C</div>
+							
+							<div className="text-sm text-muted-foreground">Cut</div>
+							<div className="text-sm font-semibold">Ctrl+X</div>
+							
+							<div className="text-sm text-muted-foreground">Paste</div>
+							<div className="text-sm font-semibold">Ctrl+V</div>
+							
+							<div className="text-sm text-muted-foreground">Delete</div>
+							<div className="text-sm font-semibold">Delete</div>
+							
+							<div className="text-sm text-muted-foreground">Move Selection</div>
+							<div className="text-sm font-semibold">Arrow Keys</div>
+							
+							<div className="text-sm text-muted-foreground">Move Faster</div>
+							<div className="text-sm font-semibold">Shift+Arrow Keys</div>
+							
+							<div className="text-sm text-muted-foreground">Multiple Select</div>
+							<div className="text-sm font-semibold">Shift+Click</div>
+						</div>
+					</div>
+				</PopoverContent>
+			</Popover>
 		</div>
 	)
 }

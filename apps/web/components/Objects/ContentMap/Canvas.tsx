@@ -35,6 +35,11 @@ export interface CanvasProps {
     snapToGrid?: boolean;
     gridGranularity?: number;
     chapterStates?: Record<number, 'locked' | 'unlocked' | 'finished'>;
+    undoRedo?: {
+        undo: () => void;
+        redo: () => void;
+    };
+    clampToMap?: boolean;
 }
 
 const Canvas: React.FC<CanvasProps> = ({
@@ -46,6 +51,8 @@ const Canvas: React.FC<CanvasProps> = ({
     snapToGrid = true,
     gridGranularity = 5,
     chapterStates = {},
+    undoRedo,
+    clampToMap,
 }) => {
     const parentRef = useRef<HTMLDivElement>(null);
     const copiedRef = useRef<AssetData[]>([]);
@@ -54,6 +61,12 @@ const Canvas: React.FC<CanvasProps> = ({
     const [contextMenu, setContextMenu] = useState<ContextMenuData | null>(null);
     const [lastMousePos, setLastMousePos] = useState<{ x: number; y: number } | null>(null);
     const [viewport, setViewport] = useState<any>(null);
+    const dispatchRef = useRef<typeof undoRedo | null>(undoRedo || null);
+
+    // Update dispatch ref when undoRedo changes
+    useEffect(() => {
+        dispatchRef.current = undoRedo || null;
+    }, [undoRedo]);
 
     // Calculate effective grid size based on granularity
     const effectiveGridSize = MINOR_GRID_SIZE * (11 - gridGranularity);
@@ -64,30 +77,83 @@ const Canvas: React.FC<CanvasProps> = ({
 
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
-            if (!e.ctrlKey && !e.metaKey) return;
-            const key = e.key.toLowerCase();
-
-            if (key === "c" && selectedIds.length) {
-                e.preventDefault();
-                copiedRef.current = layout.layout!
-                    .filter(a => selectedIds.includes(a.id))
-                    .map(a => ({ ...a }));
+            if (readOnly) return;
+            
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+                return;
             }
-            else if (key === "x" && selectedIds.length) {
+            
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
                 e.preventDefault();
-                copiedRef.current = layout.layout!
-                    .filter(a => selectedIds.includes(a.id))
-                    .map(a => ({ ...a }));
+                dispatchRef.current?.undo?.();
+                return;
+            }
+            
+            if ((e.ctrlKey || e.metaKey) && 
+                ((e.key.toLowerCase() === "y") || (e.key.toLowerCase() === "z" && e.shiftKey))) {
+                e.preventDefault();
+                dispatchRef.current?.redo?.();
+                return;
+            }
+            
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a" && layout.layout?.length) {
+                e.preventDefault();
+                setSelectedIds(layout.layout.map(asset => asset.id));
+                return;
+            }
+            
+            if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key) && selectedIds.length > 0) {
+                e.preventDefault();
+                
+                const moveAmount = e.shiftKey ? effectiveGridSize * 5 : effectiveGridSize;
+                
+                let deltaX = 0;
+                let deltaY = 0;
+                
+                if (e.key === "ArrowLeft") deltaX = -moveAmount;
+                if (e.key === "ArrowRight") deltaX = moveAmount;
+                if (e.key === "ArrowUp") deltaY = -moveAmount;
+                if (e.key === "ArrowDown") deltaY = moveAmount;
+                
                 setLayout({
-                    layout: layout.layout!.filter(a => !selectedIds.includes(a.id)),
+                    layout: layout.layout!.map((asset) => {
+                        if (selectedIds.includes(asset.id)) {
+                            return {
+                                ...asset,
+                                x: asset.x + deltaX,
+                                y: asset.y + deltaY
+                            };
+                        }
+                        return asset;
+                    }),
                     updateOriginator: "user",
                     boundaries: layout.boundaries
                 });
-                setSelectedIds([]);
+                return;
             }
-            else if (key === "v" && copiedRef.current.length) {
+            
+            if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === "c" || e.key.toLowerCase() === "x")) {
+                if (selectedIds.length === 0) return;
                 e.preventDefault();
-                // compute target world‐coords
+                
+                copiedRef.current = layout.layout!
+                    .filter(a => selectedIds.includes(a.id))
+                    .map(a => ({ ...a }));
+                
+                if (e.key.toLowerCase() === "x") {
+                    setLayout({
+                        layout: layout.layout!.filter(a => !selectedIds.includes(a.id)),
+                        updateOriginator: "user",
+                        boundaries: layout.boundaries
+                    });
+                    setSelectedIds([]);
+                }
+                
+                console.log(`${e.key.toLowerCase() === "c" ? "Copied" : "Cut"} ${copiedRef.current.length} item(s)`);
+            }
+            else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v" && copiedRef.current.length) {
+                e.preventDefault();
+                
                 let targetWorld = null;
                 if (viewport && parentRef.current && lastMousePos) {
                     const rect = parentRef.current.getBoundingClientRect();
@@ -95,13 +161,14 @@ const Canvas: React.FC<CanvasProps> = ({
                     const localY = lastMousePos.y - rect.top;
                     targetWorld = viewport.toWorld(localX, localY);
                 }
-                // compute centroid of copied group
+                
                 const copied = copiedRef.current;
                 const cx = copied.reduce((sum, a) => sum + a.x, 0) / copied.length;
                 const cy = copied.reduce((sum, a) => sum + a.y, 0) / copied.length;
 
                 const pasted = copied.map(a => {
-                    // delta: either to grid‐offset or to cursor center
+                    const newId = Date.now() * 1000 + Math.floor(Math.random() * 1000);
+                    
                     let dx = effectiveGridSize, dy = effectiveGridSize;
                     if (targetWorld) {
                         dx = targetWorld.x - cx;
@@ -109,13 +176,12 @@ const Canvas: React.FC<CanvasProps> = ({
                     }
                     const rawX = a.x + dx;
                     const rawY = a.y + dy;
-                    // snap to grid if enabled
                     const snappedX = snapToGrid ? Math.round(rawX / effectiveGridSize) * effectiveGridSize : rawX;
                     const snappedY = snapToGrid ? Math.round(rawY / effectiveGridSize) * effectiveGridSize : rawY;
 
                     return {
                         ...a,
-                        id: Date.now() + Math.random(),
+                        id: newId,
                         x: snappedX,
                         y: snappedY,
                     };
@@ -126,13 +192,27 @@ const Canvas: React.FC<CanvasProps> = ({
                     updateOriginator: "user",
                     boundaries: layout.boundaries
                 });
-                setSelectedIds(pasted.map(a => a.id));
+                
+                const newIds = pasted.map(a => a.id);
+                
+                setTimeout(() => {
+                    setSelectedIds(newIds);
+                }, 50);
+            }
+            else if (e.key === "Delete" && selectedIds.length > 0) {
+                e.preventDefault();
+                setLayout({
+                    layout: layout.layout!.filter(a => !selectedIds.includes(a.id)),
+                    updateOriginator: "user",
+                    boundaries: layout.boundaries
+                });
+                setSelectedIds([]);
             }
         };
 
         window.addEventListener("keydown", onKeyDown);
         return () => window.removeEventListener("keydown", onKeyDown);
-    }, [layout.layout, layout.boundaries, selectedIds, viewport, lastMousePos, setLayout, effectiveGridSize, snapToGrid]);
+    }, [layout.layout, layout.boundaries, selectedIds, viewport, lastMousePos, setLayout, effectiveGridSize, snapToGrid, readOnly]);
 
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -179,14 +259,39 @@ const Canvas: React.FC<CanvasProps> = ({
     };
 
     const handleAssetPositionChange = useCallback((id: number, newX: number, newY: number) => {
-        setLayout({
-            layout: layout.layout!.map((asset) =>
-                asset.id === id ? { ...asset, x: newX, y: newY } : asset
-            ),
-            updateOriginator: "user",
-            boundaries: layout.boundaries
-        });
-    }, [layout.layout, layout.boundaries, setLayout]);
+        if (selectedIds.length <= 1) {
+            setLayout({
+                layout: layout.layout!.map((asset) =>
+                    asset.id === id ? { ...asset, x: newX, y: newY } : asset
+                ),
+                updateOriginator: "user",
+                boundaries: layout.boundaries
+            });
+        } else {
+            const asset = layout.layout!.find(a => a.id === id);
+            if (!asset) return;
+            
+            const deltaX = newX - asset.x;
+            const deltaY = newY - asset.y;
+            
+            setLayout({
+                layout: layout.layout!.map((a) => {
+                    if (selectedIds.includes(a.id)) {
+                        const updatedX = snapToGrid 
+                            ? Math.round((a.x + deltaX) / effectiveGridSize) * effectiveGridSize 
+                            : a.x + deltaX;
+                        const updatedY = snapToGrid 
+                            ? Math.round((a.y + deltaY) / effectiveGridSize) * effectiveGridSize 
+                            : a.y + deltaY;
+                        return { ...a, x: updatedX, y: updatedY };
+                    }
+                    return a;
+                }),
+                updateOriginator: "user",
+                boundaries: layout.boundaries
+            });
+        }
+    }, [layout.layout, layout.boundaries, setLayout, selectedIds, effectiveGridSize, snapToGrid]);
 
     const handleAssetContextMenu = useCallback((assetId: number, pos: { clientX: number; clientY: number }) => {
         if (parentRef.current) {
@@ -219,9 +324,8 @@ const Canvas: React.FC<CanvasProps> = ({
     const handleIncreaseLayer = () => {
         if (!layout.layout) return;
         const index = layout.layout.findIndex(asset => asset.id === contextMenu?.assetId);
-        if (index === -1 || index === layout.layout.length - 1) return; // Already top-most
+        if (index === -1 || index === layout.layout.length - 1) return;
         const newLayout = [...layout.layout];
-        // Correctly swap the elements
         const temp = newLayout[index];
         newLayout[index] = newLayout[index + 1];
         newLayout[index + 1] = temp;
@@ -235,9 +339,8 @@ const Canvas: React.FC<CanvasProps> = ({
     const handleDecreaseLayer = () => {
         if (!layout.layout) return;
         const index = layout.layout.findIndex(asset => asset.id === contextMenu?.assetId);
-        if (index <= 0) return; // Already bottom-most
+        if (index <= 0) return;
         const newLayout = [...layout.layout];
-        // Correctly swap the elements
         const temp = newLayout[index];
         newLayout[index] = newLayout[index - 1];
         newLayout[index - 1] = temp;
@@ -325,6 +428,23 @@ const Canvas: React.FC<CanvasProps> = ({
         };
     }, []);
 
+    useEffect(() => {
+        const refreshSelection = () => {
+            if (layout.layout) {
+                layout.layout.forEach(asset => {
+                    const isSelected = selectedIds.includes(asset.id);
+                    const element = document.querySelector(`[data-asset-id="${asset.id}"]`) as any;
+                    if (element && element.__pixi) {
+                        element.__pixi.alpha = isSelected ? 0.8 : 1;
+                    }
+                });
+            }
+        };
+        
+        const timer = setTimeout(refreshSelection, 50);
+        return () => clearTimeout(timer);
+    }, [selectedIds, layout.layout]);
+
     return (
         <div style={{ width: "100%", height: "100%", display: "flex", maxHeight: '100%' }}>
             <div
@@ -333,6 +453,7 @@ const Canvas: React.FC<CanvasProps> = ({
                 style={{ flex: "1", height: "100%", maxHeight: '100%', position: "relative", overflow: "hidden", overscrollBehavior: "none" }}
                 onDragOver={readOnly ? undefined : handleDragOver}
                 onDrop={readOnly ? undefined : handleDrop}
+                onMouseMove={handleMouseMove}
             >
                 <Application
                     backgroundColor={0x8da64a}
@@ -356,6 +477,7 @@ const Canvas: React.FC<CanvasProps> = ({
                         gridGranularity={gridGranularity}
                         effectiveGridSize={effectiveGridSize}
                         chapterStates={chapterStates}
+                        clampToMap={clampToMap}
                     />
                 </Application>
             </div>

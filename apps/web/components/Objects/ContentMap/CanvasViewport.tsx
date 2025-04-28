@@ -17,6 +17,9 @@ interface DragData {
     assetRef: PIXI.Container | PIXI.Sprite;
     offsetX: number;
     offsetY: number;
+    selected: boolean;
+    selectedIds: number[];
+    initialPositions: Map<number, { x: number, y: number }>;
 }
 
 interface CanvasViewportProps {
@@ -39,6 +42,7 @@ interface CanvasViewportProps {
     gridGranularity?: number;
     effectiveGridSize?: number;
     chapterStates?: Record<number, 'locked' | 'unlocked' | 'finished'>;
+    clampToMap?: boolean;
 }
 
 // Default boundaries
@@ -64,6 +68,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     gridGranularity = 5,
     effectiveGridSize,
     chapterStates,
+    clampToMap,
 }) => {
     const { app } = useApplication();
 
@@ -78,6 +83,8 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
 
     const gridSize = effectiveGridSize || (MINOR_GRID_SIZE * (11 - gridGranularity));
 
+    const [temporaryAssetPositions, setTemporaryAssetPositions] = useState<Map<number, { x: number, y: number }>>(new Map());
+
     useEffect(() => {
         canvasElementRef.current = document.getElementById("canvas-parent");
     }, [app?.renderer]);
@@ -90,16 +97,23 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
         node.resize(app.renderer.width, app.renderer.height, worldWidth, worldHeight);
 
         if (isNewViewport) {
-
             node
                 .drag({ clampWheel: true, mouseButtons: "left" })
                 .decelerate({ friction: 0.9, bounce: 0, minSpeed: 0.02 })
                 .pinch()
-                .wheel({ percent: 0.15 })
-                .clampZoom({
-                    minWidth: worldWidth * 0.5,
+                .wheel({ percent: 0.15 });
+
+            if (readOnly) {
+                node.clampZoom({
+                    minWidth: worldWidth * 0.75,
                     maxWidth: worldWidth * 1
                 });
+            } else {
+                node.clampZoom({
+                    minWidth: worldWidth * 0.2,   
+                    maxWidth: worldWidth * 3      
+                });
+            }
 
             node.fit();
             node.moveCenter(0, 0);
@@ -117,19 +131,22 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
                 bottom: bottom,
                 underflow: 'none',
             });
-        } else {
-            const padX = worldWidth * 0.2;
-            const padY = worldHeight * 0.2;
+        } else if (clampToMap) {
+            const padding = Math.min(worldWidth, worldHeight) * 0.1;
             node.clamp({
-                left: left - padX,
-                right: right + padX,
-                top: top - padY,
-                bottom: bottom + padY,
+                left: left - padding,
+                right: right + padding, 
+                top: top - padding,
+                bottom: bottom + padding,
                 underflow: 'none',
             });
+        } else {
+            if (node.plugins.get('clamp')) {
+                node.plugins.remove('clamp');
+            }
         }
 
-    }, [viewport, app?.renderer, worldWidth, worldHeight, left, right, top, bottom, onViewportReady, readOnly]);
+    }, [viewport, app?.renderer, worldWidth, worldHeight, left, right, top, bottom, onViewportReady, readOnly, clampToMap]);
 
     const onGlobalMove = useCallback((e: PointerEvent) => {
         if (!dragDataRef.current || !viewport) return;
@@ -141,23 +158,62 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
         const localY = e.clientY - rect.top;
         const worldPos = viewport.toWorld(localX, localY);
 
-        const { assetRef, offsetX, offsetY } = dragDataRef.current;
+        const {
+            assetRef,
+            offsetX,
+            offsetY,
+            selected,
+            selectedIds: dragSelectedIds,
+            initialPositions
+        } = dragDataRef.current;
+
         const rawX = worldPos.x - offsetX;
         const rawY = worldPos.y - offsetY;
 
-        // Apply snapping only if enabled
-        if (snapToGrid) {
-            assetRef.x = snapValueToGrid(rawX, gridSize);
-            assetRef.y = snapValueToGrid(rawY, gridSize);
-        } else {
-            assetRef.x = rawX;
-            assetRef.y = rawY;
+        const newX = snapToGrid ? snapValueToGrid(rawX, gridSize) : rawX;
+        const newY = snapToGrid ? snapValueToGrid(rawY, gridSize) : rawY;
+
+        assetRef.x = newX;
+        assetRef.y = newY;
+
+        if (selected && dragSelectedIds.length > 1) {
+            const primaryAssetId = dragDataRef.current.id;
+            const primaryInitialPos = initialPositions.get(primaryAssetId);
+
+            if (primaryInitialPos) {
+                const deltaX = newX - primaryInitialPos.x;
+                const deltaY = newY - primaryInitialPos.y;
+
+                const newPositions = new Map<number, { x: number, y: number }>();
+
+                dragSelectedIds.forEach(assetId => {
+                    const initialPos = initialPositions.get(assetId);
+                    if (initialPos) {
+                        const targetX = snapToGrid
+                            ? snapValueToGrid(initialPos.x + deltaX, gridSize)
+                            : initialPos.x + deltaX;
+                        const targetY = snapToGrid
+                            ? snapValueToGrid(initialPos.y + deltaY, gridSize)
+                            : initialPos.y + deltaY;
+
+                        newPositions.set(assetId, { x: targetX, y: targetY });
+                    }
+                });
+
+                setTemporaryAssetPositions(newPositions);
+            }
         }
     }, [viewport, snapToGrid, gridSize]);
 
     const onGlobalUp = useCallback(() => {
         if (!dragDataRef.current) return;
-        const { id, assetRef } = dragDataRef.current;
+        const {
+            id,
+            assetRef,
+            selected,
+            selectedIds: dragSelectedIds,
+            initialPositions
+        } = dragDataRef.current;
 
         let finalX = assetRef.x;
         let finalY = assetRef.y;
@@ -170,7 +226,38 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
             assetRef.y = finalY;
         }
 
-        onAssetPositionChange(id, finalX, finalY);
+        if (selected && dragSelectedIds.length > 1) {
+            // Multi-select case - calculate delta and update all selected items
+            const primaryAssetId = id;
+            const primaryInitialPos = initialPositions.get(primaryAssetId);
+
+            if (primaryInitialPos) {
+                const deltaX = finalX - primaryInitialPos.x;
+                const deltaY = finalY - primaryInitialPos.y;
+
+                // Update the data model for all selected assets
+                dragSelectedIds.forEach(assetId => {
+                    const initialPos = initialPositions.get(assetId);
+                    if (initialPos) {
+                        const newX = snapToGrid
+                            ? snapValueToGrid(initialPos.x + deltaX, gridSize)
+                            : initialPos.x + deltaX;
+                        const newY = snapToGrid
+                            ? snapValueToGrid(initialPos.y + deltaY, gridSize)
+                            : initialPos.y + deltaY;
+
+                        // Update model with new position
+                        onAssetPositionChange(assetId, newX, newY);
+                    }
+                });
+            }
+        } else {
+            // Single asset - just update its position
+            onAssetPositionChange(id, finalX, finalY);
+        }
+
+        // Clear temporary positions
+        setTemporaryAssetPositions(new Map());
 
         dragDataRef.current = null;
         window.removeEventListener("pointermove", onGlobalMove);
@@ -183,7 +270,6 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
         (e: any, asset: AssetData, target: PIXI.Container | PIXI.Sprite) => {
             const orig = e.data?.originalEvent as MouseEvent;
 
-            // Handle right click first
             if (orig.button === 2 && !readOnly) {
                 orig.preventDefault();
                 onAssetContextMenu?.(asset.id, {
@@ -193,14 +279,14 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
                 return;
             }
 
-            // Handle chapter click in readOnly mode
             if (asset.type.kind === "chapter" && readOnly && orig.button === 0) {
                 onChapterClick?.(asset.type.associatedChapterID!);
                 return;
             }
 
-            // Skip if not left click or in readOnly mode
             if (orig.button !== 0 || readOnly) return;
+
+            const isAlreadySelected = selectedIds.includes(asset.id);
 
             if (orig.shiftKey) {
                 onSelectIds(ids =>
@@ -208,7 +294,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
                         ? ids.filter(id => id !== asset.id)
                         : [...ids, asset.id]
                 );
-            } else {
+            } else if (!isAlreadySelected) {
                 onSelectIds([asset.id]);
             }
 
@@ -225,17 +311,32 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
             const localY = originalEvent.clientY - rect.top;
             const worldPos = viewport.toWorld(localX, localY);
 
+            const initialPositions = new Map<number, { x: number, y: number }>();
+
+            if (isAlreadySelected && selectedIds.length > 1) {
+                placedAssets.forEach(a => {
+                    if (selectedIds.includes(a.id)) {
+                        initialPositions.set(a.id, { x: a.x, y: a.y });
+                    }
+                });
+            } else {
+                initialPositions.set(asset.id, { x: asset.x, y: asset.y });
+            }
+
             dragDataRef.current = {
                 id: asset.id,
                 assetRef: target,
                 offsetX: worldPos.x - asset.x,
                 offsetY: worldPos.y - asset.y,
+                selected: isAlreadySelected,
+                selectedIds: isAlreadySelected ? [...selectedIds] : [asset.id],
+                initialPositions,
             };
 
             window.addEventListener("pointermove", onGlobalMove);
             window.addEventListener("pointerup", onGlobalUp);
         },
-        [onAssetContextMenu, onChapterClick, onGlobalMove, onGlobalUp, readOnly, onSelectIds]
+        [onAssetContextMenu, onChapterClick, onGlobalMove, onGlobalUp, readOnly, onSelectIds, selectedIds, viewport, placedAssets]
     );
 
     const spriteURL = useCallback((file: string) => `/contentMap/${file}`, []);
@@ -296,40 +397,46 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
                 </>
             )}
 
-            {placedAssets.map((asset, idx) => (
-                <Asset
-                    key={asset.id}
-                    asset={asset}
-                    layer={idx}
-                    spriteURL={spriteURL}
-                    onPointerDown={handlePointerDown}
-                    selected={selectedIds.includes(asset.id)}
-                    chapterState={asset.type.kind === 'chapter' && asset.type.associatedChapterID !== undefined && chapterStates ? chapterStates[asset.type.associatedChapterID] : undefined}
-                />
-            ))}
+            {placedAssets.map((asset, idx) => {
+                const tempPos = temporaryAssetPositions.get(asset.id);
+                const effectiveAsset = tempPos ? { ...asset, x: tempPos.x, y: tempPos.y } : asset;
+
+                return (
+                    <Asset
+                        key={asset.id}
+                        asset={effectiveAsset}
+                        layer={idx}
+                        spriteURL={spriteURL}
+                        onPointerDown={handlePointerDown}
+                        selected={selectedIds.includes(asset.id)}
+                        chapterState={asset.type.kind === 'chapter' && asset.type.associatedChapterID !== undefined && chapterStates ? chapterStates[asset.type.associatedChapterID] : undefined}
+                        assetId={asset.id}
+                    />
+                );
+            })}
 
             {!readOnly && (
-            <>
-                {/* Boundary */}
-                <graphics
-                    draw={(g) => {
-                        g.clear();
-                        g.rect(left, top, worldWidth, worldHeight)
-                        g.stroke({ width: 4, color: 0xffffff, alpha: 0.8 });
-                    }}
-                />
+                <>
+                    {/* Boundary */}
+                    <graphics
+                        draw={(g) => {
+                            g.clear();
+                            g.rect(left, top, worldWidth, worldHeight)
+                            g.stroke({ width: 4, color: 0xffffff, alpha: 0.8 });
+                        }}
+                    />
 
-                {/* Origin */}
-                <graphics
-                    draw={(g) => {
-                        g.clear();
-                        g.circle(0, 0, 10)
-                        g.fill({ color: 0xffffff, alpha: 0.8 });
-                    }}
-                />
-            </>
+                    {/* Origin */}
+                    <graphics
+                        draw={(g) => {
+                            g.clear();
+                            g.circle(0, 0, 10)
+                            g.fill({ color: 0xffffff, alpha: 0.8 });
+                        }}
+                    />
+                </>
             )}
-            {/* @ts-expect-error Custom component render */}
+        {/* @ts-expect-error */}
         </viewport>
     );
 });

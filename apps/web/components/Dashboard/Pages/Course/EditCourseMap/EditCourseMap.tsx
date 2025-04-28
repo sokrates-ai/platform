@@ -198,7 +198,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
     const [showGrid, setShowGrid] = React.useState<boolean>(true)
     const [snapToGrid, setSnapToGrid] = React.useState<boolean>(true)
     const [gridGranularity, setGridGranularity] = React.useState<number>(5)
-    // Track last initialized course UUID to prevent infinite re-init
+    const [clampToMap, setClampToMap] = React.useState<boolean>(true)
     const lastInitializedUUID = React.useRef<string | undefined>(undefined);
     const [assetPanelOpen, setAssetPanelOpen] = useState(false)
 
@@ -329,6 +329,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
     const handleGridToggle = (showGrid: boolean) => setShowGrid(showGrid)
     const handleSnapToggle = (snapToGrid: boolean) => setSnapToGrid(snapToGrid)
     const handleGridGranularityChange = (value: number) => setGridGranularity(value)
+    const handleClampToMapChange = (clampToMap: boolean) => setClampToMap(clampToMap)
 
     if (!onMapUpdateCallbackRef.current || !state.layout) {
         return (<div className='bg-black flex flex-col items-center justify-center h-full'>
@@ -360,6 +361,11 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
                         showGrid={showGrid}
                         snapToGrid={snapToGrid}
                         gridGranularity={gridGranularity}
+                        clampToMap={clampToMap}
+                        undoRedo={{
+                            undo: handleUndo,
+                            redo: handleRedo
+                        }}
                         onChapterClick={() => { }}
                     />
                     {/* Floating toolbar at bottom center */}
@@ -377,6 +383,8 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
                                 onSnapToGridChange={handleSnapToggle}
                                 gridGranularity={gridGranularity}
                                 onGridGranularityChange={handleGridGranularityChange}
+                                clampToMap={clampToMap}
+                                onClampToMapChange={handleClampToMapChange}
                                 canUndo={state.historyIndex > 0}
                                 canRedo={state.historyIndex < state.history.length - 1}
                             />

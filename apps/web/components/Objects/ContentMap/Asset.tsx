@@ -31,9 +31,10 @@ export interface AssetProps {
     onPointerDown: (e: any, asset: AssetData, target: PIXI.Container | PIXI.Sprite) => void;
     selected: boolean;
     chapterState?: 'locked' | 'unlocked' | 'finished';
+    assetId?: number;
 }
 
-const Asset = React.memo(React.forwardRef<PIXI.Container | PIXI.Sprite, AssetProps>(({ asset, spriteURL, onPointerDown, layer, selected, chapterState }, ref) => {
+const Asset = React.memo(React.forwardRef<PIXI.Container | PIXI.Sprite, AssetProps>(({ asset, spriteURL, onPointerDown, layer, selected, chapterState, assetId }, ref) => {
     const [texture, setTexture] = useState<PIXI.Texture | null>(null);
     const hasLoaded = useRef(false);
     const spriteRef = useRef<PIXI.Sprite>(null);
@@ -52,8 +53,14 @@ const Asset = React.memo(React.forwardRef<PIXI.Container | PIXI.Sprite, AssetPro
     useEffect(() => {
         const target =
             asset.type.kind === "chapter" ? containerRef.current : spriteRef.current;
-        if (target) target.alpha = selected ? 0.8 : 1;
-    }, [selected, asset.type.kind]);
+        if (target) {
+            target.alpha = selected ? 0.8 : 1;
+            const pixiElement = target as any;
+            if (pixiElement.element) {
+                pixiElement.element.setAttribute('data-asset-id', assetId !== undefined ? assetId.toString() : asset.id.toString());
+            }
+        }
+    }, [selected, asset.type.kind, assetId, asset.id]);
 
     useEffect(() => {
         if (!hasLoaded.current) {
@@ -93,6 +100,7 @@ const Asset = React.memo(React.forwardRef<PIXI.Container | PIXI.Sprite, AssetPro
                 zIndex={layer}
                 interactive
                 onPointerDown={(e: PIXI.FederatedPointerEvent) => onPointerDown(e, asset, containerRef.current!)}
+                data-asset-id={assetId !== undefined ? assetId : asset.id}
             >
                 <pixiSprite
                     ref={spriteRef}
@@ -120,6 +128,7 @@ const Asset = React.memo(React.forwardRef<PIXI.Container | PIXI.Sprite, AssetPro
             scale={asset.scale}
             interactive
             onPointerDown={(e: PIXI.FederatedPointerEvent) => onPointerDown(e, asset, spriteRef.current!)}
+            data-asset-id={assetId !== undefined ? assetId : asset.id}
         />
     );
 }));
