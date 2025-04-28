@@ -25,6 +25,7 @@ import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import { AssetData } from '@components/Objects/ContentMap/Asset'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import { isChapterLocked, isActivityDone } from '@components/Pages/Courses/utils'
 
 const CourseClient = (props: any) => {
 	const [learnings, setLearnings] = useState<string[]>([])
@@ -66,6 +67,19 @@ const CourseClient = (props: any) => {
 	}
 
 	if (isStarted) {
+		// Compute chapter states
+		const chapterStates: Record<number, 'locked' | 'unlocked' | 'finished'> = {};
+		if (course && course.chapters) {
+			for (const chapter of course.chapters) {
+				const locked = isChapterLocked(chapter.id, course);
+				if (locked) {
+					chapterStates[chapter.id] = 'locked';
+				} else {
+					const allDone = chapter.activities.length > 0 && chapter.activities.every((act: any) => isActivityDone(course, act.id));
+					chapterStates[chapter.id] = allDone ? 'finished' : 'unlocked';
+				}
+			}
+		}
 		return (
 			<div className="w-full h-[calc(100vh-60px)] max-w-full overflow-hidden">
 				<Modal
@@ -91,6 +105,7 @@ const CourseClient = (props: any) => {
 						setSelectedChapter(chapter)
 						setChapterDialogOpen(true)
 					}}
+					chapterStates={chapterStates}
 				/>
 			</div>
 		)

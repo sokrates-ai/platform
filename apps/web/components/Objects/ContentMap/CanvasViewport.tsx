@@ -38,6 +38,7 @@ interface CanvasViewportProps {
     snapToGrid?: boolean;
     gridGranularity?: number;
     effectiveGridSize?: number;
+    chapterStates?: Record<number, 'locked' | 'unlocked' | 'finished'>;
 }
 
 // Default boundaries
@@ -62,6 +63,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
     snapToGrid = true,
     gridGranularity = 5,
     effectiveGridSize,
+    chapterStates,
 }) => {
     const { app } = useApplication();
 
@@ -302,6 +304,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
                     spriteURL={spriteURL}
                     onPointerDown={handlePointerDown}
                     selected={selectedIds.includes(asset.id)}
+                    chapterState={asset.type.kind === 'chapter' && asset.type.associatedChapterID !== undefined && chapterStates ? chapterStates[asset.type.associatedChapterID] : undefined}
                 />
             ))}
 

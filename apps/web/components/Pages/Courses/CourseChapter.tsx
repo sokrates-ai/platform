@@ -29,9 +29,6 @@ function CourseChapter(props: Props) {
 			<CardHeader className="pb-2 px-4 sm:px-6">
 				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
 					<div>
-						<Badge variant="outline" className="mb-2">
-							Chapter {chapterIndex} of {totalChapters}
-						</Badge>
 						<CardTitle className="text-xl font-bold">{chapter.name}</CardTitle>
 					</div>
 					{chapterLocked && <Lock className="text-muted-foreground mt-1 sm:mt-0" />}

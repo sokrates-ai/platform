@@ -34,6 +34,7 @@ export interface CanvasProps {
     showGrid?: boolean;
     snapToGrid?: boolean;
     gridGranularity?: number;
+    chapterStates?: Record<number, 'locked' | 'unlocked' | 'finished'>;
 }
 
 const Canvas: React.FC<CanvasProps> = ({
@@ -44,6 +45,7 @@ const Canvas: React.FC<CanvasProps> = ({
     showGrid = true,
     snapToGrid = true,
     gridGranularity = 5,
+    chapterStates = {},
 }) => {
     const parentRef = useRef<HTMLDivElement>(null);
     const copiedRef = useRef<AssetData[]>([]);
@@ -353,6 +355,7 @@ const Canvas: React.FC<CanvasProps> = ({
                         snapToGrid={snapToGrid}
                         gridGranularity={gridGranularity}
                         effectiveGridSize={effectiveGridSize}
+                        chapterStates={chapterStates}
                     />
                 </Application>
             </div>

@@ -30,9 +30,10 @@ export interface AssetProps {
     spriteURL: (file: string) => string;
     onPointerDown: (e: any, asset: AssetData, target: PIXI.Container | PIXI.Sprite) => void;
     selected: boolean;
+    chapterState?: 'locked' | 'unlocked' | 'finished';
 }
 
-const Asset = React.memo(React.forwardRef<PIXI.Container | PIXI.Sprite, AssetProps>(({ asset, spriteURL, onPointerDown, layer, selected }, ref) => {
+const Asset = React.memo(React.forwardRef<PIXI.Container | PIXI.Sprite, AssetProps>(({ asset, spriteURL, onPointerDown, layer, selected, chapterState }, ref) => {
     const [texture, setTexture] = useState<PIXI.Texture | null>(null);
     const hasLoaded = useRef(false);
     const spriteRef = useRef<PIXI.Sprite>(null);
@@ -66,6 +67,18 @@ const Asset = React.memo(React.forwardRef<PIXI.Container | PIXI.Sprite, AssetPro
         }
     }, [file, spriteURL]);
 
+    // Determine tint color for chapter states
+    let tint: number | undefined = undefined;
+    if (asset.type.kind === 'chapter' && chapterState) {
+        if (chapterState === 'locked') {
+            tint = 0x888888; // gray
+        } else if (chapterState === 'unlocked') {
+            tint = 0xffffff; // white
+        } else if (chapterState === 'finished') {
+            tint = 0xdddddd; // light gray
+        }
+    }
+
     if (!texture) {
         return null;
     }
@@ -86,6 +99,7 @@ const Asset = React.memo(React.forwardRef<PIXI.Container | PIXI.Sprite, AssetPro
                     texture={texture}
                     scale={asset.scale}
                     anchor={0.5}
+                    tint={tint}
                 />
                 <IsometricChapterText
                     chapterID={asset.type.customChapterId ?? 0}
