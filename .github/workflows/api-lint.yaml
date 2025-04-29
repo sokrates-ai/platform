@@ -1,11 +1,9 @@
 name: API Lint
 on:
-  push:
-    paths:
-      - "apps/api/**"
-  pull_request:
-    paths:
-      - "apps/api/**"
+  workflow_run:
+    workflows: ["Web Lint"]
+    types:
+      - completed
 jobs:
   ruff:
     runs-on: ubuntu-latest
