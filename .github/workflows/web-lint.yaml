@@ -19,7 +19,6 @@ jobs:
           version: 8
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
-        working-directory: ./apps/web
         with:
           node-version: ${{ matrix.node-version }}
           cache: "pnpm"
