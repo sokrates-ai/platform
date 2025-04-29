@@ -1,29 +1,14 @@
 from typing import List, Literal, Optional
-from src.db.courses.courses import Course
-from src.db.organizations import Organization
-from sqlmodel import SQLModel, Field, col
+from sqlmodel import SQLModel, Field
 
 from pydantic import BaseModel
 from sqlmodel import Session, select
-from sqlalchemy import Column, JSON
 from src.security.rbac.rbac import (
     authorization_verify_based_on_roles_and_authorship,
     authorization_verify_if_user_is_anon,
 )
-from src.db.courses.chapters import Chapter
-from src.db.courses.activities import (
-    Activity,
-    ActivityRead,
-    ActivitySubTypeEnum,
-    ActivityTypeEnum,
-)
-from src.db.courses.chapter_activities import ChapterActivity
-from src.db.courses.course_chapters import CourseChapter
 from src.db.users import AnonymousUser, PublicUser
-from src.services.courses.activities.uploads.videos import upload_video
-from fastapi import HTTPException, status, UploadFile, Request
-from uuid import uuid4
-from datetime import datetime
+from fastapi import HTTPException, status, Request
 
 
 class TaskBase(SQLModel):

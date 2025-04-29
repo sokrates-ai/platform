@@ -1,19 +1,13 @@
-import json
-import time
-import requests
 import httpx
 from typing import List, Optional
 from config.config import WorkspaceConfig
-from src.security.rbac.rbac import authorization_verify_based_on_roles_and_authorship
 from src.db.courses.activities import Activity, ActivityTypeEnum
-from src.services.courses.activities.activities import get_activity, rbac_check
+from src.services.courses.activities.activities import get_activity
 from src.services.courses.activities.workspaces import (
     DeleteTag,
     Tags,
     Task,
-    TaskBase,
     TaskCreate,
-    TaskModify,
     TaskWithCourseIDAndTags,
     create_tag,
     create_task,
@@ -28,8 +22,6 @@ from src.services.courses.activities.workspaces import (
 from fastapi import (
     APIRouter,
     Depends,
-    UploadFile,
-    Form,
     Request,
     HTTPException,
     status,
@@ -37,37 +29,9 @@ from fastapi import (
 )
 from sqlmodel import Session
 from pydantic import BaseModel
-from fastapi import FastAPI
 from src.core.events.database import get_db_session
-from src.db.courses.course_updates import (
-    CourseUpdateCreate,
-    CourseUpdateRead,
-    CourseUpdateUpdate,
-)
-from src.db.users import InternalUser, PublicUser
-from src.db.courses.courses import (
-    CourseCreate,
-    CourseRead,
-    CourseUpdate,
-    FullCourseReadWithTrail,
-)
+from src.db.users import PublicUser
 from src.security.auth import get_current_user
-from src.services.courses.courses import (
-    create_course,
-    get_course,
-    get_course_by_id,
-    get_course_meta,
-    get_courses_orgslug,
-    update_course,
-    delete_course,
-    update_course_thumbnail,
-)
-from src.services.courses.updates import (
-    create_update,
-    delete_update,
-    get_updates_by_course_uuid,
-    update_update,
-)
 
 
 router = APIRouter()
