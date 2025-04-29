@@ -78,6 +78,21 @@ dev_backend() {
     bash -c 'cd ./apps/api/ && poetry run python3 app.py'
 }
 
+lint_web() {
+    echo "=== WEB LINT ==="
+    bash -c "cd ./apps/web && pnpm run lint"
+}
+
+lint_api() {
+    echo "=== API LINT ==="
+    bash -c "cd ./apps/api && poetry run ruff check"
+}
+
+lint() {
+    lint_web || exit 1
+    lint_api || exit 1
+}
+
 ARG="$1"
 
 if [ "${ARG}" = "setup" ]; then
@@ -88,6 +103,8 @@ elif [ "${ARG}" = "api-dev" ]; then
     dev_backend
 elif [ "${ARG}" = "reset" ]; then
     reset
+elif [ "${ARG}" = "lint" ]; then
+    lint
 else
     echo -e "[ERROR]: Unknown argument <${ARG}>"
     exit 1
