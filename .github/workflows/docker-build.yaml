@@ -1,9 +1,12 @@
 name: Build and Push Docker Image
 
 on:
-  push:
+  workflow_run:
+    workflows: ["API Lint", "Web Lint"]
+    types:
+      - completed
     branches:
-      - PROD_REAL  # Change this if needed
+      - PROD_REAL
 
 permissions:
   contents: read
