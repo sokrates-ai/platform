@@ -10,9 +10,9 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 
 async function createSession(activity_uuid: string, access_token: string): Promise<{ token: string, workspace_url: string }> {
-  const ACTIVATE_SESSION_URL = `${getAPIUrl()}ex/session`;
+  // const ACTIVATE_SESSION_URL = `${getAPIUrl()}ex/session`;
   const result = await fetch(
-    `${getAPIUrl()}ex/session`,
+    `${getAPIUrl()}tasks/session`,
     RequestBodyWithAuthHeader('POST', {
       activity_uuid
     }, null, access_token)

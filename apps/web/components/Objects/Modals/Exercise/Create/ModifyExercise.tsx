@@ -350,4 +350,3 @@ function ModifyExerciseModal({ closeModal, orgslug, mutateURL, courses, tags, ex
 }
 
 export default ModifyExerciseModal
-
