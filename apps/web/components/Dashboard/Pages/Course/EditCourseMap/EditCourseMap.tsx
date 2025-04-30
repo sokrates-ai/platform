@@ -9,7 +9,7 @@ import { BarLoader } from 'react-spinners';
 
 import dynamic from 'next/dynamic';
 import { AssetData } from '@components/Objects/ContentMap/Asset';
-import { SPRITES } from '@components/Objects/ContentMap/spriteIndex';
+import { SPRITES} from './spriteIndex'
 import ChapterActivities from '@components/Pages/Courses/ChapterActivities';
 import { SPRITE_SCALE_FACTOR } from '@components/Objects/ContentMap/constants';
 import { setLazyProp } from 'next/dist/server/api-utils';
