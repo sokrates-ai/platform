@@ -2,7 +2,7 @@ name: Build and Push Docker Image
 
 on:
   workflow_run:
-    workflows: ["API Lint", "Web Lint"]
+    workflows: ["API Lint"]
     types:
       - completed
     # branches:
