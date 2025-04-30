@@ -4,11 +4,9 @@ on:
   push:
     branches:
       - dev
-      - PROD_REAL
   pull_request:
     branches:
       - dev
-      - PROD_REAL
 
 jobs:
   next-lint:
