@@ -12,10 +12,10 @@ permissions:
   contents: read
   packages: write
 
+# github.event.workflow_run.conclusion == 'success' &&
 jobs:
   build-and-push:
     if: >
-      github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.head_branch == 'PROD_REAL'
 
     runs-on: ubuntu-latest
