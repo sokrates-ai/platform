@@ -1,4 +1,4 @@
-name: Web Lint
+name: WEB-LINT
 
 on:
   push:

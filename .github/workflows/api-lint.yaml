@@ -1,7 +1,7 @@
-name: API Lint
+name: API-LINT
 on:
   workflow_run:
-    workflows: ["Web Lint"]
+    workflows: ["WEB-LINT"]
     types:
       - completed
 jobs:
