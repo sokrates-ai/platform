@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import * as PIXI from "pixi.js";
-import { SPRITES } from "./spriteIndex";
+import { SPRITES } from "@components/Dashboard/Pages/Course/EditCourseMap/spriteIndex";
 
 const useAssetPreloader = () => {
     useEffect(() => {
