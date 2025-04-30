@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback, Dispatch, SetStateAction } from "react";
 import { Application } from "@pixi/react";
 import CanvasViewport from "./CanvasViewport";
-import { SPRITES } from "./spriteIndex";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
