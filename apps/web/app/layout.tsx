@@ -6,6 +6,7 @@ import { SessionProvider } from 'next-auth/react'
 import LHSessionProvider from '@components/Contexts/LHSessionContext'
 import Script from 'next/script'
 import { isDevEnv } from '@services/config/config'
+import { PostHogProvider } from '@components/Posthog/PosthogProvider'
 
 export default function RootLayout({
   children,
@@ -22,8 +23,10 @@ export default function RootLayout({
       <head />
       <body>
         {isDevEnv ? '' : <Script data-website-id="a1af6d7a-9286-4a1f-8385-ddad2a29fcbb" src="/umami/script.js" />}
+  
         <SessionProvider>
           <LHSessionProvider>
+          <PostHogProvider>
             <StyledComponentsRegistry>
               <motion.main
                 variants={variants} // Pass the variant object into Framer Motion
@@ -36,6 +39,7 @@ export default function RootLayout({
                 {children}
               </motion.main>
             </StyledComponentsRegistry>
+            </PostHogProvider>
           </LHSessionProvider>
         </SessionProvider>
       </body>
