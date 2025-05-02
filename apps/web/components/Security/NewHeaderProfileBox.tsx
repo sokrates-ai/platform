@@ -67,7 +67,7 @@ export const NewHeaderProfileBox = () => {
               </div>
 
               {isUserAdmin.isAdmin && (
-                <Link href={"/dash"}>
+                <Link href={"/"}>
                   <DropdownMenuItem>
                     <Home size={14} className="mr-2" />
                     Dashboard
