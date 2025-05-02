@@ -109,7 +109,7 @@ function CourseOverviewPage({ params }: { params: CourseOverviewParams }) {
 					animate={{ opacity: 1 }}
 					exit={{ opacity: 0 }}
 					transition={{ duration: 0.1, type: 'spring', stiffness: 80 }}
-					className="h-full overflow-y-auto"
+					className="h-full overflow-hidden"
 				>
 					{params.subpage == 'map' ? (<EditCourseMap orgslug={params.orgslug}/>) : ('')}
 					{params.subpage == 'content' ? (<EditCourseStructure orgslug={params.orgslug} />) : ('')}

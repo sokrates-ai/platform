@@ -36,7 +36,7 @@ type PropsType = {
 export const removeCoursePrefix = (course_uuid: string) => course_uuid.replace('course_', '')
 
 function CourseThumbnail({ course, orgslug, customLink }: PropsType) {
-  const router = useRouter() 
+  const router = useRouter()
   const org = useOrg() as any
   const session = useLHSession() as any
 

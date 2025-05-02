@@ -2,6 +2,7 @@ import { getAPIUrl } from '@services/config/config'
 import {
   RequestBodyWithAuthHeader,
 } from '@services/utils/ts/requests'
+import internal from 'stream'
 
 export async function createWorkspace(
   data: any,
@@ -68,7 +69,7 @@ export async function modifyExercise(
   )
 
   if (result.status !== 200) {
-    throw(`Illegal response: ${await result.text()}`)
+    throw (`Illegal response: ${await result.text()}`)
   }
 
   const res = await result.json()
@@ -79,6 +80,58 @@ export async function deleteExerciseFromBE(exercise_id: number, access_token: an
   const result: any = await fetch(
     `${getAPIUrl()}tasks/id/${exercise_id}`,
     RequestBodyWithAuthHeader('DELETE', null, { revalidate: 0, tags: ['ex'] }, access_token)
+  )
+  const res = await result.json()
+  return res
+}
+
+//
+// TAGS.
+//
+
+
+export async function createTag(
+  value: string,
+  color: number,
+  access_token: string,
+) {
+  let urlComplete = `${getAPIUrl()}tasks/tag`
+  const result = await fetch(
+    urlComplete,
+    RequestBodyWithAuthHeader('POST', { value, color }, { revalidate: 0, tags: ['tasks'] }, access_token)
+  )
+  const res = await result.json()
+  return res
+}
+
+export async function modifyTag(
+  value: string,
+  color: number,
+  access_token: string,
+) {
+  let urlComplete = `${getAPIUrl()}tasks/tag`
+  const result = await fetch(
+    urlComplete,
+    RequestBodyWithAuthHeader('PUT', { value, color }, { revalidate: 0, tags: ['tasks'] }, access_token)
+  )
+
+  if (result.status !== 200) {
+    throw (`Illegal response: ${await result.text()}`)
+  }
+
+  const res = await result.json()
+  return res
+}
+
+
+export async function deleteTag(
+  value: string,
+  access_token: string,
+) {
+  let urlComplete = `${getAPIUrl()}tasks/tag`
+  const result = await fetch(
+    urlComplete,
+    RequestBodyWithAuthHeader('DELETE', { value }, { revalidate: 0, tags: ['tasks'] }, access_token)
   )
   const res = await result.json()
   return res

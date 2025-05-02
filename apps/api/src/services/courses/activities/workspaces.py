@@ -1,29 +1,14 @@
 from typing import List, Literal, Optional
-from src.db.courses.courses import Course
-from src.db.organizations import Organization
-from sqlmodel import SQLModel, Field, col
+from sqlmodel import SQLModel, Field
 
 from pydantic import BaseModel
 from sqlmodel import Session, select
-from sqlalchemy import Column, JSON
 from src.security.rbac.rbac import (
     authorization_verify_based_on_roles_and_authorship,
     authorization_verify_if_user_is_anon,
 )
-from src.db.courses.chapters import Chapter
-from src.db.courses.activities import (
-    Activity,
-    ActivityRead,
-    ActivitySubTypeEnum,
-    ActivityTypeEnum,
-)
-from src.db.courses.chapter_activities import ChapterActivity
-from src.db.courses.course_chapters import CourseChapter
 from src.db.users import AnonymousUser, PublicUser
-from src.services.courses.activities.uploads.videos import upload_video
-from fastapi import HTTPException, status, UploadFile, Request
-from uuid import uuid4
-from datetime import datetime
+from fastapi import HTTPException, status, Request
 
 
 class TaskBase(SQLModel):
@@ -63,6 +48,10 @@ class Tasks_Tags(SQLModel, table=True):
 class Tags(SQLModel, table=True):
     value: str = Field(primary_key=True)
     color: int
+
+
+class DeleteTag(BaseModel):
+    value: str
 
 
 #
@@ -163,6 +152,74 @@ async def get_task(
 # from sqlmodel import col
 
 
+async def get_tags(
+    db_session: Session,
+) -> List[Tags]:
+    statement = select(Tags)
+    tags = db_session.exec(statement).all()
+    return tags
+
+
+async def create_tag(
+    db_session: Session,
+    tag_value: str,
+    color: int,
+):
+    tag = Tags.model_validate(Tags(value=tag_value, color=color))
+    db_session.add(tag)
+    db_session.commit()
+    db_session.refresh(tag)
+
+
+async def modify_tag(
+    db_session: Session,
+    tag_value: str,
+    new_color: int,
+):
+    statement = select(Tags).where((Tags.value == tag_value))
+    tag = db_session.exec(statement).first()
+
+    if not tag:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Tag not found",
+        )
+
+    setattr(tag, "color", new_color)
+
+    db_session.commit()
+
+
+async def delete_tag(
+    db_session: Session,
+    tag_value: str,
+) -> List[str]:
+    statement = select(Tags).where((Tags.value == tag_value))
+    tag = db_session.exec(statement).first()
+    if not tag:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Tag not found",
+        )
+
+    #
+    # Remove associations.
+    #
+
+    statement = select(Tasks_Tags).where(Tasks_Tags.tag_value == tag_value)
+    tags = db_session.exec(statement).all()
+    for t in tags:
+        db_session.delete(t)
+
+    db_session.delete(tag)
+    db_session.commit()
+
+
+#
+# Task tags
+#
+
+
 async def get_task_tags(
     db_session: Session,
     task_id: int,
@@ -194,7 +251,7 @@ async def delete_task_tag(
     tag_value: str,
 ) -> List[str]:
     statement = select(Tasks_Tags).where(
-        (Tasks_Tags.tag_value == tag_value) & Tasks_Tags.task_id == task_id
+        (Tasks_Tags.tag_value == tag_value) & (Tasks_Tags.task_id == task_id)
     )
     link = db_session.exec(statement).first()
     if link:
@@ -236,10 +293,10 @@ async def get_tasks(
     for task, cid in results:
         # Get tags belonging to this task.
         tags = await get_task_tags(db_session=db_session, task_id=task.id)
-        print(tags)
+        print(f"task: {task} | tags={tags}")
 
         tasks_with_course_id.append(
-            TaskWithCourseIDAndTags(**task.model_dump(), course_id=cid)
+            TaskWithCourseIDAndTags(**task.model_dump(), course_id=cid, tags=tags)
         )
 
     return tasks_with_course_id
@@ -262,11 +319,13 @@ async def create_task(
 
     print("new task id: ", task.id, data)
 
-    # Create association
+    # Create course association
     if data.course_id:
         await add_course_task_association(db_session, data.course_id, task.id)
 
+    # Create tags.
     for tag in data.tags:
+        print(f"Create tag: {tag}")
         await create_task_tag(db_session=db_session, task_id=task.id, tag_value=tag)
 
     return task
@@ -296,14 +355,14 @@ async def modify_task(
 
     # Update fields
     for key, value in data.dict(exclude_unset=True).items():
-        if key == "id":
+        if key == "id" or key == "tags" or key == "course_id":
             continue
         setattr(task, key, value)
 
     db_session.commit()
     db_session.refresh(task)
 
-    # Update association.
+    # Update course association.
     # Delete everything by default.
     statement = select(Course_Task).where(Course_Task.task_id == data.id)
     association = db_session.exec(statement).first()

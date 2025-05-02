@@ -1,4 +1,3 @@
-import os
 from src.routers.courses import tasks
 from fastapi import APIRouter, Depends
 from src.routers import health
@@ -7,7 +6,7 @@ from src.routers import dev, trail, users, auth, orgs, roles
 from src.routers.ai import ai
 from src.routers.courses import chapters, collections, courses, assignments
 from src.routers.courses.activities import activities, blocks
-from src.routers.ee import cloud_internal, payments
+from src.routers.ee import payments
 from src.routers.install import install
 from src.services.dev.dev import isDevModeEnabledOrRaise
 from src.services.install.install import isInstallModeEnabled

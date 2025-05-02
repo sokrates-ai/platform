@@ -3,17 +3,38 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - PROD_REAL  # Change this if needed
+      - prod
 
 permissions:
   contents: read
   packages: write
 
 jobs:
-  build-and-push:
+  deploy:
     runs-on: ubuntu-latest
-
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Needed for full commit history
+
+      - name: Check if merged from dev
+        id: check_dev
+        run: |
+          git fetch origin dev
+          BASE_COMMIT=$(git merge-base HEAD origin/dev)
+          if git log --oneline $BASE_COMMIT..HEAD | grep -q .; then
+            echo "Merged from dev ✅"
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "Not merged from dev ❌"
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy
+        if: steps.check_dev.outputs.should_deploy == 'true'
+        run: echo "🚀 Deploying..."
+
       - name: Checkout repository
         uses: actions/checkout@v4
 

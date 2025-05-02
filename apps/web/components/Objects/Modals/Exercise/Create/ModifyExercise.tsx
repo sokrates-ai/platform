@@ -3,8 +3,11 @@ import { Input } from "@components/ui/input"
 import { Textarea } from "@components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select"
 import FormLayout, {
+  Flex,
   FormField,
+  FormLabel,
   FormLabelAndMessage,
+  FormMessage,
 } from '@components/Objects/StyledElements/Form/Form'
 import * as Form from '@radix-ui/react-form'
 import { createNewCourse } from '@services/courses/courses'
@@ -21,7 +24,6 @@ import { UploadCloud, Image as ImageIcon, X } from 'lucide-react'
 import UnsplashImagePicker from "@components/Dashboard/Pages/Course/EditCourseGeneral/UnsplashImagePicker"
 import { createExercise, modifyExercise } from "@services/courses/workspaces"
 import { mutate } from "swr"
-import { Exercise } from "@components/Objects/Thumbnails/ExerciseThumbnail"
 
 const validationSchema = Yup.object().shape({
   title: Yup.string()
@@ -31,16 +33,24 @@ const validationSchema = Yup.object().shape({
     .max(1000, 'Must be 1000 characters or less'),
   task: Yup.string(),
   solution: Yup.string(),
-  tags: Yup.array().of(Yup.string())
+  course_id: Yup.mixed().nullable(),
+  tags: Yup.array().of(Yup.object().shape({
+    value: Yup.string(),
+    color: Yup.number(),
+  }))
 })
 
-function ModifyExerciseModal({ closeModal, orgslug, mutateURL, exercise }: { closeModal: any, orgslug: string, mutateURL: string, exercise: Exercise }) {
+function ModifyExerciseModal({ closeModal, orgslug, mutateURL, courses, tags, exercise }: any) {
+  console.log(exercise)
   const router = useRouter()
   const session = useLHSession() as any
   const [orgId, setOrgId] = React.useState(null) as any
   const [showUnsplashPicker, setShowUnsplashPicker] = React.useState(false)
   const [isUploading, setIsUploading] = React.useState(false)
   const [tagInput, setTagInput] = React.useState('')
+  const [internalTags, setInternalTags] = React.useState<string[]>(exercise.tags)
+
+  console.log('internalTags', internalTags, 'tags', tags)
 
   const formik = useFormik({
     initialValues: {
@@ -48,7 +58,7 @@ function ModifyExerciseModal({ closeModal, orgslug, mutateURL, exercise }: { clo
       description: exercise.description,
       task: exercise.task,
       solution: exercise.solution,
-      tags: exercise.tags || [],
+      course_id: exercise.course_id,
     },
     validationSchema,
     onSubmit: async (values, { setSubmitting }) => {
@@ -62,7 +72,8 @@ function ModifyExerciseModal({ closeModal, orgslug, mutateURL, exercise }: { clo
             description: values.description,
             task: values.task,
             solution: values.solution,
-            tags: values.tags,
+            tags: internalTags,
+            course_id: values.course_id,
           },
           session.data?.tokens?.access_token
         )
@@ -85,20 +96,24 @@ function ModifyExerciseModal({ closeModal, orgslug, mutateURL, exercise }: { clo
     }
   })
 
-  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && tagInput.trim()) {
-      e.preventDefault()
-      if (!formik.values.tags.includes(tagInput.trim())) {
-        formik.setFieldValue('tags', [...formik.values.tags, tagInput.trim()])
-      }
-      setTagInput('')
+  function handleAddTag() {
+    const newInput = tags.find((t: any) => t.value == tagInput)
+    if (!newInput) {
+      throw (`${newInput} not found in tags`)
     }
+
+    const newInputVal = newInput.value
+
+    if (!internalTags.find((t: any) => t.value === newInputVal)) {
+      setInternalTags([...internalTags, newInputVal])
+    }
+
+    // setTagInput("")
   }
 
   const handleRemoveTag = (tagToRemove: string) => {
-    formik.setFieldValue(
-      'tags',
-      formik.values.tags.filter((tag: string) => tag !== tagToRemove)
+    setInternalTags(
+      internalTags.filter((tag: string) => tag !== tagToRemove)
     )
   }
 
@@ -135,13 +150,57 @@ function ModifyExerciseModal({ closeModal, orgslug, mutateURL, exercise }: { clo
   //   }
   //   setIsUploading(false)
   // }
+  const availableTags = tags.filter((t: any) => {
+    const foundItem = internalTags.find((t2: any) => {
+      return t2 === t.value
+    })
+    const found = foundItem !== undefined
+    return !found
+  })
+
+  const addButtonDisabled = tagInput.trim() === "" || availableTags.length === 0
+  // if (availableTags.length === 0) {
+  //   setTagInput("")
+  // }
 
   return (
     <FormLayout onSubmit={formik.handleSubmit} >
+      <FormField name="course_id">
+        <Flex css={{ alignItems: 'baseline', justifyContent: 'space-between' }}>
+          <FormLabel>Select Course</FormLabel>
+          <FormMessage match="valueMissing">
+            Select optional course from the courses list.
+          </FormMessage>
+        </Flex>
+        {courses ? (
+          <Form.Control asChild>
+            <select className='bg-gray-100/40 rounded-lg px-1 py-2 outline outline-1 outline-gray-100'
+              onChange={formik.handleChange}
+              value={formik.values.course_id || ""}
+              // defaultValue={undefined}
+            >
+              <option value="">
+                - None -
+              </option>
+
+              {courses.map((c: any) => {
+                return (
+                  <option
+                    key={c.id}
+                    value={c.id}
+                  >
+                    {c.name}
+                  </option>)
+              })}
+            </select>
+          </Form.Control>
+        ) : <span>loading...</span>}
+      </FormField>
+
       <FormField name="title">
         <FormLabelAndMessage
           label="Exercise Title"
-          message={formik.errors.title}
+          message={formik.errors.title as any}
         />
         <Form.Control asChild>
           <Input
@@ -156,12 +215,13 @@ function ModifyExerciseModal({ closeModal, orgslug, mutateURL, exercise }: { clo
       <FormField name="description">
         <FormLabelAndMessage
           label="Exercise Description"
-          message={formik.errors.description}
+          message={formik.errors.description as any}
         />
         <Form.Control asChild>
           <Textarea
             onChange={formik.handleChange}
             value={formik.values.description}
+            required
           />
         </Form.Control>
       </FormField>
@@ -169,34 +229,67 @@ function ModifyExerciseModal({ closeModal, orgslug, mutateURL, exercise }: { clo
       <FormField name="tags">
         <FormLabelAndMessage
           label="Tags"
-          message="Press Enter to add a tag"
+          message=""
         />
         <div className="space-y-2">
-          <Form.Control asChild>
-            <Input
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={handleAddTag}
-              type="text"
-              placeholder="Add tags..."
-            />
-          </Form.Control>
-          <div className="flex flex-wrap gap-2">
-            {formik.values.tags.map((tag: string) => (
-              <div
-                key={tag}
-                className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-sm"
+          <div className="flex justify-between">
+            <Form.Control asChild>
+              <select className='bg-gray-100/40 rounded-lg px-1 py-2 outline outline-1 outline-gray-100'
+                onChange={(e) => { setTagInput(e.target.value); }}
+                value={tagInput}
+                defaultValue={""}
               >
-                <span>{tag}</span>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTag(tag)}
-                  className="text-gray-500 hover:text-gray-700"
+                <option value="">
+                  - None -
+                </option>
+                {availableTags.map((c: any) => {
+                  return (
+                    <option
+                      key={c.value}
+                      value={c.value}
+                      className="w-10 h-6 rounded-full border-0 p-0 cursor-pointer bg-transparent"
+                    >
+                      {c.value}
+                    </option>
+                  )
+                })}
+              </select>
+            </Form.Control>
+
+            <button
+              className={`px-4 py-2 ${!addButtonDisabled ? 'bg-black' : 'bg-gray-600'} text-white text-sm font-bold rounded-md`}
+              onClick={handleAddTag}
+              disabled={addButtonDisabled}
+              type="button"
+            >
+              Add Tag
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {internalTags.map((tag: any) => {
+              const tagObj = tags.find((t: any) => t.value === tag)
+              const color = `#${tagObj.color?.toString(16).padStart(6, '0')}`;
+
+              return (
+                <div
+                  key={tag}
+                  className="flex items-center gap-1 px-2 py-1 rounded-full text-sm"
+                  style={{
+                    backgroundColor: color
+                  }}
                 >
-                  <X size={14} />
-                </button>
-              </div>
-            ))}
+                  <span>{tag}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(tag)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )
+            })}
           </div>
         </div>
       </FormField>
@@ -204,12 +297,13 @@ function ModifyExerciseModal({ closeModal, orgslug, mutateURL, exercise }: { clo
       <FormField name="task">
         <FormLabelAndMessage
           label="Exercise Task"
-          message={formik.errors.task}
+          message={formik.errors.task as any}
         />
         <Form.Control asChild>
           <Textarea
             onChange={formik.handleChange}
             value={formik.values.task}
+            required
           />
         </Form.Control>
       </FormField>
@@ -217,7 +311,7 @@ function ModifyExerciseModal({ closeModal, orgslug, mutateURL, exercise }: { clo
       <FormField name="solution">
         <FormLabelAndMessage
           label="Exercise Solution"
-          message={formik.errors.solution}
+          message={formik.errors.solution as any}
         />
         <Form.Control asChild>
           <Textarea
@@ -251,7 +345,7 @@ function ModifyExerciseModal({ closeModal, orgslug, mutateURL, exercise }: { clo
           onClose={() => setShowUnsplashPicker(false)}
         />
       )} */}
-    </FormLayout>
+    </FormLayout >
   )
 }
 

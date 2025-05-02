@@ -33,19 +33,21 @@ const validationSchema = Yup.object().shape({
     .max(1000, 'Must be 1000 characters or less'),
   task: Yup.string(),
   solution: Yup.string(),
-  course_id: Yup.mixed().nullable(),
-  tags: Yup.array().of(Yup.string())
+  // course_id: Yup.mixed().nullable(),
+  tags: Yup.array().of(Yup.object().shape({
+    value: Yup.string(),
+    color: Yup.number(),
+  }))
 })
 
-function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses }: any) {
-  console.log('CSR', courses)
-
+function CreateExerciseModal({ closeModal, orgslug, mutateURL, courseID, tags }: any) {
   const router = useRouter()
   const session = useLHSession() as any
   const [orgId, setOrgId] = React.useState(null) as any
   const [showUnsplashPicker, setShowUnsplashPicker] = React.useState(false)
   const [isUploading, setIsUploading] = React.useState(false)
   const [tagInput, setTagInput] = React.useState('')
+  const [internalTags, setInternalTags] = React.useState<string[]>([])
 
   const formik = useFormik({
     initialValues: {
@@ -53,8 +55,7 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses }: any) {
       description: '',
       task: '',
       solution: '',
-      course_id: '',
-      tags: [] as string[],
+      // course_id: '',
     },
     validationSchema,
     onSubmit: async (values, { setSubmitting }) => {
@@ -67,8 +68,8 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses }: any) {
             description: values.description,
             task: values.task,
             solution: values.solution,
-            course_id: values.course_id,
-            tags: values.tags,
+            course_id: courseID,
+            tags: internalTags,
           },
           session.data?.tokens?.access_token
         )
@@ -79,7 +80,6 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses }: any) {
           closeModal()
           mutate(mutateURL)
         } else {
-          console.log(res)
           toast.error(res.data.detail)
         }
       } catch (error) {
@@ -91,20 +91,24 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses }: any) {
     }
   })
 
-  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && tagInput.trim()) {
-      e.preventDefault()
-      if (!formik.values.tags.includes(tagInput.trim())) {
-        formik.setFieldValue('tags', [...formik.values.tags, tagInput.trim()])
-      }
-      setTagInput('')
+  function handleAddTag() {
+    const newInput = tags.find((t: any) => t.value == tagInput)
+    if (!newInput) {
+      throw (`${newInput} not found in tags`)
     }
+
+    const newInputVal = newInput.value
+
+    if (!internalTags.find((t: any) => t.value === newInputVal)) {
+      setInternalTags([...internalTags, newInputVal])
+    }
+
+    // setTagInput("")
   }
 
   const handleRemoveTag = (tagToRemove: string) => {
-    formik.setFieldValue(
-      'tags',
-      formik.values.tags.filter((tag: string) => tag !== tagToRemove)
+    setInternalTags(
+      internalTags.filter((tag: string) => tag !== tagToRemove)
     )
   }
 
@@ -141,17 +145,29 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses }: any) {
   //   }
   //   setIsUploading(false)
   // }
+  const availableTags = tags.filter((t: any) => {
+    const foundItem = internalTags.find((t2: any) => {
+      return t2 === t.value
+    })
+    const found = foundItem !== undefined
+    return !found
+  })
+
+  const addButtonDisabled = tagInput.trim() === "" || availableTags.length === 0
+  // if (availableTags.length === 0) {
+  //   setTagInput("")
+  // }
 
   return (
     <FormLayout onSubmit={formik.handleSubmit} >
-      <FormField name="course_id">
+      {/* <FormField name="course_id">
         <Flex css={{ alignItems: 'baseline', justifyContent: 'space-between' }}>
           <FormLabel>Select Course</FormLabel>
           <FormMessage match="valueMissing">
             Select optional course from the courses list.
           </FormMessage>
-        </Flex>
-        {courses ? (
+        </Flex> */}
+      {/* {courses ? (
           <Form.Control asChild>
             <select className='bg-gray-100/40 rounded-lg px-1 py-2 outline outline-1 outline-gray-100'
               onChange={formik.handleChange}
@@ -174,7 +190,7 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses }: any) {
             </select>
           </Form.Control>
         ) : <span>loading...</span>}
-      </FormField>
+      </FormField> */}
 
       <FormField name="title">
         <FormLabelAndMessage
@@ -208,34 +224,67 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses }: any) {
       <FormField name="tags">
         <FormLabelAndMessage
           label="Tags"
-          message="Press Enter to add a tag"
+          message=""
         />
         <div className="space-y-2">
-          <Form.Control asChild>
-            <Input
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={handleAddTag}
-              type="text"
-              placeholder="Add tags..."
-            />
-          </Form.Control>
-          <div className="flex flex-wrap gap-2">
-            {formik.values.tags.map((tag: string) => (
-              <div
-                key={tag}
-                className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-sm"
+          <div className="flex justify-between">
+            <Form.Control asChild>
+              <select className='bg-gray-100/40 rounded-lg px-1 py-2 outline outline-1 outline-gray-100'
+                onChange={(e) => { setTagInput(e.target.value); }}
+                value={tagInput}
+                defaultValue={""}
               >
-                <span>{tag}</span>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTag(tag)}
-                  className="text-gray-500 hover:text-gray-700"
+                <option value="">
+                  - None -
+                </option>
+                {availableTags.map((c: any) => {
+                  return (
+                    <option
+                      key={c.value}
+                      value={c.value}
+                      className="w-10 h-6 rounded-full border-0 p-0 cursor-pointer bg-transparent"
+                    >
+                      {c.value}
+                    </option>
+                  )
+                })}
+              </select>
+            </Form.Control>
+
+            <button
+              className={`px-4 py-2 ${!addButtonDisabled ? 'bg-black' : 'bg-gray-600'} text-white text-sm font-bold rounded-md`}
+              onClick={handleAddTag}
+              disabled={addButtonDisabled}
+              type="button"
+            >
+              Add Tag
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {internalTags.map((tag: any) => {
+              const tagObj = tags.find((t: any) => t.value === tag)
+              const color = `#${tagObj.color?.toString(16).padStart(6, '0')}`;
+
+              return (
+                <div
+                  key={tag}
+                  className="flex items-center gap-1 px-2 py-1 rounded-full text-sm"
+                  style={{
+                    backgroundColor: color,
+                  }}
                 >
-                  <X size={14} />
-                </button>
-              </div>
-            ))}
+                  <span>{tag}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(tag)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )
+            })}
           </div>
         </div>
       </FormField>
@@ -291,7 +340,7 @@ function CreateExerciseModal({ closeModal, orgslug, mutateURL, courses }: any) {
           onClose={() => setShowUnsplashPicker(false)}
         />
       )} */}
-    </FormLayout>
+    </FormLayout >
   )
 }
 

@@ -1,11 +1,13 @@
-name: Web Lint
+name: WEB-LINT
+
 on:
   push:
-    paths:
-      - "apps/web/**"
+    branches:
+      - dev
   pull_request:
-    paths:
-      - "apps/web/**"
+    branches:
+      - prod
+
 jobs:
   next-lint:
     runs-on: ubuntu-latest

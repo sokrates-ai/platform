@@ -17,4 +17,7 @@ web-dev:
 api-dev:
 	./dev.sh api-dev
 
+lint:
+	./dev.sh lint
+
 all-run: api-run web-run
