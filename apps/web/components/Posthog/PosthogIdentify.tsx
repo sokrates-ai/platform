@@ -4,7 +4,7 @@ import { usePostHog } from 'posthog-js/react'
 import { Suspense } from 'react';
 
 function PosthogIdentity(){
-    const { data: session, status } = useLHSession();
+    const { data: session, status }: any = useLHSession();
     const posthog = usePostHog();
 
     if(status == "unauthenticated" || status == "loading"){
@@ -27,7 +27,6 @@ function PosthogIdentity(){
     }
     return null
 }
-
 
 // Wrap this in Suspense to avoid the `useSearchParams` usage above
 // from de-opting the whole app into client-side rendering
