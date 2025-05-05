@@ -95,7 +95,7 @@ export async function createTag(
   color: number,
   access_token: string,
 ) {
-  let urlComplete = `${getAPIUrl()}tasks/tag/`
+  let urlComplete = `${getAPIUrl()}tasks/tag`
   const result = await fetch(
     urlComplete,
     RequestBodyWithAuthHeader('POST', { value, color }, { revalidate: 0, tags: ['tasks'] }, access_token)
@@ -109,7 +109,7 @@ export async function modifyTag(
   color: number,
   access_token: string,
 ) {
-  let urlComplete = `${getAPIUrl()}tasks/tag/`
+  let urlComplete = `${getAPIUrl()}tasks/tag`
   const result = await fetch(
     urlComplete,
     RequestBodyWithAuthHeader('PUT', { value, color }, { revalidate: 0, tags: ['tasks'] }, access_token)
@@ -128,7 +128,7 @@ export async function deleteTag(
   value: string,
   access_token: string,
 ) {
-  let urlComplete = `${getAPIUrl()}tasks/tag/`
+  let urlComplete = `${getAPIUrl()}tasks/tag`
   const result = await fetch(
     urlComplete,
     RequestBodyWithAuthHeader('DELETE', { value }, { revalidate: 0, tags: ['tasks'] }, access_token)
