@@ -29,7 +29,7 @@ function NewWorkspace({ submitActivity, chapterId, course, closeModal, access_to
     const [activityTaskID, setActivityTaskID] = React.useState(-1)
 
     // Fetch exercise library here.
-    const TASKS_URL = `${getAPIUrl()}ex/list/page/1/limit/50`;
+    const TASKS_URL = `${getAPIUrl()}tasks/list/page/1/limit/50`;
     const { data: exercises } = useSWR(TASKS_URL, (url: string) => swrFetcher(url, access_token))
     console.log(exercises)
 
