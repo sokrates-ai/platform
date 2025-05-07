@@ -40,7 +40,8 @@ ENV NEXT_PUBLIC_LEARNHOUSE_BASE_URL=https://app.sokrates.ae.org
 ENV NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL=https://app.sokrates.ae.org
 # TODO: this could also be completely fucked?
 ENV NEXT_PUBLIC_LEARNHOUSE_DOMAIN=https://app.sokrates.ae.org
-ENV NEXT_PUBLIC_LEARNHOUSE_MEDIA_URL=https://app.sokrates.ae.org
+# NOTE: the trailing slash is important here.
+ENV NEXT_PUBLIC_LEARNHOUSE_MEDIA_URL=https://app.sokrates.ae.org/
 ENV NEXT_PUBLIC_LEARNHOUSE_HTTPS=true
 
 COPY ./apps/web/ /app/web
