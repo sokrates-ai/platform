@@ -18,27 +18,46 @@ export default function RootLayout({
     enter: { opacity: 1, x: 0, y: 0 },
     exit: { opacity: 0, x: 0, y: 0 },
   }
+
+  const isStaging = (typeof window !== 'undefined' && (window.location.hostname.includes('staging')))
+
   return (
     <html className="" lang="en">
+      {isStaging && (
+        <div
+          style={{
+            background: 'rgba(255, 0, 0, 0.4)',
+            color: 'black',
+            padding: '10px',
+            textAlign: 'center',
+            fontWeight: 'bold',
+            position: 'fixed',
+            width: '100%',
+            zIndex: 999,
+          }}
+        >
+          STAGING
+        </div>
+      )}
+
       <head />
-      <body>
-        {isDevEnv ? '' : <Script data-website-id="a1af6d7a-9286-4a1f-8385-ddad2a29fcbb" src="/umami/script.js" />}
-  
+
+      <body style={{ marginTop: isStaging ? '40px' : 0 }}>
         <SessionProvider>
           <LHSessionProvider>
-          <PostHogProvider>
-            <StyledComponentsRegistry>
-              <motion.main
-                variants={variants} // Pass the variant object into Framer Motion
-                initial="hidden" // Set the initial state to variants.hidden
-                animate="enter" // Animated state to variants.enter
-                exit="exit" // Exit state (used later) to variants.exit
-                transition={{ type: 'linear' }} // Set the transition to linear
-                className=""
-              >
-                {children}
-              </motion.main>
-            </StyledComponentsRegistry>
+            <PostHogProvider>
+              <StyledComponentsRegistry>
+                <motion.main
+                  variants={variants} // Pass the variant object into Framer Motion
+                  initial="hidden" // Set the initial state to variants.hidden
+                  animate="enter" // Animated state to variants.enter
+                  exit="exit" // Exit state (used later) to variants.exit
+                  transition={{ type: 'linear' }} // Set the transition to linear
+                  className=""
+                >
+                  {children}
+                </motion.main>
+              </StyledComponentsRegistry>
             </PostHogProvider>
           </LHSessionProvider>
         </SessionProvider>
