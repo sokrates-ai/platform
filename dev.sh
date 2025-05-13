@@ -93,6 +93,29 @@ lint() {
     lint_api || exit 1
 }
 
+#
+# Docker build.
+#
+
+docker-build() {
+    OWNER="$1"
+    TAG="$2"
+    
+    DOMAIN="ERROR"
+    if [ "${TAG}" = "prod" ]; then
+        DOMAIN="app.sokrates.ae.org"
+    else
+        DOMAIN="staging.sokrates.ae.org"
+    fi
+
+    docker build --build-arg DOMAIN="${DOMAIN}" -t "ghcr.io/${OWNER}/sk-platform:${TAG}" .
+    docker push "ghcr.io/${OWNER}/sk-platform:${TAG}"
+}
+
+#
+# CLI
+#
+
 ARG="$1"
 
 if [ "${ARG}" = "setup" ]; then
@@ -105,6 +128,8 @@ elif [ "${ARG}" = "reset" ]; then
     reset
 elif [ "${ARG}" = "lint" ]; then
     lint
+elif [ "${ARG}" = "docker" ]; then
+    docker-build "$2" "$3"
 else
     echo -e "[ERROR]: Unknown argument <${ARG}>"
     exit 1
