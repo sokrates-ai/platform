@@ -54,4 +54,4 @@ jobs:
 
       - name: Build+Push Docker image
         run: |
-          bash ./dev.sh ${{ github.repository_owner }} ${{ steps.vars.outputs.branch_name }}
+          bash ./dev.sh docker ${{ github.repository_owner }} ${{ steps.vars.outputs.branch_name }}
