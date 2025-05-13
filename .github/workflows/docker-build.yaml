@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - prod
+      - staging
 
 permissions:
   contents: read
@@ -30,6 +31,15 @@ jobs:
             echo "Not merged from dev ❌"
             echo "should_deploy=false" >> $GITHUB_OUTPUT
           fi
+      
+      - name: Get branch name
+        id: vars
+        run: |
+          ref=${GITHUB_REF##*/}
+          # Replace slashes with dashes for Docker tag compatibility
+          tag=$(echo "$ref" | tr '/' '-')
+          echo "branch_name=$tag" >> $GITHUB_OUTPUT
+
 
       - name: Deploy
         if: steps.check_dev.outputs.should_deploy == 'true'
@@ -44,8 +54,8 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/sk-platform:latest .
+          docker build -t ghcr.io/${{ github.repository_owner }}/sk-platform:${{ steps.vars.outputs.branch_name }}.
 
       - name: Push Docker image
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/sk-platform:latest
+          docker push ghcr.io/${{ github.repository_owner }}/sk-platform:${{ steps.vars.outputs.branch_name }}
