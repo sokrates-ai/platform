@@ -73,7 +73,7 @@
     "nextjs-toploader": "^1.6.12",
     "pixi-viewport": "^6.0.3",
     "pixi.js": "^8.2.6",
-    "posthog-js": "^1.238.0",
+    "posthog-js": "^1.242.0",
     "prosemirror-state": "^1.4.3",
     "qrcode": "^1.5.4",
     "randomcolor": "^0.6.2",
