@@ -19,7 +19,9 @@ export default function RootLayout({
     exit: { opacity: 0, x: 0, y: 0 },
   }
 
-  const isStaging = (typeof window !== 'undefined' && (window.location.hostname.includes('staging')))
+  const isStaging =
+    typeof window !== 'undefined' &&
+    window.location.hostname.includes('staging')
 
   return (
     <html className="" lang="en">
@@ -31,9 +33,10 @@ export default function RootLayout({
             padding: '10px',
             textAlign: 'center',
             fontWeight: 'bold',
-            position: 'fixed',
+            position: 'absolute',
             width: '100%',
             zIndex: 999,
+            top: 0,
           }}
         >
           STAGING
@@ -42,7 +45,7 @@ export default function RootLayout({
 
       <head />
 
-      <body style={{ marginTop: isStaging ? '40px' : 0 }}>
+      <body>
         <SessionProvider>
           <LHSessionProvider>
             <PostHogProvider>
