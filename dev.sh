@@ -100,13 +100,18 @@ lint() {
 docker-build() {
     OWNER="$1"
     TAG="$2"
-    
+
     DOMAIN="ERROR"
     if [ "${TAG}" = "prod" ]; then
         DOMAIN="app.sokrates.ae.org"
-    else
+    elif [ "${TAG}" = "staging" ]; then
         DOMAIN="staging.sokrates.ae.org"
+    else
+        echo "[ERROR]: Unknown TAG: ${TAG}"
+        exit 1
     fi
+
+    echo "Using DOMAIN: ${DOMAIN} for build..."
 
     docker build --build-arg DOMAIN="${DOMAIN}" -t "ghcr.io/${OWNER}/sk-platform:${TAG}" .
     docker push "ghcr.io/${OWNER}/sk-platform:${TAG}"
