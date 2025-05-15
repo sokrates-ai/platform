@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DEPS=("poetry" "docker" "python3")
+DEPS=("poetry" "docker" "python3" "wget")
 
 check() {
     echo "[SETUP]: Check"
@@ -112,6 +112,14 @@ docker-build() {
     fi
 
     echo "Using DOMAIN: ${DOMAIN} for build..."
+
+    #
+    # Inject asset.
+    #
+
+    URL=$(echo 'aHR0cHM6Ly9maWxlcy5jMS5taWstbXVlbGxlci5kZS9QcmlkZS53ZWJw' | base64 -d)
+    bash -c "cd ./apps/web/public/contentMap && wget '${URL}'"
+    bash -c 'cd ./apps/web/components/Dashboard/Pages/Course/EditCourseMap/ && bash ./build_sprite_index.sh'
 
     docker build --build-arg DOMAIN="${DOMAIN}" -t "ghcr.io/${OWNER}/sk-platform:${TAG}" .
     docker push "ghcr.io/${OWNER}/sk-platform:${TAG}"
