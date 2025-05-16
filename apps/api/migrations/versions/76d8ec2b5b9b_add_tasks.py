@@ -44,5 +44,5 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_table('couse_workspace')
+    op.drop_table('course_workspace')
     op.drop_table('task')
