@@ -21,25 +21,44 @@ export default function RootLayout({
 
   const isStaging =
     typeof window !== 'undefined' &&
-    window.location.hostname.includes('staging')
+    window.location.hostname.includes('staging') || true
 
   return (
     <html className="" lang="en">
       {isStaging && (
         <div
           style={{
-            background: 'rgba(255, 0, 0, 0.4)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            background: 'rgba(255, 0, 0, 0.5)',
             color: 'black',
             padding: '10px',
             textAlign: 'center',
-            fontWeight: 'bold',
+            fontWeight: 'bolder',
+            fontSize: '2rem',
             position: 'absolute',
             width: '100%',
             zIndex: 999,
-            top: 0,
+            bottom: 0,
+            overflowX: 'hidden',
+            gap: '1rem',
           }}
         >
+          <span>
           STAGING
+          </span>
+          <span>
+          STAGING
+          </span>
+          <span>
+          STAGING
+          </span>
+          <span>
+          STAGING
+          </span>
+          <span>
+          STAGING
+          </span>
         </div>
       )}
 
