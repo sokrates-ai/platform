@@ -3,8 +3,6 @@ export function isChapterLocked(chapterID: number, course: any) {
 
     const predecessorChapters = chapter.predecessors
 
-    console.log(predecessorChapters)
-
     if (predecessorChapters.length === 0) {
         return false
     }
@@ -37,8 +35,6 @@ export function isActivityLocked(course: any, chapter: any, activityID: number) 
     if (isActivityDone(course, previous.id)) {
         return false
     }
-
-    console.log(activityID, 'still locked')
 
     return true
 }

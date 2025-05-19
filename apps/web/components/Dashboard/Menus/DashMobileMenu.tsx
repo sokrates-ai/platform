@@ -1,24 +1,13 @@
 'use client'
-import { useOrg } from '@components/Contexts/OrgContext'
-import { signOut } from 'next-auth/react'
-import { Backpack, BadgeDollarSign, BookCopy, Home, LogOut, School, Settings, Users } from 'lucide-react'
+import { Backpack, BadgeDollarSign, BookCopy, Home, School, Settings, Users } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
 import AdminAuthorization from '@components/Security/AdminAuthorization'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
-import { getUriWithOrg, getUriWithoutOrg } from '@services/config/config'
 import ToolTip from '@components/Objects/StyledElements/Tooltip/Tooltip'
 
 function DashMobileMenu() {
-  const org = useOrg() as any
   const session = useLHSession() as any
-
-  async function logOutUI() {
-    const res = await signOut({ redirect: true, callbackUrl: getUriWithoutOrg('/login?orgslug=' + org.slug) })
-    if (res) {
-      getUriWithOrg(org.slug, '/')
-    }
-  }
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-lg text-white shadow-xl">
