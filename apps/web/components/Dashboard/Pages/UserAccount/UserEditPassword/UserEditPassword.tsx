@@ -2,6 +2,8 @@ import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { updatePassword } from '@services/settings/password'
 import { Formik, Form, Field } from 'formik'
 import React, { useEffect } from 'react'
+import { Button } from '@components/ui/button';
+
 
 function UserEditPassword() {
   const session = useLHSession() as any
@@ -46,13 +48,13 @@ function UserEditPassword() {
               name="new_password"
             />
 
-            <button
-              type="submit"
+            <Button
+              variant={'default'}
               disabled={isSubmitting}
-              className="px-6 py-3 text-white bg-black rounded-lg shadow-md hover:bg-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-6 py-3 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               Submit
-            </button>
+            </Button>
           </Form>
         )}
       </Formik>

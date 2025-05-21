@@ -10,6 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button"
 import CourseCard from '@components/Objects/StyledElements/Cards/CourseCard'
 import NoCoursesAlert from '@components/Objects/StyledElements/Alerts/NoCourseAlert'
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+
+
 
 interface CourseProps {
   orgslug: string
