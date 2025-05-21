@@ -5,7 +5,7 @@ import { useOrg } from "@components/Contexts/OrgContext"
 import { getUriWithoutOrg } from "@services/config/config"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
-import { Settings, LogOut, Home } from "lucide-react"
+import { Settings, LogOut, Home, Backpack,School,  Users } from "lucide-react"
 import useAdminStatus from "@components/Hooks/useAdminStatus"
 import { logout } from "@services/auth/auth"
 import UserAvatar from "@components/Objects/UserAvatar"
@@ -79,6 +79,30 @@ export const NewHeaderProfileBox = () => {
                 <DropdownMenuItem>
                   <Settings size={14} className="mr-2" />
                   Settings
+                </DropdownMenuItem>
+              </Link>
+
+              <Link href={"/dash/exercises"}>
+                <DropdownMenuItem>
+                  <Backpack size={14} className="mr-2" />
+                  Exercises
+                </DropdownMenuItem>
+              </Link>
+
+              {isUserAdmin.isAdmin && (
+                <Link href={"/dash/users/settings/users"}>
+                  <DropdownMenuItem>
+                    <Users size={14} className="mr-2" />
+                    Users
+                  </DropdownMenuItem>
+                </Link>
+              )}
+
+
+              <Link href={"/dash/org/settings/general"}>
+                <DropdownMenuItem>
+                  < School size={14} className="mr-2" />
+                  School
                 </DropdownMenuItem>
               </Link>
 
