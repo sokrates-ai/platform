@@ -115,7 +115,7 @@ const CourseClient = (props: any) => {
 		<GeneralWrapperStyled>
 			<div className="pb-3 flex flex-col md:flex-row justify-between items-start md:items-center">
 				<div>
-					<Badge variant="outline" className="mb-2">Course</Badge>
+					<Badge variant="secondary" className="mb-2">Course</Badge>
 					<h1 className="text-2xl md:text-3xl font-bold">{course.name}</h1>
 				</div>
 				<div className="mt-4 md:mt-0 w-full md:w-auto">

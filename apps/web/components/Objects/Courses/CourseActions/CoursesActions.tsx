@@ -12,6 +12,7 @@ import { LogIn, LogOut, ShoppingCart, AlertCircle } from 'lucide-react'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import CoursePaidOptions from './CoursePaidOptions'
 import { checkPaidAccess } from '@services/payments/payments'
+import { Button } from "@/components/ui/button";
 
 interface Author {
   user_uuid: string
@@ -157,13 +158,9 @@ const Actions = ({ courseuuid, orgslug, course }: CourseActionsProps) => {
                 You have purchased this course and have full access to all content.
               </p>
             </div>
-            <button
+            <Button
+              variant={ isStarted? "destructive": "default"}
               onClick={handleCourseAction}
-              className={`w-full py-3 rounded-lg nice-shadow font-semibold transition-colors flex items-center justify-center gap-2 ${
-                isStarted
-                  ? 'bg-red-500 text-white hover:bg-red-600'
-                  : 'bg-neutral-900 text-white hover:bg-neutral-800'
-              }`}
             >
               {isStarted ? (
                 <>
@@ -176,7 +173,7 @@ const Actions = ({ courseuuid, orgslug, course }: CourseActionsProps) => {
                   Start Course
                 </>
               )}
-            </button>
+            </Button>
           </>
         ) : (
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg nice-shadow">
@@ -214,13 +211,10 @@ const Actions = ({ courseuuid, orgslug, course }: CourseActionsProps) => {
   }
 
   return (
-    <button
+    <Button
       onClick={handleCourseAction}
-      className={`w-full py-3 rounded-lg nice-shadow font-semibold transition-colors flex items-center justify-center gap-2 ${
-        isStarted
-          ? 'bg-red-500 text-white hover:bg-red-600'
-          : 'bg-neutral-900 text-white hover:bg-neutral-800'
-      }`}
+      variant={isStarted ? "destructive" : "default"}
+      className="w-full"
     >
       {!session.data?.user ? (
         <>
@@ -238,7 +232,7 @@ const Actions = ({ courseuuid, orgslug, course }: CourseActionsProps) => {
           Start Course
         </>
       )}
-    </button>
+    </Button>
   )
 }
 
