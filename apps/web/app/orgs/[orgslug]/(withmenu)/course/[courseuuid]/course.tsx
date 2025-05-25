@@ -26,6 +26,7 @@ import { AssetData } from '@components/Objects/ContentMap/Asset'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { isChapterLocked, isActivityDone } from '@components/Pages/Courses/utils'
+import { useLHSession } from '@components/Contexts/LHSessionContext'
 
 const CourseClient = (props: any) => {
 	const [learnings, setLearnings] = useState<string[]>([])
@@ -50,6 +51,14 @@ const CourseClient = (props: any) => {
 
 	const [chapterDialogOpen, setChapterDialogOpen] = useState(false)
 	const [selectedChapter, setSelectedChapter] = useState(0)
+  	const session = useLHSession() as any
+   	useEffect(() => {
+		if(!chapterDialogOpen){
+			console.log(`Current Chapter State: FALSE`);
+			return;
+		}
+		console.log(`Current Chapter State: ${selectedChapter}`);
+    },[selectedChapter, chapterDialogOpen]) 
 
 	const layout: LayoutState = {
 		layout: course?.map_state?.objects || [],
