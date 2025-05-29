@@ -20,3 +20,8 @@ class CourseCanvas(CourseCanvasBase, table=True):
 
 class CourseCanvasUpdate(CourseCanvasBase):
     selected_chapter_id: int | None
+
+class CourseCanvasRead(CourseCanvasBase):
+    course_id: int
+    user_id: int
+    selected_chapter_id: int | None

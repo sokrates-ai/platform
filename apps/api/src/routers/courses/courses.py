@@ -16,7 +16,7 @@ from src.db.courses.courses import (
     FullCourseReadWithTrail,
 )
 from src.security.auth import get_current_user
-from src.services.courses.course_canvas import put_update
+from src.services.courses.course_canvas import get_canvas, put_update
 from src.services.courses.courses import (
     create_course,
     get_course,
@@ -244,6 +244,16 @@ async def api_delete_course_update(
 
     return await delete_update(request, courseupdate_uuid, current_user, db_session)
 
+@router.get("/{course_uuid}/canvas")
+def get_course_canvas(
+    request: Request,
+    course_uuid: str,
+    user=Depends(get_current_user),
+    db_session=Depends(get_db_session),
+):
+    return get_canvas(request, course_uuid, user, db_session)
+
+
 
 @router.put("/{course_uuid}/canvas")
 def put_course_canvas(
@@ -254,4 +264,5 @@ def put_course_canvas(
     db_session=Depends(get_db_session),
 ):
     return put_update(request, course_uuid, course_canvas_update, user, db_session)
+
 

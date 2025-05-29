@@ -130,6 +130,28 @@ export async function deleteCourseFromBackend(
   return res
 }
 
+interface CourseCanvasRead {
+    course_id: number;
+    user_id: number;
+    selected_chapter_id: number | null;
+}
+
+export async function getCourseCanvasInteractionState({
+  courseUuid,
+  access_token,
+}: {
+  courseUuid: string
+  access_token: any
+}): Promise<CourseCanvasRead> {
+
+    const result: any = await fetch(
+      `${getAPIUrl()}courses/${courseUuid}/canvas`,
+      RequestBodyWithAuthHeader('GET', null, null, access_token)
+    )
+    const res = await errorHandling(result)
+    return res
+}
+
 export async function updateCourseCanvasInteractionState({
   selectedChapter,
   courseUuid,

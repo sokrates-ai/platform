@@ -35,6 +35,7 @@ const CourseClient = (props: any) => {
 	const courseid = courseuuid.replace('course_', '')
 	const orgslug = props.orgslug
 	const course = props.course
+	const selectedChapterId = props.selectedChapterId;
 	const org = useOrg() as any
 	const router = useRouter()
 	const isMobile = useMediaQuery('(max-width: 768px)');
@@ -50,8 +51,8 @@ const CourseClient = (props: any) => {
 
 	const isStarted = courseIsStarted(course)
 
-	const [chapterDialogOpen, setChapterDialogOpen] = useState(false)
-	const [selectedChapter, setSelectedChapter] = useState(0)
+	const [chapterDialogOpen, setChapterDialogOpen] = useState(selectedChapterId != null)
+	const [selectedChapter, setSelectedChapter] = useState(selectedChapterId != null ? selectedChapterId : 0)
   	const session = useLHSession() as any
 	const access_token = session?.data?.tokens?.access_token;
    	useEffect(() => {

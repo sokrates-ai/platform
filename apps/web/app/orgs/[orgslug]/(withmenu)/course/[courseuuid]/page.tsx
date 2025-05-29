@@ -1,6 +1,6 @@
 import React from 'react'
 import CourseClient from './course'
-import { getCourseMetadata } from '@services/courses/courses'
+import { getCourseCanvasInteractionState, getCourseMetadata } from '@services/courses/courses'
 import { getOrganizationContextInfo } from '@services/organizations/orgs'
 import { Metadata } from 'next'
 import { getCourseThumbnailMediaDirectory } from '@services/media/media'
@@ -76,13 +76,18 @@ const CoursePage = async (params: any) => {
     { revalidate: 0, tags: ['courses'] },
     access_token ? access_token : null
   )
-
+  const courseCanvas = await getCourseCanvasInteractionState({
+    courseUuid: `course_${courseuuid}`,
+    access_token,
+  });
+  
   return (
     <div>
       <CourseClient
         courseuuid={courseuuid}
         orgslug={orgslug}
         course={course_meta}
+        selectedChapterId={courseCanvas.selected_chapter_id}
       />
     </div>
   )
