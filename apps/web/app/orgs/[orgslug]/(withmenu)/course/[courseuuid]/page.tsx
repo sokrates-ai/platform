@@ -77,6 +77,7 @@ const CoursePage = async (params: any) => {
     access_token ? access_token : null
   )
   const courseCanvas = await getCourseCanvasInteractionState({
+    // TODO: Find out why we normally remove "course" from the course uuid.
     courseUuid: `course_${courseuuid}`,
     access_token,
   });
