@@ -8,6 +8,7 @@ import { useLHSession } from '@components/Contexts/LHSessionContext'
 import React, { useState } from 'react'
 import { mutate } from 'swr'
 import UnsplashImagePicker from './UnsplashImagePicker'
+import { Button } from "@components/ui/button";
 
 function ThumbnailUpdate() {
   const course = useCourse() as any
@@ -92,20 +93,22 @@ function ThumbnailUpdate() {
                 style={{ display: 'none' }}
                 onChange={handleFileChange}
               />
-              <button
-                className="font-bold antialiased items-center text-gray text-sm rounded-md px-4 mt-6 flex"
+              <Button
+                variant={"outline"}
+                className="font-bold antialiased items-center  text-sm rounded-md px-4 mt-6 flex"
                 onClick={() => document.getElementById('fileInput')?.click()}
               >
                 <UploadCloud size={16} className="mr-2" />
                 <span>Upload Image</span>
-              </button>
-              <button
-                className="font-bold antialiased items-center text-gray text-sm rounded-md px-4 mt-6 flex"
+              </Button>
+              <Button
+                variant={"outline"}
+                className="font-bold antialiased items-center  text-sm rounded-md px-4 mt-6 flex"
                 onClick={() => setShowUnsplashPicker(true)}
               >
                 <ImageIcon size={16} className="mr-2" />
                 <span>Choose from Gallery</span>
-              </button>
+              </Button>
             </div>
           )}
         </div>

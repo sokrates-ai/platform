@@ -11,6 +11,7 @@ import * as Form from '@radix-ui/react-form'
 import BarLoader from 'react-spinners/BarLoader'
 import { Youtube } from 'lucide-react'
 import { constructAcceptValue } from '@/lib/constants';
+import { Button } from '@components/ui/button'
 
 const SUPPORTED_FILES = constructAcceptValue(['mp4', 'webm'])
 
@@ -175,10 +176,10 @@ function VideoModal({
 
       <Flex css={{ marginTop: 25, justifyContent: 'flex-end' }}>
         <Form.Submit asChild>
-          <ButtonBlack
-            className="bg-black"
+          <Button
+            
             type="submit"
-            css={{ marginTop: 10 }}
+            
           >
             {isSubmitting ? (
               <BarLoader
@@ -189,7 +190,7 @@ function VideoModal({
             ) : (
               'Create activity'
             )}
-          </ButtonBlack>
+          </Button>
         </Form.Submit>
       </Flex>
     </FormLayout>

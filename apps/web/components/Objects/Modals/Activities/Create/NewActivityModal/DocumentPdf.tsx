@@ -9,7 +9,8 @@ import FormLayout, {
 import React, { useState } from 'react'
 import * as Form from '@radix-ui/react-form'
 import BarLoader from 'react-spinners/BarLoader'
-import { constructAcceptValue } from '@/lib/constants';
+import { constructAcceptValue } from '@/lib/constants';ButtonBlack
+import { Button } from '@components/ui/button'
 
 const SUPPORTED_FILES = constructAcceptValue(['pdf'])
 
@@ -72,8 +73,8 @@ function DocumentPdfModal({ submitFileActivity, chapterId, course }: any) {
       </FormField>
 
       <Flex css={{ marginTop: 25, justifyContent: 'flex-end' }}>
-        <Form.Submit asChild>
-          <ButtonBlack type="submit" css={{ marginTop: 10 }}>
+        <Form.Submit asChild> 
+          <Button type="submit">
             {isSubmitting ? (
               <BarLoader
                 cssOverride={{ borderRadius: 60 }}
@@ -83,7 +84,7 @@ function DocumentPdfModal({ submitFileActivity, chapterId, course }: any) {
             ) : (
               'Create activity'
             )}
-          </ButtonBlack>
+          </Button>
         </Form.Submit>
       </Flex>
     </FormLayout>

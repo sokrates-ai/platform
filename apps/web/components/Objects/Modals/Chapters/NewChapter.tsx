@@ -10,6 +10,7 @@ import { FormMessage } from '@radix-ui/react-form'
 import * as Form from '@radix-ui/react-form'
 import React, { useState } from 'react'
 import BarLoader from 'react-spinners/BarLoader'
+import { Button } from "@components/ui/button";
 
 function NewChapterModal({ submitChapter, closeModal, course }: any) {
   const [chapterName, setChapterName] = useState('')
@@ -62,11 +63,11 @@ function NewChapterModal({ submitChapter, closeModal, course }: any) {
         <Form.Control asChild>
           <Textarea onChange={handleChapterDescriptionChange} required />
         </Form.Control>
-      </FormField>
+      </FormField>module
 
       <Flex css={{ marginTop: 25, justifyContent: 'flex-end' }}>
         <Form.Submit asChild>
-          <ButtonBlack type="submit" css={{ marginTop: 10 }}>
+          <Button>
             {isSubmitting ? (
               <BarLoader
                 cssOverride={{ borderRadius: 60 }}
@@ -76,7 +77,7 @@ function NewChapterModal({ submitChapter, closeModal, course }: any) {
             ) : (
               'Create Chapter'
             )}
-          </ButtonBlack>
+          </Button>
         </Form.Submit>
       </Flex>
     </FormLayout>

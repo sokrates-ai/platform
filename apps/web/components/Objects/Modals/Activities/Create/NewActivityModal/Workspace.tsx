@@ -20,6 +20,7 @@ import toast from 'react-hot-toast'
 import { createWorkspace } from '@services/courses/workspaces'
 // import { TASKS_URL } from '@/app/orgs/[orgslug]/dash/exercises/client'
 import { swrFetcher } from '@services/utils/ts/requests'
+import { Button } from "@components/ui/button";
 
 function NewWorkspace({ submitActivity, chapterId, course, closeModal, access_token }: any) {
     const org = useOrg() as any;
@@ -91,7 +92,8 @@ function NewWorkspace({ submitActivity, chapterId, course, closeModal, access_to
 
     return (
         <FormLayout onSubmit={handleSubmit}>
-            <span style={{color: 'red'}}>TODO: @Albert / Tyron: RESKIN</span>
+            <span style={{color: 'green'}}> Habt einen Tollen Tag! :P </span>
+            
             {/* Name */}
             <FormField name="assignment-activity-title">
                 <Flex css={{ alignItems: 'baseline', justifyContent: 'space-between' }}>
@@ -150,7 +152,7 @@ function NewWorkspace({ submitActivity, chapterId, course, closeModal, access_to
 
             <Flex css={{ marginTop: 25, justifyContent: 'flex-end' }}>
                 <Form.Submit asChild>
-                    <ButtonBlack type="submit" css={{ marginTop: 10 }}>
+                    <Button type="submit">
                         {isSubmitting ? (
                             <BarLoader
                                 cssOverride={{ borderRadius: 60 }}
@@ -160,7 +162,7 @@ function NewWorkspace({ submitActivity, chapterId, course, closeModal, access_to
                         ) : (
                             'Create workspace'
                         )}
-                    </ButtonBlack>
+                    </Button>
                 </Form.Submit>
             </Flex>
         </FormLayout>

@@ -10,6 +10,8 @@ import { useLHSession } from '@components/Contexts/LHSessionContext'
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import useSWR, { mutate } from 'swr'
+import { Button } from "@components/ui/button"
+import { Card } from "@components/ui/card";
 
 type EditCourseAccessProps = {
     orgslug: string
@@ -163,10 +165,10 @@ function UserGroupsSection({ usergroups }: { usergroups: any[] }) {
                                         confirmationMessage="Users from this UserGroup will no longer have access to this course"
                                         dialogTitle="Unlink UserGroup?"
                                         dialogTrigger={
-                                            <button className="mr-2 flex space-x-2 hover:cursor-pointer p-1 px-3 bg-rose-700 rounded-md font-bold items-center text-sm text-rose-100">
+                                            <Button variant={"destructive"} className="mr-2 flex space-x-2 hover:cursor-pointer p-1 px-3  rounded-md font-bold items-center text-sm ">
                                                 <X className="w-4 h-4" />
                                                 <span>Delete link</span>
-                                            </button>
+                                            </Button>
                                         }
                                         functionToExecute={() => removeUserGroupLink(usergroup.id)}
                                         status="warning"
@@ -187,10 +189,10 @@ function UserGroupsSection({ usergroups }: { usergroups: any[] }) {
                     dialogTitle="Link Course to a UserGroup"
                     dialogDescription="Choose a UserGroup to link this course to. Users from this UserGroup will have access to this course."
                     dialogTrigger={
-                        <button className="flex space-x-2 hover:cursor-pointer p-1 px-3 bg-green-700 rounded-md font-bold items-center text-xs sm:text-sm text-green-100">
+                        <Button className="flex space-x-2 hover:cursor-pointer p-1 px-3 rounded-md font-bold items-center text-xs sm:text-sm ">
                             <SquareUserRound className="w-3 h-3 sm:w-4 sm:h-4" />
                             <span>Link to a UserGroup</span>
-                        </button>
+                        </Button>
                     }
                 />
             </div>
