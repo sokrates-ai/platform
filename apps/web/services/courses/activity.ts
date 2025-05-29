@@ -27,7 +27,8 @@ export async function removeCourse(course_uuid: string, org_slug: string,access_
 export async function markActivityAsComplete(
   org_slug: string,
   course_uuid: string,
-  activity_uuid: string,access_token:any
+  activity_uuid: string,
+  access_token: any,
 ) {
   const result: any = await fetch(
     `${getAPIUrl()}trail/add_activity/${activity_uuid}`,

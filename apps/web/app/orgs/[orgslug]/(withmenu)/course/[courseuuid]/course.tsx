@@ -27,6 +27,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { isChapterLocked, isActivityDone } from '@components/Pages/Courses/utils'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { updateCourseCanvasInteractionState } from '@services/courses/courses'
 
 const CourseClient = (props: any) => {
 	const [learnings, setLearnings] = useState<string[]>([])
@@ -36,7 +37,7 @@ const CourseClient = (props: any) => {
 	const course = props.course
 	const org = useOrg() as any
 	const router = useRouter()
-	const isMobile = useMediaQuery('(max-width: 768px)')
+	const isMobile = useMediaQuery('(max-width: 768px)');
 
 	function getLearningTags() {
 		const learningItems = course?.learnings ? course?.learnings.split(',') : []
@@ -52,13 +53,16 @@ const CourseClient = (props: any) => {
 	const [chapterDialogOpen, setChapterDialogOpen] = useState(false)
 	const [selectedChapter, setSelectedChapter] = useState(0)
   	const session = useLHSession() as any
+	const access_token = session?.data?.tokens?.access_token;
    	useEffect(() => {
-		if(!chapterDialogOpen){
-			console.log(`Current Chapter State: FALSE`);
-			return;
-		}
-		console.log(`Current Chapter State: ${selectedChapter}`);
-    },[selectedChapter, chapterDialogOpen]) 
+		updateCourseCanvasInteractionState({
+			selectedChapter: chapterDialogOpen ? selectedChapter : null,
+			courseUuid: 
+			// TODO: Find out why we normally remove "course" from the course uuid.
+			`course_${courseuuid}`,
+			access_token,
+		})
+    },[selectedChapter, chapterDialogOpen, access_token, courseuuid]) 
 
 	const layout: LayoutState = {
 		layout: course?.map_state?.objects || [],
