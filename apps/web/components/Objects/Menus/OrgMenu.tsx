@@ -20,8 +20,25 @@ export const OrgMenu = (props: any) => {
   
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200/30 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="w-full flex justify-center sticky top-0 z-50">
+        <div
+          className="
+            sticky top-6 z-50
+            w-2/4
+            mx-auto
+            bg-white/90
+            rounded-2xl
+            shadow-[0px_4px_16px_rgba(0,0,0,0.06)]
+            border-2 border-[#707070]
+            flex items-center justify-between
+            px-6 py-2
+            backdrop-blur-lg
+          "
+          style={{ 
+            marginTop: '24px', 
+            background: 'linear-gradient(70deg, #E8E8E8 -68.25%, #F5F5F5 41.43%)'
+          }}
+        >
           <div className="flex items-center gap-6">
             <Link href={getUriWithOrg(orgslug, "/")} className="flex items-center">
               <div className="flex h-9 w-auto items-center justify-center rounded-md">
@@ -37,14 +54,21 @@ export const OrgMenu = (props: any) => {
                 )}
               </div>
             </Link>
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <MenuLinks orgslug={orgslug} />
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
           </div>
-
           <div className="flex items-center">
             <NewHeaderProfileBox />
           </div>
         </div>
       </div>
-      <div className="h-16"></div>
+      {/* Abstandhalter für sticky */}
+      <div className="h-20"></div>
     </>
   )
 }
