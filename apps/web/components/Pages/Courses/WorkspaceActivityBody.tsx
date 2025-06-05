@@ -1,16 +1,6 @@
-import { getAPIUrl, getUriWithOrg } from '@services/config/config'
-import { CheckCircle, LockIcon, Rocket, ArrowRight } from 'lucide-react'
+import { getAPIUrl } from '@services/config/config'
 import Link from 'next/link'
-import React, { useEffect, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import React, { useEffect } from 'react'
 import { RequestBodyWithAuthHeader } from '@services/utils/ts/requests'
 import { stateConfig } from './stateConfig'
 

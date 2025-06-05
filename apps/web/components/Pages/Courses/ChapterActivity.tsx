@@ -1,18 +1,14 @@
-import { getAPIUrl, getUriWithOrg } from '@services/config/config'
-import { CheckCircle, LockIcon, Rocket, ArrowRight } from 'lucide-react'
+import { getUriWithOrg } from '@services/config/config'
 import Link from 'next/link'
 import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import WorkspaceActivity from '@components/Objects/Activities/Workspace/WorkspaceActivity'
-import { RequestBodyWithAuthHeader } from '@services/utils/ts/requests'
 import WorkspaceActivityBody from './WorkspaceActivityBody'
 import { stateConfig } from './stateConfig'
 

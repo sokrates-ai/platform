@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Optional
 from sqlmodel import Field, SQLModel
-from sqlalchemy import ForeignKey, JSON, Column, Integer, String
+from sqlalchemy import ForeignKey, JSON, Column, Integer
 
 
 class TrailStepTypeEnum(str, Enum):
