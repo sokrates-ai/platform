@@ -1,3 +1,5 @@
+from src.db.courses.activities import Activity
+from src.services.courses.activities.activities import get_activity
 from src.services.users.users import security_get_user_by_uuid
 from fastapi import APIRouter, Depends, Request
 from src.core.events.database import get_db_session
@@ -9,8 +11,10 @@ from src.services.trail.trail import (
     add_activity_to_trail,
     add_course_to_trail,
     create_user_trail,
+    get_activity_task_markers_of_activity,
     get_user_trails,
     get_user_trail_with_orgid,
+    mark_activity_task_complete,
     remove_course_from_trail,
 )
 
@@ -94,13 +98,14 @@ async def api_add_activity_to_trail(
     """
     Add Course to trail
     """
-    return await add_activity_to_trail(
-        request, user, activity_uuid, db_session
-    )
+    return await add_activity_to_trail(request, user, activity_uuid, db_session)
+
 
 class WSMarkComplete(BaseModel):
     activity_uuid: str
     user_uuid: str
+    task_id: int
+
 
 @router.post("/ws_mark_complete")
 async def api_ws_mark_complete(
@@ -108,15 +113,91 @@ async def api_ws_mark_complete(
     body: WSMarkComplete,
     # user=Depends(get_current_user),
     db_session=Depends(get_db_session),
-) -> TrailRead:
+) -> None:
     """
     Add Course to trail from WS
     """
+
+    print("WSMarkComplete called: ", body)
 
     user = await security_get_user_by_uuid(request, db_session, uuid=body.user_uuid)
     if user is None:
         raise Exception("illegal user")
 
-    return await add_activity_to_trail(
-        request, user, body.activity_uuid, db_session
+    # TODO: add atomic progress.
+
+    # Check if activity contains multiple tasks
+    activity: Activity = await get_activity(
+        request=request,
+        activity_uuid=body.activity_uuid,
+        current_user=user,
+        db_session=db_session,
     )
+
+    print(f"activity: {activity.content}")
+
+    tasks = activity.content.get("task_ids", None)
+    if tasks is None or len(tasks) == 0:
+        raise Exception("activity does not contain tasks")
+    print(f"activity tasks: {tasks}")
+
+    task_found = False
+    for task_id in tasks:
+        if task_id == body.task_id:
+            task_found = True
+            break
+
+    if not task_found:
+        raise Exception("task not found in activity")
+
+    markers = await get_activity_task_markers_of_activity(
+        request=request,
+        user=user,
+        activity_id=activity.id,
+        db_session=db_session,
+    )
+
+    markers_flat = [marker.task_id for marker in markers]
+
+    # Ensure that the activity is added to the trail.
+    await add_activity_to_trail(
+        request=request,
+        user=user,
+        activity_uuid=body.activity_uuid,
+        db_session=db_session,
+        complete=False,
+    )
+
+    if body.task_id not in markers_flat:
+        await mark_activity_task_complete(
+            request=request,
+            user=user,
+            task_id=body.task_id,
+            activity_id=activity.id,
+            org_id=activity.org_id,
+            course_id=activity.course_id,
+            db_session=db_session,
+        )
+
+    # Ensure that the task is included in the markers.
+    markers_flat.append(body.task_id)
+    print(f"markers_flat: {markers_flat}")
+
+    everything_marked = True
+    for task_id in tasks:
+        if task_id not in markers_flat:
+            everything_marked = False
+            break
+
+    # If everything is marked, we can add the activity to the trail
+    if everything_marked:
+        print("!!!everything except last one marked, adding activity to trail")
+        await add_activity_to_trail(
+            request=request,
+            user=user,
+            activity_uuid=body.activity_uuid,
+            db_session=db_session,
+            complete=True,
+        )
+
+    return None
