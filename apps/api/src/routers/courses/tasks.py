@@ -1,10 +1,10 @@
+from src.db.tasks import DeleteTag
 import httpx
 from typing import List, Optional
 from config.config import WorkspaceConfig
 from src.db.courses.activities import Activity, ActivityTypeEnum
 from src.services.courses.activities.activities import get_activity
 from src.services.courses.activities.workspaces import (
-    DeleteTag,
     Tags,
     Task,
     TaskCreate,
@@ -103,7 +103,6 @@ async def api_create_session(
             status_code=422,
             detail="Activity is not a exercise",
         )
-
 
     task_ids = []
     if "task_id" in activity.content:
