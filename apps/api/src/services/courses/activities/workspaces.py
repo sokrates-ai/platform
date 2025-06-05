@@ -1,8 +1,6 @@
 from typing import List, Literal, Optional
-from src.db.tasks import Course_Task, Tags, Task, TaskCreate, TaskWithCourseIDAndTags, Tasks_Tags, DeleteTag
-from sqlmodel import SQLModel, Field
+from src.db.tasks import Course_Task, Tags, Task, TaskCreate, TaskWithCourseIDAndTags, Tasks_Tags 
 
-from pydantic import BaseModel
 from sqlmodel import Session, select
 from src.security.rbac.rbac import (
     authorization_verify_based_on_roles_and_authorship,
