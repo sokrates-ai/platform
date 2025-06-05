@@ -15,6 +15,7 @@ interface Props {
   chapterID: number
   orgslug: string
   courseId: string
+  access_token: string
 }
 
 function CourseChapter(props: Props) {
@@ -58,6 +59,7 @@ function CourseChapter(props: Props) {
             chapterID={chapter.id}
             orgslug={orgslug}
             courseId={courseID}
+            access_token={props.access_token}
           />
         )}
       </CardContent>
