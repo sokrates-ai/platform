@@ -27,24 +27,24 @@ export const OrgMenu = (props: any) => {
       <div
         className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200/30 bg-white/80 backdrop-blur-md"
         style={{
-          background: `
-          linear-gradient(to right,
-  rgb(245, 155, 155),
-  rgb(247, 179, 155),
-  rgb(251, 208, 153),
-  rgb(248, 223, 146),
-  rgb(247, 247, 143) 27%,
-  rgb(247, 247, 143),
-  rgb(247, 247, 143) 33%,
-  rgb(185, 225, 161),
-  rgb(140, 210, 157),
-  rgb(160, 216, 221),
-  rgb(174, 189, 239),
-  rgb(201, 172, 231),
-  rgb(230, 161, 229)
-)
-
-`,
+//           background: `
+//           linear-gradient(to right,
+//   rgb(245, 155, 155),
+//   rgb(247, 179, 155),
+//   rgb(251, 208, 153),
+//   rgb(248, 223, 146),
+//   rgb(247, 247, 143) 27%,
+//   rgb(247, 247, 143),
+//   rgb(247, 247, 143) 33%,
+//   rgb(185, 225, 161),
+//   rgb(140, 210, 157),
+//   rgb(160, 216, 221),
+//   rgb(174, 189, 239),
+//   rgb(201, 172, 231),
+//   rgb(230, 161, 229)
+// )
+// 
+// `,
         }}
       >
         <div className="mx-auto flex h-16 max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">

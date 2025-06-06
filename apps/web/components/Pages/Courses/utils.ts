@@ -44,7 +44,11 @@ export function isActivityDone(course: any, activityID: number) {
         (run: any) => run.course_id == course.id
     )
     if (run) {
-        return run.steps.find((step: any) => step.activity_id == activityID)
+        const step = run.steps.find((step: any) => step.activity_id == activityID)
+        if (!step) {
+            return false
+        }
+        return step.complete
     } else {
         return false
     }

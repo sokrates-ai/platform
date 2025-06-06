@@ -154,6 +154,8 @@ async def api_ws_mark_complete(
         request=request,
         user=user,
         activity_id=activity.id,
+        course_id=activity.course_id,
+        org_id=activity.org_id,
         db_session=db_session,
     )
 
@@ -181,13 +183,14 @@ async def api_ws_mark_complete(
 
     # Ensure that the task is included in the markers.
     markers_flat.append(body.task_id)
-    print(f"markers_flat: {markers_flat}")
 
     everything_marked = True
     for task_id in tasks:
         if task_id not in markers_flat:
             everything_marked = False
             break
+
+    print(f"markers_flat: {markers_flat} | everything_marked: {everything_marked}")
 
     # If everything is marked, we can add the activity to the trail
     if everything_marked:

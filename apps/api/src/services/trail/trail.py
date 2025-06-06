@@ -176,9 +176,9 @@ async def get_user_trail_with_orgid(
             course = db_session.exec(statement).first()
 
             statement = select(Assignment_Task_Complete).where(
-                (Assignment_Task_Complete.course_id == trail_step.course_id) &
-                (Assignment_Task_Complete.activity_id == trail_step.activity_id) &
-                (Assignment_Task_Complete.user_id == trail_step.user_id)
+                (Assignment_Task_Complete.course_id == trail_step.course_id)
+                & (Assignment_Task_Complete.activity_id == trail_step.activity_id)
+                & (Assignment_Task_Complete.user_id == trail_step.user_id)
             )
             parts = db_session.exec(statement).all()
 
@@ -269,7 +269,9 @@ async def add_activity_to_trail(
         db_session.commit()
         db_session.refresh(trailstep)
     else:
-        print(f"TrailStep already exists for activity {activity.id} and user {user.id}, got UPDATED.")
+        print(
+            f"TrailStep already exists for activity {activity.id} and user {user.id}, got UPDATED."
+        )
         # Update the existing trail step with new data
         trailstep.update_date = str(datetime.now())
         trailstep.complete = complete
@@ -477,20 +479,26 @@ async def remove_course_from_trail(
 # Atomic task-based progression
 #
 
+
 async def get_activity_task_markers_of_activity(
     request: Request,
     user: PublicUser,
     activity_id: int,
+    course_id: int,
+    org_id: int,
     db_session: Session,
 ) -> List[Assignment_Task_Complete]:
     statement = select(Assignment_Task_Complete).where(
-        Assignment_Task_Complete.activity_id == activity_id,
-        Assignment_Task_Complete.user_id == user.id
+        (Assignment_Task_Complete.activity_id == activity_id)
+        & (Assignment_Task_Complete.user_id == user.id)
+        & (Assignment_Task_Complete.course_id == course_id)
+        & (Assignment_Task_Complete.org_id == org_id)
     )
 
     markers = db_session.exec(statement).all()
 
     return markers
+
 
 async def mark_activity_task_complete(
     request: Request,
