@@ -96,24 +96,6 @@ function NewActivityModal({
               Workspace
             </div>
           </ActivityOption>
-
-          <ActivityOption
-            onClick={() => {
-              setSelectedView('workspaces_multi')
-            }}
-          >
-            <div className="h-20 rounded-lg m-0.5 flex flex-col items-center justify-end text-center bg-white hover:cursor-pointer">
-              <Image
-                unoptimized
-                quality={100}
-                alt="Workspaces Multi"
-                src={AssignmentActivityImage}
-              ></Image>
-            </div>
-            <div className="flex text-sm h-5 font-medium text-gray-500 items-center justify-center text-center">
-              Workspace Multi
-            </div>
-          </ActivityOption>
         </div>
       )}
 
@@ -144,17 +126,6 @@ function NewActivityModal({
 
       {selectedView === 'workspaces' && (
         <Workspace
-          submitActivity={submitActivity}
-          chapterId={chapterId}
-          course={course}
-          closeModal={closeModal}
-          access_token={access_token}
-        />
-      )}
-
-      {selectedView === 'workspaces_multi' && (
-        <Workspace
-          multi={true}
           submitActivity={submitActivity}
           chapterId={chapterId}
           course={course}
