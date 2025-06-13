@@ -10,8 +10,6 @@ import React, {
 import { Viewport } from 'pixi-viewport'
 import { useApplication, extend } from '@pixi/react'
 import {
-  WORLD_WIDTH,
-  WORLD_HEIGHT,
   GRID_SIZE,
   MINOR_GRID_SIZE,
 } from './constants'
@@ -34,6 +32,8 @@ interface DragData {
   selectedIds: number[]
   initialPositions: Map<number, { x: number; y: number }>
 }
+
+
 
 function useZoomLevel() {
   const [zoom, setZoom] = useState(window.devicePixelRatio)
@@ -102,6 +102,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
     chapterStates,
     clampToMap,
   }) => {
+
     const { app } = useApplication()
 
     const { left, right, top, bottom } = boundaries || DEFAULT_BOUNDARIES
@@ -113,7 +114,8 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
     const dragDataRef = useRef<DragData | null>(null)
     const canvasElementRef = useRef<HTMLElement | null>(null)
     const zoom = useZoomLevel()
-    const [isZoomUpdated, setIsZoomUpdated] = useState<Boolean>(false)
+
+   
 
     const gridSize =
       effectiveGridSize || MINOR_GRID_SIZE * (11 - gridGranularity)
@@ -126,9 +128,6 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
       canvasElementRef.current = document.getElementById('canvas-parent')
     }, [app?.renderer])
 
-    useEffect(() => {
-      setIsZoomUpdated(true)
-    }, [zoom])
 
     const viewportRef = useCallback(
       (node: Viewport | null) => {
@@ -140,23 +139,8 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
           app.renderer.width,
           app.renderer.height,
           worldWidth,
-          worldHeight
+          worldHeight,
         )
-
-        if (isZoomUpdated) {
-          setIsZoomUpdated(false)
-          if (readOnly) {
-            node.clampZoom({
-              minWidth: worldWidth * 0.75,
-              maxWidth: worldWidth * 1,
-            })
-          } else {
-            node.clampZoom({
-              minWidth: worldWidth * 0.2,
-              maxWidth: worldWidth * 3,
-            })
-          }
-        }
 
         if (isNewViewport) {
           node
@@ -167,13 +151,13 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
 
           if (readOnly) {
             node.clampZoom({
-              minWidth: worldWidth * 0.75,
-              maxWidth: worldWidth * 1,
+              minWidth: app.renderer.width * 0.75,
+              maxWidth: app.renderer.width * 1,
             })
           } else {
             node.clampZoom({
-              minWidth: worldWidth * 0.2,
-              maxWidth: worldWidth * 3,
+              minWidth: app.renderer.width * 0.2,
+              maxWidth: app.renderer.width * 3,
             })
           }
 
@@ -220,7 +204,6 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
         onViewportReady,
         readOnly,
         clampToMap,
-        isZoomUpdated,
       ]
     )
 
