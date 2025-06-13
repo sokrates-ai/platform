@@ -68,7 +68,7 @@ export async function updateCourseThumbnail(course_uuid: any, thumbnail: any, ac
   const formData = new FormData()
   formData.append('thumbnail', thumbnail)
   const result: any = await fetch(
-    `${getAPIUrl()}courses/${course_uuid}/thumbnail`,
+    `${getAPIUrl()}courses/thumbnail/${course_uuid}`,
     RequestBodyFormWithAuthHeader('PUT', formData, null,access_token)
   )
   const res = await getResponseMetadata(result)
