@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_jwt_auth.exceptions import AuthJWTException
 from fastapi.middleware.gzip import GZipMiddleware
+import os
 
 
 # from src.services.mocks.initial import create_initial_data
@@ -57,7 +58,9 @@ def authjwt_exception_handler(request: Request, exc: AuthJWTException):
 
 
 # Static Files
-app.mount("/content", StaticFiles(directory="content"), name="content")
+path=os.path.abspath("content")
+print(f"Mounting content directory at: {path}")
+app.mount("/content", StaticFiles(directory=path), name="content")
 
 # Global Routes
 app.include_router(v1_router)
