@@ -200,7 +200,7 @@ function Editor(props: Editor) {
                       props.org?.org_uuid,
                       props.course.course_uuid,
                       props.course.thumbnail_image
-                    ) : getUriWithOrg(props.org?.slug,'/empty_thumbnail.png')}`}
+                    ) : getUriWithOrg(props.org?.slug,'/empty_thumbnail-new.png')}`}
                     alt=""
                   ></EditorInfoThumbnail>
                 </Link>

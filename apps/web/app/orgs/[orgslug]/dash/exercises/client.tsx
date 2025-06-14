@@ -141,7 +141,7 @@ function ExerciseHome(params: ExerciseProps) {
         {courses.map((course: any) => {
           const thumbnailImage = course.thumbnail_image
             ? getCourseThumbnailMediaDirectory(org?.org_uuid, course.course_uuid, course.thumbnail_image)
-            : '../empty_thumbnail.png'
+            : '../empty_thumbnail-new.png'
 
           console.log("COURSE_IMAGE_URL", thumbnailImage)
           return (<div key={course.course_uuid}>

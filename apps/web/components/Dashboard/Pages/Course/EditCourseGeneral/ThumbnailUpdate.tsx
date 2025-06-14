@@ -72,7 +72,7 @@ function ThumbnailUpdate() {
                   org?.org_uuid,
                   course.courseStructure.course_uuid,
                   course.courseStructure.thumbnail_image
-                ) : '/empty_thumbnail.png'}`}
+                ) : '/empty_thumbnail-new.png'}`}
                 className="shadow w-[200px] h-[100px] rounded-md bg-gray-200"
               />
             )}
