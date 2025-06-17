@@ -58,9 +58,10 @@ def authjwt_exception_handler(request: Request, exc: AuthJWTException):
 
 
 # Static Files
-path=os.path.abspath("content")
+base_path="content"
+path=os.path.abspath(base_path)
 print(f"Mounting content directory at: {path}")
-app.mount("/content", StaticFiles(directory=path), name="content")
+app.mount("/content", StaticFiles(directory=base_path), name="content")
 
 # Global Routes
 app.include_router(v1_router)
