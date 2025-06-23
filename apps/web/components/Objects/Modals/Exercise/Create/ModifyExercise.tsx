@@ -74,7 +74,7 @@ function ModifyExerciseModal({
             task: values.task,
             solution: values.solution,
             tags: internalTags,
-            course_id: values.course_id,
+            course_id: values.course_id !== "" ? values.course_id : null,
           },
           session.data?.tokens?.access_token
         )
@@ -164,7 +164,7 @@ function ModifyExerciseModal({
     <FormLayout onSubmit={formik.handleSubmit}>
       <FormField name="course_id">
         <Flex css={{ alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <FormLabel>Select Course</FormLabel>
+          <FormLabel>Move to Course</FormLabel>
           <FormMessage match="valueMissing">
             Select optional course from the courses list.
           </FormMessage>
