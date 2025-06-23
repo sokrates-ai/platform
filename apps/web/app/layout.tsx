@@ -7,6 +7,7 @@ import LHSessionProvider from '@components/Contexts/LHSessionContext'
 import Script from 'next/script'
 import { isDevEnv } from '@services/config/config'
 import { PostHogProvider } from '@components/Posthog/PosthogProvider'
+import Footer from '../components/Objects/Footer.tsx'
 
 export default function RootLayout({
   children,
@@ -79,6 +80,7 @@ export default function RootLayout({
                 >
                   {children}
                 </motion.main>
+                <Footer />
               </StyledComponentsRegistry>
             </PostHogProvider>
           </LHSessionProvider>
