@@ -166,7 +166,7 @@ function CreateCourseModal({ closeModal, orgslug }: any) {
                 />
               ) : (
                 <img
-                  src="/empty_thumbnail.png"
+                  src="/empty_thumbnail-new.png"
                   className="shadow w-[200px] h-[100px] rounded-md bg-gray-200"
                 />
               )}

@@ -20,7 +20,8 @@ export const OrgMenu = (props: any) => {
   
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200/30 bg-white/80 backdrop-blur-md">
+      <div className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200/30"
+        style={{background: "linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 9%, #ffd2d9 9%, #ffd2d9 18%, #b7e8ee 18%, #b7e8ee 27%, #e2a175 27%, #e2a175 36%, #787878 36%, #787878 45%, #ff8177 45%, #ff8177 55%, #ffbe8e 55%, #ffbe8e 64%, #fff8a8 64%, #fff8a8 73%, #bfde8f 73%, #bfde8f 82%, #91a1cf 82%, #91a1cf 91%, #be7abd 91%, #be7abd 100%)"}}>
         <div className="mx-auto flex h-16 max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-6">
             <Link href={getUriWithOrg(orgslug, "/")} className="flex items-center">

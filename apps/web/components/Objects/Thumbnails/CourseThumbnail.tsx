@@ -56,7 +56,7 @@ function CourseThumbnail({ course, orgslug, customLink }: PropsType) {
 
   const thumbnailImage = course.thumbnail_image
     ? getCourseThumbnailMediaDirectory(org?.org_uuid, course.course_uuid, course.thumbnail_image)
-    : '../empty_thumbnail.png'
+    : '../empty_thumbnail-new.png'
 
   return (
     <div className="relative">

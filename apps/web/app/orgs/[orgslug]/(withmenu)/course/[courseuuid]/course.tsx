@@ -167,7 +167,7 @@ const CourseClient = (props: any) => {
           <div
             className="w-full h-[200px] md:h-[400px] bg-cover bg-center rounded-lg shadow-md"
             style={{
-              backgroundImage: `url('../empty_thumbnail.png')`,
+              backgroundImage: `url('../empty_thumbnail-new.png')`,
               backgroundSize: 'auto',
             }}
           />
