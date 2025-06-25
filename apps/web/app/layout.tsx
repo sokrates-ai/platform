@@ -4,10 +4,8 @@ import StyledComponentsRegistry from '../components/Utils/libs/styled-registry'
 import { motion } from 'framer-motion'
 import { SessionProvider } from 'next-auth/react'
 import LHSessionProvider from '@components/Contexts/LHSessionContext'
-import Script from 'next/script'
-import { isDevEnv } from '@services/config/config'
 import { PostHogProvider } from '@components/Posthog/PosthogProvider'
-import Footer from '../components/Objects/Footer.tsx'
+import Footer from '../components/Objects/Footer'
 
 export default function RootLayout({
   children,
