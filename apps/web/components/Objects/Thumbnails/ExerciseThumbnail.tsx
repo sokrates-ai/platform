@@ -2,13 +2,9 @@
 import { useOrg } from '@components/Contexts/OrgContext'
 import AuthenticatedClientElement from '@components/Security/AuthenticatedClientElement'
 import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationModal/ConfirmationModal'
-import { getUriWithOrg } from '@services/config/config'
-import { deleteCourseFromBackend } from '@services/courses/courses'
-import { getCourseThumbnailMediaDirectory } from '@services/media/media'
 import { revalidateTags } from '@services/utils/ts/requests'
-import { BookMinus, FilePenLine, Settings2, MoreVertical, Pencil } from 'lucide-react'
+import { BookMinus, MoreVertical, Pencil } from 'lucide-react'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React from 'react'
 import toast from 'react-hot-toast'
@@ -21,7 +17,6 @@ import {
 } from "@components/ui/dropdown-menu"
 import { deleteExerciseFromBE } from '@services/courses/workspaces'
 import { mutate } from 'swr'
-import CreateExerciseModal from '../Modals/Exercise/Create/CreateExercise'
 import ModifyExerciseModal from '../Modals/Exercise/Create/ModifyExercise'
 
 export type Exercise = {

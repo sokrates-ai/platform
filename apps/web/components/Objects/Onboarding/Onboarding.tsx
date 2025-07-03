@@ -5,10 +5,7 @@ import OnBoardContentMap from '@public/onboarding/OnBoardContentMap.png';
 import OnBoardAutomaticFeedback from '@public/onboarding/OnBoardAutomaticFeedback.png';
 
 
-import { ArrowRight, Book, Check, Globe, Info, PictureInPicture, Sparkle, Sprout, SquareUser, ArrowRightLeft, ArrowLeftRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { getUriWithOrg } from '@services/config/config';
-import { useOrg } from '@components/Contexts/OrgContext';
+import { ArrowRight, Check, PictureInPicture, ArrowLeftRight } from 'lucide-react';
 import useAdminStatus from '@components/Hooks/useAdminStatus';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from '@components/ui/button';
@@ -30,8 +27,6 @@ const Onboarding: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(true);
-  const router = useRouter();
-  const org = useOrg() as any;
   const isUserAdmin = useAdminStatus() as any;
 
   const onboardingData: OnboardingStep[] = [
@@ -67,15 +62,13 @@ const Onboarding: React.FC = () => {
       localStorage.setItem('isOnboardingCompleted', 'true');
       setIsModalOpen(false); // Close modal after completion
       setIsOnboardingComplete(true); // Show success message
-      console.log('Onboarding completed');
     }
   };
 
   const skipOnboarding = () => {
     // Mark onboarding as completed in local storage
     localStorage.setItem('isOnboardingCompleted', 'true');
-    setIsModalOpen(false); // Close modal after skipping
-    console.log('Onboarding skipped');
+    setIsModalOpen(false);
   };
 
   const goToStep = (index: number) => {

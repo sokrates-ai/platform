@@ -91,7 +91,7 @@ export async function resetPassword(
   return res
 }
 
-export async function logout(): Promise<any> {
+export async function logout_deprecated(): Promise<any> {
   // Request Config
 
   // get origin

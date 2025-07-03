@@ -70,7 +70,7 @@ async def api_create_course(
     )
 
 
-@router.put("/{course_uuid}/thumbnail")
+@router.put("/thumbnail/{course_uuid}")
 async def api_create_course_thumbnail(
     request: Request,
     course_uuid: str,
@@ -81,6 +81,7 @@ async def api_create_course_thumbnail(
     """
     Update new Course Thumbnail
     """
+    print("=====UPLOAD====")
     return await update_course_thumbnail(
         request, course_uuid, current_user, db_session, thumbnail
     )

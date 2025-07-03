@@ -1,7 +1,6 @@
 from typing import List, Literal, Optional
-from sqlmodel import SQLModel, Field
+from src.db.tasks import Course_Task, Tags, Task, TaskCreate, TaskWithCourseIDAndTags, Tasks_Tags 
 
-from pydantic import BaseModel
 from sqlmodel import Session, select
 from src.security.rbac.rbac import (
     authorization_verify_based_on_roles_and_authorship,
@@ -9,65 +8,6 @@ from src.security.rbac.rbac import (
 )
 from src.db.users import AnonymousUser, PublicUser
 from fastapi import HTTPException, status, Request
-
-
-class TaskBase(SQLModel):
-    title: str = ""
-    description: str = ""
-    task: str = ""
-    solution: Optional[str] = None
-    # tags: Optional[dict] = None
-    # tags: List = Field(default={}, sa_column=Column(JSON))
-
-
-class Task(TaskBase, table=True):
-    id: int = Field(default=None, primary_key=True)
-
-
-class TaskModify(TaskBase):
-    id: int = 0
-    pass
-
-
-class TaskCreate(TaskBase):
-    course_id: Optional[int] = None
-    tags: List[str] = []
-    pass
-
-
-#
-# Tags
-#
-
-
-class Tasks_Tags(SQLModel, table=True):
-    tag_value: str = Field(foreign_key="tags.value", primary_key=True)
-    task_id: int = Field(foreign_key="task.id", primary_key=True)
-
-
-class Tags(SQLModel, table=True):
-    value: str = Field(primary_key=True)
-    color: int
-
-
-class DeleteTag(BaseModel):
-    value: str
-
-
-#
-# Course task / tag mapping.
-#
-
-
-class TaskWithCourseIDAndTags(TaskBase):
-    id: int
-    course_id: Optional[int] = None
-    tags: List[str] = []
-
-
-class Course_Task(SQLModel, table=True):
-    course_id: int = Field(default=None, primary_key=True)
-    task_id: int = Field(default=None, primary_key=True)
 
 
 async def add_course_task_association(
@@ -124,32 +64,6 @@ async def get_task(
     task = db_session.exec(statement).first()
     print(f"task={task}")
     return task
-
-
-# async def get_tasks(
-#     request: Request,
-#     db_session: Session,
-#     course_id: Optional[int] = None,
-#     page: int = 1,
-#     limit: int = 10,
-# ) -> List[Task]:
-#     if course_id is not None:
-#         statement = (
-#             select(Task)
-#             .join(Course_Task, Task.id == Course_Task.task_id)
-#             .where(Course_Task.course_id == course_id)
-#         )
-#     else:
-#         statement = select(Task)
-
-#     # Optionally add pagination
-#     offset = (page - 1) * limit
-#     statement = statement.offset(offset).limit(limit)
-
-#     tasks = db_session.exec(statement).all()
-#     print(f"tasks={tasks}")
-#     return tasks
-# from sqlmodel import col
 
 
 async def get_tags(

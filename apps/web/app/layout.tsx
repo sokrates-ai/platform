@@ -21,7 +21,7 @@ export default function RootLayout({
 
   const isStaging =
     typeof window !== 'undefined' &&
-    window.location.hostname.includes('staging') || true
+    window.location.hostname.includes('staging')
 
   return (
     <html className="" lang="en">

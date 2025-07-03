@@ -25,6 +25,7 @@ def import_all_models():
         for file_name in module_files:
             module_name = file_name[:-3]  # Remove the '.py' extension
             full_module_path = f"{current_module_base}.{module_name}"
+            print(f"Importing module: {full_module_path}")
             importlib.import_module(full_module_path)
 
 # Import all models before creating engine

@@ -21,10 +21,8 @@ import {
   Cuboid,
   FileText,
   ImagePlus,
-  Lightbulb,
   MousePointerClick,
   Sigma,
-  Tag,
   Tags,
   Video,
 } from 'lucide-react'
@@ -100,30 +98,41 @@ export const ToolbarButtons = ({ editor, props }: any) => {
       <DividerVerticalIcon
         style={{ marginTop: 'auto', marginBottom: 'auto', color: 'grey' }}
       />
-      <ToolBtn content={'Create table'}
-        onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+      <ToolBtn
+        content={'Create table'}
+        onClick={() =>
+          editor
+            .chain()
+            .focus()
+            .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+            .run()
+        }
       >
-        <TableIcon/>
+        <TableIcon />
       </ToolBtn>
-      <ToolBtn content={'Insert row'}
+      <ToolBtn
+        content={'Insert row'}
         onClick={() => editor.chain().focus().addRowAfter().run()}
       >
-        <RowsIcon/>
+        <RowsIcon />
       </ToolBtn>
-      <ToolBtn content={'Insert column'}
+      <ToolBtn
+        content={'Insert column'}
         onClick={() => editor.chain().focus().addColumnAfter().run()}
       >
-        <ColumnsIcon/>
+        <ColumnsIcon />
       </ToolBtn>
-      <ToolBtn content={'Remove column'}
+      <ToolBtn
+        content={'Remove column'}
         onClick={() => editor.chain().focus().deleteColumn().run()}
       >
-        <ContainerIcon/>
+        <ContainerIcon />
       </ToolBtn>
-      <ToolBtn content={'Remove row'}
+      <ToolBtn
+        content={'Remove row'}
         onClick={() => editor.chain().focus().deleteRow().run()}
       >
-        <SectionIcon/>
+        <SectionIcon />
       </ToolBtn>
       {/* TODO: fix this : toggling only works one-way */}
       <DividerVerticalIcon
@@ -235,37 +244,51 @@ export const ToolbarButtons = ({ editor, props }: any) => {
       </ToolTip>
       <ToolTip content={'External Object (Embed)'}>
         <ToolBtn
-          onClick={() => editor.chain().focus().insertContent({ type: 'blockEmbed' }).run()}
+          onClick={() =>
+            editor.chain().focus().insertContent({ type: 'blockEmbed' }).run()
+          }
         >
           <Cuboid size={15} />
         </ToolBtn>
       </ToolTip>
       <ToolTip content={'Badges'}>
         <ToolBtn
-          onClick={() => editor.chain().focus().insertContent({
-            type: 'badge',
-            content: [
-              {
-                type: 'text',
-                text: 'This is a Badge'
-              }
-            ]
-          }).run()}
+          onClick={() =>
+            editor
+              .chain()
+              .focus()
+              .insertContent({
+                type: 'badge',
+                content: [
+                  {
+                    type: 'text',
+                    text: 'This is a Badge',
+                  },
+                ],
+              })
+              .run()
+          }
         >
           <Tags size={15} />
         </ToolBtn>
       </ToolTip>
       <ToolTip content={'Button'}>
         <ToolBtn
-          onClick={() => editor.chain().focus().insertContent({
-            type: 'button',
-            content: [
-              {
-                type: 'text',
-                text: 'Click me'
-              }
-            ]
-          }).run()}
+          onClick={() =>
+            editor
+              .chain()
+              .focus()
+              .insertContent({
+                type: 'button',
+                content: [
+                  {
+                    type: 'text',
+                    text: 'Click me',
+                  },
+                ],
+              })
+              .run()
+          }
         >
           <MousePointerClick size={15} />
         </ToolBtn>

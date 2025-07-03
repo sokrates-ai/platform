@@ -32,7 +32,12 @@ function NewActivityModal({
             }}
           >
             <div className="h-20 rounded-lg m-0.5 flex flex-col items-center justify-end text-center bg-white hover:cursor-pointer">
-              <Image unoptimized quality={100} alt="Dynamic Page" src={DynamicPageActivityImage}></Image>
+              <Image
+                unoptimized
+                quality={100}
+                alt="Dynamic Page"
+                src={DynamicPageActivityImage}
+              ></Image>
             </div>
             <div className="flex text-sm h-5 font-medium text-gray-500 items-center justify-center text-center">
               Dynamic Page
@@ -44,7 +49,12 @@ function NewActivityModal({
             }}
           >
             <div className="h-20 rounded-lg m-0.5 flex flex-col items-center justify-end text-center bg-white hover:cursor-pointer">
-              <Image unoptimized quality={100} alt="Video Page" src={VideoPageActivityImage}></Image>
+              <Image
+                unoptimized
+                quality={100}
+                alt="Video Page"
+                src={VideoPageActivityImage}
+              ></Image>
             </div>
             <div className="flex text-sm h-5 font-medium text-gray-500 items-center justify-center text-center">
               Video
@@ -57,25 +67,17 @@ function NewActivityModal({
             }}
           >
             <div className="h-20 rounded-lg m-0.5 flex flex-col items-center justify-end text-center bg-white hover:cursor-pointer">
-              <Image unoptimized quality={100} alt="Document PDF Page" src={DocumentPdfPageActivityImage}></Image>
+              <Image
+                unoptimized
+                quality={100}
+                alt="Document PDF Page"
+                src={DocumentPdfPageActivityImage}
+              ></Image>
             </div>
             <div className="flex text-sm h-5 font-medium text-gray-500 items-center justify-center text-center">
               Document
             </div>
           </ActivityOption>
-
-          {/* <ActivityOption
-            onClick={() => {
-              setSelectedView('assignments')
-            }}
-          >
-            <div className="h-20 rounded-lg m-0.5 flex flex-col items-center justify-end text-center bg-white hover:cursor-pointer">
-              <Image unoptimized quality={100} alt="Assignment Page" src={AssignmentActivityImage}></Image>
-            </div>
-            <div className="flex text-sm h-5 font-medium text-gray-500 items-center justify-center text-center">
-              Assignments
-            </div>
-          </ActivityOption> */}
 
           <ActivityOption
             onClick={() => {
@@ -83,7 +85,12 @@ function NewActivityModal({
             }}
           >
             <div className="h-20 rounded-lg m-0.5 flex flex-col items-center justify-end text-center bg-white hover:cursor-pointer">
-              <Image unoptimized quality={100} alt="Assignment Page" src={AssignmentActivityImage}></Image>
+              <Image
+                unoptimized
+                quality={100}
+                alt="Workspaces Page"
+                src={AssignmentActivityImage}
+              ></Image>
             </div>
             <div className="flex text-sm h-5 font-medium text-gray-500 items-center justify-center text-center">
               Workspace
@@ -117,15 +124,6 @@ function NewActivityModal({
         />
       )}
 
-      {/* {selectedView === 'assignments' && (
-        <Assignment
-          submitActivity={submitActivity}
-          chapterId={chapterId}
-          course={course}
-          closeModal={closeModal}
-        />)
-      } */}
-
       {selectedView === 'workspaces' && (
         <Workspace
           submitActivity={submitActivity}
@@ -133,8 +131,8 @@ function NewActivityModal({
           course={course}
           closeModal={closeModal}
           access_token={access_token}
-        />)
-      }
+        />
+      )}
     </>
   )
 }

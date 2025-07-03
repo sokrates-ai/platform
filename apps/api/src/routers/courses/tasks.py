@@ -1,10 +1,10 @@
+from src.db.tasks import DeleteTag
 import httpx
 from typing import List, Optional
 from config.config import WorkspaceConfig
 from src.db.courses.activities import Activity, ActivityTypeEnum
 from src.services.courses.activities.activities import get_activity
 from src.services.courses.activities.workspaces import (
-    DeleteTag,
     Tags,
     Task,
     TaskCreate,
@@ -39,6 +39,7 @@ router = APIRouter()
 
 class SessionCreate(BaseModel):
     activity_uuid: str
+    task_id: Optional[int] = None
 
 
 class SessionResponse(BaseModel):
@@ -103,14 +104,27 @@ async def api_create_session(
             detail="Activity is not a exercise",
         )
 
-    # TODO: check if the user is allowed to do this
-    # if current_user.
-
-    # TODO: mock token creation here
-    if "task_id" not in activity.content:
+    task_ids = []
+    if "task_id" in activity.content:
+        task_ids.append(activity.content["task_id"])
+    elif "task_ids" in activity.content:
+        task_ids = activity.content["task_ids"]
+    else:
         raise "BUG: illegal content in activity"
 
-    task_id = activity.content["task_id"]
+    if session_obj.task_id is not None:
+        print(f"Using specific task ID={session_obj.task_id}")
+        # Sanity-check that the task_id is in the activity.
+        if session_obj.task_id not in task_ids:
+            raise HTTPException(
+                status_code=422,
+                detail="Task ID is not part of the activity",
+            )
+        task_id = session_obj.task_id
+    else:
+        print("Not a specific task, using first task in activity")
+        task_id = task_ids[0]
+
     print(f"task ID={task_id}")
 
     print(f"LEARNHOUSE={request.app.learnhouse_config.workspace_config}")

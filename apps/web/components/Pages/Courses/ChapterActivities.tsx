@@ -9,6 +9,7 @@ interface Props {
 	orgslug: string
 	courseId: string
 	current_activity?: any
+	access_token: string,
 }
 
 function ChapterActivities(props: Props) {
@@ -27,6 +28,16 @@ function ChapterActivities(props: Props) {
 
 	const completionPercentage = Math.round((completedActivities / totalActivities) * 100)
 
+    let run = course.trail?.runs.find(
+        (run: any) => run.course_id == course.id
+    )
+    // if (run) {
+    //     return run.steps.find((step: any) => step.activity_id == activityID)
+    // } else {
+    //     return false
+    // }
+	// console.log("run", run)
+// 
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between mb-2 px-1">
@@ -47,10 +58,11 @@ function ChapterActivities(props: Props) {
 					return (
 						<ChapterActivity
 							activity={activity}
-							courseId={courseid}
+							course={course}
 							orgslug={orgslug}
 							state={activityState}
 							key={activity.id}
+							access_token={props.access_token}
 						/>
 					)
 				})}
