@@ -34,22 +34,20 @@ import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import { AssetData } from '@components/Objects/ContentMap/Asset'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  isChapterLocked,
-  isActivityDone,
-} from '@components/Pages/Courses/utils'
-import { useSession } from 'next-auth/react'
+import { isChapterLocked, isActivityDone } from '@components/Pages/Courses/utils'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { updateCourseCanvasInteractionState } from '@services/courses/courses'
 
 const CourseClient = (props: any) => {
-  const [learnings, setLearnings] = useState<string[]>([])
-  const courseuuid = props.courseuuid
-  const courseid = courseuuid.replace('course_', '')
-  const orgslug = props.orgslug
-  const course = props.course
-  const org = useOrg() as any
-  const router = useRouter()
-  const isMobile = useMediaQuery('(max-width: 768px)')
+	const [learnings, setLearnings] = useState<string[]>([])
+	const courseuuid = props.courseuuid
+	const courseid = courseuuid.replace('course_', '')
+	const orgslug = props.orgslug
+	const course = props.course
+	const selectedChapterId = props.selectedChapterId;
+	const org = useOrg() as any
+	const router = useRouter()
+	const isMobile = useMediaQuery('(max-width: 768px)');
 
   const session = useLHSession() as any
   const access_token = session?.data?.tokens?.access_token
@@ -63,10 +61,18 @@ const CourseClient = (props: any) => {
     getLearningTags()
   }, [org, course])
 
+	const [chapterDialogOpen, setChapterDialogOpen] = useState(selectedChapterId != null)
+	const [selectedChapter, setSelectedChapter] = useState(selectedChapterId != null ? selectedChapterId : 0)
+   	useEffect(() => {
+		updateCourseCanvasInteractionState({
+			selectedChapter: chapterDialogOpen ? selectedChapter : null,
+			courseUuid: 
+			// TODO: Find out why we normally remove "course" from the course uuid.
+			`course_${courseuuid}`,
+			access_token,
+		})
+    },[selectedChapter, chapterDialogOpen, access_token, courseuuid]) 
   const isStarted = courseIsStarted(course)
-
-  const [chapterDialogOpen, setChapterDialogOpen] = useState(false)
-  const [selectedChapter, setSelectedChapter] = useState(0)
 
   const layout: LayoutState = {
     layout: course?.map_state?.objects || [],
