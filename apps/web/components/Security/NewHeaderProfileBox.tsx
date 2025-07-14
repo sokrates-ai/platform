@@ -35,16 +35,10 @@ export const NewHeaderProfileBox = () => {
       )}
       {session.status == "authenticated" && (
         <div className="flex items-center space-x-2">
-          <div className="hidden sm:flex items-center space-x-2">
-            <p className="text-sm capitalize">{session.data.user.username}</p>
-            {isUserAdmin.isAdmin && (
-              <div className="text-[10px] bg-rose-300 px-2 font-bold rounded-md shadow-inner py-1">ADMIN</div>
-            )}
-          </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Avatar className="cursor-pointer h-8 w-8 sm:h-10 sm:w-10">
+              <Avatar className="cursor-pointer h-10 w-10 sm:h-12 sm:w-12">
                 {/* <AvatarImage src="/path-to-avatar.jpg" alt="User Avatar" /> */}
                 <UserAvatar use_with_session={true}></UserAvatar>
                 <AvatarFallback>
@@ -57,12 +51,6 @@ export const NewHeaderProfileBox = () => {
               {/* Show username in dropdown on mobile */}
               <div className="sm:hidden px-2 py-1.5 text-sm font-medium text-muted-foreground">
                 <div className="flex items-center">
-                  <p className="capitalize">{session.data.user.username}</p>
-                  {isUserAdmin.isAdmin && (
-                    <span className="text-[10px] bg-rose-300 px-2 font-bold rounded-md shadow-inner py-0.5 ml-1 inline-flex items-center">
-                      ADMIN
-                    </span>
-                  )}
                 </div>
               </div>
 

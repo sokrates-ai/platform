@@ -12,7 +12,7 @@ import { nextAuthOptions } from 'app/auth/options'
 import { getOrgThumbnailMediaDirectory } from '@services/media/media'
 import CourseCard from '@components/Objects/StyledElements/Cards/CourseCard'
 import NoCoursesAlert from '@components/Objects/StyledElements/Alerts/NoCourseAlert'
-
+import {slides } from './slides'
 type MetadataProps = {
 	params: { orgslug: string }
 	searchParams: { [key: string]: string | string[] | undefined }
@@ -75,6 +75,7 @@ const OrgHomePage = async (params: any) => {
 	return (
 		<div className="w-full">
 			<div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-5 tracking-tight z-50">
+				
 				{/* Courses */}
 				<div className="flex flex-col space-y-4">
 					<div className="flex items-center justify-between">
