@@ -1,7 +1,8 @@
 'use client'
 import BreadCrumbs from '@components/Dashboard/Misc/BreadCrumbs'
 import AuthenticatedClientElement from '@components/Security/AuthenticatedClientElement'
-import Modal from '@components/Objects/StyledElements/Modal/Modal'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 import { useSearchParams } from 'next/navigation'
 import React from 'react'
 import useAdminStatus from '@components/Hooks/useAdminStatus'
@@ -13,7 +14,7 @@ import { swrFetcher } from '@services/utils/ts/requests'
 import CreateExerciseModal from '@components/Objects/Modals/Exercise/Create/CreateExercise'
 import ExerciseThumbnail from '@components/Objects/Thumbnails/ExerciseThumbnail'
 import EditTagsModal from '@components/Objects/Modals/Exercise/Create/EditTags'
-import { Divide } from 'lucide-react'
+import { Divide, Plus } from 'lucide-react'
 import CourseCard from './courseCard'
 import { getCourseThumbnailMediaDirectory } from '@services/media/media'
 
@@ -82,35 +83,36 @@ function ExerciseHome(params: ExerciseProps) {
             orgId={params.org_id}
           >
             <div className="flex gap-5">
-              <Modal
-                isDialogOpen={editTagsModalOpen}
-                onOpenChange={setEditTagsModalOpen}
-                minHeight="md"
-                dialogContent={
+              <Dialog open={editTagsModalOpen} onOpenChange={setEditTagsModalOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="default">Edit Tags</Button>
+                </DialogTrigger>
+                <DialogContent className="min-h-[500px] overflow-auto">
+                  <DialogHeader>
+                    <DialogTitle>Edit Tags</DialogTitle>
+                    <DialogDescription>Edit task tags</DialogDescription>
+                  </DialogHeader>
                   <EditTagsModal
                     closeModal={() => setEditTagsModalOpen(false)}
                     orgslug={params.orgslug}
                     mutateURL={TAGS_URL}
                     tags={tags}
                   />
-                }
-                dialogTitle="Edit Tags"
-                dialogDescription="Edit task tags"
-                dialogTrigger={
-                  <button>
-                    <button className="rounded-lg bg-black hover:scale-105 transition-all duration-100 ease-linear antialiased ring-offset-purple-800 p-2 px-5 my-auto font text-xs font-bold text-white drop-shadow-lg flex space-x-2 items-center">
-                      <div>Edit Tags</div>
-                      {/* <div className="text-md bg-neutral-800 px-1 rounded-full">+</div> */}
-                    </button>
-                  </button>
-                }
-              />
+                </DialogContent>
+              </Dialog>
 
-              <Modal
-                isDialogOpen={newExerciseModal}
-                onOpenChange={setNewExerciseModal}
-                minHeight="md"
-                dialogContent={
+              <Dialog open={newExerciseModal} onOpenChange={setNewExerciseModal}>
+                <DialogTrigger asChild>
+                  <Button variant="default" className="space-x-2">
+                    <span>New Exercise</span>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="min-h-[500px] overflow-auto">
+                  <DialogHeader>
+                    <DialogTitle>Create Exercise</DialogTitle>
+                    <DialogDescription>Create a new exercise</DialogDescription>
+                  </DialogHeader>
                   <CreateExerciseModal
                     closeModal={closeNewCourseModal}
                     orgslug={params.orgslug}
@@ -119,18 +121,8 @@ function ExerciseHome(params: ExerciseProps) {
                     tags={tags}
                     courseID={null}
                   />
-                }
-                dialogTitle="Create Exercise"
-                dialogDescription="Create a new exercise"
-                dialogTrigger={
-                  <button>
-                    <button className="rounded-lg bg-black hover:scale-105 transition-all duration-100 ease-linear antialiased ring-offset-purple-800 p-2 px-5 my-auto font text-xs font-bold text-white drop-shadow-lg flex space-x-2 items-center">
-                      <div>New Exercise</div>
-                      <div className="text-md bg-neutral-800 px-1 rounded-full">+</div>
-                    </button>
-                  </button>
-                }
-              />
+                </DialogContent>
+              </Dialog>
             </div>
           </AuthenticatedClientElement>
         </div>

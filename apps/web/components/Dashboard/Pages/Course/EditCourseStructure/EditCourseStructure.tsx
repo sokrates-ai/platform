@@ -29,6 +29,7 @@ import './graph.css';
 import styled from 'styled-components'
 import dynamic from 'next/dynamic'
 import classNames from 'classnames';
+import { Button } from "@components/ui/button";
 
 // -----------------------------------------------------------------------------
 // TYPE DEFINITIONS
@@ -475,21 +476,23 @@ const EditCourseStructure = (props: { orgslug: string; course_uuid?: string }) =
                 ⛶
               </button>
               {/* Auto layout */}
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => setTriggerAutoLayout((v) => !v)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded px-4 py-2 text-xs shadow transition-all"
+                className=" hover:bg-indigo-100  font-medium rounded px-4 py-2 text-xs shadow transition-all"
                 title="Auto Layout"
               >
                 Auto Layout
-              </button>
+              </Button>
               {/* Add chapter */}
-              <button
+              <Button
+                variant={"secondary"}
                 onClick={() => setNewChapterModal(true)}
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded px-4 py-2 text-xs shadow transition-all flex items-center gap-2"
+                className=" hover:bg-cyan-100  font-medium rounded px-4 py-2 text-xs shadow transition-all flex items-center gap-2"
               >
-                <Hexagon strokeWidth={2} size={14} className="text-white" />
+                <Hexagon strokeWidth={2} size={14} className="" />
                 Add Chapter
-              </button>
+              </Button>
             </div>
           </div>
         </div>

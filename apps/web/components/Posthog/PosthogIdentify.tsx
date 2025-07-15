@@ -13,8 +13,8 @@ function PosthogIdentity(){
     }
 
     const email = session?.user?.email;
-    const username = session?.user.username;
-    const userId = session?.user.user_uuid;
+    const username = session?.user?.username;
+    const userId = session?.user?.user_uuid;
     if(
       typeof email === "string" 
       && typeof username === "string" 

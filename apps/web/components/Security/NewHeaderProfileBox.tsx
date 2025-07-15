@@ -1,19 +1,14 @@
-'use client'
-import Link from 'next/link'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
-import { useOrg } from '@components/Contexts/OrgContext'
-import { getUriWithOrg, getUriWithoutOrg } from '@services/config/config'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from '@/components/ui/dropdown-menu'
-import { Settings, LogOut, Home } from 'lucide-react'
-import useAdminStatus from '@components/Hooks/useAdminStatus'
-import UserAvatar from '@components/Objects/UserAvatar'
-import { signOut } from 'next-auth/react'
+"use client"
+import Link from "next/link"
+import { useLHSession } from "@components/Contexts/LHSessionContext"
+import { useOrg } from "@components/Contexts/OrgContext"
+import { getUriWithoutOrg } from "@services/config/config"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
+import { Settings, LogOut, Home, Backpack,School,  Users } from "lucide-react"
+import useAdminStatus from "@components/Hooks/useAdminStatus"
+import { logout } from "@services/auth/auth"
+import UserAvatar from "@components/Objects/UserAvatar"
 
 export const NewHeaderProfileBox = () => {
   const session = useLHSession() as any
@@ -71,7 +66,7 @@ export const NewHeaderProfileBox = () => {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Avatar className="cursor-pointer h-8 w-8 sm:h-10 sm:w-10">
+              <Avatar className="cursor-pointer h-10 w-10 sm:h-12 sm:w-12">
                 {/* <AvatarImage src="/path-to-avatar.jpg" alt="User Avatar" /> */}
                 <UserAvatar use_with_session={true}></UserAvatar>
                 <AvatarFallback>
@@ -86,12 +81,6 @@ export const NewHeaderProfileBox = () => {
               {/* Show username in dropdown on mobile */}
               <div className="sm:hidden px-2 py-1.5 text-sm font-medium text-muted-foreground">
                 <div className="flex items-center">
-                  <p className="capitalize">{session.data.user.username}</p>
-                  {isUserAdmin.isAdmin && (
-                    <span className="text-[10px] bg-rose-300 px-2 font-bold rounded-md shadow-inner py-0.5 ml-1 inline-flex items-center">
-                      ADMIN
-                    </span>
-                  )}
                 </div>
               </div>
 
@@ -108,6 +97,30 @@ export const NewHeaderProfileBox = () => {
                 <DropdownMenuItem>
                   <Settings size={14} className="mr-2" />
                   Settings
+                </DropdownMenuItem>
+              </Link>
+
+              <Link href={"/dash/exercises"}>
+                <DropdownMenuItem>
+                  <Backpack size={14} className="mr-2" />
+                  Exercises
+                </DropdownMenuItem>
+              </Link>
+
+              {isUserAdmin.isAdmin && (
+                <Link href={"/dash/users/settings/users"}>
+                  <DropdownMenuItem>
+                    <Users size={14} className="mr-2" />
+                    Users
+                  </DropdownMenuItem>
+                </Link>
+              )}
+
+
+              <Link href={"/dash/org/settings/general"}>
+                <DropdownMenuItem>
+                  < School size={14} className="mr-2" />
+                  School
                 </DropdownMenuItem>
               </Link>
 

@@ -13,6 +13,8 @@ import {
 import UserAvatar from '@components/Objects/UserAvatar'
 import { updateUserAvatar } from '@services/users/users'
 import { constructAcceptValue } from '@/lib/constants';
+import { Button } from '@components/ui/button';
+import { Card } from '@components/ui/card';
 
 const SUPPORTED_FILES = constructAcceptValue(['image'])
 
@@ -43,7 +45,7 @@ function UserEditGeneral() {
   useEffect(() => { }, [session, session.data])
 
   return (
-    <div className="ml-10 mr-10 mx-auto bg-white rounded-xl shadow-sm px-6 py-5 sm:mb-0 mb-16">
+    <Card className="ml-10 mr-10  bg-white rounded-xl  px-6 py-5 sm:mb-0 mb-16">
       {session.data.user && (
         <Formik
           enableReinitialize
@@ -84,13 +86,13 @@ function UserEditGeneral() {
                     </div>
                   ))}
                 </div>
-                <button
-                  type="submit"
+                <Button
+                  variant="default"
                   disabled={isSubmitting}
-                  className="mt-6 px-6 py-3 text-white bg-black rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-6 px-6 py-3 text-white  rounded-lg  focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   Submit
-                </button>
+                </Button>
               </Form>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-col items-center space-y-4">
@@ -153,7 +155,7 @@ function UserEditGeneral() {
           )}
         </Formik>
       )}
-    </div>
+    </Card>
   )
 }
 

@@ -10,6 +10,7 @@ import FormLayout, {
 import React, { useState } from 'react'
 import * as Form from '@radix-ui/react-form'
 import BarLoader from 'react-spinners/BarLoader'
+import { Button } from "@components/ui/button";
 
 function DynamicCanvaModal({ submitActivity, chapterId, course }: any) {
   const [activityName, setActivityName] = useState('')
@@ -65,7 +66,7 @@ function DynamicCanvaModal({ submitActivity, chapterId, course }: any) {
 
       <Flex css={{ marginTop: 25, justifyContent: 'flex-end' }}>
         <Form.Submit asChild>
-          <ButtonBlack type="submit" css={{ marginTop: 10 }}>
+          <Button >
             {isSubmitting ? (
               <BarLoader
                 cssOverride={{ borderRadius: 60 }}
@@ -75,7 +76,7 @@ function DynamicCanvaModal({ submitActivity, chapterId, course }: any) {
             ) : (
               'Create activity'
             )}
-          </ButtonBlack>
+          </Button>
         </Form.Submit>
       </Flex>
     </FormLayout>

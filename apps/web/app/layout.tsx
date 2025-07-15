@@ -7,6 +7,13 @@ import LHSessionProvider from '@components/Contexts/LHSessionContext'
 import Script from 'next/script'
 import { isDevEnv } from '@services/config/config'
 import { PostHogProvider } from '@components/Posthog/PosthogProvider'
+import  { DM_Sans } from 'next/font/google'
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '700'], // Include the weights you need
+  style: ['normal', 'italic'], // Optional: Include styles if needed
+})
 
 export default function RootLayout({
   children,
@@ -24,7 +31,7 @@ export default function RootLayout({
     window.location.hostname.includes('staging')
 
   return (
-    <html className="" lang="en">
+    <html className={dmSans.className} lang="en">
       {isStaging && (
         <div
           style={{
@@ -63,6 +70,7 @@ export default function RootLayout({
       )}
 
       <head />
+
 
       <body>
         <SessionProvider>

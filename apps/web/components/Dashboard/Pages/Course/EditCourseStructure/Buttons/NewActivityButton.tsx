@@ -15,7 +15,7 @@ import { useRouter } from 'next/navigation'
 import React, { useEffect } from 'react'
 import { mutate } from 'swr'
 import toast from 'react-hot-toast'
-
+import { Button } from "@components/ui/button"
 
 type NewActivityButtonProps = {
   chapterId: string
@@ -115,17 +115,18 @@ function NewActivityButton(props: NewActivityButtonProps) {
         dialogTitle="Create Activity"
         dialogDescription="Choose between types of activities to add to the course"
       />
-      <div
+      <Button
+        variant={"default"}
         onClick={() => {
           openNewActivityModal(props.chapterId)
         }}
-        className="flex w-44 h-10 space-x-2 items-center py-2 my-3 rounded-xl justify-center text-white  bg-black  hover:cursor-pointer"
+        className="flex w-44 h-10 space-x-2 items-center py-2 my-3 rounded-xl justify-center hover:cursor-pointer"
       >
         <Layers className="" size={17} />
         <div className="text-sm mx-auto my-auto  items-center font-bold">
           Add Activity
         </div>
-      </div>
+      </Button>
     </div>
   )
 }

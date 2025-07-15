@@ -1,7 +1,10 @@
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { updatePassword } from '@services/settings/password'
 import { Formik, Form, Field } from 'formik'
+import { Card } from "@components/ui/card";
 import React, { useEffect } from 'react'
+import { Button } from '@components/ui/button';
+
 
 function UserEditPassword() {
   const session = useLHSession() as any
@@ -15,7 +18,7 @@ function UserEditPassword() {
   useEffect(() => { }, [session])
 
   return (
-    <div className="ml-10 mr-10 mx-auto bg-white rounded-xl shadow-sm px-6 py-5">
+    <Card className="ml-10 mr-10 bg-white rounded-xl px-6 py-5">
       <Formik
         initialValues={{ old_password: '', new_password: '' }}
         enableReinitialize
@@ -46,17 +49,17 @@ function UserEditPassword() {
               name="new_password"
             />
 
-            <button
-              type="submit"
+            <Button
+              variant={'default'}
               disabled={isSubmitting}
-              className="px-6 py-3 text-white bg-black rounded-lg shadow-md hover:bg-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-6 py-3 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               Submit
-            </button>
+            </Button>
           </Form>
         )}
       </Formik>
-    </div>
+    </Card>
   )
 }
 

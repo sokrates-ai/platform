@@ -56,63 +56,6 @@ export const DashLeftMenu = (props: any) => {
                 </NavigationMenuList>
               </NavigationMenu>
 
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                        <Link href={'/dash'} >
-                            <Button variant="ghost" size="icon">
-                            <Home size={18} />
-                            </Button>
-                          </Link>
-                    </TooltipTrigger>
-                    <TooltipContent
-                    >Dashboard</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                        <Link href={'/dash/exercises'} >
-                            <Button variant="ghost" size="icon">
-                            <Backpack size={18} />
-                            </Button>
-                          </Link>
-                    </TooltipTrigger>
-                    <TooltipContent
-                    >Exercises</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                        <Link href={'/dash/users/settings/users'} >
-                            <Button variant="ghost" size="icon">
-                            <Users size={18} />
-                            </Button>
-                          </Link>
-                    </TooltipTrigger>
-                    <TooltipContent
-                    >Users</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                        <Link href={'/dash/org/settings/general'} >
-                            <Button variant="ghost" size="icon">
-                            <School size={18} />
-                            </Button>
-                          </Link>
-                    </TooltipTrigger>
-                    <TooltipContent
-                    >school</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
           </div>
 
 

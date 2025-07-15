@@ -19,6 +19,7 @@ import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import {  UploadCloud, Image as ImageIcon } from 'lucide-react'
 import UnsplashImagePicker from "@components/Dashboard/Pages/Course/EditCourseGeneral/UnsplashImagePicker"
+import { Button } from '@components/ui/button'
 
 const validationSchema = Yup.object().shape({
   name: Yup.string()
@@ -178,22 +179,22 @@ function CreateCourseModal({ closeModal, orgslug }: any) {
                   onChange={handleFileChange}
                   accept="image/*"
                 />
-                <button
-                  type="button"
+                <Button
+                  variant={"outline"}
                   className="font-bold antialiased items-center text-gray text-sm rounded-md px-4 mt-6 flex"
                   onClick={() => document.getElementById('fileInput')?.click()}
                 >
                   <UploadCloud size={16} className="mr-2" />
                   <span>Upload Image</span>
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button 
+                  variant={"outline"}
                   className="font-bold antialiased items-center text-gray text-sm rounded-md px-4 mt-6 flex"
                   onClick={() => setShowUnsplashPicker(true)}
                 >
                   <ImageIcon size={16} className="mr-2" />
                   <span>Choose from Gallery</span>
-                </button>
+                </  Button>
               </div>
             </div>
           </div>
@@ -234,10 +235,10 @@ function CreateCourseModal({ closeModal, orgslug }: any) {
       </FormField>
 
       <div className="flex justify-end mt-6">
-        <button
-          type="submit"
+        <Button
+          variant={"secondary"}
           disabled={formik.isSubmitting}
-          className="px-4 py-2 bg-black text-white text-sm font-bold rounded-md"
+          className="px-4 py-2 text-black text-sm font-bold rounded-md"
         >
           {formik.isSubmitting ? (
             <BarLoader
@@ -248,7 +249,7 @@ function CreateCourseModal({ closeModal, orgslug }: any) {
           ) : (
             'Create Course'
           )}
-        </button>
+        </Button>
       </div>
 
       {showUnsplashPicker && (

@@ -9,12 +9,13 @@ interface CourseCardProps {
 
 const CourseCard: React.FC<CourseCardProps> = ({ course, orgslug }) => {
   return (
-    <Card key={course.course_uuid} className="shadow-none border-none">
+    <Card key={course.course_uuid} className="w-full" variant="defaultgradient">
       <CardHeader>
-        <CardTitle>{course.name}</CardTitle>
+        <CardTitle className="text-lg font-bold">{course.name}</CardTitle>
       </CardHeader>
       <CardContent>
         <CourseThumbnail course={course} orgslug={orgslug} />
+        <p className="text-sm text-gray-600 mt-2">{course.description}</p>
       </CardContent>
     </Card>
   )

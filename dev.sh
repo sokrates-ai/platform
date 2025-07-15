@@ -113,14 +113,6 @@ docker-build() {
 
     echo "Using DOMAIN: ${DOMAIN} for build..."
 
-    #
-    # Inject asset.
-    #
-
-    # URL=$(echo 'aHR0cHM6Ly9maWxlcy5jMS5taWstbXVlbGxlci5kZS9QcmlkZS53ZWJw' | base64 -d)
-    # bash -c "cd ./apps/web/public/contentMap && wget '${URL}'"
-    # bash -c 'cd ./apps/web/components/Dashboard/Pages/Course/EditCourseMap/ && bash ./build_sprite_index.sh'
-
     docker build --build-arg DOMAIN="${DOMAIN}" -t "ghcr.io/${OWNER}/sk-platform:${TAG}" .
     docker push "ghcr.io/${OWNER}/sk-platform:${TAG}"
 }
@@ -141,6 +133,8 @@ elif [ "${ARG}" = "reset" ]; then
     reset
 elif [ "${ARG}" = "lint" ]; then
     lint
+elif [ "${ARG}" = "docker" ]; then
+    docker-build "$2" "$3"
 elif [ "${ARG}" = "docker" ]; then
     docker-build "$2" "$3"
 else
