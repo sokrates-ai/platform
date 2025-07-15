@@ -1,18 +1,12 @@
 export const dynamic = 'force-dynamic'
 import { Metadata } from 'next'
-import { getUriWithOrg } from '@services/config/config'
 import { getOrgCourses } from '@services/courses/courses'
-import Link from 'next/link'
 import { getOrganizationContextInfo } from '@services/organizations/orgs'
-import { Button } from '@components/ui/button'
-import TypeOfContentTitle from '@components/Objects/StyledElements/Titles/TypeOfContentTitle'
-import AuthenticatedClientElement from '@components/Security/AuthenticatedClientElement'
 import { getServerSession } from 'next-auth'
 import { nextAuthOptions } from 'app/auth/options'
 import { getOrgThumbnailMediaDirectory } from '@services/media/media'
-import CourseCard from '@components/Objects/StyledElements/Cards/CourseCard'
-import NoCoursesAlert from '@components/Objects/StyledElements/Alerts/NoCourseAlert'
-import {slides } from './slides'
+import { slides } from './slides'
+import CoursesClient from './coursesclient'
 type MetadataProps = {
 	params: { orgslug: string }
 	searchParams: { [key: string]: string | string[] | undefined }
@@ -70,37 +64,15 @@ const OrgHomePage = async (params: any) => {
 		revalidate: 1800,
 		tags: ['organizations'],
 	})
-	const org_id = org.id
 
 	return (
 		<div className="w-full">
-			<div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-5 tracking-tight z-50">
-				
-				{/* Courses */}
-				<div className="flex flex-col space-y-4">
-					<div className="flex items-center justify-between">
-						<TypeOfContentTitle title="Courses" type="cou" />
-						<AuthenticatedClientElement
-							ressourceType="courses"
-							action="create"
-							checkMethod="roles"
-							orgId={org_id}
-						>
-							<Link href={getUriWithOrg(orgslug, '/courses?new=true')}>
-								<Button variant="default">New Course</Button>
-							</Link>
-						</AuthenticatedClientElement>
-					</div>
-
-					<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-						{courses.map((course: any) => (
-							<CourseCard key={course.course_uuid} course={course} orgslug={orgslug} />
-						))}
-
-						{courses.length === 0 && courses.length === 0 && <NoCoursesAlert text="Create courses to add content" />}
-					</div>
-				</div>
-			</div>
+			<CoursesClient 
+				org_id={org.org_id} 
+				orgslug={orgslug} 
+				courses={courses} 
+				slides={slides}
+			/>
 		</div>
 	)
 }

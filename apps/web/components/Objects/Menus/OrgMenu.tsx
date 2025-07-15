@@ -54,13 +54,6 @@ export const OrgMenu = (props: any) => {
                 ) : (
                   <LearnHouseLogo />
                 )}
-
-                  <img
-                    src={`/hpi_new.png`}
-                    alt="Organization logo"
-                    style={{ width: "auto", height: "100%" }}
-                    className="rounded-md"
-                  />
               </div>
             </Link>
             <NavigationMenu>

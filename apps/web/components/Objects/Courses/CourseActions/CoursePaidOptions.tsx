@@ -38,7 +38,7 @@ function CoursePaidOptions({ course }: CoursePaidOptionsProps) {
 
     try {
       setIsProcessing(prev => ({ ...prev, [productId]: true }))
-      const redirect_uri = getUriWithOrg(org.slug, '/courses')
+      	const redirect_uri = getUriWithOrg(org.slug, '/')
       const response = await getStripeProductCheckoutSession(
         course.org_id,
         productId,
