@@ -6,13 +6,13 @@ import internal from 'stream'
 
 export async function createWorkspace(
   data: any,
-  taskID: number,
+  taskIDs: number[],
   chapter_id: any,
   org_id: any,
   access_token: string,
 ) {
   data.content = {
-    task_id: taskID,
+    task_ids: taskIDs,
   }
   // remove chapter_id from data
   delete data.chapterId

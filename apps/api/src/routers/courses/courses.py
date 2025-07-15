@@ -2,6 +2,7 @@ from typing import List
 from fastapi import APIRouter, Depends, UploadFile, Form, Request
 from sqlmodel import Session
 from src.core.events.database import get_db_session
+from src.db.courses.course_canvas import CourseCanvasUpdate
 from src.db.courses.course_updates import (
     CourseUpdateCreate,
     CourseUpdateRead,
@@ -15,6 +16,7 @@ from src.db.courses.courses import (
     FullCourseReadWithTrail,
 )
 from src.security.auth import get_current_user
+from src.services.courses.course_canvas import get_canvas, put_update
 from src.services.courses.courses import (
     create_course,
     get_course,
@@ -68,7 +70,7 @@ async def api_create_course(
     )
 
 
-@router.put("/{course_uuid}/thumbnail")
+@router.put("/thumbnail/{course_uuid}")
 async def api_create_course_thumbnail(
     request: Request,
     course_uuid: str,
@@ -79,6 +81,7 @@ async def api_create_course_thumbnail(
     """
     Update new Course Thumbnail
     """
+    print("=====UPLOAD====")
     return await update_course_thumbnail(
         request, course_uuid, current_user, db_session, thumbnail
     )
@@ -241,3 +244,26 @@ async def api_delete_course_update(
     """
 
     return await delete_update(request, courseupdate_uuid, current_user, db_session)
+
+@router.get("/{course_uuid}/canvas")
+def get_course_canvas(
+    request: Request,
+    course_uuid: str,
+    user=Depends(get_current_user),
+    db_session=Depends(get_db_session),
+):
+    return get_canvas(request, course_uuid, user, db_session)
+
+
+
+@router.put("/{course_uuid}/canvas")
+def put_course_canvas(
+    request: Request,
+    course_uuid: str,
+    course_canvas_update: CourseCanvasUpdate,
+    user=Depends(get_current_user),
+    db_session=Depends(get_db_session),
+):
+    return put_update(request, course_uuid, course_canvas_update, user, db_session)
+
+

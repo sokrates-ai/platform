@@ -429,3 +429,69 @@ async def remove_invited_user(
     r.delete(f"invited_user:{email}:org:{org.org_uuid}")
 
     return {"detail": "User removed"}
+
+
+def record_user_interaction(user_id: str, api_route: str):
+    """
+    Records a user interaction with an API route in Redis.
+    Stores the last 100 interactions per user, each with a timestamp.
+    The data expires after 30 minutes of inactivity.
+    """
+    LH_CONFIG = get_learnhouse_config()
+    redis_conn_string = LH_CONFIG.redis_config.redis_connection_string
+
+    if not redis_conn_string:
+        raise Exception("Redis connection string not found")
+
+    r = redis.Redis.from_url(redis_conn_string)
+    key = f"user_interactions:{user_id}"
+    timestamp = datetime.now().isoformat()
+    interaction = json.dumps({"route": api_route, "timestamp": timestamp})
+
+    # Add the new interaction to the list (as the latest)
+    r.lpush(key, interaction)
+    # Trim the list to the last 100 items
+    r.ltrim(key, 0, 99)
+
+    MINUTES_TTL=5
+
+    # Set TTL to X minutes
+    r.expire(key, MINUTES_TTL * 60)
+
+
+def count_recent_active_users() -> int:
+    """
+    Searches for all user_interactions:* keys in Redis and increments a counter
+    if the last user interaction of the user occurred in the last 30 seconds.
+    Returns the count of such users.
+    """
+    LH_CONFIG = get_learnhouse_config()
+    redis_conn_string = LH_CONFIG.redis_config.redis_connection_string
+
+    if not redis_conn_string:
+        raise Exception("Redis connection string not found")
+
+    r = redis.Redis.from_url(redis_conn_string)
+    count = 0
+    now = datetime.now().timestamp()
+    for key in r.keys("user_interactions:*"):
+        print(f"key={key}")
+        # Get the most recent interaction (first in the list)
+        interaction = r.lindex(key, 0)
+        if not interaction:
+            continue
+        try:
+            data = json.loads(interaction)
+            ts = data.get("timestamp")
+            if ts:
+                # Parse ISO timestamp
+                ts_dt = datetime.fromisoformat(ts)
+                ts_epoch = ts_dt.timestamp()
+                if now - ts_epoch <= 30:
+                    count += 1
+        except Exception:
+            continue
+
+    print(f"active users: {count}")
+
+    return count

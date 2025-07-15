@@ -31,30 +31,63 @@ export default function RootLayout({
     window.location.hostname.includes('staging')
 
   return (
-    <html className={dmSans.className}  lang="en">
+    <html className={dmSans.className} lang="en">
       {isStaging && (
         <div
           style={{
-            background: 'rgba(255, 0, 0, 0.4)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            background: 'rgba(255, 0, 0, 0.5)',
             color: 'black',
             padding: '10px',
             textAlign: 'center',
-            fontWeight: 'bold',
+            fontWeight: 'bolder',
+            fontSize: '2rem',
             position: 'absolute',
             width: '100%',
             zIndex: 999,
-            top: 0,
+            bottom: 0,
+            overflowX: 'hidden',
+            gap: '1rem',
           }}
         >
+          <span>
           STAGING
+          </span>
+          <span>
+          STAGING
+          </span>
+          <span>
+          STAGING
+          </span>
+          <span>
+          STAGING
+          </span>
+          <span>
+          STAGING
+          </span>
         </div>
       )}
 
       <head />
 
+
       <body>
         <SessionProvider>
           <LHSessionProvider>
+            <PostHogProvider>
+              <StyledComponentsRegistry>
+                <motion.main
+                  variants={variants} // Pass the variant object into Framer Motion
+                  initial="hidden" // Set the initial state to variants.hidden
+                  animate="enter" // Animated state to variants.enter
+                  exit="exit" // Exit state (used later) to variants.exit
+                  transition={{ type: 'linear' }} // Set the transition to linear
+                  className=""
+                >
+                  {children}
+                </motion.main>
+              </StyledComponentsRegistry>
             <PostHogProvider>
               <StyledComponentsRegistry>
                 <motion.main

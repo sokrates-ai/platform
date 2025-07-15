@@ -20,9 +20,10 @@ export const config = {
      * 4. Umami Analytics
      * 4. /examples (inside /public)
      * 4b. /contentMap (inside /public)
+     * 4c. /students (inside /public)
      * 5. all root files inside /public (e.g. /favicon.ico)
      */
-    '/((?!api|_next|fonts|umami|examples|contentMap|[\\w-]+\\.\\w+).*)',
+    '/((?!api|_next|fonts|umami|examples|contentMap|students|[\\w-]+\\.\\w+).*)',
     '/sitemap.xml',
     '/payments/stripe/connect/oauth',
   ],

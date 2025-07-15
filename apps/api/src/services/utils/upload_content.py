@@ -39,10 +39,16 @@ async def upload_content(
 
     ensure_directory_exists(f"content/{type_of_dir}/{uuid}/{directory}")
 
+    print(content_delivery)
+
     if content_delivery == "filesystem":
+        print("aaa")
         # upload file to server
+        path=f"content/{type_of_dir}/{uuid}/{directory}/{file_and_format}"
+        print(path)
+        print(os.path.abspath(path))
         with open(
-            f"content/{type_of_dir}/{uuid}/{directory}/{file_and_format}",
+            path,
             "wb",
         ) as f:
             f.write(file_binary)

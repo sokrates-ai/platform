@@ -43,7 +43,7 @@ export const OrgMenu = (props: any) => {
         >
           <div className="flex items-center gap-6">
             <Link href={getUriWithOrg(orgslug, "/")} className="flex items-center">
-              <div className="flex h-9 w-auto items-center justify-center rounded-md">
+              <div className="flex h-9 w-auto items-center justify-center rounded-md gap-1">
                 {org?.logo_image ? (
                   <img
                     src={`${getOrgLogoMediaDirectory(org.org_uuid, org?.logo_image)}`}
@@ -54,6 +54,13 @@ export const OrgMenu = (props: any) => {
                 ) : (
                   <LearnHouseLogo />
                 )}
+
+                  <img
+                    src={`/hpi_new.png`}
+                    alt="Organization logo"
+                    style={{ width: "auto", height: "100%" }}
+                    className="rounded-md"
+                  />
               </div>
             </Link>
             <NavigationMenu>

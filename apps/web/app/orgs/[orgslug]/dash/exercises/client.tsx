@@ -135,7 +135,6 @@ function ExerciseHome(params: ExerciseProps) {
             ? getCourseThumbnailMediaDirectory(org?.org_uuid, course.course_uuid, course.thumbnail_image)
             : '../empty_thumbnail.png'
 
-          console.log("COURSE_IMAGE_URL", thumbnailImage)
           return (<div key={course.course_uuid}>
             <CourseCard
               title={course.name}
@@ -147,6 +146,16 @@ function ExerciseHome(params: ExerciseProps) {
           </div>
           )
         })}
+
+          <div key={'unassigned'}>
+            <CourseCard
+              title={"Unassigned"}
+              description={"Exercises without a course"}
+              imageUrl={undefined}
+              onClick={() => { window.location.href = `/dash/exercises/unassigned` }}
+            >
+            </CourseCard>
+          </div>
       </div>
     </div>
   )

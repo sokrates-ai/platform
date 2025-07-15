@@ -37,38 +37,54 @@ export async function getCourseMetadata(
   return res
 }
 
-export async function updateCourse(course_uuid: any, data: any, access_token:any) {
+export async function updateCourse(
+  course_uuid: any,
+  data: any,
+  access_token: any
+) {
   const result: any = await fetch(
     `${getAPIUrl()}courses/${course_uuid}`,
-    RequestBodyWithAuthHeader('PUT', data, null,access_token)
+    RequestBodyWithAuthHeader('PUT', data, null, access_token)
   )
   const res = await errorHandling(result)
   return res
 }
 
-export async function getCourse(course_uuid: string, next: any, access_token:any) {
+export async function getCourse(
+  course_uuid: string,
+  next: any,
+  access_token: any
+) {
   const result: any = await fetch(
     `${getAPIUrl()}courses/${course_uuid}`,
-    RequestBodyWithAuthHeader('GET', null, next,access_token)
+    RequestBodyWithAuthHeader('GET', null, next, access_token)
   )
   const res = await errorHandling(result)
   return res
 }
 
-export async function getCourseById(course_id: string, next: any, access_token:any) {
+export async function getCourseById(
+  course_id: string,
+  next: any,
+  access_token: any
+) {
   const result: any = await fetch(
     `${getAPIUrl()}courses/id/${course_id}`,
-    RequestBodyWithAuthHeader('GET', null, next,access_token)
+    RequestBodyWithAuthHeader('GET', null, next, access_token)
   )
   const res = await errorHandling(result)
   return res
 }
 
-export async function updateCourseThumbnail(course_uuid: any, thumbnail: any, access_token:any) {
+export async function updateCourseThumbnail(
+  course_uuid: any,
+  thumbnail: any,
+  access_token: any
+) {
   const formData = new FormData()
   formData.append('thumbnail', thumbnail)
   const result: any = await fetch(
-    `${getAPIUrl()}courses/${course_uuid}/thumbnail`,
+    `${getAPIUrl()}courses/thumbnail/${course_uuid}`,
     RequestBodyFormWithAuthHeader('PUT', formData, null,access_token)
   )
   const res = await getResponseMetadata(result)
@@ -102,11 +118,54 @@ export async function createNewCourse(
   return res
 }
 
-export async function deleteCourseFromBackend(course_uuid: any, access_token:any) {
+export async function deleteCourseFromBackend(
+  course_uuid: any,
+  access_token: any
+) {
   const result: any = await fetch(
     `${getAPIUrl()}courses/${course_uuid}`,
-    RequestBodyWithAuthHeader('DELETE', null, null,access_token)
+    RequestBodyWithAuthHeader('DELETE', null, null, access_token)
   )
   const res = await errorHandling(result)
   return res
+}
+
+interface CourseCanvasRead {
+    course_id: number;
+    user_id: number;
+    selected_chapter_id: number | null;
+}
+
+export async function getCourseCanvasInteractionState({
+  courseUuid,
+  access_token,
+}: {
+  courseUuid: string
+  access_token: any
+}): Promise<CourseCanvasRead> {
+
+    const result: any = await fetch(
+      `${getAPIUrl()}courses/${courseUuid}/canvas`,
+      RequestBodyWithAuthHeader('GET', null, null, access_token)
+    )
+    const res = await errorHandling(result)
+    return res
+}
+
+export async function updateCourseCanvasInteractionState({
+  selectedChapter,
+  courseUuid,
+  access_token,
+}: {
+  selectedChapter: number | null,
+  courseUuid: string
+  access_token: any
+}) {
+
+    const result: any = await fetch(
+      `${getAPIUrl()}courses/${courseUuid}/canvas`,
+      RequestBodyWithAuthHeader('PUT', {selected_chapter_id: selectedChapter}, null, access_token)
+    )
+    const res = await errorHandling(result)
+    return res
 }

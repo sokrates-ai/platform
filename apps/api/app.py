@@ -1,5 +1,6 @@
+import shutil
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from config.config import LearnHouseConfig, get_learnhouse_config
 from src.core.events.events import shutdown_app, startup_app
 from src.router import v1_router
@@ -8,6 +9,10 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_jwt_auth.exceptions import AuthJWTException
 from fastapi.middleware.gzip import GZipMiddleware
+import os
+from src.services.orgs.users import count_recent_active_users, record_user_interaction
+from fastapi import Depends
+from fastapi_jwt_auth import AuthJWT
 
 
 # from src.services.mocks.initial import create_initial_data
@@ -57,14 +62,38 @@ def authjwt_exception_handler(request: Request, exc: AuthJWTException):
 
 
 # Static Files
-app.mount("/content", StaticFiles(directory="content"), name="content")
+base_path="content"
+path=os.path.abspath(base_path)
+print(f"Mounting content directory at: {path}")
+app.mount("/content", StaticFiles(directory=base_path), name="content")
 
 # Global Routes
 app.include_router(v1_router)
 
 
-if __name__ == "__main__":
-    print("Hello2")
+@app.middleware("http")
+async def user_interaction_middleware(request: Request, call_next):
+    user_id = None
+    try:
+        # Try to get user id from JWT if present
+        Authorize = AuthJWT(request)
+        Authorize.jwt_required()
+        user_id = Authorize.get_jwt_subject()
+    except Exception as e:
+        pass  # No valid JWT, skip
+    if user_id:
+        try:
+            record_user_interaction(user_id, str(request.url.path))
+        except Exception as e:
+            # Optionally log the error
+            pass
+    response = await call_next(request)
+    return response
+
+
+if __name__ == "__main__": 
+    # Spawn data reporting thread.
+
     uvicorn.run(
         "app:app",
         host="0.0.0.0",
@@ -72,7 +101,6 @@ if __name__ == "__main__":
         reload=learnhouse_config.general_config.development_mode,
         forwarded_allow_ips='*'
     )
-
 
 # General Routes
 @app.get("/")

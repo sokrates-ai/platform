@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DEPS=("poetry" "docker" "python3")
+DEPS=("poetry" "docker" "python3" "wget")
 
 check() {
     echo "[SETUP]: Check"
@@ -133,6 +133,8 @@ elif [ "${ARG}" = "reset" ]; then
     reset
 elif [ "${ARG}" = "lint" ]; then
     lint
+elif [ "${ARG}" = "docker" ]; then
+    docker-build "$2" "$3"
 elif [ "${ARG}" = "docker" ]; then
     docker-build "$2" "$3"
 else
