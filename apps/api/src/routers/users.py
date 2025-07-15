@@ -32,6 +32,7 @@ from src.services.users.users import (
     update_user_avatar,
     update_user_password,
 )
+from src.db.roles import RoleRead
 
 
 router = APIRouter()
@@ -261,4 +262,28 @@ async def api_delete_user(
     """
     Delete User
     """
+    return await delete_user_by_id(request, db_session, current_user, user_id)
+
+
+@router.delete("/admin_delete/{user_id}", tags=["users"])
+async def api_admin_delete_user(
+    *,
+    request: Request,
+    db_session: Session = Depends(get_db_session),
+    current_user: PublicUser = Depends(get_current_user),
+    user_id: int,
+):
+    """
+    Admin: Delete any user by user_id
+    """
+    # Check if current_user is admin (role_id == 1 in any org)
+    statement = db_session.exec(
+        """
+        SELECT role_id FROM userorganization WHERE user_id = :uid
+        """,
+        {"uid": current_user.id}
+    )
+    roles = [row[0] for row in statement]
+    if 1 not in roles:
+        raise HTTPException(status_code=403, detail="Admin privileges required.")
     return await delete_user_by_id(request, db_session, current_user, user_id)
