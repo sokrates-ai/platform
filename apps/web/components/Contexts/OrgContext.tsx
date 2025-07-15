@@ -3,7 +3,7 @@ import { getAPIUrl, getUriWithoutOrg } from '@services/config/config'
 import { swrFetcher } from '@services/utils/ts/requests'
 import React, { createContext, useContext, useMemo } from 'react'
 import useSWR from 'swr'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import ErrorUI from '@components/Objects/StyledElements/Error/Error'
 import InfoUI from '@components/Objects/StyledElements/Info/Info'
 import { usePathname } from 'next/navigation'
@@ -11,7 +11,7 @@ import { usePathname } from 'next/navigation'
 export const OrgContext = createContext(null)
 
 export function OrgProvider({ children, orgslug }: { children: React.ReactNode, orgslug: string }) {
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const pathname = usePathname()
   const accessToken = session?.data?.tokens?.access_token
   const isAllowedPathname = ['/login', '/signup'].includes(pathname);

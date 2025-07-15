@@ -5,7 +5,7 @@ import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import { usePathname, useSearchParams } from 'next/navigation'
 import React from 'react'
 import useAdminStatus from '@components/Hooks/useAdminStatus'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import useSWR, { mutate } from 'swr'
 import { getAPIUrl } from '@services/config/config'
@@ -48,7 +48,7 @@ function ExerciseCourseHome(params: ExerciseProps) {
     setNewExerciseModal(false)
   }
 
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any
   const access_token = session?.data?.tokens?.access_token
   const org = useOrg() as any
 

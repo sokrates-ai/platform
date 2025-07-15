@@ -1,6 +1,6 @@
 'use client';
 import { useCourse } from '@components/Contexts/CourseContext';
-import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import { useOrg } from '@components/Contexts/OrgContext';
 import { getAPIUrl, getUriWithOrg } from '@services/config/config';
 import { linkResourcesToUserGroup } from '@services/usergroups/usergroups';
@@ -20,7 +20,7 @@ type LinkToUserGroupProps = {
 function LinkToUserGroup(props: LinkToUserGroupProps) {
     const course = useCourse() as any
     const org = useOrg() as any
-    const session = useLHSession() as any
+    const session = useSokratesSession() as any;
     const access_token = session?.data?.tokens?.access_token;
     const courseStructure = course.courseStructure
 

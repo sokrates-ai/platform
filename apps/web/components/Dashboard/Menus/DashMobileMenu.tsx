@@ -3,11 +3,11 @@ import { Backpack, BadgeDollarSign, BookCopy, Home, School, Settings, Users } fr
 import Link from 'next/link'
 import React from 'react'
 import AdminAuthorization from '@components/Security/AdminAuthorization'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import ToolTip from '@components/Objects/StyledElements/Tooltip/Tooltip'
 
 function DashMobileMenu() {
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-lg text-white shadow-xl">

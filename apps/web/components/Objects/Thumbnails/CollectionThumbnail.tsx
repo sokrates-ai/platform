@@ -7,7 +7,7 @@ import { deleteCollection } from '@services/courses/collections'
 import { getCourseThumbnailMediaDirectory } from '@services/media/media'
 import { revalidateTags } from '@services/utils/ts/requests'
 import { X } from 'lucide-react'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React from 'react'
@@ -74,8 +74,7 @@ function CollectionThumbnail(props: PropsType) {
 
 const CollectionAdminEditsArea = (props: any) => {
   const router = useRouter()
-  const session = useLHSession() as any;
-
+  const session = useSokratesSession() as any;
   const deleteCollectionUI = async (collectionId: number) => {
     await deleteCollection(collectionId, session.data?.tokens?.access_token)
     await revalidateTags(['collections'], props.orgslug)

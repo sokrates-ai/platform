@@ -6,7 +6,7 @@ import { useMediaQuery } from 'usehooks-ts'
 import { getUriWithOrg } from '@services/config/config'
 import { Monitor, ScanEye, SquareUserRound, UserPlus, Users } from 'lucide-react'
 import BreadCrumbs from '@components/Dashboard/Misc/BreadCrumbs'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import OrgUsers from '@components/Dashboard/Pages/Users/OrgUsers/OrgUsers'
 import OrgAccess from '@components/Dashboard/Pages/Users/OrgAccess/OrgAccess'
@@ -19,7 +19,7 @@ export type SettingsParams = {
 }
 
 function UsersSettingsPage({ params }: { params: SettingsParams }) {
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any
   const org = useOrg() as any
   const [H1Label, setH1Label] = React.useState('')
   const [H2Label, setH2Label] = React.useState('')

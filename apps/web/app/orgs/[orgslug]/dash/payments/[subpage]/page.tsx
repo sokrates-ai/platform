@@ -5,7 +5,7 @@ import BreadCrumbs from '@components/Dashboard/Misc/BreadCrumbs'
 import Link from 'next/link'
 import { getUriWithOrg } from '@services/config/config'
 import { CreditCard, Settings, Repeat, BookOpen, Users, DollarSign, Gem } from 'lucide-react'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import PaymentsConfigurationPage from '@components/Dashboard/Pages/Payments/PaymentsConfigurationPage'
 import PaymentsProductPage from '@components/Dashboard/Pages/Payments/PaymentsProductPage'
@@ -18,7 +18,7 @@ export type PaymentsParams = {
 }
 
 function PaymentsPage({ params }: { params: PaymentsParams }) {
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any
   const org = useOrg() as any
   const [selectedSubPage, setSelectedSubPage] = useState(params.subpage || 'general')
   const [H1Label, setH1Label] = useState('')

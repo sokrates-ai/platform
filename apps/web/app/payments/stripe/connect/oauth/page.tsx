@@ -1,7 +1,7 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { getUriWithOrg } from '@services/config/config'
 import { Check, Loader2, AlertTriangle } from 'lucide-react'
@@ -14,7 +14,7 @@ import learnhouseIcon from 'public/learnhouse_bigicon_1.png'
 function StripeConnectCallback() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing')
   const [message, setMessage] = useState('')
 

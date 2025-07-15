@@ -15,7 +15,7 @@ import { useOrg } from '@components/Contexts/OrgContext'
 import { CourseProvider } from '@components/Contexts/CourseContext'
 import AIActivityAsk from '@components/Objects/Activities/AI/AIActivityAsk'
 import AIChatBotProvider from '@components/Contexts/AI/AIChatBotContext'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import React, { useEffect } from 'react'
 import { getAssignmentFromActivityUUID, getFinalGrade, submitAssignmentForGrading } from '@services/courses/assignments'
 import AssignmentStudentActivity from '@components/Objects/Activities/Assignment/AssignmentStudentActivity'
@@ -55,7 +55,7 @@ function ActivityClient(props: ActivityClientProps) {
   const activity = props.activity
   const course = props.course
   const org = useOrg() as any
-  const session = useLHSession() as any;
+  const session = useSokratesSession() as any;
   const pathname = usePathname()
   const access_token = session?.data?.tokens?.access_token;
   const [bgColor, setBgColor] = React.useState('bg-white')
@@ -226,7 +226,7 @@ export function MarkStatus(props: {
   orgslug: string
 }) {
   const router = useRouter()
-  const session = useLHSession() as any;
+  const session = useSokratesSession() as any;
   const isMobile = useMediaQuery('(max-width: 768px)')
 
   // TODO: hit this route from the workspace!
@@ -284,7 +284,7 @@ function AssignmentTools(props: {
   assignment: any
 }) {
   const submission = useAssignmentSubmission() as any
-  const session = useLHSession() as any;
+  const session = useSokratesSession() as any;
   const [finalGrade, setFinalGrade] = React.useState(null) as any;
 
   const submitForGradingUI = async () => {

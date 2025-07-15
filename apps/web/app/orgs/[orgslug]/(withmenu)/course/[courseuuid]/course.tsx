@@ -35,7 +35,7 @@ import { AssetData } from '@components/Objects/ContentMap/Asset'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { isChapterLocked, isActivityDone } from '@components/Pages/Courses/utils'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { updateCourseCanvasInteractionState } from '@services/courses/courses'
 
 const CourseClient = (props: any) => {
@@ -49,7 +49,7 @@ const CourseClient = (props: any) => {
 	const router = useRouter()
 	const isMobile = useMediaQuery('(max-width: 768px)');
 
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any
   const access_token = session?.data?.tokens?.access_token
 
   function getLearningTags() {

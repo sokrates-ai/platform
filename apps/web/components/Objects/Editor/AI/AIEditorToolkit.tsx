@@ -24,7 +24,7 @@ import {
   startActivityAIChatSession,
 } from '@services/ai/ai'
 import useGetAIFeatures from '@components/Hooks/useGetAIFeatures'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 
 type AIEditorToolkitProps = {
   editor: Editor
@@ -142,7 +142,7 @@ function AIEditorToolkit(props: AIEditorToolkitProps) {
 const UserFeedbackModal = (props: AIEditorToolkitProps) => {
   const dispatchAIEditor = useAIEditorDispatch() as any
   const aiEditorState = useAIEditor() as AIEditorStateTypes
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const access_token = session?.data?.tokens?.access_token;
 
   const handleChange = async (event: React.ChangeEvent<HTMLInputElement>) => {

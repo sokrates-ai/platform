@@ -1,6 +1,6 @@
 import React from 'react'
 import { useOrg } from '@components/Contexts/OrgContext'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import useSWR from 'swr'
 import {
   Table,
@@ -121,7 +121,7 @@ function PaymentsUsersTable({ data }: { data: PaymentUserData[] }) {
 
 function PaymentsCustomersPage() {
   const org = useOrg() as any
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const access_token = session?.data?.tokens?.access_token
   const { isEnabled, isLoading } = usePaymentsEnabled()
 

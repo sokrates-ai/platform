@@ -1,96 +1,86 @@
 'use client'
+
 import '../styles/globals.css'
-import StyledComponentsRegistry from '../components/Utils/libs/styled-registry'
+import React, { useEffect, useState, ReactNode } from 'react'
 import { motion } from 'framer-motion'
+import { DM_Sans } from 'next/font/google'
+
 import { SessionProvider } from 'next-auth/react'
-import LHSessionProvider from '@components/Contexts/LHSessionContext'
-import Script from 'next/script'
-import { isDevEnv } from '@services/config/config'
 import { PostHogProvider } from '@components/Posthog/PosthogProvider'
-import  { DM_Sans } from 'next/font/google'
+import StyledComponentsRegistry from '../components/Utils/libs/styled-registry'
+import SokratesSessionProvider from '@components/Contexts/SokratesSessionContext'
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
-  weight: ['400', '500', '700'], // Include the weights you need
-  style: ['normal', 'italic'], // Optional: Include styles if needed
+  weight: ['400', '500', '700'],
+  style: ['normal', 'italic'],
 })
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const variants = {
-    hidden: { opacity: 0, x: 0, y: 0 },
-    enter: { opacity: 1, x: 0, y: 0 },
-    exit: { opacity: 0, x: 0, y: 0 },
-  }
+function AppProviders({ children }: { children: ReactNode }) {
+  return (
+    <SessionProvider>
+      <SokratesSessionProvider>
+        <PostHogProvider>
+          <StyledComponentsRegistry>{children}</StyledComponentsRegistry>
+        </PostHogProvider>
+      </SokratesSessionProvider>
+    </SessionProvider>
+  )
+}
 
-  const isStaging =
-    typeof window !== 'undefined' &&
-    window.location.hostname.includes('staging')
+export default function RootLayout({ children }: { children: ReactNode }) {
+  const [isStaging, setIsStaging] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsStaging(window.location.hostname.includes('staging'))
+    }
+  }, [])
+
+  const variants = {
+    hidden: { opacity: 0 },
+    enter: { opacity: 1 },
+    exit: { opacity: 0 },
+  }
 
   return (
     <html className={dmSans.className} lang="en">
-      {isStaging && (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            background: 'rgba(255, 0, 0, 0.5)',
-            color: 'black',
-            padding: '10px',
-            textAlign: 'center',
-            fontWeight: 'bolder',
-            fontSize: '2rem',
-            position: 'absolute',
-            width: '100%',
-            zIndex: 999,
-            bottom: 0,
-            overflowX: 'hidden',
-            gap: '1rem',
-          }}
-        >
-          <span>
-          STAGING
-          </span>
-          <span>
-          STAGING
-          </span>
-          <span>
-          STAGING
-          </span>
-          <span>
-          STAGING
-          </span>
-          <span>
-          STAGING
-          </span>
-        </div>
-      )}
-
-      <head />
-
-
       <body>
-        <SessionProvider>
-          <LHSessionProvider>
-            <PostHogProvider>
-              <StyledComponentsRegistry>
-                <motion.main
-                  variants={variants} // Pass the variant object into Framer Motion
-                  initial="hidden" // Set the initial state to variants.hidden
-                  animate="enter" // Animated state to variants.enter
-                  exit="exit" // Exit state (used later) to variants.exit
-                  transition={{ type: 'linear' }} // Set the transition to linear
-                  className=""
-                >
-                  {children}
-                </motion.main>
-              </StyledComponentsRegistry>
-            </PostHogProvider>
-          </LHSessionProvider>
-        </SessionProvider>
+        {isStaging && (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              background: 'rgba(255, 0, 0, 0.5)',
+              color: 'black',
+              padding: '10px',
+              textAlign: 'center',
+              fontWeight: 'bolder',
+              fontSize: '2rem',
+              position: 'absolute',
+              width: '100%',
+              zIndex: 999,
+              bottom: 0,
+              overflowX: 'hidden',
+              gap: '1rem',
+            }}
+          >
+            {Array.from({ length: 5 }).map((_, i) => (
+              <span key={i}>STAGING</span>
+            ))}
+          </div>
+        )}
+        <AppProviders>
+          <motion.main
+            variants={variants}
+            initial="hidden"
+            animate="enter"
+            exit="exit"
+            transition={{ type: 'linear' }}
+          >
+            {children}
+          </motion.main>
+        </AppProviders>
       </body>
     </html>
   )

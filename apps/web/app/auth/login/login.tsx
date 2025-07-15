@@ -12,7 +12,7 @@ import { AlertTriangle, UserRoundPlus, Loader2, Mail, Lock } from 'lucide-react'
 import whiteLogo from 'public/white_logo.svg'
 import { getOrgLogoMediaDirectory } from '@services/media/media'
 import { getUriWithOrg, getUriWithoutOrg } from '@services/config/config'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -46,7 +46,7 @@ const validate = (values: any) => {
 const LoginClient = (props: LoginClientProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter();
-  const session = useLHSession() as any;
+  const session = useSokratesSession() as any;
   const [error, setError] = useState('')
 
   const formik = useFormik({

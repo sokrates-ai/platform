@@ -3,7 +3,7 @@ import React from 'react'
 import Link from 'next/link'
 import { getUriWithOrg } from '@services/config/config'
 import { getOrgLogoMediaDirectory } from '@services/media/media'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { Button } from '@components/ui/button'
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink } from "@/components/ui/navigation-menu"
@@ -19,7 +19,7 @@ import { NewHeaderProfileBox } from '@components/Security/NewHeaderProfileBox'
 
 export const DashLeftMenu = (props: any) => {
   const { orgslug } = props
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const org = useOrg() as any
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
   const isUserAdmin = useAdminStatus() as any

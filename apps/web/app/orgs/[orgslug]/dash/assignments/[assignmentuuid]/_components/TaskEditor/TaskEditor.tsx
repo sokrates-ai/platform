@@ -1,7 +1,7 @@
 'use client';
 import { useAssignments } from '@components/Contexts/Assignments/AssignmentContext';
 import { useAssignmentsTask, useAssignmentsTaskDispatch } from '@components/Contexts/Assignments/AssignmentsTaskContext';
-import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import { getAPIUrl } from '@services/config/config';
 import { deleteAssignmentTask } from '@services/courses/assignments';
 import { GalleryVerticalEnd, Info, TentTree, Trash } from 'lucide-react'
@@ -17,7 +17,7 @@ function AssignmentTaskEditor({ page }: any) {
     const assignment = useAssignments() as any
     const assignmentTaskState = useAssignmentsTask() as any
     const assignmentTaskStateHook = useAssignmentsTaskDispatch() as any
-    const session = useLHSession() as any;
+    const session = useSokratesSession() as any;
     const access_token = session?.data?.tokens?.access_token;
 
     async function deleteTaskUI() {

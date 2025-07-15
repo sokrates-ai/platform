@@ -1,4 +1,4 @@
-import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import UserAvatar from '@components/Objects/UserAvatar';
 import Modal from '@components/Objects/StyledElements/Modal/Modal';
 import { getAPIUrl } from '@services/config/config';
@@ -13,7 +13,7 @@ import { AssignmentsTaskProvider } from '@components/Contexts/Assignments/Assign
 import AssignmentSubmissionProvider from '@components/Contexts/Assignments/AssignmentSubmissionContext';
 
 function AssignmentSubmissionsSubPage({ assignment_uuid }: { assignment_uuid: string }) {
-    const session = useLHSession() as any;
+    const session = useSokratesSession() as any;
     const access_token = session?.data?.tokens?.access_token;
 
     const { data: assignmentSubmission, error: assignmentError } = useSWR(
@@ -64,7 +64,7 @@ function AssignmentSubmissionsSubPage({ assignment_uuid }: { assignment_uuid: st
 }
 
 function SubmissionBox({ assignment_uuid, user_id, submission }: any) {
-    const session = useLHSession() as any;
+    const session = useSokratesSession() as any;
     const access_token = session?.data?.tokens?.access_token;
     const [gradeSudmissionModal, setGradeSubmissionModal] = React.useState({
         open: false,

@@ -9,7 +9,7 @@ import { getAPIUrl } from '@services/config/config'
 import { unLinkResourcesToUserGroup } from '@services/usergroups/usergroups'
 import { swrFetcher } from '@services/utils/ts/requests'
 import { Globe, SquareUserRound, Users, X } from 'lucide-react'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import useSWR, { mutate } from 'swr'
@@ -21,7 +21,7 @@ type EditCourseAccessProps = {
 }
 
 function ManageCourseMembers(props: EditCourseAccessProps) {
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const access_token = session?.data?.tokens?.access_token
   const course = useCourse() as any
   const { isLoading, courseStructure } = course as any

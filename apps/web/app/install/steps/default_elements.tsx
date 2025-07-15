@@ -1,13 +1,13 @@
 import { getAPIUrl } from '@services/config/config'
 import { createDefaultElements, updateInstall } from '@services/install/install'
 import { swrFetcher } from '@services/utils/ts/requests'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useRouter } from 'next/navigation'
 import React from 'react'
 import useSWR from 'swr'
 
 function DefaultElements() {
-  const session = useLHSession() as any;
+  const session = useSokratesSession() as any;
   const access_token = session?.data?.tokens?.access_token;
   const {
     data: install,

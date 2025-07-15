@@ -1,6 +1,6 @@
 "use client"
 import Link from "next/link"
-import { useLHSession } from "@components/Contexts/LHSessionContext"
+import { useSokratesSession } from "@components/Contexts/SokratesSessionContext"
 import { useOrg } from "@components/Contexts/OrgContext"
 import { getUriWithoutOrg } from "@services/config/config"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -11,7 +11,7 @@ import { logout } from "@services/auth/auth"
 import UserAvatar from "@components/Objects/UserAvatar"
 
 export const NewHeaderProfileBox = () => {
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const isUserAdmin = useAdminStatus()
   const org = useOrg() as any
 

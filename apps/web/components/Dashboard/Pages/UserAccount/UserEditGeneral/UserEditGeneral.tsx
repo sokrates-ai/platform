@@ -2,7 +2,7 @@
 import { updateProfile } from '@services/settings/profile'
 import React, { useEffect } from 'react'
 import { Formik, Form, Field } from 'formik'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import {
   ArrowBigUpDash,
   Check,
@@ -19,8 +19,7 @@ import { Card } from '@components/ui/card';
 const SUPPORTED_FILES = constructAcceptValue(['image'])
 
 function UserEditGeneral() {
-  const session = useLHSession() as any;
-  const access_token = session?.data?.tokens?.access_token;
+  const session = useSokratesSession() as any;  const access_token = session?.data?.tokens?.access_token;
   const [localAvatar, setLocalAvatar] = React.useState(null) as any
   const [isLoading, setIsLoading] = React.useState(false) as any
   const [error, setError] = React.useState() as any

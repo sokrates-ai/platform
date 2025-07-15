@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { getUriWithOrg } from '@services/config/config'
 import { Info, Lock } from 'lucide-react'
 import BreadCrumbs from '@components/Dashboard/Misc/BreadCrumbs'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 
 export type SettingsParams = {
   subpage: string
@@ -15,7 +15,7 @@ export type SettingsParams = {
 }
 
 function SettingsPage({ params }: { params: SettingsParams }) {
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any
 
   useEffect(() => {}, [session])
 

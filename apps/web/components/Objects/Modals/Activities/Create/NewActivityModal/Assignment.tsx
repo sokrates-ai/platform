@@ -14,7 +14,7 @@ import { useOrg } from '@components/Contexts/OrgContext'
 import { getAPIUrl } from '@services/config/config'
 import useSWR, { mutate } from 'swr'
 import { createAssignment } from '@services/courses/assignments'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { createActivity, deleteActivity } from '@services/courses/activities'
 import toast from 'react-hot-toast'
 // import { TASKS_URL  } from '@/app/orgs/[orgslug]/dash/exercises/client'
@@ -24,7 +24,7 @@ function NewAssignment({ submitActivity, chapterId, course, closeModal, access_t
     const TASKS_URL = `${getAPIUrl()}tasks/list/page/1/limit/50`;
 
     const org = useOrg() as any;
-    const session = useLHSession() as any
+    const session = useSokratesSession() as any;
     const [activityName, setActivityName] = React.useState('')
     const [isSubmitting, setIsSubmitting] = React.useState(false)
     const [activityDescription, setActivityDescription] = React.useState('')

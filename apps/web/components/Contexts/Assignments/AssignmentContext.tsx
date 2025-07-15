@@ -3,12 +3,12 @@ import { getAPIUrl } from '@services/config/config'
 import { swrFetcher } from '@services/utils/ts/requests'
 import React, { createContext, useContext, useEffect } from 'react'
 import useSWR from 'swr'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 
 export const AssignmentContext = createContext({})
 
 export function AssignmentProvider({ children, assignment_uuid }: { children: React.ReactNode, assignment_uuid: string }) {
-    const session = useLHSession() as any
+    const session = useSokratesSession() as any;
     const accessToken = session?.data?.tokens?.access_token
     const [assignmentsFull, setAssignmentsFull] = React.useState({ assignment_object: null, assignment_tasks: null, course_object: null , activity_object: null})
 

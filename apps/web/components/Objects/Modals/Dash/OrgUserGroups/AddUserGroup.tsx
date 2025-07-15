@@ -10,7 +10,7 @@ import React from 'react'
 import { createUserGroup } from '@services/usergroups/usergroups'
 import { mutate } from 'swr'
 import { getAPIUrl } from '@services/config/config'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useFormik } from 'formik'
 
 type AddUserGroupProps = {
@@ -28,7 +28,7 @@ const validate = (values: any) => {
 
 function AddUserGroup(props: AddUserGroupProps) {
     const org = useOrg() as any;
-    const session = useLHSession() as any
+    const session = useSokratesSession() as any;
     const access_token = session?.data?.tokens?.access_token;
     const [isSubmitting, setIsSubmitting] = React.useState(false)
 

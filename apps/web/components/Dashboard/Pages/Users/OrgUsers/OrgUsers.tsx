@@ -1,4 +1,4 @@
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import PageLoading from '@components/Objects/Loaders/PageLoading'
 import RolesUpdate from '@components/Objects/Modals/Dash/OrgUsers/RolesUpdate'
@@ -15,7 +15,7 @@ import useSWR, { mutate } from 'swr'
 
 function OrgUsers() {
   const org = useOrg() as any
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const access_token = session?.data?.tokens?.access_token;
   const { data: orgUsers } = useSWR(
     org ? `${getAPIUrl()}orgs/${org?.id}/users` : null,

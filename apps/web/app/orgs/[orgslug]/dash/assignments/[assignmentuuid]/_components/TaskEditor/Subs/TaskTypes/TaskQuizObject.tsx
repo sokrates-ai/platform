@@ -1,6 +1,6 @@
 import { useAssignments } from '@components/Contexts/Assignments/AssignmentContext';
 import { useAssignmentsTask, useAssignmentsTaskDispatch } from '@components/Contexts/Assignments/AssignmentsTaskContext';
-import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import AssignmentBoxUI from '@components/Objects/Activities/Assignment/AssignmentBoxUI';
 import { getAssignmentTask, getAssignmentTaskSubmissionsMe, getAssignmentTaskSubmissionsUser, handleAssignmentTaskSubmission, updateAssignmentTask } from '@services/courses/assignments';
 import { Check, Info, Minus, Plus, PlusCircle, X } from 'lucide-react';
@@ -42,7 +42,7 @@ type Submission = {
 };
 
 function TaskQuizObject({ view, assignmentTaskUUID, user_id }: TaskQuizObjectProps) {
-    const session = useLHSession() as any;
+    const session = useSokratesSession() as any;
     const access_token = session?.data?.tokens?.access_token;
     const assignmentTaskState = useAssignmentsTask() as any;
     const assignmentTaskStateHook = useAssignmentsTaskDispatch() as any;

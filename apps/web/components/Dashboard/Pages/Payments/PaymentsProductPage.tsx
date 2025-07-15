@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import currencyCodes from 'currency-codes';
 import { useOrg } from '@components/Contexts/OrgContext';
-import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import useSWR, { mutate } from 'swr';
 import { getProducts, updateProduct, archiveProduct } from '@services/payments/products';
 import { Plus, Pencil, Info, RefreshCcw, SquareCheck, ChevronDown, ChevronUp, Archive } from 'lucide-react';
@@ -33,8 +33,7 @@ const validationSchema = Yup.object().shape({
 
 function PaymentsProductPage() {
     const org = useOrg() as any;
-    const session = useLHSession() as any;
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const session = useSokratesSession() as any;    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingProductId, setEditingProductId] = useState<string | null>(null);
     const [expandedProducts, setExpandedProducts] = useState<{ [key: string]: boolean }>({});
     const [isStripeEnabled, setIsStripeEnabled] = useState(false);
@@ -209,8 +208,7 @@ function PaymentsProductPage() {
 
 const EditProductForm = ({ product, onSuccess, onCancel }: { product: any, onSuccess: () => void, onCancel: () => void }) => {
     const org = useOrg() as any;
-    const session = useLHSession() as any;
-    const [currencies, setCurrencies] = useState<{ code: string; name: string }[]>([]);
+    const session = useSokratesSession() as any;    const [currencies, setCurrencies] = useState<{ code: string; name: string }[]>([]);
 
     useEffect(() => {
         const allCurrencies = currencyCodes.data.map(currency => ({

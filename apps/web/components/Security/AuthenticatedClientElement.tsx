@@ -1,6 +1,6 @@
 'use client'
 import React from 'react'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 
 interface AuthenticatedClientElementProps {
@@ -20,7 +20,7 @@ export const AuthenticatedClientElement = (
   props: AuthenticatedClientElementProps
 ) => {
   const [isAllowed, setIsAllowed] = React.useState(false)
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const org = useOrg() as any
 
   function isUserAllowed(

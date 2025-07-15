@@ -15,7 +15,7 @@ import {
 import { Hexagon, MousePointer, Cross, X } from 'lucide-react'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import NewChapterModal from '@components/Objects/Modals/Chapters/NewChapter'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { AnimatePresence, motion } from 'framer-motion'
 
 import dagre from 'dagre';
@@ -119,8 +119,7 @@ const EditCourseStructure = (props: { orgslug: string; course_uuid?: string }) =
 
   // External hooks ------------------------------------------------------------
   const router = useRouter();
-  const session = useLHSession() as any;
-  const access_token = session?.data?.tokens?.access_token;
+  const session = useSokratesSession() as any;  const access_token = session?.data?.tokens?.access_token;
 
   const course = useCourse() as any;
   const course_structure = course ? course.courseStructure : {};

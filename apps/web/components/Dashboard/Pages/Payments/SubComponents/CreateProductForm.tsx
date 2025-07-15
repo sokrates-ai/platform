@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useOrg } from '@components/Contexts/OrgContext';
-import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import { createProduct } from '@services/payments/products';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
@@ -37,8 +37,7 @@ interface ProductFormValues {
 
 const CreateProductForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
   const org = useOrg() as any;
-  const session = useLHSession() as any;
-  const [currencies, setCurrencies] = useState<{ code: string; name: string }[]>([]);
+  const session = useSokratesSession() as any;  const [currencies, setCurrencies] = useState<{ code: string; name: string }[]>([]);
 
   useEffect(() => {
     const allCurrencies = currencyCodes.data.map(currency => ({

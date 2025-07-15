@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { useOrg } from '@components/Contexts/OrgContext'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import useSWR from 'swr'
 import { getOwnedCourses } from '@services/payments/payments'
 import CourseThumbnail from '@components/Objects/Thumbnails/CourseThumbnail'
@@ -11,7 +11,7 @@ import { BookOpen, Package2 } from 'lucide-react'
 
 function OwnedCoursesPage() {
   const org = useOrg() as any
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any
   const access_token = session?.data?.tokens?.access_token
 
   const { data: ownedCourses, error, isLoading } = useSWR(

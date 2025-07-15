@@ -1,5 +1,5 @@
 'use client'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import PageLoading from '@components/Objects/Loaders/PageLoading'
 import TrailCourseElement from '@components/Pages/Trail/TrailCourseElement'
@@ -12,7 +12,7 @@ import useSWR from 'swr'
 
 function Trail(params: any) {
   let orgslug = params.orgslug
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any
   const access_token = session?.data?.tokens?.access_token;
   const org = useOrg() as any
   const orgID = org?.id

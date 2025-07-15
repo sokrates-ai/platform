@@ -18,7 +18,7 @@ import {
   Video,
   X,
 } from 'lucide-react'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
@@ -45,8 +45,7 @@ interface ModifiedActivityInterface {
 
 function ActivityElement(props: ActivitiyElementProps) {
   const router = useRouter()
-  const session = useLHSession() as any;
-  const access_token = session?.data?.tokens?.access_token;
+  const session = useSokratesSession() as any;  const access_token = session?.data?.tokens?.access_token;
   const [modifiedActivity, setModifiedActivity] = React.useState<
     ModifiedActivityInterface | undefined
   >(undefined)
@@ -269,8 +268,7 @@ const ActivityElementOptions = ({ activity, isMobile }: { activity: any; isMobil
   const [assignmentUUID, setAssignmentUUID] = useState('');
   const org = useOrg() as any;
   const course = useCourse() as any;
-  const session = useLHSession() as any;
-  const access_token = session?.data?.tokens?.access_token;
+  const session = useSokratesSession() as any;  const access_token = session?.data?.tokens?.access_token;
 
   async function getAssignmentUUIDFromActivityUUID(activityUUID: string):  Promise<string | undefined> {
     const activity = await getAssignmentFromActivityUUID(activityUUID, access_token);

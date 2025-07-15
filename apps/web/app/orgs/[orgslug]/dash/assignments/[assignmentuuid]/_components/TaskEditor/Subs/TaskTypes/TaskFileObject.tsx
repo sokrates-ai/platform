@@ -1,6 +1,6 @@
 import { useAssignments } from '@components/Contexts/Assignments/AssignmentContext';
 import { useAssignmentsTaskDispatch } from '@components/Contexts/Assignments/AssignmentsTaskContext';
-import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import { useOrg } from '@components/Contexts/OrgContext';
 import AssignmentBoxUI from '@components/Objects/Activities/Assignment/AssignmentBoxUI'
 import { getAssignmentTask, getAssignmentTaskSubmissionsMe, getAssignmentTaskSubmissionsUser, handleAssignmentTaskSubmission, updateSubFile } from '@services/courses/assignments';
@@ -21,7 +21,7 @@ type TaskFileObjectProps = {
 };
 
 export default function TaskFileObject({ view, user_id, assignmentTaskUUID }: TaskFileObjectProps) {
-    const session = useLHSession() as any;
+    const session = useSokratesSession() as any;
     const org = useOrg() as any;
     const access_token = session?.data?.tokens?.access_token;
     const [isLoading, setIsLoading] = React.useState(false);

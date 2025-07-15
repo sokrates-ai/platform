@@ -3,7 +3,7 @@ import useSWR from 'swr';
 import { useCourse, useCourseDispatch } from '@components/Contexts/CourseContext';
 import { getAPIUrl } from '@services/config/config';
 import { swrFetcher } from '@services/utils/ts/requests';
-import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import { CourseMapEditorToolbar } from './EditCourseMapToolbar';
 import { BarLoader } from 'react-spinners';
 
@@ -189,7 +189,7 @@ function layoutReducer(state: LayoutHistoryState, action: LayoutAction): LayoutH
 }
 
 const EditCourseMap: React.FC<EditCourseMapProps> = () => {
-    const session = useLHSession() as any
+    const session = useSokratesSession() as any;
     const access_token = session?.data?.tokens?.access_token
     const course = useCourse() as any
     const { isLoading, courseStructure } = course as any

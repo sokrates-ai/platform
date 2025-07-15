@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useOrg } from '@components/Contexts/OrgContext';
-import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import { linkCourseToProduct } from '@services/payments/products';
 import { Button } from "@components/ui/button";
 import { Input } from "@components/ui/input";
@@ -84,8 +84,7 @@ const CoursePreview = ({ course, orgslug, onLink, isLinked }: CoursePreviewProps
 export default function LinkCourseModal({ productId, onSuccess }: LinkCourseModalProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const org = useOrg() as any;
-  const session = useLHSession() as any;
-
+  const session = useSokratesSession() as any;
   const { data: courses } = useSWR(
     () => org && session ? [org.slug, searchTerm, session.data?.tokens?.access_token] : null,
     ([orgSlug, search, token]) => getOrgCourses(orgSlug, null, token)

@@ -4,7 +4,7 @@ import AuthenticatedClientElement from '@components/Security/AuthenticatedClient
 import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationModal/ConfirmationModal'
 import { revalidateTags } from '@services/utils/ts/requests'
 import { BookMinus, MoreVertical, Pencil } from 'lucide-react'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useRouter } from 'next/navigation'
 import React from 'react'
 import toast from 'react-hot-toast'
@@ -42,7 +42,7 @@ type PropsType = {
 function ExerciseThumbnail(props: PropsType) {
   const router = useRouter()
   const org = useOrg() as any
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
 
   const deleteExercise = async () => {
     // TODO: not implemented!

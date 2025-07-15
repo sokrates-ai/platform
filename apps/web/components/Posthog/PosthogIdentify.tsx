@@ -1,10 +1,10 @@
 'use client'
-import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import { usePostHog } from 'posthog-js/react'
 import { Suspense } from 'react';
 
 function PosthogIdentity(){
-    const { data: session, status }: any = useLHSession();
+    const { data: session, status }: any = useSokratesSession();
     const posthog = usePostHog();
 
     if(status == "unauthenticated" || status == "loading"){

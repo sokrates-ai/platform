@@ -1,6 +1,6 @@
 'use client'
 import React, { createContext, useContext, useEffect, useReducer } from 'react'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { getAssignmentTask } from '@services/courses/assignments'
 import { useAssignments } from './AssignmentContext';
 import { mutate } from 'swr';
@@ -27,8 +27,7 @@ export const AssignmentsTaskContext = createContext<State | undefined>(undefined
 export const AssignmentsTaskDispatchContext = createContext<React.Dispatch<Action> | undefined>(undefined);
 
 export function AssignmentsTaskProvider({ children }: { children: React.ReactNode }) {
-    const session = useLHSession() as any;
-    const access_token = session?.data?.tokens?.access_token;
+    const session = useSokratesSession() as any;    const access_token = session?.data?.tokens?.access_token;
     const assignment = useAssignments() as any
 
     const [state, dispatch] = useReducer(assignmentstaskReducer, initialState);

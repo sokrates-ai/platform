@@ -5,13 +5,13 @@ import Link from 'next/link'
 import { Package2, Settings } from 'lucide-react'
 import UserAvatar from '@components/Objects/UserAvatar'
 import useAdminStatus from '@components/Hooks/useAdminStatus'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { getUriWithoutOrg } from '@services/config/config'
 import Tooltip from '@components/Objects/StyledElements/Tooltip/Tooltip'
 
 export const HeaderProfileBox = () => {
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const isUserAdmin = useAdminStatus()
   const org = useOrg() as any
 

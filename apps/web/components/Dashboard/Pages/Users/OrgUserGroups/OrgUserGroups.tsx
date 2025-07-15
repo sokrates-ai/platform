@@ -1,5 +1,5 @@
 'use client'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import AddUserGroup from '@components/Objects/Modals/Dash/OrgUserGroups/AddUserGroup'
 import EditUserGroup from '@components/Objects/Modals/Dash/OrgUserGroups/EditUserGroup'
@@ -16,7 +16,7 @@ import useSWR, { mutate } from 'swr'
 
 function OrgUserGroups() {
     const org = useOrg() as any
-    const session = useLHSession() as any
+    const session = useSokratesSession() as any;
     const access_token = session?.data?.tokens?.access_token;
     const [userGroupManagementModal, setUserGroupManagementModal] = React.useState(false)
     const [createUserGroupModal, setCreateUserGroupModal] = React.useState(false)

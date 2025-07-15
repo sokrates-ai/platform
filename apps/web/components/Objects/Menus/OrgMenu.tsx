@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getUriWithOrg } from '@services/config/config'
 import { getOrgLogoMediaDirectory } from '@services/media/media'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem } from "@/components/ui/navigation-menu"
 import logo_black from '@public/black_logo.svg'
@@ -15,7 +15,7 @@ import { AvatarProgressRing} from "@components/Objects/Menus/AvatarProgressRing"
 
 export const OrgMenu = (props: any) => {
   const { orgslug } = props
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const org = useOrg() as any
   const isUserAdmin = useAdminStatus() as any
   

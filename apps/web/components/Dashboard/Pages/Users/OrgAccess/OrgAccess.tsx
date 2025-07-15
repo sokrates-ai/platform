@@ -16,11 +16,11 @@ import toast from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import OrgInviteCodeGenerate from '@components/Objects/Modals/Dash/OrgAccess/OrgInviteCodeGenerate'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 
 function OrgAccess() {
   const org = useOrg() as any
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const access_token = session?.data?.tokens?.access_token;
   const { data: invites } = useSWR(
     org ? `${getAPIUrl()}orgs/${org?.id}/invites` : null,

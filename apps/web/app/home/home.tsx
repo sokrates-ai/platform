@@ -1,5 +1,5 @@
 'use client'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import UserAvatar from '@components/Objects/UserAvatar';
 import { getAPIUrl, getUriWithOrg, getUriWithoutOrg } from '@services/config/config';
 import { swrFetcher } from '@services/utils/ts/requests';
@@ -12,7 +12,7 @@ import React, { useEffect } from 'react'
 import useSWR from 'swr';
 
 function HomeClient() {
-  const session = useLHSession() as any;
+  const session = useSokratesSession() as any;
   const access_token = session?.data?.tokens?.access_token;
   const { data: orgs } = useSWR(`${getAPIUrl()}orgs/user/page/1/limit/10`, (url: string) => swrFetcher(url, access_token))
 
@@ -45,7 +45,7 @@ function HomeClient() {
           </Link>
         ))}
       </div>
-      <div className='flex cursor-pointer space-x-4 mx-auto font-semibold text-2xl pt-16 items-center'><span onClick={() =>  signOut({ redirect: true, callbackUrl: getUriWithoutOrg('/') })}>Sign out</span></div>
+      <div className='flex cursor-pointer space-x-4 mx-auto font-semibold text-2xl pt-16 items-center'><span onClick={() => signOut({ redirect: true, callbackUrl: getUriWithoutOrg('/') })}>Sign out</span></div>
 
     </div>
   )

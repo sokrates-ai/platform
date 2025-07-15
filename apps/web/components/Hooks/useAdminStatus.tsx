@@ -1,5 +1,5 @@
 import { useOrg } from '@components/Contexts/OrgContext';
-import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import { useEffect, useState, useMemo } from 'react';
 
 interface Role {
@@ -8,8 +8,7 @@ interface Role {
 }
 
 function useAdminStatus() {
-    const session = useLHSession() as any;
-    const org = useOrg() as any;
+    const session = useSokratesSession() as any;    const org = useOrg() as any;
     const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
 

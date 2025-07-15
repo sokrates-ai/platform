@@ -4,7 +4,7 @@ import { getAPIUrl, getUriWithOrg } from '@services/config/config'
 import { removeCourse } from '@services/courses/activity'
 import { getCourseThumbnailMediaDirectory } from '@services/media/media'
 import { revalidateTags } from '@services/utils/ts/requests'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
@@ -18,8 +18,7 @@ interface TrailCourseElementProps {
 
 function TrailCourseElement(props: TrailCourseElementProps) {
   const org = useOrg() as any
-  const session = useLHSession() as any;
-  const access_token = session?.data?.tokens?.access_token;
+  const session = useSokratesSession() as any;  const access_token = session?.data?.tokens?.access_token;
   const courseid = props.course.course_uuid.replace('course_', '')
   const course = props.course
   const router = useRouter()

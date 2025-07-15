@@ -9,7 +9,7 @@ import * as Form from '@radix-ui/react-form'
 import React from 'react'
 import { BarLoader } from 'react-spinners'
 import { useRouter } from 'next/navigation'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import toast from 'react-hot-toast'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
@@ -40,7 +40,7 @@ function CreateExerciseModal({
   tags,
 }: any) {
   const router = useRouter()
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const [tagInput, setTagInput] = React.useState('')
   const [internalTags, setInternalTags] = React.useState<string[]>([])
 

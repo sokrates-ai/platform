@@ -4,7 +4,7 @@ import { getAPIUrl } from '@services/config/config'
 import { updateCourseThumbnail } from '@services/courses/courses'
 import { getCourseThumbnailMediaDirectory } from '@services/media/media'
 import { ArrowBigUpDash, UploadCloud, Image as ImageIcon } from 'lucide-react'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import React, { useState } from 'react'
 import { mutate } from 'swr'
 import UnsplashImagePicker from './UnsplashImagePicker'
@@ -12,8 +12,7 @@ import { Button } from "@components/ui/button";
 
 function ThumbnailUpdate() {
   const course = useCourse() as any
-  const session = useLHSession() as any;
-  const org = useOrg() as any
+  const session = useSokratesSession() as any;  const org = useOrg() as any
   const [localThumbnail, setLocalThumbnail] = React.useState(null) as any
   const [isLoading, setIsLoading] = React.useState(false) as any
   const [error, setError] = React.useState('') as any

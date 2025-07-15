@@ -7,7 +7,7 @@ import { getActivityBlockMediaDirectory } from '@services/media/media'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { useCourse } from '@components/Contexts/CourseContext'
 import { useEditorProvider } from '@components/Contexts/Editor/EditorContext'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { FileUploadBlock, FileUploadBlockButton, FileUploadBlockInput } from '../../FileUploadBlock'
 import { constructAcceptValue } from '@/lib/constants';
 
@@ -19,7 +19,7 @@ function VideoBlockComponents(props: any) {
   const editorState = useEditorProvider() as any
   const isEditable = editorState.isEditable
   const [video, setVideo] = React.useState(null)
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const access_token = session?.data?.tokens?.access_token;
   const [isLoading, setIsLoading] = React.useState(false)
   const [blockObject, setblockObject] = React.useState(

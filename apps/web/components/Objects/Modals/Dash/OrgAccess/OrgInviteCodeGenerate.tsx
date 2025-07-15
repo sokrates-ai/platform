@@ -3,7 +3,7 @@ import { getAPIUrl, getUriWithOrg } from '@services/config/config'
 import { createInviteCode, createInviteCodeWithUserGroup } from '@services/organizations/invites'
 import { swrFetcher } from '@services/utils/ts/requests'
 import { Ticket } from 'lucide-react'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import React, { useEffect } from 'react'
 import toast from 'react-hot-toast'
 import useSWR, { mutate } from 'swr'
@@ -15,7 +15,7 @@ type OrgInviteCodeGenerateProps = {
 
 function OrgInviteCodeGenerate(props: OrgInviteCodeGenerateProps) {
     const org = useOrg() as any
-    const session = useLHSession() as any
+    const session = useSokratesSession() as any;
     const access_token = session?.data?.tokens?.access_token;
     const [usergroup_id, setUsergroup_id] = React.useState(0);
 

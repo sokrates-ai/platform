@@ -1,4 +1,4 @@
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { updatePassword } from '@services/settings/password'
 import { Formik, Form, Field } from 'formik'
 import { Card } from "@components/ui/card";
@@ -7,7 +7,7 @@ import { Button } from '@components/ui/button';
 
 
 function UserEditPassword() {
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const access_token = session?.data?.tokens?.access_token;
 
   const updatePasswordUI = async (values: any) => {

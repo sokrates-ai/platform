@@ -7,13 +7,13 @@ import TaskFileObject from '../../_components/TaskEditor/Subs/TaskTypes/TaskFile
 import { useOrg } from '@components/Contexts/OrgContext';
 import { getTaskRefFileDir } from '@services/media/media';
 import { deleteUserSubmission, markActivityAsDoneForUser, putFinalGrade } from '@services/courses/assignments';
-import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 function EvaluateAssignment({ user_id }: any) {
     const assignments = useAssignments() as any;
-    const session = useLHSession() as any;
+    const session = useSokratesSession() as any;
     const org = useOrg() as any;
     const router = useRouter();
 

@@ -5,7 +5,7 @@ import React, { useContext, createContext } from 'react'
 
 export const SessionContext = createContext({}) as any
 
-function LHSessionProvider({ children }: { children: React.ReactNode }) {
+function SokratesSessionProvider({ children }: { children: React.ReactNode }) {
     const session = useSession();
 
     if (session && session.status == 'loading') {
@@ -21,8 +21,8 @@ function LHSessionProvider({ children }: { children: React.ReactNode }) {
     }
 }
 
-export function useLHSession() {
+export function useSokratesSession() {
     return useContext(SessionContext)
 }
 
-export default LHSessionProvider
+export default SokratesSessionProvider

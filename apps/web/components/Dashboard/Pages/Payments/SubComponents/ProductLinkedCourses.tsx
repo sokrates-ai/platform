@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getCoursesLinkedToProduct, unlinkCourseFromProduct } from '@services/payments/products';
-import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import { useOrg } from '@components/Contexts/OrgContext';
 import { Trash2, Plus, BookOpen } from 'lucide-react';
 import { Button } from "@components/ui/button";
@@ -16,8 +16,7 @@ interface ProductLinkedCoursesProps {
 export default function ProductLinkedCourses({ productId }: ProductLinkedCoursesProps) {
   const [linkedCourses, setLinkedCourses] = useState<any[]>([]);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
-  const session = useLHSession() as any;
-  const org = useOrg() as any;
+  const session = useSokratesSession() as any;  const org = useOrg() as any;
 
   const fetchLinkedCourses = async () => {
     try {

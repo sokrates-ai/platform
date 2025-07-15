@@ -10,7 +10,7 @@ import {
 import { getOrganizationContextInfoWithoutCredentials } from '@services/organizations/orgs'
 import { revalidateTags } from '@services/utils/ts/requests'
 import { Layers } from 'lucide-react'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useRouter } from 'next/navigation'
 import React, { useEffect } from 'react'
 import { mutate } from 'swr'
@@ -26,8 +26,7 @@ function NewActivityButton(props: NewActivityButtonProps) {
   const [newActivityModal, setNewActivityModal] = React.useState(false)
   const router = useRouter()
   const course = useCourse() as any
-  const session = useLHSession() as any;
-  const access_token = session?.data?.tokens?.access_token;
+  const session = useSokratesSession() as any;  const access_token = session?.data?.tokens?.access_token;
 
   const openNewActivityModal = async (chapterId: any) => {
     setNewActivityModal(true)

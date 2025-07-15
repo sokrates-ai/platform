@@ -5,7 +5,7 @@ import React, { useEffect } from 'react'
 import { AssignmentProvider, useAssignments } from '@components/Contexts/Assignments/AssignmentContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { updateAssignment } from '@services/courses/assignments';
-import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import { mutate } from 'swr';
 import { getAPIUrl } from '@services/config/config';
 import toast from 'react-hot-toast';
@@ -104,7 +104,7 @@ function BrdCmpx() {
 
 function PublishingState() {
     const assignment = useAssignments() as any;
-    const session = useLHSession() as any;
+    const session = useSokratesSession() as any;
     const access_token = session?.data?.tokens?.access_token;
 
     async function updateAssignmentPublishState(assignmentUUID: string) {

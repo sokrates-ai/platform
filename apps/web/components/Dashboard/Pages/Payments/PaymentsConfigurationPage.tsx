@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useOrg } from '@components/Contexts/OrgContext';
 import { SiStripe } from '@icons-pack/react-simple-icons'
-import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import { getPaymentConfigs, initializePaymentConfig, updatePaymentConfig, deletePaymentConfig, updateStripeAccountID, getStripeOnboardingLink } from '@services/payments/payments';
 import FormLayout, { ButtonBlack, Input, Textarea, FormField, FormLabelAndMessage, Flex } from '@components/Objects/StyledElements/Form/Form';
 import { AlertTriangle, BarChart2, Check, Coins, CreditCard, Edit, ExternalLink, Info, Loader2, RefreshCcw, Trash2, UnplugIcon } from 'lucide-react';
@@ -17,8 +17,7 @@ import { getUriWithoutOrg } from '@services/config/config';
 
 const PaymentsConfigurationPage: React.FC = () => {
     const org = useOrg() as any;
-    const session = useLHSession() as any;
-    const router = useRouter();
+    const session = useSokratesSession() as any;    const router = useRouter();
     const access_token = session?.data?.tokens?.access_token;
     const { data: paymentConfigs, error, isLoading } = useSWR(
         () => (org && access_token ? [`/payments/${org.id}/config`, access_token] : null),

@@ -7,7 +7,7 @@ import { deleteCourseFromBackend } from '@services/courses/courses'
 import { getCourseThumbnailMediaDirectory } from '@services/media/media'
 import { revalidateTags } from '@services/utils/ts/requests'
 import { BookMinus, FilePenLine, Settings2, MoreVertical } from 'lucide-react'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React from 'react'
@@ -38,7 +38,7 @@ export const removeCoursePrefix = (course_uuid: string) => course_uuid.replace('
 function CourseThumbnail({ course, orgslug, customLink }: PropsType) {
   const router = useRouter()
   const org = useOrg() as any
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
 
   const deleteCourse = async () => {
     const toastId = toast.loading('Deleting course...')

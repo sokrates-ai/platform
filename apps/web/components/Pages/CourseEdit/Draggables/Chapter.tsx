@@ -9,7 +9,7 @@ import { updateChapter } from '@services/courses/chapters'
 import { mutate } from 'swr'
 import { getAPIUrl } from '@services/config/config'
 import { revalidateTags } from '@services/utils/ts/requests'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 
 interface ModifiedChapterInterface {
   chapterId: string
@@ -18,8 +18,7 @@ interface ModifiedChapterInterface {
 
 function Chapter(props: any) {
   const router = useRouter()
-  const session = useLHSession() as any;
-  const [modifiedChapter, setModifiedChapter] = React.useState<
+  const session = useSokratesSession() as any;  const [modifiedChapter, setModifiedChapter] = React.useState<
     ModifiedChapterInterface | undefined
   >(undefined)
   const [selectedChapter, setSelectedChapter] = React.useState<

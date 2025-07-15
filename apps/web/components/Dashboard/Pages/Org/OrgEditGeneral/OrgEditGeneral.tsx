@@ -10,7 +10,7 @@ import { UploadCloud, Info } from 'lucide-react'
 import { revalidateTags } from '@services/utils/ts/requests'
 import { useRouter } from 'next/navigation'
 import { useOrg } from '@components/Contexts/OrgContext'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { getOrgLogoMediaDirectory, getOrgThumbnailMediaDirectory } from '@services/media/media'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/ui/tabs"
 import { Toaster, toast } from 'react-hot-toast';
@@ -29,7 +29,7 @@ interface OrganizationValues {
 
 function OrgEditGeneral() {
   const router = useRouter()
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const access_token = session?.data?.tokens?.access_token
   const org = useOrg() as any
   const [selectedTab, setSelectedTab] = useState<'logo' | 'thumbnail'>('logo');

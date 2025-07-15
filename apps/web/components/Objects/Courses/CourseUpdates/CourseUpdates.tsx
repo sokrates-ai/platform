@@ -20,14 +20,13 @@ import toast from 'react-hot-toast'
 import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationModal/ConfirmationModal'
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 
 dayjs.extend(relativeTime);
 
 function CourseUpdates() {
   const course = useCourse() as any;
-  const session = useLHSession() as any;
-  const access_token = session?.data?.tokens?.access_token;
+  const session = useSokratesSession() as any;  const access_token = session?.data?.tokens?.access_token;
   const { data: updates } = useSWR(`${getAPIUrl()}courses/${course?.courseStructure.course_uuid}/updates`, (url: string) => swrFetcher(url, access_token))
   const [isModelOpen, setIsModelOpen] = React.useState(false)
 
@@ -100,8 +99,7 @@ const UpdatesSection = () => {
 const NewUpdateForm = ({ setSelectedView }: any) => {
   const org = useOrg() as any;
   const course = useCourse() as any;
-  const session = useLHSession() as any;
-
+  const session = useSokratesSession() as any;
   const validate = (values: any) => {
     const errors: any = {}
 
@@ -196,8 +194,7 @@ const NewUpdateForm = ({ setSelectedView }: any) => {
 const UpdatesListView = () => {
   const course = useCourse() as any;
   const adminStatus = useAdminStatus() ;
-  const session = useLHSession() as any;
-  const access_token = session?.data?.tokens?.access_token;
+  const session = useSokratesSession() as any;  const access_token = session?.data?.tokens?.access_token;
   const { data: updates } = useSWR(`${getAPIUrl()}courses/${course?.courseStructure?.course_uuid}/updates`, (url: string) => swrFetcher(url, access_token))
 
   return (
@@ -228,8 +225,7 @@ const UpdatesListView = () => {
 }
 
 const DeleteUpdateButton = ({ update }: any) => {
-  const session = useLHSession() as any;
-  const course = useCourse() as any;
+  const session = useSokratesSession() as any;  const course = useCourse() as any;
   const org = useOrg() as any;
 
   const handleDelete = async () => {

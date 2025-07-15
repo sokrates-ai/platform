@@ -1,7 +1,7 @@
 'use client';
 import { useAssignments } from '@components/Contexts/Assignments/AssignmentContext';
 import { useAssignmentsTask, useAssignmentsTaskDispatch } from '@components/Contexts/Assignments/AssignmentsTaskContext';
-import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import { useOrg } from '@components/Contexts/OrgContext';
 import FormLayout, { FormField, FormLabelAndMessage, Input, Textarea } from '@components/Objects/StyledElements/Form/Form';
 import * as Form from '@radix-ui/react-form';
@@ -18,7 +18,7 @@ import { constructAcceptValue } from '@/lib/constants';
 const SUPPORTED_FILES = constructAcceptValue(['pdf', 'docx', 'mp4', 'jpg', 'png', 'pptx', 'zip'])
 
 export function AssignmentTaskGeneralEdit() {
-    const session = useLHSession() as any;
+    const session = useSokratesSession() as any;
     const access_token = session?.data?.tokens?.access_token;
     const assignmentTaskState = useAssignmentsTask() as any
     const assignmentTaskStateHook = useAssignmentsTaskDispatch() as any
@@ -129,7 +129,7 @@ export function AssignmentTaskGeneralEdit() {
 }
 
 function UpdateTaskRef() {
-    const session = useLHSession() as any;
+    const session = useSokratesSession() as any;
     const org = useOrg() as any;
     const access_token = session?.data?.tokens?.access_token;
     const assignmentTaskState = useAssignmentsTask() as any

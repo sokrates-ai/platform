@@ -1,4 +1,4 @@
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import {
   sendActivityAIChatMessage,
   startActivityAIChatSession,
@@ -74,7 +74,7 @@ type ActivityChatMessageBoxProps = {
 }
 
 function ActivityChatMessageBox(props: ActivityChatMessageBoxProps) {
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const access_token = session?.data?.tokens?.access_token;
   const aiChatBotState = useAIChatBot() as AIChatBotStateTypes
   const dispatchAIChatBot = useAIChatBotDispatch() as any
@@ -328,7 +328,7 @@ type AIMessageProps = {
 }
 
 function AIMessage(props: AIMessageProps) {
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
 
   const words = props.message.message.split(' ')
 
@@ -378,7 +378,7 @@ const AIMessagePlaceHolder = (props: {
   activity_uuid: string
   sendMessage: any
 }) => {
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const [feedbackModal, setFeedbackModal] = React.useState(false)
   const aiChatBotState = useAIChatBot() as AIChatBotStateTypes
 

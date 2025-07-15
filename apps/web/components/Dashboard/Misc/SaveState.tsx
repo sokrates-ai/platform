@@ -11,12 +11,11 @@ import { useRouter } from 'next/navigation'
 import React, { useEffect } from 'react'
 import { mutate } from 'swr'
 import { updateCourse } from '@services/courses/courses'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 
 function SaveState(props: { orgslug: string }) {
   const course = useCourse() as any
-  const session = useLHSession() as any;
-  const router = useRouter()
+  const session = useSokratesSession() as any;  const router = useRouter()
   const saved = course ? course.isSaved : true
   const dispatchCourse = useCourseDispatch() as any
   const course_structure = course.courseStructure

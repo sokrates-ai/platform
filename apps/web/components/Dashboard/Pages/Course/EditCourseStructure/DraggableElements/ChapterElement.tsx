@@ -17,7 +17,7 @@ import { revalidateTags } from '@services/utils/ts/requests'
 import { useRouter } from 'next/navigation'
 import { getAPIUrl } from '@services/config/config'
 import { mutate } from 'swr'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 
 type ChapterElementProps = {
   chapter: any
@@ -33,8 +33,7 @@ interface ModifiedChapterInterface {
 
 function ChapterElement(props: ChapterElementProps) {
   const activities = props.chapter.activities || []
-  const session = useLHSession() as any;
-  const access_token = session?.data?.tokens?.access_token;
+  const session = useSokratesSession() as any;  const access_token = session?.data?.tokens?.access_token;
   const [modifiedChapter, setModifiedChapter] = React.useState<
     ModifiedChapterInterface | undefined
   >(undefined)

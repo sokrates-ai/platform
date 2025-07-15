@@ -4,7 +4,7 @@ import { getUserAvatarMediaDirectory } from '@services/media/media'
 import { removeCourse, startCourse } from '@services/courses/activity'
 import { revalidateTags } from '@services/utils/ts/requests'
 import { useRouter } from 'next/navigation'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useMediaQuery } from 'usehooks-ts'
 import { getUriWithOrg } from '@services/config/config'
 import { getProductsByCourse } from '@services/payments/products'
@@ -80,7 +80,7 @@ export function courseIsStarted(course: any): boolean {
 
 const Actions = ({ courseuuid, orgslug, course }: CourseActionsProps) => {
   const router = useRouter()
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const [linkedProducts, setLinkedProducts] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -238,7 +238,7 @@ const Actions = ({ courseuuid, orgslug, course }: CourseActionsProps) => {
 
 function CoursesActions({ courseuuid, orgslug, course }: CourseActionsProps) {
   const router = useRouter()
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const isMobile = useMediaQuery('(max-width: 768px)')
 
 

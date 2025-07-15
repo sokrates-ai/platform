@@ -1,5 +1,5 @@
 'use client';
-import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import { useOrg } from '@components/Contexts/OrgContext';
 import BreadCrumbs from '@components/Dashboard/Misc/BreadCrumbs'
 import { getAPIUrl, getUriWithOrg } from '@services/config/config';
@@ -12,7 +12,7 @@ import React from 'react'
 import useSWR from 'swr';
 
 function AssignmentsHome() {
-  const session = useLHSession() as any;
+  const session = useSokratesSession() as any;
   const access_token = session?.data?.tokens?.access_token;
   const org = useOrg() as any;
   const [courseAssignments, setCourseAssignments] = React.useState<any[]>([])

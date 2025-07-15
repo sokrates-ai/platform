@@ -7,7 +7,7 @@ import FormLayout, {
 import * as Form from '@radix-ui/react-form'
 import React from 'react'
 import { BarLoader } from 'react-spinners'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import toast from 'react-hot-toast'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
@@ -22,7 +22,7 @@ const validationSchema = Yup.object().shape({
 
 function EditTagsModal({ closeModal, orgslug, mutateURL, tags }: any) {
   // const router = useRouter()
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   // const [orgId, setOrgId] = React.useState(null) as any
   // const [showUnsplashPicker, setShowUnsplashPicker] = React.useState(false)
   // const [isUploading, setIsUploading] = React.useState(false)

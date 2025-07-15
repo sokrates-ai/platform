@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useOrg } from '@components/Contexts/OrgContext'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import useSWR from 'swr'
 import { getProductsByCourse, getStripeProductCheckoutSession } from '@services/payments/products'
 import { RefreshCcw, SquareCheck, ChevronDown, ChevronUp } from 'lucide-react'
@@ -19,7 +19,7 @@ interface CoursePaidOptionsProps {
 
 function CoursePaidOptions({ course }: CoursePaidOptionsProps) {
   const org = useOrg() as any
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const [expandedProducts, setExpandedProducts] = useState<{ [key: string]: boolean }>({})
   const [isProcessing, setIsProcessing] = useState<{ [key: string]: boolean }>({})
   const router = useRouter()

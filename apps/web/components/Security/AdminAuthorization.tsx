@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import useAdminStatus from '@components/Hooks/useAdminStatus';
 import { usePathname, useRouter } from 'next/navigation';
 import PageLoading from '@components/Objects/Loaders/PageLoading';
@@ -21,8 +21,7 @@ const ADMIN_PATHS = [
 ];
 
 const AdminAuthorization: React.FC<AuthorizationProps> = ({ children, authorizationMode }) => {
-  const session = useLHSession() as any;
-  const pathname = usePathname();
+  const session = useSokratesSession() as any;  const pathname = usePathname();
   const router = useRouter();
   const { isAdmin, loading } = useAdminStatus() as any
   const [isAuthorized, setIsAuthorized] = useState(false);

@@ -17,7 +17,7 @@ import { revalidateTags } from '@services/utils/ts/requests'
 import { useRouter } from 'next/navigation'
 import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationModal/ConfirmationModal'
 import { deleteActivity, updateActivity } from '@services/courses/activities'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 
 interface ModifiedActivityInterface {
   activityId: string
@@ -26,8 +26,7 @@ interface ModifiedActivityInterface {
 
 function Activity(props: any) {
   const router = useRouter()
-  const session = useLHSession() as any;
-  const [modifiedActivity, setModifiedActivity] = React.useState<
+  const session = useSokratesSession() as any;  const [modifiedActivity, setModifiedActivity] = React.useState<
     ModifiedActivityInterface | undefined
   >(undefined)
   const [selectedActivity, setSelectedActivity] = React.useState<

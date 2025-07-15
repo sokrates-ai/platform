@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { getOrgLogoMediaDirectory } from '@services/media/media'
 import Link from 'next/link'
 import { getUriWithOrg } from '@services/config/config'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import React, { useEffect } from 'react'
 import { MailWarning, Ticket, UserPlus, Loader2 } from 'lucide-react'
 import { useOrg } from '@components/Contexts/OrgContext'
@@ -28,7 +28,7 @@ interface SignUpClientProps {
 }
 
 function SignUpClient(props: SignUpClientProps) {
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any
   const [joinMethod, setJoinMethod] = React.useState('open')
   const [inviteCode, setInviteCode] = React.useState('')
   const searchParams = useSearchParams()
@@ -108,7 +108,7 @@ function SignUpClient(props: SignUpClientProps) {
 }
 
 const LoggedInJoinScreen = (props: any) => {
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any
   const org = useOrg() as any
   const invite_code = props.inviteCode
   const [isLoading, setIsLoading] = React.useState(true)
@@ -179,7 +179,7 @@ const LoggedInJoinScreen = (props: any) => {
 }
 
 const NoTokenScreen = (props: any) => {
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any
   const org = useOrg() as any
   const router = useRouter()
   const [isLoading, setIsLoading] = React.useState(true)

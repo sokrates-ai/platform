@@ -12,7 +12,7 @@ import { BarLoader } from 'react-spinners'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { getAPIUrl } from '@services/config/config'
 import useSWR, { mutate } from 'swr'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import toast from 'react-hot-toast'
 import { createWorkspace } from '@services/courses/workspaces'
 import { swrFetcher } from '@services/utils/ts/requests'
@@ -37,7 +37,7 @@ function NewWorkspace({
   multi,
 }: any) {
   const org = useOrg() as any
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const [activityName, setActivityName] = React.useState('')
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [activityTaskIDs, setActivityTaskIDs] = React.useState<number[]>([])

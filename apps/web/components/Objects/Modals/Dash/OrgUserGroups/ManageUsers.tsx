@@ -1,4 +1,4 @@
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { getAPIUrl } from '@services/config/config'
 import { linkUserToUserGroup, unLinkUserToUserGroup } from '@services/usergroups/usergroups'
@@ -15,7 +15,7 @@ type ManageUsersProps = {
 
 function ManageUsers(props: ManageUsersProps) {
   const org = useOrg() as any
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const access_token = session?.data?.tokens?.access_token;
   const { data: OrgUsers } = useSWR(
     org ? `${getAPIUrl()}orgs/${org.id}/users` : null,

@@ -3,13 +3,13 @@ import { getAPIUrl } from '@services/config/config'
 import { swrFetcher } from '@services/utils/ts/requests'
 import React, { createContext, useContext, useEffect, useReducer } from 'react'
 import useSWR from 'swr'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 
 export const CourseContext = createContext(null)
 export const CourseDispatchContext = createContext(null)
 
 export function CourseProvider({ children, courseuuid }: any) {
-  const session = useLHSession() as any;
+  const session = useSokratesSession() as any;
   const access_token = session?.data?.tokens?.access_token;
 
   const { data: courseStructureData, error } = useSWR(`${getAPIUrl()}courses/${courseuuid}/meta`,

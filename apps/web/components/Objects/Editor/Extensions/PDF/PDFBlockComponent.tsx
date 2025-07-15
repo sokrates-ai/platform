@@ -7,7 +7,7 @@ import { getActivityBlockMediaDirectory } from '@services/media/media'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { useCourse } from '@components/Contexts/CourseContext'
 import { useEditorProvider } from '@components/Contexts/Editor/EditorContext'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { FileUploadBlock, FileUploadBlockButton, FileUploadBlockInput } from '../../FileUploadBlock'
 import { constructAcceptValue } from '@/lib/constants';
 
@@ -16,7 +16,7 @@ const SUPPORTED_FILES = constructAcceptValue(['pdf'])
 function PDFBlockComponent(props: any) {
   const org = useOrg() as any
   const course = useCourse() as any
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const access_token = session?.data?.tokens?.access_token;
   const [pdf, setPDF] = React.useState(null)
   const [isLoading, setIsLoading] = React.useState(false)

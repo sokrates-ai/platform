@@ -15,7 +15,7 @@ import {
   startActivityAIChatSession,
 } from '@services/ai/ai'
 import useGetAIFeatures from '../../../../Hooks/useGetAIFeatures'
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 
 type AICanvaToolkitProps = {
   editor: Editor
@@ -93,7 +93,7 @@ function AIActionButton(props: {
   label: string
   activity: any
 }) {
-  const session = useLHSession() as any
+  const session = useSokratesSession() as any;
   const access_token = session?.data?.tokens?.access_token;
   const dispatchAIChatBot = useAIChatBotDispatch() as any
   const aiChatBotState = useAIChatBot() as AIChatBotStateTypes

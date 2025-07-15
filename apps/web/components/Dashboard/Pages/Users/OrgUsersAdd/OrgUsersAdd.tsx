@@ -1,4 +1,4 @@
-import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import PageLoading from '@components/Objects/Loaders/PageLoading'
 import Toast from '@components/Objects/StyledElements/Toast/Toast'
@@ -13,7 +13,7 @@ import useSWR, { mutate } from 'swr'
 
 function OrgUsersAdd() {
     const org = useOrg() as any
-    const session = useLHSession() as any
+    const session = useSokratesSession() as any;
     const access_token = session?.data?.tokens?.access_token;
     const [isLoading, setIsLoading] = React.useState(false)
     const [invitedUsers, setInvitedUsers] = React.useState('');
