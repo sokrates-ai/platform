@@ -9,7 +9,7 @@ import { Button } from '@components/ui/button'
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink } from "@/components/ui/navigation-menu"
 import { Tooltip, TooltipContent,TooltipProvider,TooltipTrigger } from '@components/ui/tooltip'
 import { Backpack, Home,School,  Users } from 'lucide-react'
-import logo_black from '@public/black_logo.svg'
+import logo_black from '@public/dark_logo.svg'
 import Image from 'next/image'
 import MenuLinks from '@components/Objects/Menus/OrgMenuLinks'
 import useAdminStatus from '@components/Hooks/useAdminStatus'

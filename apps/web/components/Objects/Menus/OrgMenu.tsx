@@ -7,7 +7,7 @@ import { getOrgLogoMediaDirectory } from '@services/media/media'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem } from "@/components/ui/navigation-menu"
-import logo_black from '@public/black_logo.svg'
+import logo_black from '@public/dark_logo.svg'
 import MenuLinks from './OrgMenuLinks'
 import useAdminStatus from '@components/Hooks/useAdminStatus'
 import { NewHeaderProfileBox } from '@components/Security/NewHeaderProfileBox'

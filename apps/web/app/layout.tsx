@@ -12,7 +12,7 @@ import SokratesSessionProvider from '@components/Contexts/SokratesSessionContext
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
-  weight: ['400', '500', '700'],
+  weight: ['400', '500', '700', '900'],
   style: ['normal', 'italic'],
 })
 
@@ -46,24 +46,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html className={dmSans.className} lang="en">
       <body>
+        <link
+          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500;1,700;1,900&display=swap"
+          rel="stylesheet"
+        />
         {isStaging && (
           <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              background: 'rgba(255, 0, 0, 0.5)',
-              color: 'black',
-              padding: '10px',
-              textAlign: 'center',
-              fontWeight: 'bolder',
-              fontSize: '2rem',
-              position: 'absolute',
-              width: '100%',
-              zIndex: 999,
-              bottom: 0,
-              overflowX: 'hidden',
-              gap: '1rem',
-            }}
+            className="flex justify-between bg-red-500/50 text-black p-2.5 text-center font-black text-4xl absolute w-full z-[999] bottom-0 overflow-x-hidden gap-4"
           >
             {Array.from({ length: 5 }).map((_, i) => (
               <span key={i}>STAGING</span>

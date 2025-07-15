@@ -1,7 +1,7 @@
 "use client"
 import { motion } from "framer-motion"
 import Image from "next/image"
-import logo_black from "@public/black_logo.svg"
+import logo_black from "@public/dark_logo.svg"
 
 const variants = {
   hidden: { opacity: 0, scale: 0.9 },
