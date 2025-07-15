@@ -32,7 +32,7 @@ export default function NotFound() {
             404
           </h1>
 
-          <p className="max-w-[95%] sm:max-w-[80%] md:max-w-[600px] text-gray-600 font-medium leading-tight tracking-wider p-0 text-xl sm:text-2xl md:text-3xl font-['DM_Sans']">
+          <p className="-mt-6 max-w-[95%] sm:max-w-[80%] md:max-w-[600px] text-gray-600 font-medium leading-tight tracking-wider p-0 text-2xl sm:text-2xl md:text-2xl font-['DM_Sans']">
             The page you are looking for can't be found.
           </p>
 

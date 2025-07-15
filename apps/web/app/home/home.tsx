@@ -7,7 +7,7 @@ import { ArrowRightCircle, Info } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import learnhouseIcon from 'public/learnhouse_bigicon_1.png'
+import SokratesLogo from 'public/dark_logo.svg'
 import React, { useEffect } from 'react'
 import useSWR from 'swr';
 
@@ -26,7 +26,7 @@ function HomeClient() {
           quality={100}
           width={60}
           height={60}
-          src={learnhouseIcon}
+          src={SokratesLogo}
           alt=""
         />
       </div>
