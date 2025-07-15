@@ -1,3 +1,4 @@
+from src.routers import metrics
 from src.routers.courses import tasks
 from fastapi import APIRouter, Depends
 from src.routers import health
@@ -16,6 +17,8 @@ v1_router = APIRouter(prefix="/api/v1")
 
 
 # API Routes
+v1_router.include_router(metrics.router, prefix="/metrics", tags=["users"])
+
 v1_router.include_router(users.router, prefix="/users", tags=["users"])
 v1_router.include_router(usergroups.router, prefix="/usergroups", tags=["usergroups"])
 v1_router.include_router(auth.router, prefix="/auth", tags=["auth"])
