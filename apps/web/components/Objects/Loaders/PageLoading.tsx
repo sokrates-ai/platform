@@ -21,7 +21,7 @@ const logoVariants = {
   },
 }
 
-function PageLoading() {
+export default function PageLoading() {
   return (
     <motion.main
       variants={variants}
@@ -29,16 +29,24 @@ function PageLoading() {
       animate="enter"
       exit="exit"
       transition={{ type: "ease-in-out", duration: 0.5 }}
-      className="flex items-center justify-center min-h-screen w-full"
+      className="flex items-center justify-center min-h-screen w-full overflow-hidden"
     >
       <div className="flex flex-col items-center justify-center">
-        <motion.div variants={logoVariants} animate="animate" className="flex justify-center">
+        <motion.div
+          variants={logoVariants}
+          animate="animate"
+          className="
+            relative
+            /* fluid 150–440px box at 50vw */
+            w-[clamp(150px,_50vw,_440px)]
+            h-[clamp(150px,_50vw,_440px)]
+          "
+        >
           <Image
-            width={440}
-            height={440}
-            className="mx-auto opacity-25"
-            src={logo_black || "/placeholder.svg"}
+            src={logo_black}
             alt="HPI Sokrates"
+            fill
+            className="object-contain opacity-25"
             priority
           />
         </motion.div>
@@ -46,6 +54,3 @@ function PageLoading() {
     </motion.main>
   )
 }
-
-export default PageLoading
-
