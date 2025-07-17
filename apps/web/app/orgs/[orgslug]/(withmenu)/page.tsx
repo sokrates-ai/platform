@@ -6,7 +6,7 @@ import { getServerSession } from 'next-auth'
 import { nextAuthOptions } from 'app/auth/options'
 import { getOrgThumbnailMediaDirectory } from '@services/media/media'
 import { slides } from './slides'
-import CoursesClient from './coursesClient'
+import CoursesClient from './courses'
 type MetadataProps = {
 	params: { orgslug: string }
 	searchParams: { [key: string]: string | string[] | undefined }

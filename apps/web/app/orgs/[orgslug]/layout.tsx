@@ -15,7 +15,7 @@ export default function RootLayout({
   return (
     <div>
       <OrgProvider orgslug={params.orgslug}>
-        <NextTopLoader color="#2e2e2e" initialPosition={0.3} height={4}  easing={'ease'} speed={500} showSpinner={false} />
+        <NextTopLoader shadow={false} color="#E25A26" initialPosition={0.3} height={4}  easing={'ease'} speed={500} showSpinner={false} />
         <Toaster />
         <Onboarding />
         {children}

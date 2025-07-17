@@ -15,6 +15,7 @@ import {
   ArrowRight,
   Backpack,
   Check,
+  DoorOpen,
   File,
   Sparkles,
   Video,
@@ -33,21 +34,22 @@ import CourseChapter from '@components/Pages/Courses/CourseChapter'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import { AssetData } from '@components/Objects/ContentMap/Asset'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { isChapterLocked, isActivityDone } from '@components/Pages/Courses/utils'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { updateCourseCanvasInteractionState } from '@services/courses/courses'
 
 const CourseClient = (props: any) => {
-	const [learnings, setLearnings] = useState<string[]>([])
-	const courseuuid = props.courseuuid
-	const courseid = courseuuid.replace('course_', '')
-	const orgslug = props.orgslug
-	const course = props.course
-	const selectedChapterId = props.selectedChapterId;
-	const org = useOrg() as any
-	const router = useRouter()
-	const isMobile = useMediaQuery('(max-width: 768px)');
+  const [learnings, setLearnings] = useState<string[]>([])
+  const courseuuid = props.courseuuid
+  const courseid = courseuuid.replace('course_', '')
+  const orgslug = props.orgslug
+  const course = props.course
+  const selectedChapterId = props.selectedChapterId;
+  const org = useOrg() as any
+  const router = useRouter()
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const session = useSokratesSession() as any
   const access_token = session?.data?.tokens?.access_token
@@ -61,17 +63,17 @@ const CourseClient = (props: any) => {
     getLearningTags()
   }, [org, course])
 
-	const [chapterDialogOpen, setChapterDialogOpen] = useState(selectedChapterId != null)
-	const [selectedChapter, setSelectedChapter] = useState(selectedChapterId != null ? selectedChapterId : 0)
-   	useEffect(() => {
-		updateCourseCanvasInteractionState({
-			selectedChapter: chapterDialogOpen ? selectedChapter : null,
-			courseUuid: 
-			// TODO: Find out why we normally remove "course" from the course uuid.
-			`course_${courseuuid}`,
-			access_token,
-		})
-    },[selectedChapter, chapterDialogOpen, access_token, courseuuid]) 
+  const [chapterDialogOpen, setChapterDialogOpen] = useState(selectedChapterId != null)
+  const [selectedChapter, setSelectedChapter] = useState(selectedChapterId != null ? selectedChapterId : 0)
+  useEffect(() => {
+    updateCourseCanvasInteractionState({
+      selectedChapter: chapterDialogOpen ? selectedChapter : null,
+      courseUuid:
+        // TODO: Find out why we normally remove "course" from the course uuid.
+        `course_${courseuuid}`,
+      access_token,
+    })
+  }, [selectedChapter, chapterDialogOpen, access_token, courseuuid])
   const isStarted = courseIsStarted(course)
 
   const layout: LayoutState = {
@@ -108,7 +110,7 @@ const CourseClient = (props: any) => {
       }
     }
     return (
-      <div className="w-full h-[calc(100vh-60px)] max-w-full overflow-hidden">
+      <div className="relative flex flex-col h-screen overflow-hidden">
         <Modal
           isDialogOpen={chapterDialogOpen}
           onOpenChange={setChapterDialogOpen}
@@ -125,40 +127,52 @@ const CourseClient = (props: any) => {
           }
         />
 
-        <Canvas
-          layout={layout}
-          setLayout={() => {
-            throw 'BUG: This cannot be called from here.'
-          }}
-          readOnly={true}
-          onChapterClick={(chapter: number) => {
-            setSelectedChapter(chapter)
-            setChapterDialogOpen(true)
-          }}
-          chapterStates={chapterStates}
-        />
+        <Link href={getUriWithOrg(orgslug, '/')}>
+          <Button
+            variant="secondary"
+            size="default"
+            className="absolute bottom-8 left-8 z-10 w-18 h-10"
+          >
+            <DoorOpen className="size-6" style={{ color: '#454545' }} />
+          </Button>
+        </Link>
+
+        <div className="flex-1 overflow-hidden relative">
+          <Canvas
+            layout={layout}
+            setLayout={() => {
+              throw 'BUG: This cannot be called from here.'
+            }}
+            readOnly
+            onChapterClick={(chapter: number) => {
+              setSelectedChapter(chapter)
+              setChapterDialogOpen(true)
+            }}
+            chapterStates={chapterStates}
+          />
+        </div>
       </div>
     )
   }
 
-	return (
-		<GeneralWrapperStyled>
-			<div className="pb-3 flex flex-col md:flex-row justify-between items-start md:items-center">
-				<div>
-					<Badge variant="secondary" className="mb-2">Course</Badge>
-					<h1 className="text-2xl md:text-3xl font-bold">{course.name}</h1>
-				</div>
-				<div className="mt-4 md:mt-0 w-full md:w-auto">
-					<CourseProvider courseuuid={course.course_uuid}>
-						<CourseUpdates />
-					</CourseProvider>
-				</div>
-			</div>
+  return (
+    <GeneralWrapperStyled>
+      <div className="pb-3 flex flex-col md:flex-row justify-between items-start md:items-center">
+        <div>
+          <Badge variant="secondary" className="mb-2">Course</Badge>
+          <h1 className="text-2xl md:text-3xl font-bold">{course.name}</h1>
+        </div>
+        <div className="mt-4 md:mt-0 w-full md:w-auto">
+          <CourseProvider courseuuid={course.course_uuid}>
+            <CourseUpdates />
+          </CourseProvider>
+        </div>
+      </div>
 
       <Card className="mb-6 overflow-hidden border-none">
         {course?.thumbnail_image && org ? (
           <div
-            className="w-full h-[200px] md:h-[400px] bg-cover bg-center rounded-lg shadow-md"
+            className="w-full h-52 md:h-96 lg:h-[500px] bg-cover bg-center rounded-lg shadow-md"
             style={{
               backgroundImage: `url(${getCourseThumbnailMediaDirectory(
                 org?.org_uuid,
@@ -169,7 +183,7 @@ const CourseClient = (props: any) => {
           />
         ) : (
           <div
-            className="w-full h-[200px] md:h-[400px] bg-cover bg-center rounded-lg shadow-md"
+            className="w-full h-52 md:h-96 lg:h-[500px] bg-cover bg-center rounded-lg shadow-md"
             style={{
               backgroundImage: `url('../empty_thumbnail.png')`,
               backgroundSize: 'auto',
@@ -178,8 +192,8 @@ const CourseClient = (props: any) => {
         )}
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-6">
-        <div className="col-span-1 md:col-span-3 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 pt-6">
+        <div className="col-span-1 lg:col-span-3 space-y-6">
           <Card>
             <CardContent className="pt-6">
               <h2 className="text-xl font-bold mb-3">About</h2>

@@ -30,7 +30,7 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
   // Unauthenticated
   if (session?.status !== 'authenticated') {
     return (
-      <header className="fixed inset-x-0 z-50 flex justify-center top-4 sm:top-12 px-4 sm:px-0">
+      <header className="fixed inset-x-0 z-50 flex justify-center top-4 px-4 sm:px-0">
         <div className="relative w-full sm:w-3/4 md:w-2/3 lg:w-1/2">
           <div
             className="relative flex h-12 sm:h-14 md:h-16 lg:h-[71px] w-full
@@ -76,7 +76,7 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
 
   // Authenticated
   return (
-    <header className="fixed inset-x-0 z-50 flex justify-center top-4 sm:top-12 px-4 sm:px-0">
+    <header className="fixed inset-x-0 z-50 flex justify-center top-4 px-4 sm:px-0">
       <div className="relative w-full sm:w-3/4 md:w-2/3 lg:w-1/2">
         <div className="relative grid w-full grid-cols-[1fr_auto_40px] sm:grid-cols-[1fr_auto_100px] lg:grid-cols-[1fr_auto_110px] items-center">
           <LeftRail
@@ -225,7 +225,6 @@ function railStyle(side: 'left' | 'right'): React.CSSProperties {
   } as React.CSSProperties
 }
 
-// ✂️ Modified to accept an inline style override
 const Badge = ({
   children,
   style,
