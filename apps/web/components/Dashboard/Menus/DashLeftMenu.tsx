@@ -13,7 +13,7 @@ import logo_black from '@public/dark_logo.svg'
 import Image from 'next/image'
 import MenuLinks from '@components/Objects/Menus/OrgMenuLinks'
 import useAdminStatus from '@components/Hooks/useAdminStatus'
-import { NewHeaderProfileBox } from '@components/Security/NewHeaderProfileBox'
+
 
 
 
@@ -59,7 +59,7 @@ export const DashLeftMenu = (props: any) => {
           </div>
 
 
-          <NewHeaderProfileBox></NewHeaderProfileBox>
+          {/* Profile functionality moved to OrgMenu */}
          
                   
         </div>

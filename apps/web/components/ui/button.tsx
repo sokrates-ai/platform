@@ -5,25 +5,27 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-[#E25A26] text-white shadow-[0_4px_0_0_#C94918] rounded-[6px] relative",
+          "relative bg-[#E25A26] text-white font-semibold font-['DM_Sans'] shadow-[0px_4px_0px_0px_#C94918] hover:bg-[#E25A26]/90 overflow-hidden active:rounded-[0.375rem] active:bg-[#E25A26] active:shadow-[0px_2px_0px_0px_#C94918] active:translate-y-[2px] active:[&>svg]:opacity-0",
         destructive:
-          "border border-[#E03131] bg-[#E03131] text-white shadow-[0_4px_0_0_#B71C1C] rounded-[6px] hover:bg-[#B71C1C] hover:shadow-[0_4px_0_0_#8A1A1A]", 
+          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+          "rounded-[0.375rem] border border-[#626262] text-[#454545] text-center font-['DM_Sans'] text-[0.875rem] font-semibold leading-[1.5rem] hover:bg-accent hover:text-accent-foreground",
         secondary:
-          "border border-[#626262] bg-[#F4F4F4] text-black shadow-[0_4px_0_0_#454545] rounded-[6px] hover:bg-[#EDEDED] hover:shadow-[0_4px_0_0_#3A3A3A]",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+          "relative h-10 rounded-md bg-[#F4F4F4] border border-[#626262] text-[#454545] text-center font-['DM_Sans'] text-[0.875rem] font-semibold leading-[1.5rem] shadow-[0px_4px_0px_#454545] hover:bg-[#E8E8E8] active:rounded-[0.375rem] active:border-[#626262] active:bg-[#F4F4F4] active:shadow-[0px_2px_0px_0px_#454545] active:translate-y-[2px]",
+        ghost:
+          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+        link:
+          "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
+        default: "h-9 px-4 py-2 has-[>svg]:px-8",
+        sm: "h-8 rounded-md gap-1.5 px-3 text-xs has-[>svg]:px-2.5",
+        lg: "h-10 rounded-md px-8 has-[>svg]:px-4",
         icon: "h-9 w-9",
       },
     },
@@ -41,34 +43,49 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  (
+    { className, variant, size, asChild = false, children, ...props },
+    ref
+  ) => {
     const Comp = asChild ? Slot : "button"
+
+    const svgSize = React.useMemo(() => {
+      switch (size) {
+        case "sm":
+          return { width: 20, height: 3 }
+        case "lg":
+          return { width: 28, height: 5 }
+        default:
+          return { width: 24, height: 4 }
+      }
+    }, [size])
 
     return (
       <Comp
-      className={cn(buttonVariants({ variant, size, className }))}
-      ref={ref}
-      {...props}
-    >
-      <>
-        {props.children}
+        data-slot="button"
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      >
+        {children}
         {variant === "default" && (
           <svg
-            className="absolute top-0 right-2 w-6 h-1"
+            width={svgSize.width}
+            height={svgSize.height}
             viewBox="0 0 24 4"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
+            className="absolute top-1.5 right-2 pointer-events-none transition-opacity"
           >
             <rect x="6" width="18" height="4" rx="2" fill="#F1F1F1" />
             <rect width="4" height="4" rx="2" fill="#F1F1F1" />
           </svg>
         )}
-      </>
-    </Comp>
+      </Comp>
     )
-
   }
 )
+
 Button.displayName = "Button"
 
 export { Button, buttonVariants }

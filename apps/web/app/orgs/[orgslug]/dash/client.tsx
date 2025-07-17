@@ -39,23 +39,21 @@ function CoursesHome(params: CourseProps) {
             ressourceType="courses"
             orgId={params.org_id}
           >
-               <Dialog open={newCourseModal} onOpenChange={setNewCourseModal}>
-                    <DialogTrigger asChild>
-                        <Button variant="default">Create Course</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                        <DialogTitle>Create Course</DialogTitle>
-                        </DialogHeader>
-                        <CreateCourseModal closeModal={closeNewCourseModal} orgslug={orgslug} />
-                    </DialogContent>
-                  </Dialog>
-         
-
+            <Dialog open={newCourseModal} onOpenChange={setNewCourseModal}>
+              <DialogTrigger asChild>
+                <Button variant="default">Create Course</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create Course</DialogTitle>
+                </DialogHeader>
+                <CreateCourseModal closeModal={closeNewCourseModal} orgslug={orgslug} />
+              </DialogContent>
+            </Dialog>
           </AuthenticatedClientElement>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {courses.map((course: any) => (
           <div key={course.course_uuid}>
@@ -99,15 +97,15 @@ function CoursesHome(params: CourseProps) {
 
 
                     <Dialog open={newCourseModal} onOpenChange={setNewCourseModal}>
-                    <DialogTrigger asChild>
+                      <DialogTrigger asChild>
                         <Button variant="default">Create Course</Button>
-                    </DialogTrigger>
-                    <DialogContent>
+                      </DialogTrigger>
+                      <DialogContent>
                         <DialogHeader>
-                        <DialogTitle>Create Course</DialogTitle>
+                          <DialogTitle>Create Course</DialogTitle>
                         </DialogHeader>
                         <CreateCourseModal closeModal={closeNewCourseModal} orgslug={orgslug} />
-                    </DialogContent>
+                      </DialogContent>
                     </Dialog>
 
                   </AuthenticatedClientElement>

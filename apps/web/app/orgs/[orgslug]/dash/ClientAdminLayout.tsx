@@ -6,13 +6,6 @@ import { SessionProvider } from 'next-auth/react'
 import React from 'react'
 import { useMediaQuery } from 'usehooks-ts';
 
-// Hinweis: Wenn du Links in deiner Anwendung hast, wie:
-// <Link href={"dash/user-account/settings/general"}>
-// solltest du sie so ändern:
-// <Link href={"/dash/user-account/settings/general"}>
-// oder besser noch mit dynamischem Pfad:
-// <Link href={`/orgs/${params.orgslug}/dash/user-account/settings/general`}>
-
 function ClientAdminLayout({
     children,
     params,

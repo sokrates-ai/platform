@@ -6,7 +6,7 @@ import { getServerSession } from 'next-auth'
 import { nextAuthOptions } from 'app/auth/options'
 import { getOrgThumbnailMediaDirectory } from '@services/media/media'
 import { slides } from './slides'
-import CoursesClient from './coursesclient'
+import CoursesClient from './coursesClient'
 type MetadataProps = {
 	params: { orgslug: string }
 	searchParams: { [key: string]: string | string[] | undefined }
@@ -14,39 +14,43 @@ type MetadataProps = {
 
 export async function generateMetadata({
 	params,
+	searchParams,
 }: MetadataProps): Promise<Metadata> {
-	// Get Org context information
 	const org = await getOrganizationContextInfo(params.orgslug, {
-		revalidate: 0,
+		revalidate: 86400,
 		tags: ['organizations'],
 	})
 
-	// SEO
+	let title = org.name
+	let description = org.description
+	let imageUrl = null
+
+	if (org.logo_image) {
+		imageUrl = getOrgThumbnailMediaDirectory(org.org_uuid, org.logo_image)
+	}
+
 	return {
-		title: `Home — ${org.name}`,
-		description: org.description,
-		robots: {
-			index: true,
-			follow: true,
-			nocache: true,
-			googleBot: {
-				index: true,
-				follow: true,
-				'max-image-preview': 'large',
-			},
-		},
+		title: title,
+		description: description,
 		openGraph: {
-			title: `Home — ${org.name}`,
-			description: org.description,
-			type: 'website',
-			images: [
-				{
-					url: getOrgThumbnailMediaDirectory(org?.org_uuid, org?.thumbnail_image),
-					width: 800,
-					height: 600,
-					alt: org.name,
-				},
-			],
+			title: title,
+			description: description,
+			images: imageUrl
+				? [
+						{
+							url: imageUrl,
+							width: 1200,
+							height: 630,
+							alt: title,
+						},
+				  ]
+				: [],
+		},
+		twitter: {
+			card: 'summary_large_image',
+			title: title,
+			description: description,
+			images: imageUrl ? [imageUrl] : [],
 		},
 	}
 }
@@ -66,7 +70,7 @@ const OrgHomePage = async (params: any) => {
 	})
 
 	return (
-		<div className="w-full">
+		<div className="relative z-10 w-full">
 			<CoursesClient 
 				org_id={org.org_id} 
 				orgslug={orgslug} 

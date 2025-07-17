@@ -77,39 +77,57 @@ const Onboarding: React.FC = () => {
     }
   };
 
+  return null;
 
+  // return (
+    // <div>
+      {/* {isUserAdmin.isAdmin && !isUserAdmin.loading && !isOnboardingComplete && */}
 
-  return (
-    <div>
-      {isUserAdmin.isAdmin && !isUserAdmin.loading && !isOnboardingComplete &&
+      // <Dialog open={isModalOpen} onOpenChange={setIsModalOpen} >
+      //   <DialogTrigger>
+      //       <div className='inline z-50 fixed pb-10 w-full bottom-10'>
+      //         <Button variant='secondary' size='lg'>
+      //           <ArrowLeftRight size={20} />
+      //           <p>Onboarding</p>
+      //           <div className='h-2 w-2 bg-[#E25A26] animate-pulse rounded-full'></div>
+      //         </Button>
+      //       </div>
+      //   </DialogTrigger>
+      //   <DialogContent className="w-[700px] h-[600px] max-w-full max-h-[90vh] overflow-hidden">
+      //     <DialogHeader>
+      //       <DialogTitle>Onboarding</DialogTitle>
+      //     </DialogHeader>
+      //   </DialogContent>
+      // </Dialog>
 
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen} >
-          <DialogTrigger asChild>
-            <div className=' fixed pb-10 w-full bottom-0 bg-gradient-to-t from-1% from-gray-950/25 to-transparent'>
-              <div className='bg-gray-950 flex space-x-1 font-bold cursor-pointer hover:bg-gray-900 shadow-md items-center text-gray-200 px-5 py-2 w-fit rounded-full mx-auto'>
-                <ArrowLeftRight size={20} />
-                <p>Onboarding</p>
-                <div className='h-2 w-2 bg-blue-500 animate-pulse rounded-full'></div>
-              </div>
-            </div>
-          </DialogTrigger>
-          <DialogContent className="w-[700px] h-[600px] max-w-full max-h-[90vh] overflow-hidden">
-            <DialogHeader>
-              <DialogTitle>Onboarding</DialogTitle>
-            </DialogHeader>
-            <OnboardingScreen
-              step={onboardingData[currentStep]}
-              onboardingData={onboardingData}
-              currentStep={currentStep}
-              nextStep={nextStep}
-              skipOnboarding={skipOnboarding}
-              setIsModalOpen={setIsModalOpen}
-              goToStep={goToStep}
-            />
-          </DialogContent>
-        </Dialog>}
-    </div>
-  );
+      // <Dialog open={isModalOpen} onOpenChange={setIsModalOpen} >
+      //   <DialogTrigger asChild>
+      //     <div className='z-100 fixed pb-10 w-full bottom-0'>
+      //       <div className='bg-gray-950 flex space-x-1 font-bold cursor-pointer hover:bg-gray-900 shadow-md items-center text-gray-200 px-5 py-2 w-fit rounded-full mx-auto'>
+      //         <ArrowLeftRight size={20} />
+      //         <p>Onboarding</p>
+      //         <div className='h-2 w-2 bg-blue-500 animate-pulse rounded-full'></div>
+      //       </div>
+      //     </div>
+      //   </DialogTrigger>
+      //   <DialogContent className="w-[700px] h-[600px] max-w-full max-h-[90vh] overflow-hidden">
+      //     <DialogHeader>
+      //       <DialogTitle>Onboarding</DialogTitle>
+      //     </DialogHeader>
+      //     <OnboardingScreen
+      //       step={onboardingData[currentStep]}
+      //       onboardingData={onboardingData}
+      //       currentStep={currentStep}
+      //       nextStep={nextStep}
+      //       skipOnboarding={skipOnboarding}
+      //       setIsModalOpen={setIsModalOpen}
+      //       goToStep={goToStep}
+      //     />
+      //   </DialogContent>
+      // </Dialog>
+        // }
+    // </div>
+  // );
 };
 
 interface OnboardingScreenProps {
