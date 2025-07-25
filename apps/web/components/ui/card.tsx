@@ -1,7 +1,5 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { secureHeapUsed } from "crypto"
-import { setupConnectErrorHandler } from "@sentry/nextjs"
 
 const cardVariants = {
   default: "rounded-[12px] border-[1px] border-[#707070] bg-[#FFF] shadow-[0_4px_0_0_#454545]",

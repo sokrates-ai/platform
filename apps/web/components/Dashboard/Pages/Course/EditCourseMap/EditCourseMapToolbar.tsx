@@ -1,5 +1,5 @@
 "use client"
-import { Undo2, Redo2, Trash2, Maximize, Grid, Lock, ArrowDown, ArrowUp, ArrowLeft, ArrowRight, Plus, Minus, Copy, Clipboard, ClipboardCopy, ClipboardPaste, Scissors, Copy as CopyIcon, HelpCircle, MousePointerClick, Info, FileDown } from "lucide-react"
+import { Undo2, Redo2, Trash2, Maximize, ArrowDown, ArrowUp, ArrowLeft, ArrowRight, Plus, Minus, ClipboardPaste, Scissors, Copy as CopyIcon, HelpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@components/ui/separator"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"

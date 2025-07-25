@@ -2,7 +2,6 @@ import { getAPIUrl } from '@services/config/config'
 import {
   RequestBodyWithAuthHeader,
 } from '@services/utils/ts/requests'
-import internal from 'stream'
 
 export async function createWorkspace(
   data: any,

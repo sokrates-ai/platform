@@ -1,20 +1,14 @@
-import React, { useEffect, useRef, useState, useReducer, Dispatch } from 'react';
-import useSWR from 'swr';
+import React, { useRef, useState, useReducer } from 'react';
 import { useCourse, useCourseDispatch } from '@components/Contexts/CourseContext';
-import { getAPIUrl } from '@services/config/config';
-import { swrFetcher } from '@services/utils/ts/requests';
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import { CourseMapEditorToolbar } from './EditCourseMapToolbar';
 import { BarLoader } from 'react-spinners';
 
 import dynamic from 'next/dynamic';
-import { AssetData } from '@components/Objects/ContentMap/Asset';
+import { AssetData } from '@components/Objects/ContentMap/Asset/assetTypes';
 import { SPRITES} from '@components/Dashboard/Pages/Course/EditCourseMap/spriteIndex';
-import ChapterActivities from '@components/Pages/Courses/ChapterActivities';
 import { SPRITE_SCALE_FACTOR } from '@components/Objects/ContentMap/constants';
-import { setLazyProp } from 'next/dist/server/api-utils';
 import { LayoutState } from '@components/Objects/ContentMap/Canvas'; 
-import { cn } from "@/lib/utils"
 import { AnimatePresence, motion } from "framer-motion"
 import { X, PanelRightOpen } from "lucide-react"
 const ContentMap = dynamic(() => import('components/Objects/ContentMap/Canvas'), { ssr: false });

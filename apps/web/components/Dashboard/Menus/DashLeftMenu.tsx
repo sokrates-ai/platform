@@ -5,10 +5,7 @@ import { getUriWithOrg } from '@services/config/config'
 import { getOrgLogoMediaDirectory } from '@services/media/media'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
-import { Button } from '@components/ui/button'
-import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink } from "@/components/ui/navigation-menu"
-import { Tooltip, TooltipContent,TooltipProvider,TooltipTrigger } from '@components/ui/tooltip'
-import { Backpack, Home,School,  Users } from 'lucide-react'
+import { NavigationMenu, NavigationMenuList, NavigationMenuItem } from "@/components/ui/navigation-menu"
 import logo_black from '@public/dark_logo.svg'
 import Image from 'next/image'
 import MenuLinks from '@components/Objects/Menus/OrgMenuLinks'

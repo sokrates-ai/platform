@@ -1,14 +1,12 @@
 import { isInstallModeEnabled } from '@services/install/install'
 import {
   LEARNHOUSE_DOMAIN,
-  LEARNHOUSE_TOP_DOMAIN,
   getDefaultOrg,
   getUriWithOrg,
   isMultiOrgModeEnabled,
 } from './services/config/config'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { DEFAULT_CIPHERS } from 'tls'
 
 export const config = {
   matcher: [
@@ -21,9 +19,10 @@ export const config = {
      * 4. /examples (inside /public)
      * 4b. /contentMap (inside /public)
      * 4c. /students (inside /public)
+     * 4d. /chapterStones (inside /public)
      * 5. all root files inside /public (e.g. /favicon.ico)
      */
-    '/((?!api|_next|fonts|umami|examples|contentMap|students|[\\w-]+\\.\\w+).*)',
+    '/((?!api|_next|fonts|umami|examples|contentMap|students|chapterStones|[\\w-]+\\.\\w+).*)',
     '/sitemap.xml',
     '/payments/stripe/connect/oauth',
   ],

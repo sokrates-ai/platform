@@ -1,0 +1,47 @@
+<svg width="141" height="104" viewBox="0 0 141 104" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g filter="url(#filter0_g_477_10)">
+        <ellipse cx="72" cy="62.75" rx="66" ry="38.5" fill="#3D3D3D" fill-opacity="0.16" />
+    </g>
+    <g filter="url(#filter1_n_477_10)">
+        <path
+            d="M131.25 39.25V55C131.25 65.254 124.119 74.6763 112.291 81.5762C100.481 88.4652 84.1163 92.75 66 92.75C47.8837 92.75 31.5189 88.4652 19.709 81.5762C7.88062 74.6763 0.750003 65.254 0.75 55V39.25H131.25Z"
+            fill="#848178" stroke="#918D81" stroke-width="1.5" />
+        <path
+            d="M66 1C84.0802 1 100.4 5.27748 112.165 12.1406C123.955 19.0181 131 28.3719 131 38.5C131 48.6281 123.955 57.9819 112.165 64.8594C100.4 71.7225 84.0802 76 66 76C47.9198 76 31.6003 71.7225 19.835 64.8594C8.04508 57.9819 1 48.6281 1 38.5C1 28.3719 8.04508 19.0181 19.835 12.1406C31.6003 5.27748 47.9198 1 66 1Z"
+            fill="#B5B0AA" stroke="#BCB7AB" stroke-width="2" />
+    </g>
+    <defs>
+        <filter id="filter0_g_477_10" x="3.7" y="21.95" width="136.6" height="81.6"
+            filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+            <feTurbulence type="fractalNoise"
+                baseFrequency="0.32258066534996033 0.32258066534996033" numOctaves="3" seed="785" />
+            <feDisplacementMap in="shape" scale="4.5999999046325684" xChannelSelector="R"
+                yChannelSelector="G" result="displacedImage" width="100%" height="100%" />
+            <feMerge result="effect1_texture_477_10">
+                <feMergeNode in="displacedImage" />
+            </feMerge>
+        </filter>
+        <filter id="filter1_n_477_10" x="0" y="0" width="132" height="93.5"
+            filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+            <feTurbulence type="fractalNoise"
+                baseFrequency="0.54644805192947388 0.54644805192947388" stitchTiles="stitch"
+                numOctaves="3" result="noise" seed="7070" />
+            <feColorMatrix in="noise" type="luminanceToAlpha" result="alphaNoise" />
+            <feComponentTransfer in="alphaNoise" result="coloredNoise1">
+                <feFuncA type="discrete"
+                    tableValues="0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 " />
+            </feComponentTransfer>
+            <feComposite operator="in" in2="shape" in="coloredNoise1" result="noise1Clipped" />
+            <feFlood flood-color="rgba(158, 150, 134, 0.25)" result="color1Flood" />
+            <feComposite operator="in" in2="noise1Clipped" in="color1Flood" result="color1" />
+            <feMerge result="effect1_noise_477_10">
+                <feMergeNode in="shape" />
+                <feMergeNode in="color1" />
+            </feMerge>
+        </filter>
+    </defs>
+</svg>

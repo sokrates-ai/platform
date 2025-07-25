@@ -1,20 +1,14 @@
 'use client'
-import Link from 'next/link'
-import { getAPIUrl, getUriWithOrg } from '@services/config/config'
+import { getAPIUrl } from '@services/config/config'
 import Canva from '@components/Objects/Activities/DynamicCanva/DynamicCanva'
 import VideoActivity from '@components/Objects/Activities/Video/Video'
-import { BookOpenCheck, Check, CheckCircle, MoreVertical, UserRoundPen } from 'lucide-react'
+import { BookOpenCheck, Check, CheckCircle, UserRoundPen } from 'lucide-react'
 import { markActivityAsComplete } from '@services/courses/activity'
 import DocumentPdfActivity from '@components/Objects/Activities/DocumentPdf/DocumentPdf'
-import ActivityIndicators from '@components/Pages/Courses/ActivityIndicators'
-import GeneralWrapperStyled from '@components/Objects/StyledElements/Wrappers/GeneralWrapper'
 import { usePathname, useRouter } from 'next/navigation'
 import AuthenticatedClientElement from '@components/Security/AuthenticatedClientElement'
-import { getCourseThumbnailMediaDirectory } from '@services/media/media'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { CourseProvider } from '@components/Contexts/CourseContext'
-import AIActivityAsk from '@components/Objects/Activities/AI/AIActivityAsk'
-import AIChatBotProvider from '@components/Contexts/AI/AIChatBotContext'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import React, { useEffect } from 'react'
 import { getAssignmentFromActivityUUID, getFinalGrade, submitAssignmentForGrading } from '@services/courses/assignments'
@@ -30,14 +24,8 @@ import PaidCourseActivityDisclaimer from '@components/Objects/Courses/CourseActi
 import WorkspaceActivity from '@components/Objects/Activities/Workspace/WorkspaceActivity'
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem
-} from "@/components/ui/dropdown-menu";
+
+
 
 interface ActivityClientProps {
   activityid: string

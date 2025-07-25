@@ -2,17 +2,11 @@ import {
   useCourse,
   useCourseDispatch,
 } from '@components/Contexts/CourseContext'
-import LinkToUserGroup from '@components/Objects/Modals/Dash/EditCourseAccess/LinkToUserGroup'
-import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationModal/ConfirmationModal'
-import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import { getAPIUrl } from '@services/config/config'
-import { unLinkResourcesToUserGroup } from '@services/usergroups/usergroups'
 import { swrFetcher } from '@services/utils/ts/requests'
-import { Globe, SquareUserRound, Users, X } from 'lucide-react'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import React, { useEffect, useState } from 'react'
-import toast from 'react-hot-toast'
-import useSWR, { mutate } from 'swr'
+import useSWR from 'swr'
 import Content from './Content'
 
 type EditCourseAccessProps = {

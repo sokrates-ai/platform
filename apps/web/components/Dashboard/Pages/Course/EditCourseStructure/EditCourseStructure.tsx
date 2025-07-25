@@ -1,8 +1,8 @@
 'use client'
 import { getAPIUrl } from '@services/config/config'
 import { revalidateTags } from '@services/utils/ts/requests'
-import React, { useEffect, useState, FC, useCallback, useRef, useMemo } from 'react'
-import { DragDropContext, Droppable } from 'react-beautiful-dnd'
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
+import { DragDropContext } from 'react-beautiful-dnd'
 import { mutate } from 'swr'
 import ChapterElement from './DraggableElements/ChapterElement'
 import PageLoading from '@components/Objects/Loaders/PageLoading'
@@ -12,14 +12,14 @@ import {
   useCourse,
   useCourseDispatch,
 } from '@components/Contexts/CourseContext'
-import { Hexagon, MousePointer, Cross, X } from 'lucide-react'
+import { Hexagon, X } from 'lucide-react'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import NewChapterModal from '@components/Objects/Modals/Chapters/NewChapter'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { AnimatePresence, motion } from 'framer-motion'
 
 import dagre from 'dagre';
-import { Background, BackgroundVariant, Controls, Handle, MarkerType, MiniMap, NodeProps, Position, addEdge, useEdgesState, useNodesState, Node, Edge } from '@xyflow/react';
+import { Background, BackgroundVariant, Handle, MarkerType, MiniMap, NodeProps, Position, addEdge, useEdgesState, useNodesState, Node, Edge } from '@xyflow/react';
 const ReactFlow = dynamic(() => import('@xyflow/react').then((mod) => mod.ReactFlow), {
   ssr: false,
 });
@@ -28,7 +28,6 @@ import './graph.css';
 
 import styled from 'styled-components'
 import dynamic from 'next/dynamic'
-import classNames from 'classnames';
 import { Button } from "@components/ui/button";
 
 // -----------------------------------------------------------------------------

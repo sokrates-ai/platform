@@ -1,7 +1,4 @@
-import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import ExerciseThumbnail from '@components/Objects/Thumbnails/ExerciseThumbnail'
-import AuthenticatedClientElement from '@components/Security/AuthenticatedClientElement'
-import { prependOnceListener } from 'process'
 
 interface CourseListingProps {
   isUserAdmin: boolean

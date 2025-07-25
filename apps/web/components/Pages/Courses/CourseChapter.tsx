@@ -1,14 +1,8 @@
+// CourseChapter.tsx
 import { Lock } from 'lucide-react'
 import React from 'react'
 import ChapterActivities from './ChapterActivities'
 import { isChapterLocked } from './utils'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 
 interface Props {
   course: any
@@ -20,50 +14,53 @@ interface Props {
 
 function CourseChapter(props: Props) {
   const course = props.course
-  const orgslug = props.orgslug
-  const courseID = props.courseId
-
   const chapter = course.chapters.find((c: any) => c.id === props.chapterID)
   const chapterLocked = isChapterLocked(chapter.id, course)
 
-  // Get chapter index in course
-  const chapterIndex =
-    course.chapters.findIndex((c: any) => c.id === props.chapterID) + 1
-  const totalChapters = course.chapters.length
-
   return (
-    <Card className="w-full max-w-4xl mx-auto shadow-none border-none">
-      <CardHeader className="pb-2 px-4 sm:px-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <div className="flex flex-col h-full">
+
+      {!chapterLocked ? (
+        <div className="z-10 flex justify-between items-center px-8 sm:px-16 py-4 sm:py-6 border-b-[#707070] border-b-4 bg-[#EBEBEB]">
           <div>
-            <CardTitle className="text-xl font-bold">{chapter.name}</CardTitle>
+            <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-[#3C3C3C]">
+              {chapter.name}
+            </h2>
+            {chapter.description && (
+              <p className="mt-1 text-xs sm:text-sm md:text-base text-[#3C3C3C]">
+                {chapter.description}
+              </p>
+            )}
           </div>
-          {chapterLocked && (
-            <Lock className="text-muted-foreground mt-1 sm:mt-0" />
-          )}
         </div>
-        <CardDescription>{chapter.description}</CardDescription>
-      </CardHeader>
-      <CardContent className="pt-4 px-4 sm:px-6">
+      ) : <></>}
+
+      <div className="flex-1 overflow-auto z-10">
         {chapterLocked ? (
-          <div className="flex flex-col items-center text-muted-foreground gap-3 py-8 sm:py-12">
-            <Lock size={42} strokeWidth={1.5} />
-            <h3 className="text-lg font-medium mt-2">This chapter is locked</h3>
-            <p className="text-sm text-center max-w-md">
-              Complete the previous chapter to unlock this content.
+          <div className="flex flex-col items-center justify-center px-4 text-center text-[#3c3c3c] w-full h-full">
+            <Lock
+              size={88}
+              strokeWidth={1.5}
+              className="text-[#3C3C3C] mb-2 sm:mb-2"
+            />
+            <h3 className="text-lg sm:text-2xl md:text-3xl font-bold tracking-[0.02em] leading-[1.25] mb-2 text-[#3C3C3C]">
+              This chapter is locked
+            </h3>
+            <p className="text-xs sm:text-sm md:text-base tracking-[0.02em] leading-[1.25] max-w-[280px] sm:max-w-[350px] mx-auto text-[#3C3C3C]">
+              Complete the previous chapters
             </p>
           </div>
         ) : (
           <ChapterActivities
             course={course}
             chapterID={chapter.id}
-            orgslug={orgslug}
-            courseId={courseID}
+            orgslug={props.orgslug}
+            courseId={props.courseId}
             access_token={props.access_token}
           />
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 

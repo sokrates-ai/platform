@@ -11,7 +11,6 @@ import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import useSWR, { mutate } from 'swr'
 import { Button } from "@components/ui/button"
-import { Card } from "@components/ui/card";
 
 type EditCourseAccessProps = {
     orgslug: string

@@ -2,20 +2,17 @@
 import BreadCrumbs from '@components/Dashboard/Misc/BreadCrumbs'
 import AuthenticatedClientElement from '@components/Security/AuthenticatedClientElement'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import React from 'react'
 import useAdminStatus from '@components/Hooks/useAdminStatus'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
-import useSWR, { mutate } from 'swr'
+import useSWR from 'swr'
 import { getAPIUrl } from '@services/config/config'
 import { swrFetcher } from '@services/utils/ts/requests'
 import CreateExerciseModal from '@components/Objects/Modals/Exercise/Create/CreateExercise'
-import ExerciseThumbnail from '@components/Objects/Thumbnails/ExerciseThumbnail'
 import EditTagsModal from '@components/Objects/Modals/Exercise/Create/EditTags'
-import { Divide } from 'lucide-react'
 import CourseListing from '../courseListing'
-import { useRouter } from 'next/navigation'
 
 type ExerciseProps = {
   params: {

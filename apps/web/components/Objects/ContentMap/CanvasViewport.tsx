@@ -2,7 +2,6 @@ import React, {
   useEffect,
   useState,
   useCallback,
-  useRef,
   memo,
   Dispatch,
   SetStateAction,
@@ -14,26 +13,15 @@ import {
   MINOR_GRID_SIZE,
 } from './constants'
 import Asset from './Asset'
-import type { AssetData } from './Asset'
+import type { AssetData } from './Asset/assetTypes'
 import * as PIXI from 'pixi.js'
 import { Graphics } from 'pixi.js'
+import { ZoomBlurFilter } from 'pixi-filters'
+import useDragInteractions from './hooks/useDragInteractions'
 
 extend({ Viewport, Graphics })
 
-const snapValueToGrid = (value: number, gridSize: number) =>
-  Math.round(value / gridSize) * gridSize
-
-interface DragData {
-  id: number
-  assetRef: PIXI.Container | PIXI.Sprite
-  offsetX: number
-  offsetY: number
-  selected: boolean
-  selectedIds: number[]
-  initialPositions: Map<number, { x: number; y: number }>
-}
-
-
+const snapValueToGrid = (value: number, gridSize: number) => Math.round(value / gridSize) * gridSize
 
 function useZoomLevel() {
   const [zoom, setZoom] = useState(window.devicePixelRatio)
@@ -111,22 +99,28 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
     const worldHeight = Math.abs(bottom - top)
 
     const [viewport, setViewport] = useState<Viewport | null>(null)
-    const dragDataRef = useRef<DragData | null>(null)
-    const canvasElementRef = useRef<HTMLElement | null>(null)
     const zoom = useZoomLevel()
-
-   
 
     const gridSize =
       effectiveGridSize || MINOR_GRID_SIZE * (11 - gridGranularity)
 
-    const [temporaryAssetPositions, setTemporaryAssetPositions] = useState<
-      Map<number, { x: number; y: number }>
-    >(new Map())
-
-    useEffect(() => {
-      canvasElementRef.current = document.getElementById('canvas-parent')
-    }, [app?.renderer])
+    /* All pointer / drag / multi-select bookkeeping lives in this hook now */
+    const {
+      temporaryAssetPositions,
+      handlePointerDown,
+      handlePointerUp,
+    } = useDragInteractions({
+      placedAssets,
+      selectedIds,
+      onSelectIds,
+      onAssetPositionChange,
+      onAssetContextMenu,
+      onChapterClick,
+      readOnly,
+      viewport,
+      snapToGrid,
+      gridSize,
+    })
 
 
     const viewportRef = useCallback(
@@ -162,6 +156,12 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
           }
 
           node.fit()
+
+
+          // const zoomBlurFilter = new ZoomBlurFilter({ strength: 0.25, radius: app.renderer.width*1.25, innerRadius: app.renderer.width * 0.55})
+          // zoomBlurFilter.centerX = app.renderer.width / 2;
+          // zoomBlurFilter.centerY = app.renderer.height / 2;
+          // node.filters = [zoomBlurFilter]
 
           // expose to parent
           setViewport(node)
@@ -207,209 +207,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
       ]
     )
 
-    const onGlobalMove = useCallback(
-      (e: PointerEvent) => {
-        if (!dragDataRef.current || !viewport) return
-        const canvasElement = canvasElementRef.current
-        if (!canvasElement) return
-
-        const rect = canvasElement.getBoundingClientRect()
-        const localX = e.clientX - rect.left
-        const localY = e.clientY - rect.top
-        const worldPos = viewport.toWorld(localX, localY)
-
-        const {
-          assetRef,
-          offsetX,
-          offsetY,
-          selected,
-          selectedIds: dragSelectedIds,
-          initialPositions,
-        } = dragDataRef.current
-
-        const rawX = worldPos.x - offsetX
-        const rawY = worldPos.y - offsetY
-
-        const newX = snapToGrid ? snapValueToGrid(rawX, gridSize) : rawX
-        const newY = snapToGrid ? snapValueToGrid(rawY, gridSize) : rawY
-
-        assetRef.x = newX
-        assetRef.y = newY
-
-        if (selected && dragSelectedIds.length > 1) {
-          const primaryAssetId = dragDataRef.current.id
-          const primaryInitialPos = initialPositions.get(primaryAssetId)
-
-          if (primaryInitialPos) {
-            const deltaX = newX - primaryInitialPos.x
-            const deltaY = newY - primaryInitialPos.y
-
-            const newPositions = new Map<number, { x: number; y: number }>()
-
-            dragSelectedIds.forEach((assetId) => {
-              const initialPos = initialPositions.get(assetId)
-              if (initialPos) {
-                const targetX = snapToGrid
-                  ? snapValueToGrid(initialPos.x + deltaX, gridSize)
-                  : initialPos.x + deltaX
-                const targetY = snapToGrid
-                  ? snapValueToGrid(initialPos.y + deltaY, gridSize)
-                  : initialPos.y + deltaY
-
-                newPositions.set(assetId, { x: targetX, y: targetY })
-              }
-            })
-
-            setTemporaryAssetPositions(newPositions)
-          }
-        }
-      },
-      [viewport, snapToGrid, gridSize]
-    )
-
-    const onGlobalUp = useCallback(() => {
-      if (!dragDataRef.current) return
-      const {
-        id,
-        assetRef,
-        selected,
-        selectedIds: dragSelectedIds,
-        initialPositions,
-      } = dragDataRef.current
-
-      let finalX = assetRef.x
-      let finalY = assetRef.y
-
-      // snap to nearest grid size if enabled
-      if (snapToGrid) {
-        finalX = snapValueToGrid(assetRef.x, gridSize)
-        finalY = snapValueToGrid(assetRef.y, gridSize)
-        assetRef.x = finalX
-        assetRef.y = finalY
-      }
-
-      if (selected && dragSelectedIds.length > 1) {
-        // Multi-select case - calculate delta and update all selected items
-        const primaryAssetId = id
-        const primaryInitialPos = initialPositions.get(primaryAssetId)
-
-        if (primaryInitialPos) {
-          const deltaX = finalX - primaryInitialPos.x
-          const deltaY = finalY - primaryInitialPos.y
-
-          // Update the data model for all selected assets
-          dragSelectedIds.forEach((assetId) => {
-            const initialPos = initialPositions.get(assetId)
-            if (initialPos) {
-              const newX = snapToGrid
-                ? snapValueToGrid(initialPos.x + deltaX, gridSize)
-                : initialPos.x + deltaX
-              const newY = snapToGrid
-                ? snapValueToGrid(initialPos.y + deltaY, gridSize)
-                : initialPos.y + deltaY
-
-              // Update model with new position
-              onAssetPositionChange(assetId, newX, newY)
-            }
-          })
-        }
-      } else {
-        // Single asset - just update its position
-        onAssetPositionChange(id, finalX, finalY)
-      }
-
-      // Clear temporary positions
-      setTemporaryAssetPositions(new Map())
-
-      dragDataRef.current = null
-      window.removeEventListener('pointermove', onGlobalMove)
-      window.removeEventListener('pointerup', onGlobalUp)
-
-      viewport?.plugins?.resume('drag')
-    }, [onAssetPositionChange, onGlobalMove, viewport, snapToGrid, gridSize])
-
-    const handlePointerDown = useCallback(
-      (e: any, asset: AssetData, target: PIXI.Container | PIXI.Sprite) => {
-        const orig = e.data?.originalEvent as MouseEvent
-
-        if (orig.button === 2 && !readOnly) {
-          orig.preventDefault()
-          onAssetContextMenu?.(asset.id, {
-            clientX: orig.clientX,
-            clientY: orig.clientY,
-          })
-          return
-        }
-
-        if (asset.type.kind === 'chapter' && readOnly && orig.button === 0) {
-          onChapterClick?.(asset.type.associatedChapterID!)
-          return
-        }
-
-        if (orig.button !== 0 || readOnly) return
-
-        const isAlreadySelected = selectedIds.includes(asset.id)
-
-        if (orig.shiftKey) {
-          onSelectIds((ids) =>
-            ids.includes(asset.id)
-              ? ids.filter((id) => id !== asset.id)
-              : [...ids, asset.id]
-          )
-        } else if (!isAlreadySelected) {
-          onSelectIds([asset.id])
-        }
-
-        const originalEvent = e.data?.originalEvent || e.nativeEvent || e
-        if (!originalEvent) return
-
-        viewport?.plugins?.pause('drag')
-
-        const canvasElement = canvasElementRef.current
-        if (!canvasElement || !viewport) return
-
-        const rect = canvasElement.getBoundingClientRect()
-        const localX = originalEvent.clientX - rect.left
-        const localY = originalEvent.clientY - rect.top
-        const worldPos = viewport.toWorld(localX, localY)
-
-        const initialPositions = new Map<number, { x: number; y: number }>()
-
-        if (isAlreadySelected && selectedIds.length > 1) {
-          placedAssets.forEach((a) => {
-            if (selectedIds.includes(a.id)) {
-              initialPositions.set(a.id, { x: a.x, y: a.y })
-            }
-          })
-        } else {
-          initialPositions.set(asset.id, { x: asset.x, y: asset.y })
-        }
-
-        dragDataRef.current = {
-          id: asset.id,
-          assetRef: target,
-          offsetX: worldPos.x - asset.x,
-          offsetY: worldPos.y - asset.y,
-          selected: isAlreadySelected,
-          selectedIds: isAlreadySelected ? [...selectedIds] : [asset.id],
-          initialPositions,
-        }
-
-        window.addEventListener('pointermove', onGlobalMove)
-        window.addEventListener('pointerup', onGlobalUp)
-      },
-      [
-        onAssetContextMenu,
-        onChapterClick,
-        onGlobalMove,
-        onGlobalUp,
-        readOnly,
-        onSelectIds,
-        selectedIds,
-        viewport,
-        placedAssets,
-      ]
-    )
+    /* ↑ both handlers now come straight from the hook */
 
     const spriteURL = useCallback((file: string) => `/contentMap/${file}`, [])
 
@@ -497,11 +295,12 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
               layer={idx}
               spriteURL={spriteURL}
               onPointerDown={handlePointerDown}
+              onPointerUp={handlePointerUp}
               selected={selectedIds.includes(asset.id)}
               chapterState={
                 asset.type.kind === 'chapter' &&
-                asset.type.associatedChapterID !== undefined &&
-                chapterStates
+                  asset.type.associatedChapterID !== undefined &&
+                  chapterStates
                   ? chapterStates[asset.type.associatedChapterID]
                   : undefined
               }

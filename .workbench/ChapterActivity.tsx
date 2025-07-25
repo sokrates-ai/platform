@@ -16,6 +16,7 @@ interface Props {
   course: any
   state: ACTIVITY_STATE
   access_token: string
+  /* new --------------------------------------------------------------- */
   selected?: boolean
   showTop?: boolean
   showBottom?: boolean
@@ -34,6 +35,11 @@ export default function ChapterActivity({
   topColour = '#DFDFDF',
   bottomColour = '#DFDFDF',
 }: Props) {
+  // const bulletSize = selected ? 'h-11 w-11' : 'h-9 w-9'
+
+  /* ------------------------------------------------------------------ */
+  /* url / button config                                                */
+  /* ------------------------------------------------------------------ */
   const isFreeSelect =
     activity.activity_type === 'TYPE_WORKSPACE' &&
     activity.content?.task_ids?.length > 1
@@ -49,27 +55,25 @@ export default function ChapterActivity({
   const { buttonText = 'Review', buttonVariant: cfgButtonVariant } =
     stateConfig[state] ?? {}
 
-  const bulletSizeClass = clsx(
-    'h-6 w-6',
-    'sm:h-9 sm:w-9'
-  )
+  /* ------------------------------------------------------------------ */
+  /* bullet size + lines                                                */
+  /* ------------------------------------------------------------------ */
+  const bulletSizeClass = 'h-9 w-9' // selected ?'h-11 w-11' : 'h-9 w-9'
+  const bulletStyles = {
+    done: 'bg-[#9ABB46] text-white', // not visible – checkmark SVG
+    available: '',                     // handled by custom SVG
+    locked: 'bg-[#E4E4E4] border-2 border-[#DFDFDF] text-[#3C3C3C]',
+  }[state]
 
   const bullet =
     state === 'done' ? (
-      <span
-        className={clsx(
-          'relative z-10 shrink-0 flex items-center justify-center rounded-full overflow-hidden',
-          bulletSizeClass,
-          'bg-[#9ABB46]'
-        )}
-      >
-        <Image
-          src="/checkmark-green.svg"
-          alt="Completed"
-          fill
-          className="object-contain"
-        />
-      </span>
+      <Image
+        src="/checkmark-green.svg"
+        alt="Completed"
+        width={selected ? 36 : 36} // 44 : 36
+        height={selected ? 36 : 36} // 44 : 36
+        className="relative z-10 shrink-0"
+      />
     ) : state === 'available' ? (
       <span
         className={clsx(
@@ -83,8 +87,9 @@ export default function ChapterActivity({
         <Image
           src="/available-circle.svg"
           alt="Available"
-          fill
-          className="object-contain"
+          width={selected ? 36 : 36} // 44 : 36
+          height={selected ? 36 : 36}
+          className="block"
         />
       </span>
     ) : (
@@ -92,40 +97,31 @@ export default function ChapterActivity({
         className={clsx(
           'relative z-10 flex items-center justify-center rounded-full',
           bulletSizeClass,
-          'bg-[#E4E4E4] border-2 border-[#DFDFDF]'
+          bulletStyles
         )}
       >
-        <Lock className={clsx('sm:h-4 sm:w-4 h-3 w-3 text-[#C5C5C5]')} />
+        <Lock className="h-4 w-4 text-[#C5C5C5]" />
       </span>
     )
 
+  /* ------------------------------------------------------------------ */
+  /* render                                                             */
+  /* ------------------------------------------------------------------ */
   const buttonVariant =
     cfgButtonVariant ?? (state === 'done' ? 'secondary' : 'outline')
-  const buttonClass = clsx(
-    'flex items-center justify-center',
-    'h-8 w-24 text-xs',
-    'sm:h-10 sm:w-36 sm:text-sm'
-  )
-
-  console.log(activity)
 
   return (
     <div
       className={clsx(
-        'flex items-center rounded-lg w-full transition-all duration-200',
-        'h-16 sm:h-24',
+        'flex items-center rounded-lg w-full transition-all duration-200 h-24',
         selected ? 'bg-[#EBEBEB]' : ''
       )}
     >
-      <div
-        className={clsx(
-          'relative flex flex-col items-center justify-center',
-          'ml-6 sm:ml-[33px] h-full'
-        )}
-      >
+      {/* bullet + vertical timeline */}
+      <div className="relative flex flex-col items-center justify-center ml-[33px] h-full">
         {showTop && (
           <span
-            className="absolute top-0 bottom-1/2 left-1/2 -translate-x-1/2 w-[2px]"
+            className="absolute top-0 left-1/2 -translate-x-1/2 h-1/2 w-[2px]"
             style={{ backgroundColor: topColour }}
           />
         )}
@@ -134,27 +130,26 @@ export default function ChapterActivity({
 
         {showBottom && (
           <span
-            className="absolute top-1/2 bottom-0 left-1/2 -translate-x-1/2 w-[2px]"
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1/2 w-[2px]"
             style={{ backgroundColor: bottomColour }}
           />
         )}
       </div>
 
-      <div className="flex-1 pl-3 pr-2 sm:pl-4 sm:pr-0">
+      {/* title + description */}
+      <div className="flex-1 pl-4">
         <h3
           className={clsx(
-            'font-semibold tracking-[0.02em] leading-[125%]',
-            'text-sm sm:text-base',
+            'text-base font-semibold tracking-[0.02em] leading-[125%]',
             selected ? 'text-[#3C3C3C]' : 'text-[#727272]'
           )}
         >
-          {activity.title ?? activity.name ?? 'Untitled activity'}
+          {activity.name ?? 'Untitled activity'}
         </h3>
         <p
           className={clsx(
-            'mt-1 tracking-[0.02em] leading-[125%]',
-            'text-[11px] sm:text-xs',
-            'truncate sm:whitespace-normal'
+            'mt-1 text-xs tracking-[0.02em] leading-[125%]',
+            selected ? 'text-[#3C3C3C]' : 'text-[#727272]'
           )}
         >
           {activity.description ??
@@ -162,14 +157,18 @@ export default function ChapterActivity({
         </p>
       </div>
 
+      {/* action button */}
       {state !== 'locked' && (
-        <Link href={activityUrl} prefetch={false} className="pr-3 sm:pr-[33px]">
-          <Button variant={buttonVariant} className={buttonClass}>
-            <span className="flex-1 text-center">{buttonText}</span>
-            <ArrowRight
-              strokeWidth={3}
-              className="sm:h-4 sm:w-4 h-3 w-3"
-            />
+        <Link
+          href={activityUrl}
+          prefetch={false}
+          className="pr-[33px]"
+        >
+          <Button
+            variant={buttonVariant}
+            className="h-10 w-36 flex items-center justify-center"
+          >
+            {buttonText} <ArrowRight strokeWidth={3} className="h-4 w-4" />
           </Button>
         </Link>
       )}

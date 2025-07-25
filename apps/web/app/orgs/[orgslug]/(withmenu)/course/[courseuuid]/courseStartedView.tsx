@@ -94,16 +94,15 @@ const CourseStartedView = ({
       <Modal
         isDialogOpen={chapterDialogOpen}
         onOpenChange={setChapterDialogOpen}
-        minHeight="md"
-        minWidth="md"
-        dialogContent={
-          <CourseChapter
-            course={course}
-            courseId={courseIdWithoutPrefix}
-            orgslug={orgslug}
-            chapterID={selectedChapter}
-            access_token={access_token ?? ''}
-          />
+        customWidth="w-[95vw] max-w-[62.4375rem]"
+        customHeight="h-[60vh] max-h-[35rem]" 
+        dialogContent={<CourseChapter
+          course={course}
+          courseId={courseIdWithoutPrefix}
+          orgslug={orgslug}
+          chapterID={selectedChapter}
+          access_token={access_token ?? ''}
+        />
         }
       />
 
@@ -111,7 +110,12 @@ const CourseStartedView = ({
         <Button
           variant="secondary"
           size="default"
-          className="absolute bottom-8 left-8 z-10 h-10 w-18"
+          className="
+            absolute bottom-8
+            left-1/2 transform -translate-x-1/2
+            md:left-8 md:translate-x-0
+            z-10 h-10 w-18
+          "
         >
           <DoorOpen className="size-6" style={{ color: '#454545' }} />
         </Button>

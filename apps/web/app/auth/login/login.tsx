@@ -6,17 +6,15 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signIn } from "next-auth/react"
 import { useFormik } from 'formik'
-import * as Form from '@radix-ui/react-form'
 import { AlertTriangle, UserRoundPlus, Loader2, Mail, Lock } from 'lucide-react'
 
 import whiteLogo from 'public/white_logo.svg'
-import { getOrgLogoMediaDirectory } from '@services/media/media'
 import { getUriWithOrg, getUriWithoutOrg } from '@services/config/config'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"

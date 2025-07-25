@@ -5,9 +5,8 @@ import OnBoardContentMap from '@public/onboarding/OnBoardContentMap.png';
 import OnBoardAutomaticFeedback from '@public/onboarding/OnBoardAutomaticFeedback.png';
 
 
-import { ArrowRight, Check, PictureInPicture, ArrowLeftRight } from 'lucide-react';
+import { ArrowRight, Check, PictureInPicture } from 'lucide-react';
 import useAdminStatus from '@components/Hooks/useAdminStatus';
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from '@components/ui/button';
 import { cn } from '@/lib/utils';
 import { Badge } from '@components/ui/badge'

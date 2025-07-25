@@ -1,6 +1,3 @@
-import { getUriWithOrg } from '@services/config/config'
-import { BookCopy } from 'lucide-react'
-import Link from 'next/link'
 import React from 'react'
 
 function MenuLinks({ orgslug }: { orgslug: string }) {

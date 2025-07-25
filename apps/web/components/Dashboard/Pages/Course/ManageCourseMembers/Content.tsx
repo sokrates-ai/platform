@@ -6,7 +6,6 @@ import {
   Users,
   User,
   BookOpen,
-  Lock,
   Smile,
   BarChart3,
   NotebookPen,
@@ -18,7 +17,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import {
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
 } from '@/components/ui/chart'
 import {
   Line,

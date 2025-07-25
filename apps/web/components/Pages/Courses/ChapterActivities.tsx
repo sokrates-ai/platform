@@ -1,74 +1,74 @@
-import React from 'react'
-import ChapterActivity from './ChapterActivity'
+import React, { useState } from 'react'
+import ChapterActivity, { ACTIVITY_STATE } from './ChapterActivity'
 import { isActivityDone, isActivityLocked } from './utils'
-import { Progress } from '@/components/ui/progress'
 
 interface Props {
 	course: any
-	chapterID: number,
+	chapterID: number
 	orgslug: string
 	courseId: string
 	current_activity?: any
-	access_token: string,
+	access_token: string
 }
 
-function ChapterActivities(props: Props) {
-	const course = props.course
-	const chapterID = props.chapterID
-	const orgslug = props.orgslug
-	const courseid = props.courseId
+export default function ChapterActivities({
+	course,
+	chapterID,
+	orgslug,
+	access_token,
+}: Props) {
+	const [selectedId, setSelectedId] = useState<number | null>(null)
 
-	const chapter = course.chapters.find(((c: any) => c.id === chapterID))
+	const chapter = course.chapters.find((c: any) => c.id === chapterID)
+	const { activities } = chapter
 
-	// Calculate completion percentage for the chapter
-	const totalActivities = chapter.activities.length
-	const completedActivities = chapter.activities.filter((activity: any) =>
-		!isActivityLocked(course, chapter, activity.id) && isActivityDone(course, activity.id)
-	).length
+	const stateOf = (idx: number): ACTIVITY_STATE => {
+		const a = activities[idx]
+		if (isActivityLocked(course, chapter, a.id)) return 'locked'
+		return isActivityDone(course, a.id) ? 'done' : 'available'
+	}
 
-	const completionPercentage = Math.round((completedActivities / totalActivities) * 100)
-
-    let run = course.trail?.runs.find(
-        (run: any) => run.course_id == course.id
-    )
-    // if (run) {
-    //     return run.steps.find((step: any) => step.activity_id == activityID)
-    // } else {
-    //     return false
-    // }
-	// console.log("run", run)
-// 
 	return (
-		<div className="space-y-4">
-			<div className="flex items-center justify-between mb-2 px-1">
-				<div className="text-xs sm:text-sm text-muted-foreground">
-					{completedActivities} of {totalActivities} activities completed
-				</div>
-				<div className="text-xs sm:text-sm font-medium">{completionPercentage}%</div>
-			</div>
+		<div className="space-y-4 mt-4 sm:mt-12 mx-0 sm:mx-16">
+			<div className="relative">
+				{activities.map((activity: any, idx: number) => {
+					const state = stateOf(idx)
+					const prevState = idx > 0 ? stateOf(idx - 1) : null
+					const nextState =
+						idx < activities.length - 1 ? stateOf(idx + 1) : null
 
-			<Progress value={completionPercentage} className="h-2 mb-4 sm:mb-6" />
+					const green = '#9ABB46'
+					const grey = '#DFDFDF'
 
-			<div className="space-y-2">
-				{chapter.activities.map((activity: any) => {
-					const activityLocked = isActivityLocked(course, chapter, activity.id)
-					const activityDone = !activityLocked && isActivityDone(course, activity.id)
-					const activityState = (activityLocked ? 'locked' : (activityDone ? 'done' : 'available'))
+					const topColour =
+						prevState === 'done' ? green : grey
+					const bottomColour =
+						state === 'done' ? green : grey
 
 					return (
-						<ChapterActivity
-							activity={activity}
-							course={course}
-							orgslug={orgslug}
-							state={activityState}
+						<div
 							key={activity.id}
-							access_token={props.access_token}
-						/>
+							className="relative flex gap-4 cursor-pointer"
+							onClick={() => setSelectedId(activity.id)}
+						>
+							<ChapterActivity
+								activity={activity}
+								course={course}
+								orgslug={orgslug}
+								state={state}
+								access_token={access_token}
+								showTop={idx !== 0}
+								showBottom={idx !== activities.length - 1}
+								topColour={idx === 0 ? 'transparent' : topColour}
+								bottomColour={
+									idx === activities.length - 1 ? 'transparent' : bottomColour
+								}
+								selected={selectedId === activity.id}
+							/>
+						</div>
 					)
 				})}
 			</div>
 		</div>
 	)
 }
-
-export default ChapterActivities

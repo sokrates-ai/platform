@@ -23,20 +23,22 @@ type ModalParams = {
 const Modal = (params: ModalParams) => {
   const getMinHeight = () => {
     switch (params.minHeight) {
-      case 'sm': return 'min-h-[300px]'
-      case 'md': return 'min-h-[500px]'
-      case 'lg': return 'min-h-[700px]'
-      case 'xl': return 'min-h-[900px]'
+      // Only start enforcing these minima once the viewport
+      // is large enough for them.
+      case 'sm': return 'sm:min-h-[300px]'
+      case 'md': return 'md:min-h-[500px]'
+      case 'lg': return 'lg:min-h-[700px]'
+      case 'xl': return 'xl:min-h-[900px]'
       default: return ''
     }
   }
 
   const getMinWidth = () => {
     switch (params.minWidth) {
-      case 'sm': return 'min-w-[600px]'
-      case 'md': return 'min-w-[800px]'
-      case 'lg': return 'min-w-[1000px]'
-      case 'xl': return 'min-w-[1200px]'
+      case 'sm': return 'sm:min-w-[600px]'
+      case 'md': return 'md:min-w-[800px]'
+      case 'lg': return 'lg:min-w-[1000px]'
+      case 'xl': return 'xl:min-w-[1200px]'
       default: return ''
     }
   }
@@ -46,7 +48,7 @@ const Modal = (params: ModalParams) => {
       {params.dialogTrigger && (
         <DialogTrigger asChild>{params.dialogTrigger}</DialogTrigger>
       )}
-      <DialogContent className={cn(
+      <DialogContent pattern={true} className={cn(
         "overflow-auto",
         getMinHeight(),
         getMinWidth(),

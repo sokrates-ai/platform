@@ -1,19 +1,27 @@
+// components/course/WorkspaceActivityBody.tsx
 import { getAPIUrl } from '@services/config/config'
 import Link from 'next/link'
 import React, { useEffect } from 'react'
+import Image from 'next/image'
+import clsx from 'clsx'
+
 import { RequestBodyWithAuthHeader } from '@services/utils/ts/requests'
 import { stateConfig } from './stateConfig'
+
+export type ACTIVITY_STATE = 'locked' | 'available' | 'done'
 
 interface Props {
   activity: any
   orgslug: string
   course: any
-  state: ACTIVITY_STATE
+  state: ACTIVITY_STATE        // state of the *parent* activity
   access_token: string
   baseUrl: string
 }
 
-export type ACTIVITY_STATE = 'locked' | 'available' | 'done'
+/* ------------------------------------------------------------------ */
+/* -------------------- helpers / data fetching ---------------------- */
+/* ------------------------------------------------------------------ */
 
 export interface Task {
   title: string
@@ -23,128 +31,122 @@ export interface Task {
   id: number
 }
 
-//   const task = fetchTask(activity.k)
 async function fetchTasks(
   task_ids: number[],
   access_token: string
 ): Promise<Task[]> {
-  let tasks: Task[] = []
+  const tasks: Task[] = []
 
-  for (let id of task_ids) {
-    const result = await fetch(
+  for (const id of task_ids) {
+    const res = await fetch(
       `${getAPIUrl()}tasks/id/${id}`,
       RequestBodyWithAuthHeader('GET', null, null, access_token)
     )
-    const res = await result.json()
-    // if (res.statusCode !== 200) {
-    //   throw `Could not fetch: ${res}`
-    // }
-    tasks.push(res)
+    tasks.push(await res.json())
   }
 
   return tasks
 }
 
-function ChapterActivityBody(props: Props) {
-  const activity = props.activity
-  const orgslug = props.orgslug
-  const course = props.course
-  const state = props.state
+/* ------------------------------------------------------------------ */
+/* --------------------------- component ----------------------------- */
+/* ------------------------------------------------------------------ */
 
-  const steps = course.trail?.runs.find(
-    (run: any) => run.course_id == course.id
-  ).steps
-  const step = steps.find((step: any) => step.activity_id == activity.id)
+export default function WorkspaceActivityBody(props: Props) {
+  const { activity, course, state: parentState, access_token, baseUrl } = props
+  const stepRun = course.trail?.runs.find(
+    (run: any) => run.course_id === course.id
+  )
+  const stepData = stepRun?.steps?.find(
+    (s: any) => s.activity_id === activity.id
+  )
 
-  let parts: any[] = []
-  if (!step) {
-    // throw new Error('Activity step not found in the course run.')
-    console.log('No step found for activity:', activity.id)
-  } else {
-    parts = step.data.parts
-
-    if (!parts) {
-      throw new Error('Activity content does not contain parts.')
-    }
-  }
-
-  console.log('parts', parts)
-
-  let ids = activity.content.task_ids
+  /** IDs of the tasks that belong to this workspace activity */
+  const ids: number[] = activity.content.task_ids ?? []
 
   const [tasks, setTasks] = React.useState<Task[]>([])
-
   useEffect(() => {
-    if (ids) {
-      fetchTasks(ids, props.access_token).then((t) => setTasks(t))
+    if (ids.length) {
+      fetchTasks(ids, access_token).then(setTasks)
     }
-  }, [ids, props.access_token])
+  }, [ids, access_token])
 
+  /* -------------------------------------------------------------- */
+  /* helpers to decide *per task* state (available / done)           */
+  /* -------------------------------------------------------------- */
+  function atomicState(id: number): 'available' | 'done' {
+    const part = stepData?.data?.parts?.find((p: any) => p.task_id === id)
+    return part?.complete ? 'done' : 'available'
+  }
+
+  const tasksDone = tasks.filter((t) => atomicState(t.id) === 'done').length
+
+  /* -------------------------------------------------------------- */
+  /* --------------------------- render ---------------------------- */
+  /* -------------------------------------------------------------- */
   return (
-    <div className="flex gap-1 min-h-40 py-4 flex-wrap w-full">
-      {tasks.map((t) => {
-        const task_step = parts.find((part: any) => part.task_id === t.id)
-        let atomic_state: 'available' | 'done' = 'available'
-        if (task_step) {
-          console.log('task_step FOUND: ', task_step)
-          if (task_step.complete) {
-            atomic_state = 'done'
-          }
-        } else {
-          console.log('task_step NOT FOUND for task: ', t.id)
-        }
+    <div className={clsx(parentState === 'locked' && 'opacity-60 blur-sm')}>
+      {/* header line */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm sm:text-base font-medium">
+          Select an exercise from the following: {activity.name}
+        </span>
+        <span className="text-xs font-semibold">
+          {tasksDone}/{tasks.length}
+        </span>
+      </div>
 
-        const {
-          icon,
-          badge,
-          buttonText,
-          mobileButtonText,
-          buttonVariant,
-          buttonIcon,
-          borderColor,
-        } = stateConfig[atomic_state]
+      {/* grid of task cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {tasks.map((t) => {
+          const aState = atomicState(t.id)
+          const {
+            borderColor,     // comes from your stateConfig ('available' | 'done')
+          } = stateConfig[aState]
 
-        const taskUrl = props.baseUrl.replaceAll(
-          'TASK_ID_PLACEHOLDER',
-          `${t.id}`
-        )
+          const url = baseUrl.replaceAll('TASK_ID_PLACEHOLDER', `${t.id}`)
+          const locked = parentState === 'locked'
 
-        return (
-          <Link
-            key={t.id}
-            href={state === 'locked' ? '#' : taskUrl}
-            className="grow flex flex-col text-black rounded-md bg-gray-200 hover:border-gray-500 hover:bg-gray-300 border-transparent"
-            style={{
-              minWidth: '10rem',
-              cursor: state === 'locked' ? 'not-allowed' : 'pointer',
-              filter: state === 'locked' ? 'blur(5px)' : 'none',
-            }}
-          >
-            <div className="flex flex-row-reverse items-center pt-2 px-2">
-              <div
-                className="w-2 h-2 rounded-xl transition-all duration-200 mb-3"
-                style={{ backgroundColor: borderColor }}
-              ></div>
-            </div>
-
-            <div
-              className="flex items-center justify-between mb-8 px-6 mt-auto"
-              style={{ transform: 'translateY(-1.25rem)' }}
+          return (
+            <Link
+              key={t.id}
+              href={locked ? '#' : url}
+              className={clsx(
+                'relative flex flex-col justify-between rounded-lg bg-white shadow-sm border border-transparent p-4 min-h-[5.5rem] hover:border-gray-300 transition',
+                locked && 'cursor-not-allowed'
+              )}
             >
-              <span
-                style={{ color: buttonText }}
-                className="text-l font-medium"
-              >
-                {t.title}
-              </span>
+              {/* title & (optional) description */}
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium leading-tight">{t.title}</p>
+                {t.description && (
+                  <p className="text-[11px] leading-tight text-muted-foreground">
+                    {t.description}
+                  </p>
+                )}
+              </div>
 
-              <div className="hidden sm:block">{badge}</div>
-            </div>
-          </Link>
-        )
-      })}
+              {/* indicator dot (top-right) */}
+              <span className="absolute top-2 right-2">
+                {aState === 'done' ? (
+                  <Image
+                    src="/checkmark-green.svg"
+                    alt="completed"
+                    width={20}
+                    height={20}
+                    priority
+                  />
+                ) : (
+                  <span
+                    className="block w-5 h-5 rounded-full border"
+                    style={{ borderColor }}
+                  />
+                )}
+              </span>
+            </Link>
+          )
+        })}
+      </div>
     </div>
   )
 }
-
-export default ChapterActivityBody

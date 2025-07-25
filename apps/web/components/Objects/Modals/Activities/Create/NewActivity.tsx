@@ -8,7 +8,6 @@ import DynamicCanvaModal from './NewActivityModal/DynamicCanva'
 import VideoModal from './NewActivityModal/Video'
 import Image from 'next/image'
 import DocumentPdfModal from './NewActivityModal/DocumentPdf'
-import Assignment from './NewActivityModal/Assignment'
 import Workspace from './NewActivityModal/Workspace'
 
 function NewActivityModal({

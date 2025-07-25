@@ -5,8 +5,9 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AssetData } from "./Asset";
+import { AssetData } from "./Asset/assetTypes";
 import { SPRITE_SCALE_FACTOR, MINOR_GRID_SIZE } from "./constants";
+import useCanvasShortcuts from "./hooks/useCanvasShortcuts";
 
 interface ContextMenuData {
     assetId: number;
@@ -54,11 +55,9 @@ const Canvas: React.FC<CanvasProps> = ({
     clampToMap,
 }) => {
     const parentRef = useRef<HTMLDivElement>(null);
-    const copiedRef = useRef<AssetData[]>([]);
     const contextMenuRef = useRef<HTMLDivElement>(null);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [contextMenu, setContextMenu] = useState<ContextMenuData | null>(null);
-    const [lastMousePos, setLastMousePos] = useState<{ x: number; y: number } | null>(null);
     const [viewport, setViewport] = useState<any>(null);
     const dispatchRef = useRef<typeof undoRedo | null>(undoRedo || null);
 
@@ -70,148 +69,22 @@ const Canvas: React.FC<CanvasProps> = ({
     // Calculate effective grid size based on granularity
     const effectiveGridSize = MINOR_GRID_SIZE * (11 - gridGranularity);
 
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        setLastMousePos({ x: e.clientX, y: e.clientY });
-    };
-
-    useEffect(() => {
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (readOnly) return;
-            
-            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-                return;
-            }
-            
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
-                e.preventDefault();
-                dispatchRef.current?.undo?.();
-                return;
-            }
-            
-            if ((e.ctrlKey || e.metaKey) && 
-                ((e.key.toLowerCase() === "y") || (e.key.toLowerCase() === "z" && e.shiftKey))) {
-                e.preventDefault();
-                dispatchRef.current?.redo?.();
-                return;
-            }
-            
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a" && layout.layout?.length) {
-                e.preventDefault();
-                setSelectedIds(layout.layout.map(asset => asset.id));
-                return;
-            }
-            
-            if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key) && selectedIds.length > 0) {
-                e.preventDefault();
-                
-                const moveAmount = e.shiftKey ? effectiveGridSize * 5 : effectiveGridSize;
-                
-                let deltaX = 0;
-                let deltaY = 0;
-                
-                if (e.key === "ArrowLeft") deltaX = -moveAmount;
-                if (e.key === "ArrowRight") deltaX = moveAmount;
-                if (e.key === "ArrowUp") deltaY = -moveAmount;
-                if (e.key === "ArrowDown") deltaY = moveAmount;
-                
-                setLayout({
-                    layout: layout.layout!.map((asset) => {
-                        if (selectedIds.includes(asset.id)) {
-                            return {
-                                ...asset,
-                                x: asset.x + deltaX,
-                                y: asset.y + deltaY
-                            };
-                        }
-                        return asset;
-                    }),
-                    updateOriginator: "user",
-                    boundaries: layout.boundaries
-                });
-                return;
-            }
-            
-            if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === "c" || e.key.toLowerCase() === "x")) {
-                if (selectedIds.length === 0) return;
-                e.preventDefault();
-                
-                copiedRef.current = layout.layout!
-                    .filter(a => selectedIds.includes(a.id))
-                    .map(a => ({ ...a }));
-                
-                if (e.key.toLowerCase() === "x") {
-                    setLayout({
-                        layout: layout.layout!.filter(a => !selectedIds.includes(a.id)),
-                        updateOriginator: "user",
-                        boundaries: layout.boundaries
-                    });
-                    setSelectedIds([]);
-                }
-                
-                console.log(`${e.key.toLowerCase() === "c" ? "Copied" : "Cut"} ${copiedRef.current.length} item(s)`);
-            }
-            else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v" && copiedRef.current.length) {
-                e.preventDefault();
-                
-                let targetWorld = null;
-                if (viewport && parentRef.current && lastMousePos) {
-                    const rect = parentRef.current.getBoundingClientRect();
-                    const localX = lastMousePos.x - rect.left;
-                    const localY = lastMousePos.y - rect.top;
-                    targetWorld = viewport.toWorld(localX, localY);
-                }
-                
-                const copied = copiedRef.current;
-                const cx = copied.reduce((sum, a) => sum + a.x, 0) / copied.length;
-                const cy = copied.reduce((sum, a) => sum + a.y, 0) / copied.length;
-
-                const pasted = copied.map(a => {
-                    const newId = Date.now() * 1000 + Math.floor(Math.random() * 1000);
-                    
-                    let dx = effectiveGridSize, dy = effectiveGridSize;
-                    if (targetWorld) {
-                        dx = targetWorld.x - cx;
-                        dy = targetWorld.y - cy;
-                    }
-                    const rawX = a.x + dx;
-                    const rawY = a.y + dy;
-                    const snappedX = snapToGrid ? Math.round(rawX / effectiveGridSize) * effectiveGridSize : rawX;
-                    const snappedY = snapToGrid ? Math.round(rawY / effectiveGridSize) * effectiveGridSize : rawY;
-
-                    return {
-                        ...a,
-                        id: newId,
-                        x: snappedX,
-                        y: snappedY,
-                    };
-                });
-
-                setLayout({
-                    layout: [...layout.layout!, ...pasted],
-                    updateOriginator: "user",
-                    boundaries: layout.boundaries
-                });
-                
-                const newIds = pasted.map(a => a.id);
-                
-                setTimeout(() => {
-                    setSelectedIds(newIds);
-                }, 50);
-            }
-            else if (e.key === "Delete" && selectedIds.length > 0) {
-                e.preventDefault();
-                setLayout({
-                    layout: layout.layout!.filter(a => !selectedIds.includes(a.id)),
-                    updateOriginator: "user",
-                    boundaries: layout.boundaries
-                });
-                setSelectedIds([]);
-            }
-        };
-
-        window.addEventListener("keydown", onKeyDown);
-        return () => window.removeEventListener("keydown", onKeyDown);
-    }, [layout.layout, layout.boundaries, selectedIds, viewport, lastMousePos, setLayout, effectiveGridSize, snapToGrid, readOnly]);
+    /**
+     * Pull all keyboard, clipboard and mouse-move bookkeeping into a tidy hook.
+     * This returns the single handler we still need to wire to the <div>.
+     */
+    const { handleMouseMove } = useCanvasShortcuts({
+        layout,
+        setLayout,
+        selectedIds,
+        setSelectedIds,
+        parentRef,
+        viewport,
+        effectiveGridSize,
+        snapToGrid,
+        undoRedo: dispatchRef.current ?? undefined,
+        readOnly,
+    });
 
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -427,22 +300,7 @@ const Canvas: React.FC<CanvasProps> = ({
         };
     }, []);
 
-    useEffect(() => {
-        const refreshSelection = () => {
-            if (layout.layout) {
-                layout.layout.forEach(asset => {
-                    const isSelected = selectedIds.includes(asset.id);
-                    const element = document.querySelector(`[data-asset-id="${asset.id}"]`) as any;
-                    if (element && element.__pixi) {
-                        element.__pixi.alpha = isSelected ? 0.8 : 1;
-                    }
-                });
-            }
-        };
-        
-        const timer = setTimeout(refreshSelection, 50);
-        return () => clearTimeout(timer);
-    }, [selectedIds, layout.layout]);
+
 
     return (
         <div style={{ width: "100%", height: "100%", display: "flex", maxHeight: '100%' }}>

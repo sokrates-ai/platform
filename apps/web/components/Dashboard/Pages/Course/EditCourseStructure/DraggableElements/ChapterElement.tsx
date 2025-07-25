@@ -5,11 +5,10 @@ import {
   MoreVertical,
   Pencil,
   Save,
-  X,
   Trash2,
 } from 'lucide-react'
 import React from 'react'
-import { Draggable, Droppable } from 'react-beautiful-dnd'
+import { Droppable } from 'react-beautiful-dnd'
 import ActivityElement from './ActivityElement'
 import NewActivityButton from '../Buttons/NewActivityButton'
 import { deleteChapter, updateChapter } from '@services/courses/chapters'

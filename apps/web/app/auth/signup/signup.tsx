@@ -1,7 +1,5 @@
 'use client'
-import learnhouseIcon from 'public/learnhouse_bigicon_1.png'
 import Image from 'next/image'
-import { getOrgLogoMediaDirectory } from '@services/media/media'
 import Link from 'next/link'
 import { getUriWithOrg } from '@services/config/config'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
@@ -18,7 +16,6 @@ import Toast from '@components/Objects/StyledElements/Toast/Toast'
 import toast from 'react-hot-toast'
 import { joinOrg } from '@services/organizations/orgs'
 import whiteLogo from 'public/white_logo.svg'
-import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
