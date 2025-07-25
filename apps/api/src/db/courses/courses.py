@@ -15,11 +15,11 @@ class CourseBase(SQLModel):
     thumbnail_image: Optional[str]
     # map_state: Optional[str]
     map_state: dict = Field(default={
-        "objects": [], 
+        "objects": [],
         "boundaries": {
-            "left": -1000, 
-            "right": 1000, 
-            "top": -1000, 
+            "left": -1000,
+            "right": 1000,
+            "top": -1000,
             "bottom": 1000
         }
     }, sa_column=Column(JSON))

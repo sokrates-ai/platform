@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 DEPS=("poetry" "docker" "python3" "wget")
 
@@ -137,6 +137,8 @@ elif [ "${ARG}" = "docker" ]; then
     docker-build "$2" "$3"
 elif [ "${ARG}" = "docker" ]; then
     docker-build "$2" "$3"
+elif [ "${ARG}" = "db" ]; then
+    docker compose -f docker-compose-dev.yml exec -it db psql --user learnhouse -d learnhouse
 else
     echo -e "[ERROR]: Unknown argument <${ARG}>"
     exit 1

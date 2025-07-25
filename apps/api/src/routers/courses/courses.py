@@ -8,7 +8,7 @@ from src.db.courses.course_updates import (
     CourseUpdateRead,
     CourseUpdateUpdate,
 )
-from src.db.users import PublicUser
+from src.db.users import PublicUser, User
 from src.db.courses.courses import (
     CourseCreate,
     CourseRead,
@@ -17,6 +17,7 @@ from src.db.courses.courses import (
 )
 from src.security.auth import get_current_user
 from src.services.courses.course_canvas import get_canvas, put_update
+from src.services.courses.students import list_course_students
 from src.services.courses.courses import (
     create_course,
     get_course,
@@ -267,3 +268,16 @@ def put_course_canvas(
     return put_update(request, course_uuid, course_canvas_update, user, db_session)
 
 
+@router.get("/students/list")
+async def api_list_course_students(
+    request: Request,
+    course_uuid: str,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+) -> List[PublicUser]:
+    """
+    List students who are enrolled in the selected course.
+    """
+    return await list_course_students(
+        request, course_uuid, current_user, db_session
+    )

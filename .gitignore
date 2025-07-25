@@ -54,3 +54,4 @@ redis_data
 .workspace.env
 platform_postgres
 load_test2/.venv
+prometheus_multiproc

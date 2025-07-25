@@ -21,6 +21,13 @@ function ManageCourseMembers(props: EditCourseAccessProps) {
   const { isLoading, courseStructure } = course as any
   const dispatchCourse = useCourseDispatch() as any
 
+  const { data: students } = useSWR(
+    courseStructure
+      ? `${getAPIUrl()}courses/students/list?course_uuid=${courseStructure.course_uuid}`
+      : null,
+    (url: string) => swrFetcher(url, access_token)
+  )
+
   const { data: usergroups } = useSWR(
     courseStructure
       ? `${getAPIUrl()}usergroups/resource/${courseStructure.course_uuid}`
@@ -56,7 +63,9 @@ function ManageCourseMembers(props: EditCourseAccessProps) {
 
   return (
     <div className="py-4 box-border overflow-hidden h-full bg-white">
-      {courseStructure && <Content></Content>}
+        {
+            courseStructure && students ? (<Content orgslug={props.orgslug} students={students}></Content>) : null
+        }
     </div>
   )
 }

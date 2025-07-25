@@ -27,6 +27,33 @@ import {
   Area,
   CartesianGrid,
 } from 'recharts'
+import { getAvatarUrl } from '@components/Objects/avatar'
+import { getMediaUrl } from '@services/media/media'
+import { getUriWithOrg } from '@services/config/config'
+
+interface PerformancePoint {
+       week: number,
+       score: number,
+}
+
+interface ExerciseLog {
+      name: string,
+      passed: boolean,
+}
+
+interface Student {
+    id: number,
+    name: string,
+    age: number,
+    grade: string,
+    avatar: string,
+    exercises: number,
+    homework: number,
+    satisfaction: number,
+    performance: number
+    performanceHistory: PerformancePoint[],
+    exerciseHistory: ExerciseLog[],
+}
 
 // Classroom performance data
 const classroomPerformance = [
@@ -41,7 +68,7 @@ const classroomPerformance = [
 ]
 
 // Mock student data with performance history
-const students = [
+const students2 = [
   {
     id: 1,
     name: 'Clarissa Charlson',
@@ -568,7 +595,7 @@ const classroom = {
 function InteractivePerformanceChart({
   studentData,
 }: {
-  studentData: (typeof students)[0]
+  studentData: Student
 }) {
   // Combine classroom and student data for the chart
   const chartData = classroomPerformance.map((classPoint, index) => ({
@@ -736,9 +763,41 @@ function InteractivePerformanceChart({
   )
 }
 
-export default function Component() {
+export default function Component(props: {students: any[], orgslug: string}) {
+  const students = props.students.map((s) => {
+      console.dir(s)
+      const name = (s.first_name) ? (
+        (s.first_name && s.last_name) ? (`${s.first_name} ${s.last_name}`) : s.first_name
+      ) : s.email
+
+
+      const avatar = s.avatar_image ? `${getMediaUrl()}content/users/${s.user_uuid}/avatars/${s.avatar_image}` : '/empty_avatar.png'
+      console.log(avatar)
+
+      return {
+        id: s.id,
+        name,
+        age: 0,
+        grade: "",
+        avatar,
+        exercises: 0,
+        homework: 0,
+        satisfaction: 0,
+        performance: 0,
+        performanceHistory: [],
+        exerciseHistory: [],
+      }
+  })
+
   const [currentStudent, setCurrentStudent] = useState(students[0])
   const [searchTerm, setSearchTerm] = useState('')
+
+  // const students = fetch(
+  //   `${getAPIUrl()}courses/students/list?course_uuid=${course_id}`,
+  //   RequestBodyFormWithAuthHeader('POST', formData, null, access_token)
+  // )
+  //   .then((result) => result.json())
+  //   .catch((error) => console.log('error', error))
 
   const handleStudentClick = (studentId: number | null) => {
     if (studentId) {
@@ -779,7 +838,7 @@ export default function Component() {
 
                   <div className="flex items-center gap-4">
                     <h1 className="text-2xl font-semibold text-gray-800">
-                      Class 10b
+                        Student Overview
                     </h1>
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-full text-sm font-medium text-gray-700">

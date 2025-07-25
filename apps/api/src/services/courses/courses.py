@@ -216,7 +216,7 @@ async def get_courses_orgslug(
             .where(ResourceAuthor.resource_uuid == course.course_uuid)
         )
         authors = db_session.exec(authors_query).all()
-        
+
         course_read = CourseRead.model_validate(course)
         course_read.authors = [UserRead.model_validate(author) for author in authors]
         course_reads.append(course_read)
@@ -251,11 +251,11 @@ async def create_course(
     course.creation_date = str(datetime.now())
     course.update_date = str(datetime.now())
     course.map_state = {
-        "objects": [], 
+        "objects": [],
         "boundaries": {
-            "left": -1000, 
-            "right": 1000, 
-            "top": -1000, 
+            "left": -1000,
+            "right": 1000,
+            "top": -1000,
             "bottom": 1000
         }
     }

@@ -3,7 +3,7 @@ import { getBackendUrl } from '@services/config/config'
 // TODO: fix this; it is currently fucked.
 const LEARNHOUSE_MEDIA_URL = process.env.NEXT_PUBLIC_LEARNHOUSE_MEDIA_URL
 
-function getMediaUrl() {
+export function getMediaUrl() {
   if (LEARNHOUSE_MEDIA_URL) {
     return LEARNHOUSE_MEDIA_URL
   } else {

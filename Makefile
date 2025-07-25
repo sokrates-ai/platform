@@ -20,4 +20,7 @@ api-dev:
 lint:
 	./dev.sh lint
 
+db:
+	./dev.sh db
+
 all-run: api-run web-run
