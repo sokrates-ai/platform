@@ -13,6 +13,18 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+			SokratesOrange: 'var(--color-SokratesOrange)',
+			SokratesOrangeShadow: 'var(--color-SokratesOrangeShadow)',
+			SokratesRed: 'var(--color-SokratesRed)',
+			SokratesRedBorder: 'var(--color-SokratesRedBorder)',
+			SokratesRedShadow: 'var(--color-SokratesRedShadow)',
+			SokratesGrayBorder: 'var(--color-SokratesGrayBorder)',
+			SokratesGrayBorder2: 'var(--color-SokratesGrayBorder2)',
+			SokratesBlackBoxShadow: 'var(--color-SokratesBlackBoxShadow)',
+			SokratesLightGray: 'var(--color-SokratesLightGray)',
+			SokratesWhite: 'var(--color-SokratesWhite)',
+			SokratesLightGreen: 'var(--color-SokratesLightGreen)',
+			SokratesDarkGreen: 'var(--color-SokratesDarkGreen)',
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

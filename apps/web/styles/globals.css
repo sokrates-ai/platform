@@ -133,7 +133,22 @@ a {
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;}
+    --radius: 0.5rem;
+    --color-SokratesOrange: #E25A26;
+    --color-SokratesOrangeShadow: #C94918;
+    --color-SokratesRed:#E03131;
+    --color-SokratesRedBorder:#CB1E1E;
+    --color-SokratesRedShadow: #B71C1C;
+    --color-SokratesGrayBorder:#626262;
+    --color-SokratesGrayBorder2: #707070;
+    --color-SokratesBlackBoxShadow: #454545;
+    --color-SokratesLightGray:#EBEBEB;
+    --color-SokratesWhite:#F1F1F1;
+    --color-SokratesLightGreen:#9ABB46;
+    --color-SokratesDarkGreen:#90AF40;
+  }
+    
+
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
