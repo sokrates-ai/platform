@@ -28,11 +28,11 @@ function CoursesHome(params: CourseProps) {
   }
 
   return (
-    <div className="h-full w-full bg-[#f8f8f8] pl-10 pr-10">
+    <div className="h-full w-full bg-SokratesLightGray pl-10 pr-10">
       <div className="mb-6">
         <BreadCrumbs type="courses" />
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4">
-          <h1 className="text-3xl font-bold mb-4 sm:mb-0">Courses</h1>
+          <h1 className="text-3xl font-bold mb-4 sm:mb-0 text-SokratesBlackBoxShadow">Courses</h1>
           <AuthenticatedClientElement
             checkMethod="roles"
             action="create"
@@ -76,10 +76,10 @@ function CoursesHome(params: CourseProps) {
                   {/* ... SVG content ... */}
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-600 mb-2">
+              <h2 className="text-2xl font-bold text-SokratesGrayBorder2 mb-2">
                 No courses yet
               </h2>
-              <p className="text-lg text-gray-400">
+              <p className="text-lg text-SokratesGrayBorder">
                 {isUserAdmin ? (
                   "Create a course to add content"
                 ) : (
@@ -94,8 +94,6 @@ function CoursesHome(params: CourseProps) {
                     checkMethod="roles"
                     orgId={params.org_id}
                   >
-
-
                     <Dialog open={newCourseModal} onOpenChange={setNewCourseModal}>
                       <DialogTrigger asChild>
                         <Button variant="default">Create Course</Button>
@@ -107,7 +105,6 @@ function CoursesHome(params: CourseProps) {
                         <CreateCourseModal closeModal={closeNewCourseModal} orgslug={orgslug} />
                       </DialogContent>
                     </Dialog>
-
                   </AuthenticatedClientElement>
                 </div>
               )}

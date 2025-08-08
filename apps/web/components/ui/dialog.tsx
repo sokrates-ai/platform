@@ -53,15 +53,10 @@ const DialogContent = React.forwardRef<
         role="dialog"
         aria-modal="true"
         className={cn(
-          // -- New base style -----------------------------------------------
-          // (fill all available width but always leave side-gutters)
           "relative z-50 grid w-full max-w-[min(90vw,40rem)]",
-
-          // Never exceed the viewport height – keeps the close-button visible
           "max-h-[calc(100dvh-4rem)] overflow-y-auto gap-4 duration-200",
-          "rounded-[0.875rem] border-4 border-[#707070] bg-[#F1F1F1]",
-          "shadow-[0_8px_0_0_#454545]",
-          // -----------------------------------------------------------------
+          "rounded-[0.875rem] border-4 border-SokratesGrayBorder bg-SokratesWhite",
+          "shadow-[0_8px_0_0_var(--color-SokratesBlackBoxShadow)]",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",

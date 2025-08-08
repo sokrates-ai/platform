@@ -19,17 +19,17 @@ export function AvatarProgressRing({ level, progress, children }: { level: numbe
       >
         {/* Outer border */}
         <circle
-          stroke="#707070"
+          stroke="var(--color-SokratesGrayBorder)"
           fill="none"
           strokeWidth={borderStroke}
           r={normalizedRadius + stroke / 2}
           cx={radius}
           cy={radius}
-          style={{ filter: "drop-shadow(0px 2px 0px #454545)" }}
+          style={{ filter: "drop-shadow(0px 2px 0px var(--color-SokratesBlackBoxShadow))" }}
         />
         {/* Background ring */}
         <circle
-          stroke="#E5E7EB"
+          stroke="var(--color-SokratesLightGray)"
           fill="transparent"
           strokeWidth={stroke}
           r={normalizedRadius}
@@ -38,7 +38,7 @@ export function AvatarProgressRing({ level, progress, children }: { level: numbe
         />
         {/* Progress ring */}
         <circle
-          stroke="#E25A26"
+          stroke="var(--color-SokratesOrange)"
           fill="transparent"
           strokeWidth={stroke}
           strokeLinecap="round"
@@ -55,7 +55,7 @@ export function AvatarProgressRing({ level, progress, children }: { level: numbe
         />
         {/* Inner border */}
         <circle
-          stroke="#707070"
+          stroke="var(--color-SokratesGrayBorder)"
           fill="none"
           strokeWidth={borderStroke}
           r={normalizedRadius - stroke / 2}
@@ -65,7 +65,7 @@ export function AvatarProgressRing({ level, progress, children }: { level: numbe
       </svg>
       {/* Avatar */}
       <div
-        className="flex items-center justify-center rounded-full bg-white"
+        className="flex items-center justify-center rounded-full bg-SokratesWhite"
         style={{
           width: radius * 2 - stroke * 2,
           height: radius * 2 - stroke * 2,
@@ -85,12 +85,11 @@ export function AvatarProgressRing({ level, progress, children }: { level: numbe
         }}
       >
         <div
-          className="whitespace-nowrap min-w-[20px] text-center text-[10px] font-semibold"
+          className="whitespace-nowrap min-w-[20px] text-center text-[10px] font-semibold bg-SokratesLightGray text-SokratesBlackBoxShadow"
           style={{
             borderRadius: 8,
-            border: "1px solid #707070",
-            background: "#F4F4F4",
-            boxShadow: "0px 2px 0px 0px #454545",
+            border: "1px solid var(--color-SokratesGrayBorder)",
+            boxShadow: "0px 2px 0px 0px var(--color-SokratesBlackBoxShadow)",
             padding: "1px 5px",
             letterSpacing: "0.01em",
             display: "inline-block",

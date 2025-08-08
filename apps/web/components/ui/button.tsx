@@ -10,13 +10,13 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "relative bg-[#E25A26] text-white font-semibold font-['DM_Sans'] shadow-[0px_4px_0px_0px_#C94918] hover:bg-[#E25A26]/90 overflow-hidden active:rounded-[0.375rem] active:bg-[#E25A26] active:shadow-[0px_2px_0px_0px_#C94918] active:translate-y-[2px] active:[&>svg]:opacity-0",
+          "relative bg-SokratesOrange text-white font-semibold font-['DM_Sans'] shadow-[0px_4px_0px_0px_var(--color-SokratesOrangeShadow)] hover:bg-SokratesOrangeShadow/90 overflow-hidden active:rounded-[0.375rem] active:bg-SokratesOrange active:shadow-[0px_2px_0px_0px_var(--color-SokratesOrangeShadow)] active:translate-y-[2px] active:[&>svg]:opacity-0",
         destructive:
           "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
-          "rounded-[0.375rem] border border-[#626262] text-[#454545] text-center font-['DM_Sans'] text-[0.875rem] font-semibold leading-[1.5rem] hover:bg-accent hover:text-accent-foreground",
+          "rounded-[0.375rem] border border-SokratesGrayBorder text-SokratesBlackBoxShadow text-center font-['DM_Sans'] text-[0.875rem] font-semibold leading-[1.5rem] hover:bg-accent hover:text-accent-foreground",
         secondary:
-          "relative h-10 rounded-md bg-[#F4F4F4] border border-[#626262] text-[#454545] text-center font-['DM_Sans'] text-[0.875rem] font-semibold leading-[1.5rem] shadow-[0px_4px_0px_#454545] hover:bg-[#E8E8E8] active:rounded-[0.375rem] active:border-[#626262] active:bg-[#F4F4F4] active:shadow-[0px_2px_0px_0px_#454545] active:translate-y-[2px]",
+          "relative h-10 rounded-md bg-SokratesLightGray border border-SokratesGrayBorder text-SokratesBlackBoxShadow text-center font-['DM_Sans'] text-[0.875rem] font-semibold leading-[1.5rem] shadow-[0px_4px_0px_var(--color-SokratesBlackBoxShadow)] hover:bg-SokratesWhite active:rounded-[0.375rem] active:border-SokratesGrayBorder active:bg-SokratesLightGray active:shadow-[0px_2px_0px_0px_var(--color-SokratesBlackBoxShadow)] active:translate-y-[2px]",
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link:

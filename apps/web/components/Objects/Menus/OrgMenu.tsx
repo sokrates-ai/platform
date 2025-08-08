@@ -14,9 +14,10 @@ import { AvatarDropdownMenu } from './AvatarDropdownMenu'
 
 import logo_black from '@public/dark_logo.svg'
 
-const GRADIENT = 'linear-gradient(135deg,#f7f7f7 0%,#eaeaea 100%)'
-const BORDER = '2px solid #707070'
-const SHADOW = '0 2px 0 #454545'
+// Farbschema-Variablen
+const GRADIENT = 'linear-gradient(135deg,var(--color-SokratesLightGray) 0%,var(--color-SokratesWhite) 100%)'
+const BORDER = '2px solid var(--color-SokratesGrayBorder)'
+const SHADOW = '0 2px 0 var(--color-SokratesBlackBoxShadow)'
 const DROP_SHADOW = 'drop-shadow(0px 2px 2px rgba(69, 69, 69, 0.15))'
 
 export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
@@ -34,7 +35,7 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
         <div className="relative w-full sm:w-3/4 md:w-2/3 lg:w-1/2">
           <div
             className="relative flex h-12 sm:h-14 md:h-16 lg:h-[71px] w-full
-                         items-center px-6 text-[#454545]/90"
+                         items-center px-6 text-SokratesBlackBoxShadow/90"
             style={{
               background: GRADIENT,
               border: BORDER,
@@ -105,7 +106,7 @@ function LeftRail({ orgslug, org, session, isUserAdmin }: any) {
   return (
     <div
       className="relative flex h-12 sm:h-14 md:h-16 lg:h-[71px] w-full
-                 items-center pl-4 sm:pl-6 pr-6 sm:pr-8 text-[#454545]/90"
+                 items-center pl-4 sm:pl-6 pr-6 sm:pr-8 text-SokratesBlackBoxShadow/90"
       style={railStyle('left')}
     >
       {/* logo */}
@@ -165,10 +166,10 @@ function Avatar({ session, org, isUserAdmin, onLogout }: any) {
         <div
           className="absolute inset-0 rounded-full border-2"
           style={{
-            borderColor: '#707070',
+            borderColor: 'var(--color-SokratesGrayBorder)',
             boxShadow: SHADOW,
             background: [
-              `conic-gradient(from 180deg at 50% 50%, #e25a26 0deg, #E25A26 ${deg}deg, transparent ${deg}deg)`,
+              `conic-gradient(from 180deg at 50% 50%, var(--color-SokratesOrange) 0deg, var(--color-SokratesOrange) ${deg}deg, transparent ${deg}deg)`,
               GRADIENT
             ].join(',')
           }}
@@ -183,7 +184,7 @@ function Avatar({ session, org, isUserAdmin, onLogout }: any) {
           <div
             className="absolute inset-[6%] rounded-full overflow-hidden border-2 cursor-pointer"
             style={{
-              borderColor: '#707070',
+              borderColor: 'var(--color-SokratesGrayBorder)',
               background: 'linear-gradient(135deg,#fff,#f3f3f3)'
             }}
           >
@@ -198,10 +199,10 @@ function Avatar({ session, org, isUserAdmin, onLogout }: any) {
 
         {/* level badge */}
         <div
-          className="absolute bottom-2 left-1/2 translate-x-[-50%] translate-y-1/2 rounded-md border px-3 lg:px-6 py-1 lg:py-0.5 shadow bg-[#f4f4f4]"
-          style={{ borderColor: '#707070', boxShadow: SHADOW }}
+          className="absolute bottom-2 left-1/2 translate-x-[-50%] translate-y-1/2 rounded-md border px-3 lg:px-6 py-1 lg:py-0.5 shadow bg-SokratesLightGray border-SokratesGrayBorder"
+          style={{ boxShadow: SHADOW }}
         >
-          <span className="block text-xs sm:text-sm font-bold leading-none text-[#454545]">
+          <span className="block text-xs sm:text-sm font-bold leading-none text-SokratesBlackBoxShadow">
             {session?.data?.user?.level ?? 0}
           </span>
         </div>
@@ -235,7 +236,10 @@ const Badge = ({
   className?: string
 }) => (
   <div
-    className={`flex items-center text-[10px] sm:text-xs bg-white border border-[#707070] px-2 sm:px-3 py-1 font-bold rounded-lg select-none ${className || ''}`}
+    className={
+      "flex items-center text-[10px] sm:text-xs bg-SokratesWhite border border-SokratesGrayBorder px-2 sm:px-3 py-1 font-bold rounded-lg select-none " +
+      (className || "")
+    }
     style={style}
   >
     {children}

@@ -2,10 +2,10 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 const cardVariants = {
-  default: "rounded-[12px] border-[1px] border-[#707070] bg-[#FFF] shadow-[0_4px_0_0_#454545]",
-  defaultgradient: "rounded-[12px] border-[1px] border-[#707070] shadow-[0_4px_0_0_#454545] bg-[linear-gradient(242deg,_#FFF_69.88%,_#E8E8E8_116.14%)]",
-  secondary: "rounded-[12px] border-2 border-[#707070] bg-[#F4F4F4]",
-  secondarygradient: "rounded-[12px] border-2 border-[#707070] bg-[linear-gradient(238deg,_#F4F4F4_71.2%,_#DBDBDB_124.63%)]",
+  default: "rounded-[12px] border-[1px] border-SokratesGrayBorder bg-SokratesWhite shadow-[0_4px_0_0_var(--color-SokratesBlackBoxShadow)]",
+  defaultgradient: "rounded-[12px] border-[1px] border-SokratesGrayBorder shadow-[0_4px_0_0_var(--color-SokratesBlackBoxShadow)] bg-[linear-gradient(242deg,_var(--color-SokratesWhite)_69.88%,_#E8E8E8_116.14%)]",
+  secondary: "rounded-[12px] border-2 border-SokratesGrayBorder bg-SokratesLightGray",
+  secondarygradient: "rounded-[12px] border-2 border-SokratesGrayBorder bg-[linear-gradient(238deg,_var(--color-SokratesLightGray)_71.2%,_#DBDBDB_124.63%)]",
 }
 
 type CardVariant = keyof typeof cardVariants

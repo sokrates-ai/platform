@@ -27,9 +27,9 @@ function CourseOverviewPage({ params }: { params: CourseOverviewParams }) {
 	}
 
 	return (
-		<div className="h-screen w-full bg-[#f8f8f8] grid grid-rows-[auto,1fr] overscroll-x-none">
+		<div className="h-screen w-full bg-SokratesLightGray grid grid-rows-[auto,1fr] overscroll-x-none">
 			<CourseProvider courseuuid={getEntireCourseUUID(params.courseuuid)}>
-				<div className="pl-10 pr-10 text-sm tracking-tight bg-[#fcfbfc] z-10 shadow-[0px_4px_16px_rgba(0,0,0,0.06)]">
+				<div className="pl-10 pr-10 text-sm tracking-tight bg-SokratesWhite z-10 shadow-[0px_4px_16px_rgba(0,0,0,0.06)]">
 					<CourseOverviewTop params={params} />
 					<div className="flex space-x-3 font-black text-sm">
 						<Link
@@ -39,7 +39,7 @@ function CourseOverviewPage({ params }: { params: CourseOverviewParams }) {
 							}
 						>
 							<div
-								className={`flex space-x-4 py-2 w-fit text-center border-black transition-all ease-linear ${params.subpage.toString() === 'general'
+								className={`flex space-x-4 py-2 w-fit text-center border-SokratesBlackBoxShadow transition-all ease-linear ${params.subpage.toString() === 'general'
 									? 'border-b-4'
 									: 'opacity-50'
 									} cursor-pointer`}
@@ -57,7 +57,7 @@ function CourseOverviewPage({ params }: { params: CourseOverviewParams }) {
 							}
 						>
 							<div
-								className={`flex space-x-4 py-2 w-fit text-center border-black transition-all ease-linear ${params.subpage.toString() === 'access'
+								className={`flex space-x-4 py-2 w-fit text-center border-SokratesBlackBoxShadow transition-all ease-linear ${params.subpage.toString() === 'access'
 									? 'border-b-4'
 									: 'opacity-50'
 									} cursor-pointer`}
@@ -75,7 +75,7 @@ function CourseOverviewPage({ params }: { params: CourseOverviewParams }) {
 							}
 						>
 							<div
-								className={`flex space-x-4 py-2 w-fit text-center border-black transition-all ease-linear ${params.subpage.toString() === 'content'
+								className={`flex space-x-4 py-2 w-fit text-center border-SokratesBlackBoxShadow transition-all ease-linear ${params.subpage.toString() === 'content'
 									? 'border-b-4'
 									: 'opacity-50'
 									} cursor-pointer`}
@@ -93,7 +93,7 @@ function CourseOverviewPage({ params }: { params: CourseOverviewParams }) {
 							}
 						>
 							<div
-								className={`flex space-x-4 py-2 w-fit text-center border-black transition-all ease-linear ${params.subpage.toString() === 'map'
+								className={`flex space-x-4 py-2 w-fit text-center border-SokratesBlackBoxShadow transition-all ease-linear ${params.subpage.toString() === 'map'
 									? 'border-b-4'
 									: 'opacity-50'
 									} cursor-pointer`}
@@ -111,7 +111,7 @@ function CourseOverviewPage({ params }: { params: CourseOverviewParams }) {
 							}
 						>
 							<div
-								className={`flex space-x-4 py-2 w-fit text-center border-black transition-all ease-linear ${params.subpage.toString() === 'students'
+								className={`flex space-x-4 py-2 w-fit text-center border-SokratesBlackBoxShadow transition-all ease-linear ${params.subpage.toString() === 'students'
 									? 'border-b-4'
 									: 'opacity-50'
 									} cursor-pointer`}

@@ -28,15 +28,15 @@ function OrgPage({ params }: { params: OrgParams }) {
   }, [params.subpage, params])
 
   return (
-    <div className="h-full w-full bg-[#f8f8f8]">
-      <div className="pl-10 pr-10  tracking-tight bg-[#fcfbfc] shadow-[0px_4px_16px_rgba(0,0,0,0.02)]">
+    <div className="h-full w-full bg-SokratesLightGray">
+      <div className="pl-10 pr-10 tracking-tight bg-SokratesWhite shadow-[0px_4px_16px_rgba(0,0,0,0.02)]">
         <BreadCrumbs type="org"></BreadCrumbs>
-        <div className="my-2  py-3">
+        <div className="my-2 py-3">
           <div className="w-100 flex flex-col space-y-1">
-            <div className="pt-3 flex font-bold text-4xl tracking-tighter">
+            <div className="pt-3 flex font-bold text-4xl tracking-tighter text-SokratesBlackBoxShadow">
               {H1Label}
             </div>
-            <div className="flex font-medium text-gray-400 text-md">
+            <div className="flex font-medium text-SokratesGrayBorder2 text-md">
               {H2Label}{' '}
             </div>
           </div>
@@ -48,7 +48,7 @@ function OrgPage({ params }: { params: OrgParams }) {
             }
           >
             <div
-              className={`py-2 w-fit text-center border-black transition-all ease-linear ${
+              className={`py-2 w-fit text-center border-SokratesBlackBoxShadow transition-all ease-linear ${
                 params.subpage.toString() === 'general'
                   ? 'border-b-4'
                   : 'opacity-50'
