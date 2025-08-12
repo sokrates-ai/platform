@@ -1,6 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends, UploadFile, Form, Request
 from sqlmodel import Session
+from src.db.users import PublicUser
 from src.core.events.database import get_db_session
 from src.db.courses.course_canvas import CourseCanvasUpdate
 from src.db.courses.course_updates import (
@@ -8,7 +9,6 @@ from src.db.courses.course_updates import (
     CourseUpdateRead,
     CourseUpdateUpdate,
 )
-from src.db.users import PublicUser, User
 from src.db.courses.courses import (
     CourseCreate,
     CourseRead,
@@ -39,7 +39,7 @@ from src.services.courses.updates import (
 router = APIRouter()
 
 
-@router.post("/")
+@router.post('/')
 async def api_create_course(
     request: Request,
     org_id: int,
@@ -61,7 +61,7 @@ async def api_create_course(
         description=description,
         org_id=org_id,
         public=public,
-        thumbnail_image="",
+        thumbnail_image='',
         about=about,
         learnings=learnings,
         tags=tags,
@@ -71,7 +71,7 @@ async def api_create_course(
     )
 
 
-@router.put("/thumbnail/{course_uuid}")
+@router.put('/thumbnail/{course_uuid}')
 async def api_create_course_thumbnail(
     request: Request,
     course_uuid: str,
@@ -82,13 +82,13 @@ async def api_create_course_thumbnail(
     """
     Update new Course Thumbnail
     """
-    print("=====UPLOAD====")
+    print('=====UPLOAD====')
     return await update_course_thumbnail(
         request, course_uuid, current_user, db_session, thumbnail
     )
 
 
-@router.get("/{course_uuid}")
+@router.get('/{course_uuid}')
 async def api_get_course(
     request: Request,
     course_uuid: str,
@@ -103,7 +103,7 @@ async def api_get_course(
     )
 
 
-@router.get("/id/{course_id}")
+@router.get('/id/{course_id}')
 async def api_get_course_by_id(
     request: Request,
     course_id: str,
@@ -118,7 +118,7 @@ async def api_get_course_by_id(
     )
 
 
-@router.get("/{course_uuid}/meta")
+@router.get('/{course_uuid}/meta')
 async def api_get_course_meta(
     request: Request,
     course_uuid: str,
@@ -133,7 +133,7 @@ async def api_get_course_meta(
     )
 
 
-@router.get("/org_slug/{org_slug}/page/{page}/limit/{limit}")
+@router.get('/org_slug/{org_slug}/page/{page}/limit/{limit}')
 async def api_get_course_by_orgslug(
     request: Request,
     page: int,
@@ -150,7 +150,7 @@ async def api_get_course_by_orgslug(
     )
 
 
-@router.put("/{course_uuid}")
+@router.put('/{course_uuid}')
 async def api_update_course(
     request: Request,
     course_object: CourseUpdate,
@@ -161,13 +161,13 @@ async def api_update_course(
     """
     Update Course by course_uuid
     """
-    print(f"aa={course_object}")
+    print(f'aa={course_object}')
     return await update_course(
         request, course_object, course_uuid, current_user, db_session
     )
 
 
-@router.delete("/{course_uuid}")
+@router.delete('/{course_uuid}')
 async def api_delete_course(
     request: Request,
     course_uuid: str,
@@ -181,7 +181,7 @@ async def api_delete_course(
     return await delete_course(request, course_uuid, current_user, db_session)
 
 
-@router.get("/{course_uuid}/updates")
+@router.get('/{course_uuid}/updates')
 async def api_get_course_updates(
     request: Request,
     course_uuid: str,
@@ -197,7 +197,7 @@ async def api_get_course_updates(
     )
 
 
-@router.post("/{course_uuid}/updates")
+@router.post('/{course_uuid}/updates')
 async def api_create_course_update(
     request: Request,
     course_uuid: str,
@@ -214,7 +214,7 @@ async def api_create_course_update(
     )
 
 
-@router.put("/{course_uuid}/update/{courseupdate_uuid}")
+@router.put('/{course_uuid}/update/{courseupdate_uuid}')
 async def api_update_course_update(
     request: Request,
     course_uuid: str,
@@ -232,7 +232,7 @@ async def api_update_course_update(
     )
 
 
-@router.delete("/{course_uuid}/update/{courseupdate_uuid}")
+@router.delete('/{course_uuid}/update/{courseupdate_uuid}')
 async def api_delete_course_update(
     request: Request,
     course_uuid: str,
@@ -244,9 +244,12 @@ async def api_delete_course_update(
     Delete Course Update by courseupdate_uuid
     """
 
-    return await delete_update(request, courseupdate_uuid, current_user, db_session)
+    return await delete_update(
+        request, courseupdate_uuid, current_user, db_session
+    )
 
-@router.get("/{course_uuid}/canvas")
+
+@router.get('/{course_uuid}/canvas')
 def get_course_canvas(
     request: Request,
     course_uuid: str,
@@ -256,8 +259,7 @@ def get_course_canvas(
     return get_canvas(request, course_uuid, user, db_session)
 
 
-
-@router.put("/{course_uuid}/canvas")
+@router.put('/{course_uuid}/canvas')
 def put_course_canvas(
     request: Request,
     course_uuid: str,
@@ -265,10 +267,12 @@ def put_course_canvas(
     user=Depends(get_current_user),
     db_session=Depends(get_db_session),
 ):
-    return put_update(request, course_uuid, course_canvas_update, user, db_session)
+    return put_update(
+        request, course_uuid, course_canvas_update, user, db_session
+    )
 
 
-@router.get("/students/list")
+@router.get('/students/list')
 async def api_list_course_students(
     request: Request,
     course_uuid: str,

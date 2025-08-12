@@ -4,7 +4,7 @@ from sqlmodel import Field, SQLModel
 from src.db.users import UserRead
 from src.db.trails import TrailRead
 from src.db.courses.chapters import ChapterRead
-# from sqlalchemy import JSON, Column, ForeignKey, Integer
+
 
 class CourseBase(SQLModel):
     name: str
@@ -14,30 +14,35 @@ class CourseBase(SQLModel):
     tags: Optional[str]
     thumbnail_image: Optional[str]
     # map_state: Optional[str]
-    map_state: dict = Field(default={
-        "objects": [],
-        "boundaries": {
-            "left": -1000,
-            "right": 1000,
-            "top": -1000,
-            "bottom": 1000
-        }
-    }, sa_column=Column(JSON))
+    map_state: dict = Field(
+        default={
+            'objects': [],
+            'boundaries': {
+                'left': -1000,
+                'right': 1000,
+                'top': -1000,
+                'bottom': 1000,
+            },
+        },
+        sa_column=Column(JSON),
+    )
     public: bool
 
 
 class Course(CourseBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     org_id: int = Field(
-        sa_column=Column(Integer, ForeignKey("organization.id", ondelete="CASCADE"))
+        sa_column=Column(
+            Integer, ForeignKey('organization.id', ondelete='CASCADE')
+        )
     )
-    course_uuid: str = ""   
-    creation_date: str = ""
-    update_date: str = ""
+    course_uuid: str = ''
+    creation_date: str = ''
+    update_date: str = ''
 
 
 class CourseCreate(CourseBase):
-    org_id: int = Field(default=None, foreign_key="organization.id")
+    org_id: int = Field(default=None, foreign_key='organization.id')
     pass
 
 
@@ -53,7 +58,7 @@ class CourseUpdate(CourseBase):
 
 class CourseRead(CourseBase):
     id: int
-    org_id: int = Field(default=None, foreign_key="organization.id")
+    org_id: int = Field(default=None, foreign_key='organization.id')
     authors: Optional[List[UserRead]]
     course_uuid: str
     creation_date: str
@@ -77,7 +82,7 @@ class FullCourseReadWithTrail(CourseBase):
     course_uuid: Optional[str]
     creation_date: Optional[str]
     update_date: Optional[str]
-    org_id: int = Field(default=None, foreign_key="organization.id")
+    org_id: int = Field(default=None, foreign_key='organization.id')
     authors: List[UserRead]
     # Chapters, Activities
     chapters: List[ChapterRead]

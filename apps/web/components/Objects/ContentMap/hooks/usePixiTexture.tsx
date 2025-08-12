@@ -9,9 +9,9 @@ export default function usePixiTexture(url: string): PIXI.Texture | null {
 
   console.log('usePixiTexture', url);
 
-  if (!url) return null;
-
   useEffect(() => {
+    if (!url) return null;
+
     const cached = PIXI.Assets.get(url);
     if (cached) {
       setTexture(cached);
@@ -19,6 +19,7 @@ export default function usePixiTexture(url: string): PIXI.Texture | null {
     }
 
     let active = true;
+
     PIXI.Assets.load(url)
       .then((tex) => active && setTexture(tex as PIXI.Texture))
       .catch(console.error);

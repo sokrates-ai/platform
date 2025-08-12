@@ -24,7 +24,6 @@ export function getAvatarUrl(orgslug: string, predefined_avatar: string, avatar_
     session?.data?.user?.avatar_image
   )
 
-  const useAvatar = () => {
     if (predefined_avatar) {
       return predefinedAvatar
     } else {
@@ -38,7 +37,4 @@ export function getAvatarUrl(orgslug: string, predefined_avatar: string, avatar_
         }
       }
     }
-  }
-
-  return useAvatar()
 }

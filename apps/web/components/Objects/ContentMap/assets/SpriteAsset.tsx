@@ -42,4 +42,5 @@ const SpriteAsset = React.forwardRef<Sprite, Props>(
   }
 );
 
+SpriteAsset.displayName = 'SpriteAsset';
 export default React.memo(SpriteAsset);

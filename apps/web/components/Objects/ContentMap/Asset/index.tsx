@@ -30,7 +30,6 @@ const Asset: React.FC<AssetWrapperProps> = (props) => {
 	const Concrete =
 		registry[(props.asset.type.kind as Kind) ?? 'default'] || SpriteAsset;
 
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore
 	return <Concrete {...props} />;
 };

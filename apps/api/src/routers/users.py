@@ -32,7 +32,6 @@ from src.services.users.users import (
     update_user_avatar,
     update_user_password,
 )
-from src.db.roles import RoleRead
 
 
 router = APIRouter()

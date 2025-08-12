@@ -1,6 +1,5 @@
-import shutil
 import uvicorn
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request
 from config.config import LearnHouseConfig, get_learnhouse_config
 from src.core.events.events import shutdown_app, startup_app
 from src.router import v1_router
@@ -10,12 +9,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi_jwt_auth.exceptions import AuthJWTException
 from fastapi.middleware.gzip import GZipMiddleware
 import os
-from src.services.orgs.users import count_recent_active_users, record_user_interaction
-from fastapi import Depends
+from src.services.orgs.users import (
+    record_user_interaction,
+)
 from fastapi_jwt_auth import AuthJWT
 
-
-# from src.services.mocks.initial import create_initial_data
 
 ########################
 # Pre-Alpha Version 0.1.0
@@ -30,17 +28,21 @@ learnhouse_config: LearnHouseConfig = get_learnhouse_config()
 app = FastAPI(
     title=learnhouse_config.site_name,
     description=learnhouse_config.site_description,
-    docs_url="/docs" if learnhouse_config.general_config.development_mode else None,
-    redoc_url="/redoc" if learnhouse_config.general_config.development_mode else None,
-    version="0.1.0",
+    docs_url='/docs'
+    if learnhouse_config.general_config.development_mode
+    else None,
+    redoc_url='/redoc'
+    if learnhouse_config.general_config.development_mode
+    else None,
+    version='0.1.0',
 )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=learnhouse_config.hosting_config.allowed_regexp,
-    allow_methods=["*"],
+    allow_methods=['*'],
     allow_credentials=True,
-    allow_headers=["*"],
+    allow_headers=['*'],
 )
 
 # Gzip Middleware (will add brotli later)
@@ -48,8 +50,8 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 # Events
-app.add_event_handler("startup", startup_app(app))
-app.add_event_handler("shutdown", shutdown_app(app))
+app.add_event_handler('startup', startup_app(app))
+app.add_event_handler('shutdown', shutdown_app(app))
 
 
 # JWT Exception Handler
@@ -57,21 +59,21 @@ app.add_event_handler("shutdown", shutdown_app(app))
 def authjwt_exception_handler(request: Request, exc: AuthJWTException):
     return JSONResponse(
         status_code=exc.status_code,  # type: ignore
-        content={"detail": exc.message},  # type: ignore
+        content={'detail': exc.message},  # type: ignore
     )
 
 
 # Static Files
-base_path="content"
-path=os.path.abspath(base_path)
-print(f"Mounting content directory at: {path}")
-app.mount("/content", StaticFiles(directory=base_path), name="content")
+base_path = 'content'
+path = os.path.abspath(base_path)
+print(f'Mounting content directory at: {path}')
+app.mount('/content', StaticFiles(directory=base_path), name='content')
 
 # Global Routes
 app.include_router(v1_router)
 
 
-@app.middleware("http")
+@app.middleware('http')
 async def user_interaction_middleware(request: Request, call_next):
     user_id = None
     try:
@@ -79,30 +81,30 @@ async def user_interaction_middleware(request: Request, call_next):
         Authorize = AuthJWT(request)
         Authorize.jwt_required()
         user_id = Authorize.get_jwt_subject()
-    except Exception as e:
+    except Exception:
         pass  # No valid JWT, skip
     if user_id:
         try:
             record_user_interaction(user_id, str(request.url.path))
-        except Exception as e:
+        except Exception:
             # Optionally log the error
             pass
     response = await call_next(request)
     return response
 
 
-if __name__ == "__main__": 
+if __name__ == '__main__':
     # Spawn data reporting thread.
 
     uvicorn.run(
-        "app:app",
-        host="0.0.0.0",
+        'app:app',
+        host='0.0.0.0',
         port=learnhouse_config.hosting_config.port,
         reload=learnhouse_config.general_config.development_mode,
-        forwarded_allow_ips='*'
+        forwarded_allow_ips='*',
     )
 
 # General Routes
-@app.get("/")
+@app.get('/')
 async def root():
-    return {"Message": "Welcome to LearnHouse ✨"}
+    return {'Message': 'Welcome to LearnHouse ✨'}

@@ -1,9 +1,6 @@
-from sqlmodel import Session, select
-from src.security.rbac.rbac import authorization_verify_if_user_is_author
+from sqlmodel import Session
 from src.db.users import PublicUser, AnonymousUser
-from src.db.courses.activities import Activity
-from src.db.courses.courses import Course
-from fastapi import HTTPException, Request
+from fastapi import Request
 
 async def check_activity_paid_access(
     request: Request,

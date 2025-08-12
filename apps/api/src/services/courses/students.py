@@ -1,35 +1,16 @@
 from typing import Literal, List
-from uuid import uuid4
-from src.db.courses.chapters import Chapter
-from sqlmodel import Session, select, or_, and_
-from src.db.usergroup_resources import UserGroupResource
-from src.db.usergroup_user import UserGroupUser
-from src.db.organizations import Organization
+from sqlmodel import Session, select
 from src.db.trail_runs import TrailRun
-from src.security.features_utils.usage import (
-    check_limits_with_usage,
-    decrease_feature_usage,
-    increase_feature_usage,
-)
-from src.services.trail.trail import get_user_trail_with_orgid
-from src.db.resource_authors import ResourceAuthor, ResourceAuthorshipEnum
-from src.db.users import PublicUser, AnonymousUser, User, UserRead
+from src.db.users import PublicUser, AnonymousUser, User
 from src.db.courses.courses import (
     Course,
-    CourseCreate,
-    CourseRead,
-    CourseUpdate,
-    FullCourseReadWithTrail,
 )
 from src.security.rbac.rbac import (
     authorization_verify_based_on_roles_and_authorship,
     authorization_verify_if_element_is_public,
     authorization_verify_if_user_is_anon,
 )
-from src.services.courses.thumbnails import upload_thumbnail
-from fastapi import HTTPException, Request, UploadFile
-from datetime import datetime
-from fastapi import APIRouter, Depends, UploadFile, Form, Request
+from fastapi import HTTPException, Request
 from sqlalchemy.dialects import postgresql
 
 

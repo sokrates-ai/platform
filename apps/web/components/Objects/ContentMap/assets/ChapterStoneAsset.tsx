@@ -169,4 +169,5 @@ const ChapterStoneAsset = React.forwardRef<Container, Props>(
   },
 );
 
+ChapterStoneAsset.displayName = 'ChapterStoneAsset';
 export default React.memo(ChapterStoneAsset);

@@ -1,5 +1,4 @@
 from typing import Literal, Optional
-from botocore.exceptions import ClientError
 import os
 
 from fastapi import HTTPException
