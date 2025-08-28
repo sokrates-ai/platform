@@ -2,6 +2,11 @@ from typing import Literal, List
 from sqlmodel import Session, select
 from src.db.trail_runs import TrailRun
 from src.db.users import PublicUser, AnonymousUser, User
+
+from src.services.courses.activities.workspaces import (
+    get_task_log_of_user,
+    TaskLog,
+)
 from src.db.courses.courses import (
     Course,
 )
@@ -14,12 +19,16 @@ from fastapi import HTTPException, Request
 from sqlalchemy.dialects import postgresql
 
 
+class CourseStudent(PublicUser):
+    log: List[TaskLog]
+
+
 async def list_course_students(
     request: Request,
     course_uuid: str,
     current_user: PublicUser,
     db_session: Session,
-) -> List[PublicUser]:
+) -> List[CourseStudent]:
     """
     List students who are enrolled in the selected course.
     """
@@ -28,11 +37,10 @@ async def list_course_students(
         request, course_uuid, current_user, db_session
     )
 
-    print(f"CID={course_id}")
+    print(f'CID={course_id}')
 
     statement = (
-        select(User)
-        .join(TrailRun)
+        select(User).join(TrailRun)
         # .on(TrailStep.user_id == User.id)
         .where(TrailRun.course_id == course_id)
     )
@@ -41,7 +49,15 @@ async def list_course_students(
 
     students = db_session.exec(statement).all()
 
-    print("STUD = ", students)
+    students_new = []
+    for student in students:
+        log = await get_task_log_of_user(db_session, student.user_uuid)
+        stud = CourseStudent(**student.dict(), log=log)
+        students_new.append(stud)
+
+    print('STUD = ', students_new)
+
+    # Get task log for each user
 
     # RBAC check
     # TODO: RBAC is totally FUCKED!!!
@@ -62,7 +78,7 @@ async def list_course_students(
     #
     # course = CourseRead(**course.model_dump(), authors=authors)
 
-    return students
+    return students_new
 
     # return await (request, course_uuid, current_user, db_session)
 
@@ -73,7 +89,7 @@ async def get_course_id_by_uuid(
     current_user: PublicUser | AnonymousUser,
     db_session: Session,
 ) -> int:
-    print(f"GET COURSE UUID: {uuid}")
+    print(f'GET COURSE UUID: {uuid}')
     statement = select(Course).where(Course.course_uuid == uuid)
     course = db_session.exec(statement).first()
 

@@ -55,3 +55,4 @@ redis_data
 platform_postgres
 load_test2/.venv
 prometheus_multiproc
+.direnv

@@ -17,7 +17,7 @@ from src.db.courses.courses import (
 )
 from src.security.auth import get_current_user
 from src.services.courses.course_canvas import get_canvas, put_update
-from src.services.courses.students import list_course_students
+from src.services.courses.students import list_course_students, CourseStudent
 from src.services.courses.courses import (
     create_course,
     get_course,
@@ -278,7 +278,7 @@ async def api_list_course_students(
     course_uuid: str,
     current_user: PublicUser = Depends(get_current_user),
     db_session: Session = Depends(get_db_session),
-) -> List[PublicUser]:
+) -> List[CourseStudent]:
     """
     List students who are enrolled in the selected course.
     """

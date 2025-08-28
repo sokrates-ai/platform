@@ -1,5 +1,14 @@
 from typing import List, Literal, Optional
-from src.db.tasks import Course_Task, Tags, Task, TaskCreate, TaskWithCourseIDAndTags, Tasks_Tags 
+from datetime import datetime
+from src.db.tasks import (
+    Course_Task,
+    Tags,
+    Task,
+    TaskCreate,
+    TaskWithCourseIDAndTags,
+    Tasks_Tags,
+)
+from src.db.task_log import TaskLogBase, TaskLog
 
 from sqlmodel import Session, select
 from src.security.rbac.rbac import (
@@ -23,7 +32,7 @@ async def add_course_task_association(
     if existing:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Course-task association already present",
+            detail='Course-task association already present',
         )
 
     association = Course_Task(course_id=course_id, task_id=task_id)
@@ -43,7 +52,7 @@ async def remove_course_task_association(
     if not association:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Course-task association not found",
+            detail='Course-task association not found',
         )
 
     db_session.delete(association)
@@ -62,7 +71,7 @@ async def get_task(
 ) -> Optional[Task]:
     statement = select(Task).where(Task.id == id)
     task = db_session.exec(statement).first()
-    print(f"task={task}")
+    print(f'task={task}')
     return task
 
 
@@ -96,10 +105,10 @@ async def modify_tag(
     if not tag:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Tag not found",
+            detail='Tag not found',
         )
 
-    setattr(tag, "color", new_color)
+    setattr(tag, 'color', new_color)
 
     db_session.commit()
 
@@ -113,7 +122,7 @@ async def delete_tag(
     if not tag:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Tag not found",
+            detail='Tag not found',
         )
 
     #
@@ -153,7 +162,9 @@ async def create_task_tag(
     task_id: int,
     tag_value: str,
 ) -> List[str]:
-    link = Tasks_Tags.model_validate(Tasks_Tags(tag_value=tag_value, task_id=task_id))
+    link = Tasks_Tags.model_validate(
+        Tasks_Tags(tag_value=tag_value, task_id=task_id)
+    )
     db_session.add(link)
     db_session.commit()
     db_session.refresh(link)
@@ -207,10 +218,12 @@ async def get_tasks(
     for task, cid in results:
         # Get tags belonging to this task.
         tags = await get_task_tags(db_session=db_session, task_id=task.id)
-        print(f"task: {task} | tags={tags}")
+        print(f'task: {task} | tags={tags}')
 
         tasks_with_course_id.append(
-            TaskWithCourseIDAndTags(**task.model_dump(), course_id=cid, tags=tags)
+            TaskWithCourseIDAndTags(
+                **task.model_dump(), course_id=cid, tags=tags
+            )
         )
 
     return tasks_with_course_id
@@ -223,7 +236,7 @@ async def create_task(
     db_session: Session,
 ):
     # RBAC check
-    await rbac_check(request, "activity_x", current_user, "create", db_session)
+    await rbac_check(request, 'activity_x', current_user, 'create', db_session)
 
     # create activity
     task = Task.model_validate(data)
@@ -231,7 +244,7 @@ async def create_task(
     db_session.commit()
     db_session.refresh(task)
 
-    print("new task id: ", task.id, data)
+    print('new task id: ', task.id, data)
 
     # Create course association
     if data.course_id:
@@ -239,8 +252,10 @@ async def create_task(
 
     # Create tags.
     for tag in data.tags:
-        print(f"Create tag: {tag}")
-        await create_task_tag(db_session=db_session, task_id=task.id, tag_value=tag)
+        print(f'Create tag: {tag}')
+        await create_task_tag(
+            db_session=db_session, task_id=task.id, tag_value=tag
+        )
 
     return task
 
@@ -252,24 +267,24 @@ async def modify_task(
     db_session: Session,
 ):
     # RBAC check
-    await rbac_check(request, "activity_x", current_user, "update", db_session)
+    await rbac_check(request, 'activity_x', current_user, 'update', db_session)
 
     # create activity
     task = Task.model_validate(data)
 
     statement = select(Task).where(Task.id == data.id)
     task = db_session.exec(statement).first()
-    print(f"task={task}")
+    print(f'task={task}')
 
     if not task:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Unprocessable entity: task does not exist",
+            detail='Unprocessable entity: task does not exist',
         )
 
     # Update fields
     for key, value in data.dict(exclude_unset=True).items():
-        if key == "id" or key == "tags" or key == "course_id":
+        if key == 'id' or key == 'tags' or key == 'course_id':
             continue
         setattr(task, key, value)
 
@@ -293,11 +308,15 @@ async def modify_task(
 
     for tag in data.tags:
         if tag not in current_tags:
-            await create_task_tag(db_session=db_session, task_id=task.id, tag_value=tag)
+            await create_task_tag(
+                db_session=db_session, task_id=task.id, tag_value=tag
+            )
 
     for tag in current_tags:
         if tag not in data.tags:
-            await delete_task_tag(db_session=db_session, task_id=task.id, tag_value=tag)
+            await delete_task_tag(
+                db_session=db_session, task_id=task.id, tag_value=tag
+            )
 
     return task
 
@@ -314,10 +333,10 @@ async def delete_task(
         # TODO: raise an unprocessable entiry
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Unprocessable entity: task does not exist",
+            detail='Unprocessable entity: task does not exist',
         )
 
-    print(f"task={task}")
+    print(f'task={task}')
 
     # TODO: protect this route a bit.
     # await rbac_check(request, course.course_uuid, current_user, "delete", db_session)
@@ -326,7 +345,7 @@ async def delete_task(
     association = db_session.exec(statement).first()
 
     if association:
-        print("Deleted task association.")
+        print('Deleted task association.')
         db_session.delete(association)
         db_session.commit()
 
@@ -337,14 +356,45 @@ async def delete_task(
     # Delete all tags
     tags = await get_task_tags(db_session=db_session, task_id=task.id)
     for tag in tags:
-        await delete_task_tag(db_session=db_session, task_id=task.id, tag_value=tag)
+        await delete_task_tag(
+            db_session=db_session, task_id=task.id, tag_value=tag
+        )
+
+
+async def create_task_log(
+    db_session: Session,
+    task_id: int,
+    user_uuid: str,
+    correct: bool,
+) -> None:
+    print(f'Task Log: {task_id} by {user_uuid} [{correct}]')
+    log_item = TaskLog.model_validate(
+        TaskLogBase(
+            task_id=task_id,
+            user_uuid=user_uuid,
+            correct=correct,
+            date=str(datetime.now()),
+        )
+    )
+    db_session.add(log_item)
+    db_session.commit()
+    db_session.refresh(log_item)
+
+
+async def get_task_log_of_user(
+    db_session: Session,
+    user_uuid: str,
+) -> List[TaskLog]:
+    statement = select(TaskLog).where(TaskLog.user_uuid == user_uuid)
+    log = db_session.exec(statement).all()
+    return log
 
 
 async def rbac_check(
     request: Request,
     course_id: str,
     current_user: PublicUser | AnonymousUser,
-    action: Literal["create", "read", "update", "delete"],
+    action: Literal['create', 'read', 'update', 'delete'],
     db_session: Session,
 ):
     await authorization_verify_if_user_is_anon(current_user.id)

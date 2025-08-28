@@ -1,11 +1,12 @@
-from typing import List,  Optional
+from typing import List, Optional
 from sqlmodel import SQLModel, Field
 from pydantic import BaseModel
 
+
 class TaskBase(SQLModel):
-    title: str = ""
-    description: str = ""
-    task: str = ""
+    title: str = ''
+    description: str = ''
+    task: str = ''
     solution: Optional[str] = None
     # tags: Optional[dict] = None
     # tags: List = Field(default={}, sa_column=Column(JSON))
@@ -32,8 +33,8 @@ class TaskCreate(TaskBase):
 
 
 class Tasks_Tags(SQLModel, table=True):
-    tag_value: str = Field(foreign_key="tags.value", primary_key=True)
-    task_id: int = Field(foreign_key="task.id", primary_key=True)
+    tag_value: str = Field(foreign_key='tags.value', primary_key=True)
+    task_id: int = Field(foreign_key='task.id', primary_key=True)
 
 
 class Tags(SQLModel, table=True):

@@ -48,7 +48,7 @@ const Modal = (params: ModalParams) => {
       {params.dialogTrigger && (
         <DialogTrigger asChild>{params.dialogTrigger}</DialogTrigger>
       )}
-      <DialogContent pattern={true} className={cn(
+      <DialogContent pattern={false} className={cn(
         "overflow-auto",
         getMinHeight(),
         getMinWidth(),

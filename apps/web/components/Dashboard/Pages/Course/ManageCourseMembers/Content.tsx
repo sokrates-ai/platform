@@ -30,30 +30,8 @@ import {
 import { getAvatarUrl } from '@components/Objects/avatar'
 import { getMediaUrl } from '@services/media/media'
 import { getUriWithOrg } from '@services/config/config'
+import { ApiStudent } from './shared'
 
-interface PerformancePoint {
-       week: number,
-       score: number,
-}
-
-interface ExerciseLog {
-      name: string,
-      passed: boolean,
-}
-
-interface Student {
-    id: number,
-    name: string,
-    age: number,
-    grade: string,
-    avatar: string,
-    exercises: number,
-    homework: number,
-    satisfaction: number,
-    performance: number
-    performanceHistory: PerformancePoint[],
-    exerciseHistory: ExerciseLog[],
-}
 
 // Classroom performance data
 const classroomPerformance = [
@@ -67,535 +45,13 @@ const classroomPerformance = [
   { week: 8, score: 77 },
 ]
 
-// Mock student data with performance history
-const students2 = [
-  {
-    id: 1,
-    name: 'Clarissa Charlson',
-    age: 16,
-    grade: '10th grade',
-    avatar: '/students/female0.png',
-    exercises: 13,
-    homework: 2,
-    satisfaction: 68,
-    performance: 63,
-    performanceHistory: [
-      { week: 1, score: 58 },
-      { week: 2, score: 62 },
-      { week: 3, score: 59 },
-      { week: 4, score: 64 },
-      { week: 5, score: 66 },
-      { week: 6, score: 63 },
-      { week: 7, score: 67 },
-      { week: 8, score: 65 },
-    ],
-    exerciseHistory: [
-      { name: 'Algebra Basics', passed: true },
-      { name: 'Quadratic Equations', passed: false },
-      { name: 'Linear Functions', passed: true },
-      { name: 'Polynomial Division', passed: false },
-      { name: 'Factoring', passed: true },
-      { name: 'Systems of Equations', passed: false },
-      { name: 'Inequalities', passed: true },
-      { name: 'Graphing', passed: false },
-      { name: 'Word Problems', passed: true },
-      { name: 'Review Quiz', passed: false },
-    ],
-  },
-  {
-    id: 2,
-    name: 'Tyron Franzke',
-    age: 15,
-    grade: '10th grade',
-    avatar: '/students/male0.png',
-    exercises: 8,
-    homework: 3,
-    satisfaction: 72,
-    performance: 82,
-    performanceHistory: [
-      { week: 1, score: 75 },
-      { week: 2, score: 78 },
-      { week: 3, score: 80 },
-      { week: 4, score: 79 },
-      { week: 5, score: 82 },
-      { week: 6, score: 84 },
-      { week: 7, score: 81 },
-      { week: 8, score: 82 },
-    ],
-    exerciseHistory: [
-      { name: 'Solve for X', passed: true },
-      { name: 'Solve for X', passed: false },
-      { name: 'Circle Theorems', passed: false },
-      { name: 'Area Calculations', passed: true },
-      { name: 'Volume Problems', passed: true },
-      { name: 'Coordinate Geometry', passed: true },
-      { name: 'Transformations', passed: false },
-      { name: 'Similarity', passed: true },
-      { name: 'Trigonometry Basics', passed: true },
-      { name: 'Practice Test', passed: true },
-    ],
-  },
-  {
-    id: 3,
-    name: 'Emma Wilson',
-    age: 16,
-    grade: '10th grade',
-    avatar: '/students/female1.png',
-    exercises: 15,
-    homework: 1,
-    satisfaction: 85,
-    performance: 91,
-    performanceHistory: [
-      { week: 1, score: 85 },
-      { week: 2, score: 87 },
-      { week: 3, score: 89 },
-      { week: 4, score: 88 },
-      { week: 5, score: 90 },
-      { week: 6, score: 92 },
-      { week: 7, score: 91 },
-      { week: 8, score: 91 },
-    ],
-    exerciseHistory: [
-      { name: 'Calculus Limits', passed: true },
-      { name: 'Derivatives', passed: true },
-      { name: 'Chain Rule', passed: true },
-      { name: 'Integration', passed: true },
-      { name: 'Applications', passed: true },
-      { name: 'Related Rates', passed: true },
-      { name: 'Optimization', passed: true },
-      { name: 'Area Under Curve', passed: true },
-      { name: 'Advanced Problems', passed: false },
-      { name: 'Final Assessment', passed: true },
-    ],
-  },
-  {
-    id: 4,
-    name: 'Michael Brown',
-    age: 15,
-    grade: '10th grade',
-    avatar: '/students/male1.png',
-    exercises: 6,
-    homework: 4,
-    satisfaction: 58,
-    performance: 67,
-    performanceHistory: [
-      { week: 1, score: 60 },
-      { week: 2, score: 62 },
-      { week: 3, score: 65 },
-      { week: 4, score: 63 },
-      { week: 5, score: 67 },
-      { week: 6, score: 69 },
-      { week: 7, score: 66 },
-      { week: 8, score: 67 },
-    ],
-    exerciseHistory: [
-      { name: 'Basic Equations', passed: true },
-      { name: 'Fractions', passed: false },
-      { name: 'Decimals', passed: true },
-      { name: 'Percentages', passed: false },
-      { name: 'Ratios', passed: true },
-      { name: 'Proportions', passed: false },
-      { name: 'Simple Interest', passed: true },
-      { name: 'Compound Interest', passed: false },
-      { name: 'Measurement', passed: true },
-      { name: 'Data Analysis', passed: false },
-    ],
-  },
-  {
-    id: 5,
-    name: 'Sarah Davis',
-    age: 16,
-    grade: '10th grade',
-    avatar: '/students/female0.png',
-    exercises: 12,
-    homework: 2,
-    satisfaction: 79,
-    performance: 88,
-    performanceHistory: [
-      { week: 1, score: 80 },
-      { week: 2, score: 83 },
-      { week: 3, score: 85 },
-      { week: 4, score: 87 },
-      { week: 5, score: 88 },
-      { week: 6, score: 86 },
-      { week: 7, score: 89 },
-      { week: 8, score: 88 },
-    ],
-    exerciseHistory: [
-      { name: 'Trigonometry Identities', passed: true },
-      { name: 'Unit Circle', passed: true },
-      { name: 'Law of Sines', passed: true },
-      { name: 'Law of Cosines', passed: true },
-      { name: 'Trigonometric Equations', passed: false },
-      { name: 'Inverse Functions', passed: true },
-      { name: 'Graphing Trig Functions', passed: true },
-      { name: 'Applications of Trig', passed: true },
-      { name: 'Complex Numbers', passed: false },
-      { name: 'Polar Coordinates', passed: true },
-    ],
-  },
-  {
-    id: 6,
-    name: 'James Miller',
-    age: 15,
-    grade: '10th grade',
-    avatar: '/students/male0.png',
-    exercises: 9,
-    homework: 3,
-    satisfaction: 65,
-    performance: 73,
-    performanceHistory: [
-      { week: 1, score: 68 },
-      { week: 2, score: 70 },
-      { week: 3, score: 72 },
-      { week: 4, score: 71 },
-      { week: 5, score: 73 },
-      { week: 6, score: 75 },
-      { week: 7, score: 74 },
-      { week: 8, score: 73 },
-    ],
-    exerciseHistory: [
-      { name: 'Exponents and Radicals', passed: true },
-      { name: 'Scientific Notation', passed: true },
-      { name: 'Polynomial Operations', passed: false },
-      { name: 'Rational Expressions', passed: true },
-      { name: 'Solving Equations', passed: true },
-      { name: 'Inequalities', passed: false },
-      { name: 'Absolute Value', passed: true },
-      { name: 'Complex Numbers', passed: true },
-      { name: 'Logarithms', passed: false },
-      { name: 'Sequences and Series', passed: true },
-    ],
-  },
-  {
-    id: 7,
-    name: 'Olivia Garcia',
-    age: 16,
-    grade: '10th grade',
-    avatar: '/students/female1.png',
-    exercises: 14,
-    homework: 1,
-    satisfaction: 82,
-    performance: 89,
-    performanceHistory: [
-      { week: 1, score: 82 },
-      { week: 2, score: 85 },
-      { week: 3, score: 87 },
-      { week: 4, score: 86 },
-      { week: 5, score: 89 },
-      { week: 6, score: 90 },
-      { week: 7, score: 88 },
-      { week: 8, score: 89 },
-    ],
-    exerciseHistory: [
-      { name: 'Statistics Basics', passed: true },
-      { name: 'Probability', passed: true },
-      { name: 'Data Representation', passed: true },
-      { name: 'Hypothesis Testing', passed: true },
-      { name: 'Regression Analysis', passed: true },
-      { name: 'Sampling Methods', passed: true },
-      { name: 'Confidence Intervals', passed: true },
-      { name: 'Variance and Standard Deviation', passed: true },
-      { name: 'Correlation', passed: true },
-      { name: 'Experimental Design', passed: true },
-    ],
-  },
-  {
-    id: 8,
-    name: 'William Martinez',
-    age: 15,
-    grade: '10th grade',
-    avatar: '/students/male1.png',
-    exercises: 7,
-    homework: 5,
-    satisfaction: 61,
-    performance: 69,
-    performanceHistory: [
-      { week: 1, score: 62 },
-      { week: 2, score: 65 },
-      { week: 3, score: 67 },
-      { week: 4, score: 66 },
-      { week: 5, score: 69 },
-      { week: 6, score: 71 },
-      { week: 7, score: 68 },
-      { week: 8, score: 69 },
-    ],
-    exerciseHistory: [
-      { name: 'Basic Arithmetic', passed: true },
-      { name: 'Number Systems', passed: false },
-      { name: 'Order of Operations', passed: true },
-      { name: 'Estimation', passed: false },
-      { name: 'Problem Solving', passed: true },
-      { name: 'Mental Math', passed: false },
-      { name: 'Basic Algebra', passed: true },
-      { name: 'Geometry Basics', passed: false },
-      { name: 'Measurement', passed: true },
-      { name: 'Data Interpretation', passed: false },
-    ],
-  },
-  {
-    id: 9,
-    name: 'Sophia Anderson',
-    age: 16,
-    grade: '10th grade',
-    avatar: '/students/female0.png',
-    exercises: 11,
-    homework: 2,
-    satisfaction: 76,
-    performance: 84,
-    performanceHistory: [
-      { week: 1, score: 78 },
-      { week: 2, score: 80 },
-      { week: 3, score: 82 },
-      { week: 4, score: 81 },
-      { week: 5, score: 84 },
-      { week: 6, score: 85 },
-      { week: 7, score: 83 },
-      { week: 8, score: 84 },
-    ],
-    exerciseHistory: [
-      { name: 'Linear Equations', passed: true },
-      { name: 'Graphing Lines', passed: true },
-      { name: 'Slope and Intercept', passed: true },
-      { name: 'Systems of Equations', passed: false },
-      { name: 'Linear Inequalities', passed: true },
-      { name: 'Absolute Value Equations', passed: true },
-      { name: 'Functions', passed: true },
-      { name: 'Domain and Range', passed: true },
-      { name: 'Transformations', passed: false },
-      { name: 'Applications', passed: true },
-    ],
-  },
-  {
-    id: 10,
-    name: 'Benjamin Taylor',
-    age: 15,
-    grade: '10th grade',
-    avatar: '/students/male0.png',
-    exercises: 10,
-    homework: 3,
-    satisfaction: 70,
-    performance: 78,
-    performanceHistory: [
-      { week: 1, score: 72 },
-      { week: 2, score: 74 },
-      { week: 3, score: 76 },
-      { week: 4, score: 75 },
-      { week: 5, score: 78 },
-      { week: 6, score: 79 },
-      { week: 7, score: 77 },
-      { week: 8, score: 78 },
-    ],
-    exerciseHistory: [
-      { name: 'Polynomials', passed: true },
-      { name: 'Factoring', passed: true },
-      { name: 'Rational Expressions', passed: true },
-      { name: 'Radicals', passed: false },
-      { name: 'Quadratic Equations', passed: true },
-      { name: 'Complex Numbers', passed: true },
-      { name: 'Polynomial Functions', passed: true },
-      { name: 'Graphing Polynomials', passed: true },
-      { name: 'Applications', passed: false },
-      { name: 'Review', passed: true },
-    ],
-  },
-  {
-    id: 11,
-    name: 'Isabella Thomas',
-    age: 16,
-    grade: '10th grade',
-    avatar: '/students/female1.png',
-    exercises: 13,
-    homework: 1,
-    satisfaction: 88,
-    performance: 93,
-    performanceHistory: [
-      { week: 1, score: 88 },
-      { week: 2, score: 90 },
-      { week: 3, score: 92 },
-      { week: 4, score: 91 },
-      { week: 5, score: 93 },
-      { week: 6, score: 94 },
-      { week: 7, score: 92 },
-      { week: 8, score: 93 },
-    ],
-    exerciseHistory: [
-      { name: 'Exponential Functions', passed: true },
-      { name: 'Logarithmic Functions', passed: true },
-      { name: 'Exponential Equations', passed: true },
-      { name: 'Logarithmic Equations', passed: true },
-      { name: 'Applications', passed: true },
-      { name: 'Growth and Decay', passed: true },
-      { name: 'Compound Interest', passed: true },
-      { name: 'Graphing', passed: true },
-      { name: 'Transformations', passed: true },
-      { name: 'Review', passed: true },
-    ],
-  },
-  {
-    id: 12,
-    name: 'Lucas Jackson',
-    age: 15,
-    grade: '10th grade',
-    avatar: '/students/male1.png',
-    exercises: 5,
-    homework: 6,
-    satisfaction: 52,
-    performance: 61,
-    performanceHistory: [
-      { week: 1, score: 55 },
-      { week: 2, score: 58 },
-      { week: 3, score: 60 },
-      { week: 4, score: 59 },
-      { week: 5, score: 61 },
-      { week: 6, score: 63 },
-      { week: 7, score: 60 },
-      { week: 8, score: 61 },
-    ],
-    exerciseHistory: [
-      { name: 'Basic Math', passed: false },
-      { name: 'Addition', passed: true },
-      { name: 'Subtraction', passed: false },
-      { name: 'Multiplication', passed: true },
-      { name: 'Division', passed: false },
-      { name: 'Fractions', passed: false },
-      { name: 'Decimals', passed: false },
-      { name: 'Percentages', passed: true },
-      { name: 'Ratios', passed: false },
-      { name: 'Proportions', passed: false },
-    ],
-  },
-  {
-    id: 13,
-    name: 'Mia White',
-    age: 16,
-    grade: '10th grade',
-    avatar: '/students/female0.png',
-    exercises: 16,
-    homework: 0,
-    satisfaction: 91,
-    performance: 96,
-    performanceHistory: [
-      { week: 1, score: 92 },
-      { week: 2, score: 94 },
-      { week: 3, score: 95 },
-      { week: 4, score: 93 },
-      { week: 5, score: 96 },
-      { week: 6, score: 97 },
-      { week: 7, score: 95 },
-      { week: 8, score: 96 },
-    ],
-    exerciseHistory: [
-      { name: 'Advanced Calculus', passed: true },
-      { name: 'Multivariable Calculus', passed: true },
-      { name: 'Differential Equations', passed: true },
-      { name: 'Linear Algebra', passed: true },
-      { name: 'Complex Analysis', passed: true },
-      { name: 'Real Analysis', passed: true },
-      { name: 'Topology', passed: true },
-      { name: 'Abstract Algebra', passed: true },
-      { name: 'Number Theory', passed: true },
-      { name: 'Functional Analysis', passed: true },
-    ],
-  },
-  {
-    id: 14,
-    name: 'Ethan Harris',
-    age: 15,
-    grade: '10th grade',
-    avatar: '/students/male0.png',
-    exercises: 8,
-    homework: 4,
-    satisfaction: 63,
-    performance: 71,
-    performanceHistory: [
-      { week: 1, score: 65 },
-      { week: 2, score: 68 },
-      { week: 3, score: 70 },
-      { week: 4, score: 69 },
-      { week: 5, score: 71 },
-      { week: 6, score: 73 },
-      { week: 7, score: 70 },
-      { week: 8, score: 71 },
-    ],
-    exerciseHistory: [
-      { name: 'Geometry Basics', passed: true },
-      { name: 'Angles', passed: true },
-      { name: 'Triangles', passed: true },
-      { name: 'Quadrilaterals', passed: false },
-      { name: 'Circles', passed: true },
-      { name: 'Area', passed: true },
-      { name: 'Volume', passed: false },
-      { name: 'Coordinate Geometry', passed: true },
-      { name: 'Transformations', passed: false },
-      { name: 'Review', passed: true },
-    ],
-  },
-  {
-    id: 15,
-    name: 'Charlotte Clark',
-    age: 16,
-    grade: '10th grade',
-    avatar: '/students/female1.png',
-    exercises: 12,
-    homework: 2,
-    satisfaction: 80,
-    performance: 86,
-    performanceHistory: [
-      { week: 1, score: 80 },
-      { week: 2, score: 82 },
-      { week: 3, score: 84 },
-      { week: 4, score: 83 },
-      { week: 5, score: 86 },
-      { week: 6, score: 87 },
-      { week: 7, score: 85 },
-      { week: 8, score: 86 },
-    ],
-    exerciseHistory: [
-      { name: 'Algebraic Expressions', passed: true },
-      { name: 'Linear Equations', passed: true },
-      { name: 'Quadratic Equations', passed: true },
-      { name: 'Polynomials', passed: true },
-      { name: 'Factoring', passed: true },
-      { name: 'Rational Expressions', passed: false },
-      { name: 'Radicals', passed: true },
-      { name: 'Exponents', passed: true },
-      { name: 'Logarithms', passed: false },
-      { name: 'Review', passed: true },
-    ],
-  },
-]
-
 // Classroom layout - defines which students sit at which desks
-const classroom = {
-  desks: [
-    // Row 1
-    { id: 1, students: [1, 2], position: { row: 1, col: 1 } },
-    { id: 2, students: [3, 4], position: { row: 1, col: 2 } },
-    { id: 3, students: [5, 6], position: { row: 1, col: 3 } },
-    // Row 2
-    { id: 4, students: [7, 8], position: { row: 2, col: 1 } },
-    { id: 5, students: [9, 10], position: { row: 2, col: 2 } },
-    { id: 6, students: [11, 12], position: { row: 2, col: 3 } },
-    // Row 3
-    { id: 7, students: [13, 14], position: { row: 3, col: 1 } },
-    { id: 8, students: [15, null], position: { row: 3, col: 2 } },
-    { id: 9, students: [null, null], position: { row: 3, col: 3 } },
-    // Row 4
-    { id: 10, students: [null, null], position: { row: 4, col: 1 } },
-    { id: 11, students: [null, null], position: { row: 4, col: 2 } },
-    { id: 12, students: [null, null], position: { row: 4, col: 3 } },
-
-    // Single desk: TODO
-    // { id: 13, students: [null], position: { row: 4, col: 3 } },
-  ],
-}
 
 // Interactive Performance Chart Component using shadcn charts
 function InteractivePerformanceChart({
   studentData,
 }: {
-  studentData: Student
+  studentData: ApiStudent
 }) {
   // Combine classroom and student data for the chart
   const chartData = classroomPerformance.map((classPoint, index) => ({
@@ -763,10 +219,34 @@ function InteractivePerformanceChart({
   )
 }
 
-export default function Component(props: {students: any[], orgslug: string}) {
-  const students = props.students.map((s) => {
+interface ContentStudent {
+        id: number,
+        name: string,
+        age: number,
+        grade: string,
+        avatar: string,
+        exercises: number,
+        homework: number,
+        satisfaction: number,
+        performance: number,
+        performanceHistory: PerformancePoint[],
+        exerciseHistory: ExerciseLog[],
+}
+
+export interface PerformancePoint {
+       week: number,
+       score: number,
+}
+
+export interface ExerciseLog {
+      name: string,
+      passed: boolean,
+}
+
+export default function Component(props: {apiStudents: ApiStudent[], orgslug: string}) {
+  const students = props.apiStudents.map((s) => {
       console.dir(s)
-      const name = (s.first_name) ? (
+      const displayName = (s.first_name) ? (
         (s.first_name && s.last_name) ? (`${s.first_name} ${s.last_name}`) : s.first_name
       ) : s.email
 
@@ -776,7 +256,7 @@ export default function Component(props: {students: any[], orgslug: string}) {
 
       return {
         id: s.id,
-        name,
+        name: displayName,
         age: 0,
         grade: "",
         avatar,
@@ -786,8 +266,52 @@ export default function Component(props: {students: any[], orgslug: string}) {
         performance: 0,
         performanceHistory: [],
         exerciseHistory: [],
-      }
+      } as ContentStudent
   })
+
+  // const classroom = students.map((value, index) => {
+  //
+  // })
+
+  let desks = []
+
+  let row = 1
+  let col = 1
+
+  for (const student of students) {
+      let currentDesk = desks[desks.length == 0 ? 0 : desks.length - 1]
+
+      console.dir(currentDesk)
+
+      if (!currentDesk || currentDesk.students.length == 2) {
+          desks.push(
+            { id: desks.length + 1, students: [student.id], position: { row, col } },
+          )
+
+          // Advance position
+          col += 1
+          if (col > 3) {
+              col = 1
+              row += 1
+          }
+
+          continue;
+      }
+
+      currentDesk.students.push(student.id)
+  }
+
+  const classroom = { desks }
+
+  // const classroooom = {
+  // desks: [
+  //   // Row 1
+  //   { id: 1, students: [1, 2], position: { row: 1, col: 1 } },
+  //   { id: 2, students: [3, 4], position: { row: 1, col: 2 } },
+  //   { id: 3, students: [5, 6], position: { row: 1, col: 3 } },
+  //   // Single desk: TODO
+  //   // { id: 13, students: [null], position: { row: 4, col: 3 } },
+  // ],
 
   const [currentStudent, setCurrentStudent] = useState(students[0])
   const [searchTerm, setSearchTerm] = useState('')

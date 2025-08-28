@@ -50,14 +50,14 @@ class SessionResponse(BaseModel):
 async def workspace_system_obtain_token(
     user: PublicUser, task_id: int, activity_uuid: str, config: WorkspaceConfig
 ) -> str:
-    url = f"http://{config.workspace_api_host}:{config.workspace_api_port}/api/createSession"
+    url = f'http://{config.workspace_api_host}:{config.workspace_api_port}/api/createSession'
     body = {
-        "activity_uuid": activity_uuid,
-        "exercise_id": task_id,
-        "user_uuid": user.user_uuid,
+        'activity_uuid': activity_uuid,
+        'exercise_id': task_id,
+        'user_uuid': user.user_uuid,
     }
     # print(f"CREATING WS SESSION FOR USER={user} and TASK={task_id}...", url, body)
-    print(f"user={user.user_uuid}")
+    print(f'user={user.user_uuid}')
     async with httpx.AsyncClient() as client:
         res = await client.post(url, json=body)
         # print(res)
@@ -67,15 +67,15 @@ async def workspace_system_obtain_token(
 
         parsed = res.json()
 
-        if "token" not in parsed:
-            raise ("Illegal response: " + res.text)
+        if 'token' not in parsed:
+            raise ('Illegal response: ' + res.text)
 
-        token = parsed["token"]
+        token = parsed['token']
 
         return token
 
 
-@router.post("/session")
+@router.post('/session')
 async def api_create_session(
     request: Request,
     session_obj: SessionCreate,
@@ -86,7 +86,7 @@ async def api_create_session(
     Create new exercise session
     """
 
-    print(f"create new session: {current_user} | {session_obj}")
+    print(f'create new session: {current_user} | {session_obj}')
 
     # Get task-id based on the activity.
     activity: Activity = await get_activity(
@@ -97,39 +97,41 @@ async def api_create_session(
     )
 
     # Sanity-check that the activity type is task.
-    print(f"activity={activity}")
+    print(f'activity={activity}')
     if activity.activity_type != ActivityTypeEnum.TYPE_WORKSPACE:
         raise HTTPException(
             status_code=422,
-            detail="Activity is not a exercise",
+            detail='Activity is not a exercise',
         )
 
     task_ids = []
-    if "task_id" in activity.content:
-        task_ids.append(activity.content["task_id"])
-    elif "task_ids" in activity.content:
-        task_ids = activity.content["task_ids"]
+    if 'task_id' in activity.content:
+        task_ids.append(activity.content['task_id'])
+    elif 'task_ids' in activity.content:
+        task_ids = activity.content['task_ids']
     else:
-        raise "BUG: illegal content in activity"
+        raise 'BUG: illegal content in activity'
 
     if session_obj.task_id is not None:
-        print(f"Using specific task ID={session_obj.task_id}")
+        print(f'Using specific task ID={session_obj.task_id}')
         # Sanity-check that the task_id is in the activity.
         if session_obj.task_id not in task_ids:
             raise HTTPException(
                 status_code=422,
-                detail="Task ID is not part of the activity",
+                detail='Task ID is not part of the activity',
             )
         task_id = session_obj.task_id
     else:
-        print("Not a specific task, using first task in activity")
+        print('Not a specific task, using first task in activity')
         task_id = task_ids[0]
 
-    print(f"task ID={task_id}")
+    print(f'task ID={task_id}')
 
-    print(f"LEARNHOUSE={request.app.learnhouse_config.workspace_config}")
+    print(f'LEARNHOUSE={request.app.learnhouse_config.workspace_config}')
 
-    workspace_config: WorkspaceConfig = request.app.learnhouse_config.workspace_config
+    workspace_config: WorkspaceConfig = (
+        request.app.learnhouse_config.workspace_config
+    )
     token = await workspace_system_obtain_token(
         user=current_user,
         task_id=task_id,
@@ -137,7 +139,7 @@ async def api_create_session(
         config=workspace_config,
     )
 
-    print(f"token={token}")
+    print(f'token={token}')
 
     return SessionResponse(
         token=token,
@@ -145,7 +147,7 @@ async def api_create_session(
     )
 
 
-@router.post("/")
+@router.post('/')
 async def api_create_task(
     request: Request,
     task_obj: TaskCreate,
@@ -158,7 +160,7 @@ async def api_create_task(
     return await create_task(request, current_user, task_obj, db_session)
 
 
-@router.put("/")
+@router.put('/')
 async def api_modify_task(
     request: Request,
     task_obj: TaskWithCourseIDAndTags,
@@ -171,7 +173,7 @@ async def api_modify_task(
     return await modify_task(request, current_user, task_obj, db_session)
 
 
-@router.get("/id/{id}")
+@router.get('/id/{id}')
 async def api_get_task_single(
     request: Request,
     id: int,
@@ -185,13 +187,13 @@ async def api_get_task_single(
     if not task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Task does not exist",
+            detail='Task does not exist',
         )
 
     return task
 
 
-@router.get("/list/page/{page}/limit/{limit}")
+@router.get('/list/page/{page}/limit/{limit}')
 async def api_get_task_list(
     request: Request,
     page: int,
@@ -205,7 +207,7 @@ async def api_get_task_list(
     return await get_tasks(request, db_session, course_id, page, limit)
 
 
-@router.delete("/id/{id}")
+@router.delete('/id/{id}')
 async def api_delete_task(
     request: Request,
     id: int,
@@ -228,7 +230,7 @@ async def api_delete_task(
 #
 
 
-@router.get("/tag")
+@router.get('/tag')
 async def api_get_tags_list(
     db_session: Session = Depends(get_db_session),
 ) -> List[Tags]:
@@ -238,7 +240,7 @@ async def api_get_tags_list(
     return await get_tags(db_session)
 
 
-@router.post("/tag")
+@router.post('/tag')
 async def api_create_tag(
     request: Request,
     tag: Tags,
@@ -248,10 +250,12 @@ async def api_create_tag(
     """
     Create new task tag
     """
-    return await create_tag(db_session=db_session, tag_value=tag.value, color=tag.color)
+    return await create_tag(
+        db_session=db_session, tag_value=tag.value, color=tag.color
+    )
 
 
-@router.put("/tag")
+@router.put('/tag')
 async def api_modify_tag(
     request: Request,
     tag: Tags,
@@ -266,7 +270,7 @@ async def api_modify_tag(
     )
 
 
-@router.delete("/tag")
+@router.delete('/tag')
 async def api_delete_tag(
     request: Request,
     tag: DeleteTag,

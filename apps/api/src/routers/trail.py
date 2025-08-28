@@ -1,6 +1,7 @@
 from src.db.courses.activities import Activity
 from src.services.courses.activities.activities import get_activity
 from src.services.users.users import security_get_user_by_uuid
+from src.services.courses.activities.workspaces import create_task_log
 from fastapi import APIRouter, Depends, Request
 from src.core.events.database import get_db_session
 from src.db.trails import TrailCreate, TrailRead
@@ -22,7 +23,7 @@ from src.services.trail.trail import (
 router = APIRouter()
 
 
-@router.post("/start")
+@router.post('/start')
 async def api_start_trail(
     request: Request,
     trail_object: TrailCreate,
@@ -35,7 +36,7 @@ async def api_start_trail(
     return await create_user_trail(request, user, trail_object, db_session)
 
 
-@router.get("/")
+@router.get('/')
 async def api_get_user_trail(
     request: Request,
     user=Depends(get_current_user),
@@ -47,7 +48,7 @@ async def api_get_user_trail(
     return await get_user_trails(request, user=user, db_session=db_session)
 
 
-@router.get("/org/{org_id}/trail")
+@router.get('/org/{org_id}/trail')
 async def api_get_trail_by_org_id(
     request: Request,
     org_id: int,
@@ -62,7 +63,7 @@ async def api_get_trail_by_org_id(
     )
 
 
-@router.post("/add_course/{course_uuid}")
+@router.post('/add_course/{course_uuid}')
 async def api_add_course_to_trail(
     request: Request,
     course_uuid: str,
@@ -75,7 +76,7 @@ async def api_add_course_to_trail(
     return await add_course_to_trail(request, user, course_uuid, db_session)
 
 
-@router.delete("/remove_course/{course_uuid}")
+@router.delete('/remove_course/{course_uuid}')
 async def api_remove_course_to_trail(
     request: Request,
     course_uuid: str,
@@ -85,10 +86,12 @@ async def api_remove_course_to_trail(
     """
     Remove Course from trail
     """
-    return await remove_course_from_trail(request, user, course_uuid, db_session)
+    return await remove_course_from_trail(
+        request, user, course_uuid, db_session
+    )
 
 
-@router.post("/add_activity/{activity_uuid}")
+@router.post('/add_activity/{activity_uuid}')
 async def api_add_activity_to_trail(
     request: Request,
     activity_uuid: str,
@@ -98,19 +101,22 @@ async def api_add_activity_to_trail(
     """
     Add Course to trail
     """
-    return await add_activity_to_trail(request, user, activity_uuid, db_session)
+    return await add_activity_to_trail(
+        request, user, activity_uuid, db_session
+    )
 
 
-class WSMarkComplete(BaseModel):
+class WSRecordSolution(BaseModel):
     activity_uuid: str
     user_uuid: str
     task_id: int
+    correct: bool
 
 
-@router.post("/ws_mark_complete")
-async def api_ws_mark_complete(
+@router.post('/ws_record_solution')
+async def api_ws_record_solution(
     request: Request,
-    body: WSMarkComplete,
+    body: WSRecordSolution,
     # user=Depends(get_current_user),
     db_session=Depends(get_db_session),
 ) -> None:
@@ -118,11 +124,12 @@ async def api_ws_mark_complete(
     Add Course to trail from WS
     """
 
-    print("WSMarkComplete called: ", body)
+    print('WSMarkComplete called: ', body)
 
-    user = await security_get_user_by_uuid(request, db_session, uuid=body.user_uuid)
+    user_uuid = body.user_uuid
+    user = await security_get_user_by_uuid(request, db_session, uuid=user_uuid)
     if user is None:
-        raise Exception("illegal user")
+        raise Exception('illegal user')
 
     # TODO: add atomic progress.
 
@@ -134,12 +141,12 @@ async def api_ws_mark_complete(
         db_session=db_session,
     )
 
-    print(f"activity: {activity.content}")
+    print(f'activity: {activity.content}')
 
-    tasks = activity.content.get("task_ids", None)
+    tasks = activity.content.get('task_ids', None)
     if tasks is None or len(tasks) == 0:
-        raise Exception("activity does not contain tasks")
-    print(f"activity tasks: {tasks}")
+        raise Exception('activity does not contain tasks')
+    print(f'activity tasks: {tasks}')
 
     task_found = False
     for task_id in tasks:
@@ -148,7 +155,14 @@ async def api_ws_mark_complete(
             break
 
     if not task_found:
-        raise Exception("task not found in activity")
+        raise Exception('task not found in activity')
+
+    # Add to task log of the user.
+    await create_task_log(db_session, task_id, user_uuid, correct=body.correct)
+
+    # Only add this activity if it was marked as `correct`
+    if not body.correct:
+        return
 
     markers = await get_activity_task_markers_of_activity(
         request=request,
@@ -190,11 +204,13 @@ async def api_ws_mark_complete(
             everything_marked = False
             break
 
-    print(f"markers_flat: {markers_flat} | everything_marked: {everything_marked}")
+    print(
+        f'markers_flat: {markers_flat} | everything_marked: {everything_marked}'
+    )
 
     # If everything is marked, we can add the activity to the trail
     if everything_marked:
-        print("!!!everything except last one marked, adding activity to trail")
+        print('!!!everything except last one marked, adding activity to trail')
         await add_activity_to_trail(
             request=request,
             user=user,
