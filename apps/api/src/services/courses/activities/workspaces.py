@@ -5,10 +5,13 @@ from src.db.tasks import (
     Tags,
     Task,
     TaskCreate,
+    TaskBase,
     TaskWithCourseIDAndTags,
     Tasks_Tags,
 )
 from src.db.task_log import TaskLogBase, TaskLog
+# from src.services.courses.activities.workspaces_gen import TaskGradingCriteriaCollection
+# from src.services.courses.activities.workspaces_prompts import GENERATE_GRADING_CRITERIA
 
 from sqlmodel import Session, select
 from src.security.rbac.rbac import (

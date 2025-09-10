@@ -4,6 +4,12 @@ from typing import List, Optional
 from config.config import WorkspaceConfig
 from src.db.courses.activities import Activity, ActivityTypeEnum
 from src.services.courses.activities.activities import get_activity
+
+from src.db.tasks import TaskBase
+
+from src.services.courses.activities.workspaces_gen import (TaskGradingCriteria,
+    generate_task_grading_criteria)
+
 from src.services.courses.activities.workspaces import (
     Tags,
     Task,
@@ -19,6 +25,7 @@ from src.services.courses.activities.workspaces import (
     modify_tag,
     modify_task,
 )
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -63,11 +70,13 @@ async def workspace_system_obtain_token(
         # print(res)
 
         if res.status_code != 200:
+            print(f"WS_RESPONSE: {res.text}")
             raise Exception(res.text)
 
         parsed = res.json()
 
         if 'token' not in parsed:
+            print(f"WS_RESPONSE: {res.text}")
             raise ('Illegal response: ' + res.text)
 
         token = parsed['token']
@@ -139,7 +148,7 @@ async def api_create_session(
         config=workspace_config,
     )
 
-    print(f'token={token}')
+    print(f'token={token} | Workspace_URL={workspace_config.workspace_external_base_url}')
 
     return SessionResponse(
         token=token,
@@ -171,6 +180,19 @@ async def api_modify_task(
     Modify task
     """
     return await modify_task(request, current_user, task_obj, db_session)
+
+
+@router.post('/criteria')
+async def api_generate_grading_criteria(
+    request: Request,
+    task_obj: TaskBase,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+) -> TaskGradingCriteria:
+    """
+    Generate task grading criteria
+    """
+    return await generate_task_grading_criteria(task_obj)
 
 
 @router.get('/id/{id}')

@@ -16,6 +16,7 @@ import EditTagsModal from '@components/Objects/Modals/Exercise/Create/EditTags'
 import { Plus } from 'lucide-react'
 import CourseCard from './courseCard'
 import { getCourseThumbnailMediaDirectory } from '@services/media/media'
+import type { ApiExercise } from './types'
 
 type ExerciseProps = {
   orgslug: string
@@ -50,24 +51,13 @@ function ExerciseHome(params: ExerciseProps) {
   const { data: courses, isLoading: coursesLoading } = useSWR(COURSES_URL, (url: string) => swrFetcher(url, access_token))
 
   // TODO: set limit?
-  const { data: exercises, isLoading: exercisesLoading } = useSWR(TASKS_URL, (url: string) => swrFetcher(url, access_token))
+  const { data: exercises, isLoading: exercisesLoading }: { data: ApiExercise[], isLoading: boolean } = useSWR(TASKS_URL, (url: string) => swrFetcher(url, access_token))
 
   const { data: tags, isLoading: tagsLoading } = useSWR(TAGS_URL, (url: string) => swrFetcher(url, access_token))
 
   if (coursesLoading || exercisesLoading || tagsLoading) {
     return;
   }
-
-  // {(!!exercises && !!tags) ?
-  //   (<div>
-  //     {courses.map((course: any) => (
-  //       <div>
-  //         {course.name}
-  //       </div>
-  //     ))}
-  //   </div>)
-  //   : (<span>LOADING...</span>)
-  // }
 
   return (
     <div className="h-full w-full pl-10 pr-10">

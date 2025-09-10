@@ -31,7 +31,6 @@ class ChromaDBConfig(BaseModel):
 
 class AIConfig(BaseModel):
     openai_api_key: str | None
-    is_ai_enabled: bool | None
     chromadb_config: ChromaDBConfig | None
 
 

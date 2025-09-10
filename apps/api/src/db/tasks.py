@@ -1,15 +1,21 @@
 from typing import List, Optional
 from sqlmodel import SQLModel, Field
 from pydantic import BaseModel
+from sqlalchemy import JSON, Column, ForeignKey, Integer, String, Enum as SqlEnum
+from enum import Enum
+
+
+class TaskType(Enum):
+    AI = "ai"
+    Multiple_Choice = "multiple_choice"
 
 
 class TaskBase(SQLModel):
     title: str = ''
     description: str = ''
-    task: str = ''
-    solution: Optional[str] = None
-    # tags: Optional[dict] = None
-    # tags: List = Field(default={}, sa_column=Column(JSON))
+    task_type = Field(default=TaskType.AI, sa_column= Column(SqlEnum(TaskType), nullable=False))
+    _type_ai_instruction: str = ''
+    _type_multiple_choice_data: dict = Field(default={}, sa_column=Column(JSON))
 
 
 class Task(TaskBase, table=True):

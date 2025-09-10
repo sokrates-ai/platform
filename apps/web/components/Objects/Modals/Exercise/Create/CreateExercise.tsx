@@ -50,7 +50,6 @@ function CreateExerciseModal({
       description: '',
       task: '',
       solution: '',
-      // course_id: '',
     },
     validationSchema,
     onSubmit: async (values, { setSubmitting }) => {
@@ -96,8 +95,6 @@ function CreateExerciseModal({
     if (!internalTags.find((t: any) => t.value === newInputVal)) {
       setInternalTags([...internalTags, newInputVal])
     }
-
-    // setTagInput("")
   }
 
   const handleRemoveTag = (tagToRemove: string) => {
