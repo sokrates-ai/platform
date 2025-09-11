@@ -3,7 +3,7 @@ import React from 'react'
 import ClientAdminLayout from './ClientAdminLayout'
 
 export const metadata: Metadata = {
-  title: 'Sokrates Dashboard',
+  title: 'Sokrates',
 }
 
 function DashboardLayout({

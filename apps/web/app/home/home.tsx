@@ -11,6 +11,8 @@ import SokratesLogo from 'public/dark_logo.svg'
 import React, { useEffect } from 'react'
 import useSWR from 'swr';
 
+// TODO: fix organization issues.
+
 function HomeClient() {
   const session = useSokratesSession() as any;
   const access_token = session?.data?.tokens?.access_token;
@@ -35,12 +37,12 @@ function HomeClient() {
       <div className='flex space-x-4 mx-auto font-semibold text-sm mt-12 items-center uppercase bg-slate-200 text-gray-600 px-3 py-2 rounded-md'>Your Organizations</div>
       {orgs && orgs.length == 0 && <div className='flex mx-auto my-5 space-x-3 bg-rose-200 rounded-lg px-3 py-2'>
         <Info />
-        <span>It seems you're not part of an organization yet, join one to be able to see it here </span>
+        <span>It seems you're not part of an organization yet, join one to be able to see it here: TODO: fix this</span>
       </div>}
       <div className='flex mx-auto pt-10 rounded-lg'>
         {orgs && orgs.map((org: any) => (
           <Link href={getUriWithOrg(org.slug, '/')} key={org.id} className='flex space-x-2 mx-auto w-fit justify-between items-center outline outline-1 outline-slate-200 px-3 py-2 rounded-lg'>
-            <div>{org.name}</div>
+            <div>Sokrates - HPI</div>
             <ArrowRightCircle />
           </Link>
         ))}

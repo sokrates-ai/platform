@@ -31,7 +31,7 @@ export async function generateMetadata({
 
   // SEO
   return {
-    title: course_meta.name + ` — ${org.name}`,
+    title: course_meta.name + ` — Sokrates`,
     description: course_meta.description,
     keywords: course_meta.learnings,
     robots: {
@@ -45,7 +45,7 @@ export async function generateMetadata({
       },
     },
     openGraph: {
-      title: course_meta.name + ` — ${org.name}`,
+      title: course_meta.name + ` — Sokrates`,
       description: course_meta.description ? course_meta.description : '',
       images: [
         {

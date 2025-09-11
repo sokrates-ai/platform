@@ -18,7 +18,7 @@ export async function generateMetadata(params: MetadataProps): Promise<Metadata>
   })
 
   return {
-    title: 'Login' + ` — ${org.name}`,
+    title: 'Login' + ` — Sokrates`,
   }
 }
 

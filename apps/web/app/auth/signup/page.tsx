@@ -20,7 +20,7 @@ export async function generateMetadata(
   })
 
   return {
-    title: 'Sign up' + ` — ${org.name}`,
+    title: 'Sign up' + ` — Sokrate`,
   }
 }
 
