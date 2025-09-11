@@ -4,11 +4,13 @@ from typing import List, Optional
 from config.config import WorkspaceConfig
 from src.db.courses.activities import Activity, ActivityTypeEnum
 from src.services.courses.activities.activities import get_activity
-
 from src.db.tasks import TaskBase
 
-from src.services.courses.activities.workspaces_gen import (TaskGradingCriteria,
-    generate_task_grading_criteria)
+from src.services.courses.activities.workspaces_gen import (
+        TaskGradingCriteria,
+        GenerateGradingCriteria,
+        generate_task_grading_criteria,
+)
 
 from src.services.courses.activities.workspaces import (
     Tags,
@@ -185,14 +187,15 @@ async def api_modify_task(
 @router.post('/criteria')
 async def api_generate_grading_criteria(
     request: Request,
-    task_obj: TaskBase,
+    body: GenerateGradingCriteria,
     current_user: PublicUser = Depends(get_current_user),
     db_session: Session = Depends(get_db_session),
 ) -> TaskGradingCriteria:
     """
     Generate task grading criteria
     """
-    return await generate_task_grading_criteria(task_obj)
+
+    return await generate_task_grading_criteria(body)
 
 
 @router.get('/id/{id}')

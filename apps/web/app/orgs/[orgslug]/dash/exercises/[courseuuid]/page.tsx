@@ -105,6 +105,7 @@ function ExerciseCourseHome(params: ExerciseProps) {
       <div className="mb-6">
         <BreadCrumbs type="exercises" />
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4">
+
           <h1 className="text-3xl font-bold mb-4 sm:mb-0">
             {course ? (
               <>
@@ -145,7 +146,8 @@ function ExerciseCourseHome(params: ExerciseProps) {
               <Modal
                 isDialogOpen={newExerciseModal}
                 onOpenChange={setNewExerciseModal}
-                minHeight="md"
+                minHeight="lg"
+                minWidth='xl'
                 dialogContent={
                   <CreateExerciseModal
                     closeModal={closeNewCourseModal}

@@ -49,6 +49,7 @@ function ModifyExerciseModal({
   // Multiple choice state
   type Choice = { id: string; text: string; correct: boolean }
   const [choices, setChoices] = React.useState<Choice[]>([])
+  const [submitError, setSubmitError] = React.useState<string | null>(null)
 
   // Hydrate type-specific state from incoming exercise
   React.useEffect(() => {
@@ -89,12 +90,14 @@ function ModifyExerciseModal({
     validationSchema,
     onSubmit: async (values, { setSubmitting }) => {
       const toast_loading = toast.loading('Modifying exercise...')
+      setSubmitError(null)
 
       try {
         // Validate type-specific fields
         if (taskType === 'ai') {
           if (!aiInstruction.trim()) {
             toast.error('Task instruction is required for AI tasks')
+            setSubmitError('Task instruction is required for AI tasks')
             toast.dismiss(toast_loading)
             setSubmitting(false)
             return
@@ -104,12 +107,14 @@ function ModifyExerciseModal({
           const hasCorrect = nonEmpty.some(c => c.correct)
           if (nonEmpty.length < 2) {
             toast.error('Provide at least two answer options')
+            setSubmitError('Provide at least two answer options')
             toast.dismiss(toast_loading)
             setSubmitting(false)
             return
           }
           if (!hasCorrect) {
             toast.error('Select at least one correct answer')
+            setSubmitError('Select at least one correct answer')
             toast.dismiss(toast_loading)
             setSubmitting(false)
             return
@@ -132,6 +137,7 @@ function ModifyExerciseModal({
               gradingCriteria = JSON.parse(aiGradingCriteriaText)
             } catch (e) {
               toast.error('Grading criteria must be valid JSON')
+              setSubmitError('Grading criteria must be valid JSON')
               toast.dismiss(toast_loading)
               setSubmitting(false)
               return
@@ -162,11 +168,15 @@ function ModifyExerciseModal({
           mutate(mutateURL)
         } else {
           toast.dismiss(toast_loading)
-          toast.error(res.data?.detail || 'Failed to modify exercise')
+          const errMsg = res.data?.detail || 'Failed to modify exercise'
+          toast.error(errMsg)
+          setSubmitError(errMsg)
         }
       } catch (error) {
         toast.dismiss(toast_loading)
-        toast.error('Failed to modify exercise')
+        const errMsg = 'Failed to modify exercise'
+        toast.error(errMsg)
+        setSubmitError(errMsg)
       } finally {
         setSubmitting(false)
       }
@@ -439,6 +449,11 @@ function ModifyExerciseModal({
           </div>
         </div>
         <div className="flex justify-end pt-4">
+          {submitError && (
+            <div className="mr-auto rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+              {submitError}
+            </div>
+          )}
           <Button type="submit" disabled={formik.isSubmitting}>
             {formik.isSubmitting ? (
               <BarLoader

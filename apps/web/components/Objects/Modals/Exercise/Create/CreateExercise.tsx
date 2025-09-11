@@ -19,6 +19,7 @@ import { X } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs'
 import { Separator } from '@components/ui/separator'
 import { Button } from '@components/ui/button'
+import { Switch } from '@components/ui/switch'
 
 export interface Evidence {
   targets: string[];
@@ -35,6 +36,38 @@ export interface TaskGradingCriteria {
   weight: number;
   prereqs: string[];
   evidence: Evidence;
+}
+
+function ArrayEditor({ label, values, onAdd, onRemove }: { label: string; values: string[]; onAdd: (v: string) => void; onRemove: (v: string) => void }) {
+  const [inputVal, setInputVal] = React.useState('')
+  const canAdd = inputVal.trim().length > 0
+  return (
+    <div>
+      <label className="text-xs text-muted-foreground">{label}</label>
+      <div className="flex gap-2 mt-1">
+        <Input
+          value={inputVal}
+          onChange={(e) => setInputVal(e.target.value)}
+          placeholder={`Add ${label.toLowerCase()}`}
+        />
+        <Button type="button" variant="secondary" size="sm" disabled={!canAdd} onClick={() => { if (!canAdd) return; onAdd(inputVal.trim()); setInputVal('') }}>
+          Add
+        </Button>
+      </div>
+      {values.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {values.map((v) => (
+            <div key={v} className="flex items-center gap-2 rounded-full border px-2 py-1 text-xs">
+              <span>{v}</span>
+              <Button type="button" variant="ghost" size="sm" onClick={() => onRemove(v)}>
+                Remove
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 const validationSchema = Yup.object().shape({
@@ -62,7 +95,24 @@ function CreateExerciseModal({
   // AI fields
   const [aiInstruction, setAiInstruction] = React.useState('')
   const [aiProposedSolution, setAiProposedSolution] = React.useState('')
-  const [aiGradingCriteriaText, setAiGradingCriteriaText] = React.useState('')
+  const [criteria, setCriteria] = React.useState<TaskGradingCriteria[]>([
+    {
+      id_slug: '',
+      type: '',
+      short: '',
+      detail: '',
+      must_fix: false,
+      weight: 1,
+      prereqs: [],
+      evidence: { targets: [], methods: [], forms: [] },
+    },
+  ])
+  const [currentCriterionIndex, setCurrentCriterionIndex] = React.useState(0)
+  React.useEffect(() => {
+    if (currentCriterionIndex > criteria.length - 1) {
+      setCurrentCriterionIndex(Math.max(0, criteria.length - 1))
+    }
+  }, [criteria.length])
 
   // Multiple choice fields
   type Choice = { id: string; text: string; correct: boolean }
@@ -70,6 +120,7 @@ function CreateExerciseModal({
     { id: crypto.randomUUID(), text: '', correct: false },
     { id: crypto.randomUUID(), text: '', correct: false },
   ])
+  const [submitError, setSubmitError] = React.useState<string | null>(null)
 
   const formik = useFormik({
     initialValues: {
@@ -79,12 +130,14 @@ function CreateExerciseModal({
     validationSchema,
     onSubmit: async (values, { setSubmitting }) => {
       const toast_loading = toast.loading('Creating exercise...')
+      setSubmitError(null)
 
       try {
         // Validate type-specific fields
         if (taskType === 'ai') {
           if (!aiInstruction.trim()) {
             toast.error('Task instruction is required for AI tasks')
+            setSubmitError('Task instruction is required for AI tasks')
             toast.dismiss(toast_loading)
             setSubmitting(false)
             return
@@ -94,12 +147,14 @@ function CreateExerciseModal({
           const hasCorrect = nonEmpty.some(c => c.correct)
           if (nonEmpty.length < 2) {
             toast.error('Provide at least two answer options')
+            setSubmitError('Provide at least two answer options')
             toast.dismiss(toast_loading)
             setSubmitting(false)
             return
           }
           if (!hasCorrect) {
             toast.error('Select at least one correct answer')
+            setSubmitError('Select at least one correct answer')
             toast.dismiss(toast_loading)
             setSubmitting(false)
             return
@@ -116,17 +171,7 @@ function CreateExerciseModal({
         }
 
         if (taskType === 'ai') {
-          let gradingCriteria: any = {}
-          if (aiGradingCriteriaText.trim()) {
-            try {
-              gradingCriteria = JSON.parse(aiGradingCriteriaText)
-            } catch (e) {
-              toast.error('Grading criteria must be valid JSON')
-              toast.dismiss(toast_loading)
-              setSubmitting(false)
-              return
-            }
-          }
+          const gradingCriteria = { criteria }
           payload.ai_instruction = {
             task_instruction: aiInstruction,
             proposed_solution: aiProposedSolution,
@@ -152,11 +197,15 @@ function CreateExerciseModal({
           mutate(mutateURL)
         } else {
           toast.dismiss(toast_loading)
-          toast.error(res.data?.detail || 'Failed to create exercise')
+          const errMsg = res.data?.detail || 'Failed to create exercise'
+          toast.error(errMsg)
+          setSubmitError(errMsg)
         }
       } catch (error) {
         toast.dismiss(toast_loading)
-        toast.error('Failed to create exercise')
+        const errMsg = 'Failed to create exercise'
+        toast.error(errMsg)
+        setSubmitError(errMsg)
       } finally {
         setSubmitting(false)
       }
@@ -206,7 +255,7 @@ function CreateExerciseModal({
   return (
     <FormLayout onSubmit={formik.handleSubmit}>
       <div className="flex flex-col min-h-[560px]">
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-start flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1.5fr] gap-4 items-start flex-1">
           <div>
             <FormField name="title">
               <FormLabelAndMessage
@@ -320,46 +369,207 @@ function CreateExerciseModal({
                 </TabsList>
 
                 <TabsContent value="ai">
-                  <div className="space-y-4 mt-2">
-                    <FormField name="ai_instruction">
-                      <FormLabelAndMessage
-                        label="Task Instruction"
-                        message={''}
-                      />
-                      <Form.Control asChild>
-                        <Textarea
-                          value={aiInstruction}
-                          onChange={(e) => setAiInstruction(e.target.value)}
+                  <div className="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                      <FormField name="ai_instruction">
+                        <FormLabelAndMessage
+                          label="Task Instruction"
+                          message={''}
                         />
-                      </Form.Control>
-                    </FormField>
+                        <Form.Control asChild>
+                          <Textarea
+                            value={aiInstruction}
+                            onChange={(e) => setAiInstruction(e.target.value)}
+                          />
+                        </Form.Control>
+                      </FormField>
 
-                    <FormField name="ai_proposed_solution">
-                      <FormLabelAndMessage
-                        label="Proposed Solution"
-                        message={''}
-                      />
-                      <Form.Control asChild>
-                        <Textarea
-                          value={aiProposedSolution}
-                          onChange={(e) => setAiProposedSolution(e.target.value)}
+                      <FormField name="ai_proposed_solution">
+                        <FormLabelAndMessage
+                          label="Proposed Solution"
+                          message={''}
                         />
-                      </Form.Control>
-                    </FormField>
+                        <Form.Control asChild>
+                          <Textarea
+                            value={aiProposedSolution}
+                            onChange={(e) => setAiProposedSolution(e.target.value)}
+                          />
+                        </Form.Control>
+                      </FormField>
+                    </div>
 
-                    <FormField name="ai_grading_criteria">
-                      <FormLabelAndMessage
-                        label="Grading Criteria (JSON)"
-                        message={''}
-                      />
-                      <Form.Control asChild>
-                        <Textarea
-                          placeholder='{"criteria": [{"name": "Correctness", "weight": 0.7}]}'
-                          value={aiGradingCriteriaText}
-                          onChange={(e) => setAiGradingCriteriaText(e.target.value)}
+                    <div>
+                      <FormField name="ai_grading_criteria">
+                        <FormLabelAndMessage
+                          label="Grading Criteria"
+                          message={''}
                         />
-                      </Form.Control>
-                    </FormField>
+                        <div className="space-y-4">
+                          {/* Pagination controls */}
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm text-muted-foreground">
+                              Criterion {criteria.length === 0 ? 0 : currentCriterionIndex + 1} of {criteria.length}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={currentCriterionIndex <= 0}
+                                onClick={() => setCurrentCriterionIndex((i) => Math.max(0, i - 1))}
+                              >
+                                Previous
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={currentCriterionIndex >= criteria.length - 1}
+                                onClick={() => setCurrentCriterionIndex((i) => Math.min(criteria.length - 1, i + 1))}
+                              >
+                                Next
+                              </Button>
+                            </div>
+                          </div>
+
+                          {criteria.length > 0 && (<>
+                            <div className="rounded-md border p-3 space-y-3">
+                              {(() => { const idx = currentCriterionIndex; const c = criteria[idx]; return (<>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                  <label className="text-xs text-muted-foreground">ID Slug</label>
+                                  <Input
+                                    value={c.id_slug}
+                                    onChange={(e) => {
+                                      const v = e.target.value
+                                      setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, id_slug: v } : pc))
+                                    }}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-xs text-muted-foreground">Type</label>
+                                  <Input
+                                    value={c.type}
+                                    onChange={(e) => {
+                                      const v = e.target.value
+                                      setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, type: v } : pc))
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                  <label className="text-xs text-muted-foreground">Short</label>
+                                  <Input
+                                    value={c.short}
+                                    onChange={(e) => {
+                                      const v = e.target.value
+                                      setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, short: v } : pc))
+                                    }}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-xs text-muted-foreground">Weight</label>
+                                  <Input
+                                    type="number"
+                                    value={c.weight}
+                                    onChange={(e) => {
+                                      const v = Number(e.target.value)
+                                      setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, weight: v } : pc))
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="text-xs text-muted-foreground">Detail</label>
+                                <Textarea
+                                  value={c.detail}
+                                  onChange={(e) => {
+                                    const v = e.target.value
+                                    setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, detail: v } : pc))
+                                  }}
+                                />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Switch
+                                  checked={c.must_fix}
+                                  onCheckedChange={(checked) => {
+                                    setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, must_fix: !!checked } : pc))
+                                  }}
+                                />
+                                <span className="text-sm">Must fix</span>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <ArrayEditor
+                                  label="Prereqs"
+                                  values={c.prereqs}
+                                  onAdd={(v) => setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, prereqs: [...pc.prereqs, v] } : pc))}
+                                  onRemove={(v) => setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, prereqs: pc.prereqs.filter(x => x !== v) } : pc))}
+                                />
+                                <ArrayEditor
+                                  label="Evidence Targets"
+                                  values={c.evidence.targets}
+                                  onAdd={(v) => setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, evidence: { ...pc.evidence, targets: [...pc.evidence.targets, v] } } : pc))}
+                                  onRemove={(v) => setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, evidence: { ...pc.evidence, targets: pc.evidence.targets.filter(x => x !== v) } } : pc))}
+                                />
+                                <ArrayEditor
+                                  label="Evidence Methods"
+                                  values={c.evidence.methods}
+                                  onAdd={(v) => setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, evidence: { ...pc.evidence, methods: [...pc.evidence.methods, v] } } : pc))}
+                                  onRemove={(v) => setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, evidence: { ...pc.evidence, methods: pc.evidence.methods.filter(x => x !== v) } } : pc))}
+                                />
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <ArrayEditor
+                                  label="Evidence Forms"
+                                  values={c.evidence.forms}
+                                  onAdd={(v) => setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, evidence: { ...pc.evidence, forms: [...pc.evidence.forms, v] } } : pc))}
+                                  onRemove={(v) => setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, evidence: { ...pc.evidence, forms: pc.evidence.forms.filter(x => x !== v) } } : pc))}
+                                />
+                              </div>
+
+                              <div className="flex justify-between">
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => {
+                                    const blank = { id_slug: '', type: '', short: '', detail: '', must_fix: false, weight: 1, prereqs: [], evidence: { targets: [], methods: [], forms: [] } }
+                                    setCriteria(prev => { const next = [...prev]; next.splice(idx + 1, 0, blank); return next })
+                                    setCurrentCriterionIndex(idx + 1)
+                                  }}
+                                >
+                                  Add After
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setCriteria(prev => prev.length > 0 ? prev.filter((_, i) => i !== idx) : prev)
+                                    setCurrentCriterionIndex((i) => Math.max(0, Math.min(i, criteria.length - 2)))
+                                  }}
+                                  disabled={criteria.length === 0}
+                                >
+                                  Remove Criterion
+                                </Button>
+                              </div>
+                              </>
+                              ) })()}
+                            </div>
+                            </>
+                          )}
+ 
+                          <div className="flex items-center justify-between">
+                            <div />
+                            <Button type="button" variant="secondary" size="sm" onClick={() => { const blank = { id_slug: '', type: '', short: '', detail: '', must_fix: false, weight: 1, prereqs: [], evidence: { targets: [], methods: [], forms: [] } }; setCriteria(prev => ([...prev, blank])); setCurrentCriterionIndex(criteria.length); }}>
+                              Add Criterion
+                            </Button>
+                          </div>
+                        </div>
+                      </FormField>
+                    </div>
                   </div>
                 </TabsContent>
 
@@ -405,6 +615,11 @@ function CreateExerciseModal({
             </div>
           </div>
         </div>
+        {submitError && (
+          <div className="mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+            {submitError}
+          </div>
+        )}
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={formik.isSubmitting}>
             {formik.isSubmitting ? (
