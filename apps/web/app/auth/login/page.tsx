@@ -18,7 +18,7 @@ export async function generateMetadata(params: MetadataProps): Promise<Metadata>
   })
 
   return {
-    title: 'Login' + ` — ${org.name}`,
+    title: 'Sokrates',
   }
 }
 
@@ -30,9 +30,7 @@ const Login = async (params: MetadataProps) => {
   })
 
   return (
-    <div>
-      <LoginClient org={org}></LoginClient>
-    </div>
+    <LoginClient org={org}></LoginClient>
   )
 }
 

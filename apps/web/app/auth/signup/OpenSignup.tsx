@@ -1,53 +1,63 @@
 'use client'
+import React, { useEffect } from 'react'
 import { useFormik } from 'formik'
 import { useRouter } from 'next/navigation'
-import React, { useEffect } from 'react'
-import { AlertTriangle, Check, User, Mail, Lock, UserRound, FileText, Loader2 } from 'lucide-react'
+import {
+  AlertTriangle,
+  Check,
+  Mail,
+  Lock,
+  UserRound,
+  FileText,
+  Loader2,
+  ArrowLeft,
+} from 'lucide-react'
 import Link from 'next/link'
 import { signup } from '@services/auth/auth'
 import { useOrg } from '@components/Contexts/OrgContext'
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
-const validate = (values: any) => {
+const validateStep1 = (values: any) => {
   const errors: any = {}
-
-  if (!values.email) {
-    errors.email = 'Required'
-  } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)) {
+  if (!values.email) errors.email = 'Required'
+  else if (
+    !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)
+  )
     errors.email = 'Invalid email address'
-  }
+  return errors
+}
 
-  if (!values.password) {
-    errors.password = 'Required'
-  } else if (values.password.length < 8) {
+const validateStep2 = (values: any) => {
+  const errors: any = {}
+  if (!values.password) errors.password = 'Required'
+  else if (values.password.length < 8)
     errors.password = 'Password must be at least 8 characters'
-  }
 
-  if (!values.username) {
-    errors.username = 'Required'
-  }
-
-  if (!values.username || values.username.length < 4) {
-    errors.username = 'Username must be at least 4 characters'
-  }
-
-  if (!values.bio) {
-    errors.bio = 'Required'
-  }
+  if (!values.confirmPassword) errors.confirmPassword = 'Required'
+  else if (values.password !== values.confirmPassword)
+    errors.confirmPassword = 'Passwords do not match'
 
   return errors
 }
 
-function OpenSignUpComponent() {
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
+const validateStep3 = (values: any) => {
+  const errors: any = {}
+  if (!values.username) errors.username = 'Required'
+  else if (values.username.length < 4)
+    errors.username = 'Username must be at least 4 characters'
+  // Bio is optional, so no validation needed
+  return errors
+}
+
+export default function OpenSignUpComponent() {
   const org = useOrg() as any
   const router = useRouter()
+  const [currentStep, setCurrentStep] = React.useState(1)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState('')
   const [message, setMessage] = React.useState('')
 
@@ -57,190 +67,369 @@ function OpenSignUpComponent() {
       org_id: org?.id,
       email: '',
       password: '',
+      confirmPassword: '',
       username: '',
       bio: '',
-      first_name: '',
-      last_name: '',
     },
-    validate,
+    validate: (values) => {
+      switch (currentStep) {
+        case 1:
+          return validateStep1(values)
+        case 2:
+          return validateStep2(values)
+        case 3:
+          return validateStep3(values)
+        default:
+          return {}
+      }
+    },
     enableReinitialize: true,
     onSubmit: async (values) => {
+      if (currentStep < 3) {
+        setCurrentStep(currentStep + 1)
+        setError('')
+        return
+      }
+
+      // Final submission
       setError('')
       setMessage('')
       setIsSubmitting(true)
-      let res = await signup(values)
-      let message = await res.json()
-      if (res.status == 200) {
+      const res = await signup(values)
+      const body = await res.json()
+      if (res.status === 200) {
         setMessage('Your account was successfully created')
-        setIsSubmitting(false)
-      } else if (
-        res.status == 401 ||
-        res.status == 400 ||
-        res.status == 404 ||
-        res.status == 409
-      ) {
-        setError(message.detail)
-        setIsSubmitting(false)
+      } else if ([400, 401, 404, 409].includes(res.status)) {
+        setError(body.detail)
       } else {
         setError('Something went wrong')
-        setIsSubmitting(false)
       }
+      setIsSubmitting(false)
     },
   })
 
-  useEffect(() => { }, [org])
+  useEffect(() => {
+    // Revalidate when step changes
+    formik.validateForm()
+  }, [currentStep, org])
+
+  const isCurrentStepValid = () => {
+    switch (currentStep) {
+      case 1:
+        return !validateStep1(formik.values).email && formik.values.email
+      case 2:
+        return !validateStep2(formik.values).password && !validateStep2(formik.values).confirmPassword && formik.values.password && formik.values.confirmPassword
+      case 3:
+        return !validateStep3(formik.values).username && formik.values.username
+      default:
+        return false
+    }
+  }
+
+  const goBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1)
+      setError('')
+    }
+  }
+
+  const getStepTitle = () => {
+    switch (currentStep) {
+      case 1:
+        return 'Enter your email'
+      case 2:
+        return 'Create a password'
+      case 3:
+        return 'Complete your profile'
+      default:
+        return 'Sign Up'
+    }
+  }
+
+  const getButtonText = () => {
+    if (isSubmitting) return 'Creating Account...'
+    return currentStep === 3 ? 'Create Account' : 'Continue'
+  }
 
   return (
-    <Card className="w-full max-w-md shadow-none border-none">
-      <CardHeader className="space-y-1">
-        <h2 className="text-2xl font-bold tracking-tight text-center">
-          Create an Account
-        </h2>
-        <p className="text-sm text-muted-foreground text-center">
-          Join {org?.name} by filling out the form below
-        </p>
-      </CardHeader>
-      <CardContent>
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription className="ml-2">{error}</AlertDescription>
-          </Alert>
-        )}
+    <div className="bg-gradient-to-br from-[#f5f5f5] to-[#e5e5e5] border-2 border-[#707070] rounded-xl shadow-[0_4px_0_#454545] w-full max-w-[95vw] sm:max-w-[45rem] md:max-w-[52.5rem] p-10 sm:p-12 md:p-16">
+      {/* Header with step indicator */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          {currentStep > 1 && (
+            <button
+              type="button"
+              onClick={goBack}
+              className="flex items-center text-[#454545] hover:text-[#e25a26] transition-colors"
+            >
+              <ArrowLeft size={16} className="mr-1" aria-hidden="true" />
+              Back
+            </button>
+          )}
+          <div className="flex space-x-2 ml-auto">
+            {[1, 2, 3].map((step) => (
+              <div
+                key={step}
+                className={`w-2 h-2 rounded-full ${step === currentStep
+                    ? 'bg-[#e25a26]'
+                    : step < currentStep
+                      ? 'bg-[#454545]'
+                      : 'bg-[#d0d0d0]'
+                  }`}
+              />
+            ))}
+          </div>
+        </div>
+        <h2 className="text-lg font-semibold text-[#242424]">{getStepTitle()}</h2>
+        <p className="text-sm text-[#666666]">Step {currentStep} of 3</p>
+      </div>
 
-        {message && (
-          <Alert variant="default" className="bg-green-50 text-green-800 border-green-200 mb-6">
-            <div className="flex flex-col w-full space-y-4">
-              <div className="flex items-center space-x-2">
-                <Check className="h-4 w-4" />
-                <AlertDescription>{message}</AlertDescription>
-              </div>
-              <div className="w-full border-t border-green-200 my-2"></div>
-              <Link
-                className="flex items-center space-x-2 justify-center bg-green-100 rounded-md py-2 hover:bg-green-200 transition-colors"
-                href={`/login?orgslug=${org?.slug}`}
-              >
-                <User size={14} />
-                <span>Login to your account</span>
-              </Link>
+      {/* Error / Success Messages */}
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="ml-2">{error}</AlertDescription>
+        </Alert>
+      )}
+      {message && (
+        <Alert
+          variant="default"
+          className="mb-6 bg-green-50 text-green-800 border-green-200"
+        >
+          <div className="flex flex-col w-full space-y-4">
+            <div className="flex items-center space-x-2">
+              <Check className="h-4 w-4" />
+              <AlertDescription>{message}</AlertDescription>
             </div>
-          </Alert>
-        )}
+            <div className="w-full border-t border-green-200 my-2" />
+            <Link
+              href={`/login?orgslug=${org?.slug}`}
+              className="flex items-center justify-center space-x-2 bg-green-100 rounded-md py-2 hover:bg-green-200 transition-colors"
+            >
+              <UserRound size={14} />
+              <span>Login to your account</span>
+            </Link>
+          </div>
+        </Alert>
+      )}
 
-        <form onSubmit={formik.handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium">
-              Email
-            </Label>
+      {/* Form */}
+      <form onSubmit={formik.handleSubmit} className="space-y-4">
+        {/* Step 1: Email */}
+        {currentStep === 1 && (
+          <div className="space-y-1">
+            <label htmlFor="email" className="block text-sm font-medium text-[#242424]">
+              Email Address
+            </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666] h-4 w-4" aria-hidden="true" />
               <Input
                 id="email"
                 name="email"
                 type="email"
-                placeholder="your@email.com"
-                className={`pl-10 ${formik.touched.email && formik.errors.email ? 'border-red-500' : ''}`}
+                placeholder="Enter your email address"
+                className={`h-10 pl-10 border border-[#626262] rounded-md w-full ${formik.touched.email && formik.errors.email
+                    ? 'border-[#E25A26]'
+                    : ''
+                  }`}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 value={formik.values.email}
+                autoComplete="email"
+                inputMode="email"
+                required
+                aria-required="true"
+                aria-invalid={Boolean(formik.touched.email && formik.errors.email)}
+                aria-describedby={formik.touched.email && formik.errors.email ? 'email-error' : undefined}
               />
             </div>
             {formik.touched.email && formik.errors.email && (
-              <p className="text-xs text-red-500 mt-1">{formik.errors.email}</p>
+              <p id="email-error" role="alert" aria-live="polite" className="text-xs text-[#E25A26] mt-1">{formik.errors.email}</p>
             )}
           </div>
+        )}
 
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-medium">
-              Password
-            </Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                className={`pl-10 ${formik.touched.password && formik.errors.password ? 'border-red-500' : ''}`}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.password}
-              />
+        {/* Step 2: Password */}
+        {currentStep === 2 && (
+          <div className="space-y-4">
+            {/* Password */}
+            <div className="space-y-1">
+              <label htmlFor="password" className="block text-sm font-medium text-[#242424]">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666] h-4 w-4" aria-hidden="true" />
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="Create a strong password"
+                  className={`h-10 pl-10 border border-[#626262] rounded-md w-full ${formik.touched.password && formik.errors.password
+                      ? 'border-[#E25A26]'
+                      : ''
+                    }`}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  value={formik.values.password}
+                  autoComplete="new-password"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  required
+                  aria-required="true"
+                  aria-invalid={Boolean(formik.touched.password && formik.errors.password)}
+                  aria-describedby={formik.touched.password && formik.errors.password ? 'password-error' : undefined}
+                  data-lpignore="true"
+                  data-1p-ignore="true"
+                />
+              </div>
+              {formik.touched.password && formik.errors.password && (
+                <p id="password-error" role="alert" aria-live="polite" className="text-xs text-[#E25A26] mt-1">{formik.errors.password}</p>
+              )}
             </div>
-            {formik.touched.password && formik.errors.password && (
-              <p className="text-xs text-red-500 mt-1">{formik.errors.password}</p>
-            )}
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="username" className="text-sm font-medium">
-              Username
-            </Label>
-            <div className="relative">
-              <UserRound className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="username"
-                name="username"
-                type="text"
-                placeholder="mik-mueller"
-                className={`pl-10 ${formik.touched.username && formik.errors.username ? 'border-red-500' : ''}`}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.username}
-              />
+            {/* Confirm Password */}
+            <div className="space-y-1">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#242424]">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666] h-4 w-4" aria-hidden="true" />
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="Confirm your password"
+                  className={`h-10 pl-10 border border-[#626262] rounded-md w-full ${formik.touched.confirmPassword && formik.errors.confirmPassword
+                      ? 'border-[#E25A26]'
+                      : ''
+                    }`}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  value={formik.values.confirmPassword}
+                  autoComplete="new-password"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  required
+                  aria-required="true"
+                  aria-invalid={Boolean(formik.touched.confirmPassword && formik.errors.confirmPassword)}
+                  aria-describedby={formik.touched.confirmPassword && formik.errors.confirmPassword ? 'confirmPassword-error' : undefined}
+                  data-lpignore="true"
+                  data-1p-ignore="true"
+                />
+              </div>
+              {formik.touched.confirmPassword && formik.errors.confirmPassword && (
+                <p id="confirmPassword-error" role="alert" aria-live="polite" className="text-xs text-[#E25A26] mt-1">{formik.errors.confirmPassword}</p>
+              )}
             </div>
-            {formik.touched.username && formik.errors.username && (
-              <p className="text-xs text-red-500 mt-1">{formik.errors.username}</p>
-            )}
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="bio" className="text-sm font-medium">
-              Bio
-            </Label>
-            <div className="relative">
-              <FileText className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Textarea
-                id="bio"
-                name="bio"
-                placeholder="Tell us about yourself..."
-                className={`pl-10 min-h-20 ${formik.touched.bio && formik.errors.bio ? 'border-red-500' : ''}`}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.bio}
-              />
+            <p className="text-xs text-[#666666] mt-1">
+              Password must be at least 8 characters long
+            </p>
+          </div>
+        )}
+
+        {/* Step 3: Username and Bio */}
+        {currentStep === 3 && (
+          <div className="space-y-4">
+            {/* Username */}
+            <div className="space-y-1">
+              <label htmlFor="username" className="block text-sm font-medium text-[#242424]">
+                Username
+              </label>
+              <div className="relative">
+                <UserRound className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666] h-4 w-4" aria-hidden="true" />
+                <Input
+                  id="username"
+                  name="username"
+                  type="text"
+                  placeholder="Choose a username"
+                  className={`h-10 pl-10 border border-[#626262] rounded-md w-full ${formik.touched.username && formik.errors.username
+                      ? 'border-[#E25A26]'
+                      : ''
+                    }`}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  value={formik.values.username}
+                  autoComplete="username"
+                  required
+                  aria-required="true"
+                  aria-invalid={Boolean(formik.touched.username && formik.errors.username)}
+                  aria-describedby={formik.touched.username && formik.errors.username ? 'username-error' : undefined}
+                />
+              </div>
+              {formik.touched.username && formik.errors.username && (
+                <p id="username-error" role="alert" aria-live="polite" className="text-xs text-[#E25A26] mt-1">{formik.errors.username}</p>
+              )}
             </div>
-            {formik.touched.bio && formik.errors.bio && (
-              <p className="text-xs text-red-500 mt-1">{formik.errors.bio}</p>
-            )}
+
+            {/* Bio (Optional) */}
+            <div className="space-y-1">
+              <label htmlFor="bio" className="block text-sm font-medium text-[#242424]">
+                Bio <span className="text-[#666666] font-normal">(Optional)</span>
+              </label>
+              <div className="relative">
+                <FileText className="absolute left-3 top-3 text-[#666666] h-4 w-4" aria-hidden="true" />
+                <Textarea
+                  id="bio"
+                  name="bio"
+                  placeholder="Tell us a bit about yourself (optional)"
+                  className="min-h-[80px] pl-10 border border-[#626262] rounded-md w-full"
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  value={formik.values.bio}
+                />
+              </div>
+            </div>
           </div>
+        )}
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating Account...
-              </>
-            ) : (
-              "Create Account"
-            )}
-          </Button>
-        </form>
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          disabled={!isCurrentStepValid() || isSubmitting}
+          className="w-full h-10 bg-[#e25a26] rounded-md shadow-[0_4px_0_#c94918] text-white font-semibold flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-busy={isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="animate-spin mr-2 h-4 w-4" />
+              Creating Account...
+            </>
+          ) : (
+            getButtonText()
+          )}
+        </Button>
+      </form>
 
-        <div className="mt-4 text-center text-sm">
-          <p className="text-muted-foreground">
-            Already have an account?{" "}
-            <Link
-              href={`/login?orgslug=${org?.slug}`}
-              className="text-primary hover:underline"
-            >
-              Sign In
-            </Link>
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+      {/* OR Divider */}
+      <div className="flex items-center my-6">
+        <div className="flex-1 border-t border-[#666666]"></div>
+        <span className="px-4 text-[#666666] font-medium">OR</span>
+        <div className="flex-1 border-t border-[#666666]"></div>
+      </div>
+
+      {/* HPI Keycloak Login */}
+      <Button
+        variant="outline"
+        disabled={true}
+        className="w-full h-12 border-2 border-[#707070] bg-white hover:bg-gray-50 rounded-lg flex items-center justify-center mb-6"
+        type="button"
+      >
+        <img src="hpi-logo.png" alt="HPI" className="w-5 h-5" />
+        <span className="text-[#454545] font-medium">HPI Keycloak</span>
+      </Button>
+
+      <p className="text-center font-semibold text-sm text-[#454545]">
+        Already have an account?{' '}
+        <Link
+          href={`/login?orgslug=${org?.slug}`}
+          className="font-semibold text-[#e25a26] hover:underline"
+        >
+          Sign up
+        </Link>
+      </p>
+    </div>
   )
 }
-
-export default OpenSignUpComponent

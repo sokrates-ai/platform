@@ -62,7 +62,7 @@ const DialogContent = React.forwardRef<
           "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           // -- Optional dotted background pattern ---------------------------
           pattern &&
-          "relative before:absolute before:inset-0 before:content-[''] " +
+          "relative before:absolute before:inset-0 before:content-['']" +
           "before:bg-[url('/background-1.svg')] before:bg-repeat before:bg-auto " +
           "before:opacity-[0.6]",
           className

@@ -1,42 +1,41 @@
 'use client'
+import React, { useEffect } from 'react'
 import { useFormik } from 'formik'
 import { useRouter } from 'next/navigation'
-import React, { useEffect } from 'react'
-import { AlertTriangle, Check, User, Mail, Lock, UserRound, FileText, Loader2 } from 'lucide-react'
+import {
+  AlertTriangle,
+  Check,
+  Mail,
+  Lock,
+  UserRound,
+  FileText,
+  Loader2,
+} from 'lucide-react'
 import Link from 'next/link'
 import { signUpWithInviteCode } from '@services/auth/auth'
 import { useOrg } from '@components/Contexts/OrgContext'
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import AuthCard from '@components/Pages/AuthCard'
 
 const validate = (values: any) => {
   const errors: any = {}
-
-  if (!values.email) {
-    errors.email = 'Required'
-  } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)) {
+  if (!values.email) errors.email = 'Required'
+  else if (
+    !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)
+  )
     errors.email = 'Invalid email address'
-  }
 
-  if (!values.password) {
-    errors.password = 'Required'
-  } else if (values.password.length < 8) {
+  if (!values.password) errors.password = 'Required'
+  else if (values.password.length < 8)
     errors.password = 'Password must be at least 8 characters'
-  }
 
-  if (!values.username) {
-    errors.username = 'Required'
-  }
-
-  if (!values.username || values.username.length < 4) {
+  if (!values.username) errors.username = 'Required'
+  else if (values.username.length < 4)
     errors.username = 'Username must be at least 4 characters'
-  }
 
   return errors
 }
@@ -45,10 +44,12 @@ interface InviteOnlySignUpProps {
   inviteCode: string
 }
 
-function InviteOnlySignUpComponent(props: InviteOnlySignUpProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
+export default function InviteOnlySignUpComponent(
+  props: InviteOnlySignUpProps
+) {
   const org = useOrg() as any
   const router = useRouter()
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState('')
   const [message, setMessage] = React.useState('')
 
@@ -60,8 +61,6 @@ function InviteOnlySignUpComponent(props: InviteOnlySignUpProps) {
       password: '',
       username: '',
       bio: '',
-      first_name: '',
-      last_name: '',
     },
     validate,
     enableReinitialize: true,
@@ -69,169 +68,181 @@ function InviteOnlySignUpComponent(props: InviteOnlySignUpProps) {
       setError('')
       setMessage('')
       setIsSubmitting(true)
-      let res = await signUpWithInviteCode(values, props.inviteCode)
-      let message = await res.json()
-      if (res.status == 200) {
+      const res = await signUpWithInviteCode(values, props.inviteCode)
+      const body = await res.json()
+      if (res.status === 200) {
         setMessage('Your account was successfully created')
-        setIsSubmitting(false)
-      } else if (
-        res.status == 401 ||
-        res.status == 400 ||
-        res.status == 404 ||
-        res.status == 409
-      ) {
-        setError(message.detail)
-        setIsSubmitting(false)
+      } else if ([400, 401, 404, 409].includes(res.status)) {
+        setError(body.detail)
       } else {
         setError('Something went wrong')
-        setIsSubmitting(false)
       }
+      setIsSubmitting(false)
     },
   })
-
 
   useEffect(() => { }, [org])
 
   return (
-    <Card className="w-full max-w-md shadow-none border-none">
-      <CardHeader className="space-y-1">
-        <h2 className="text-2xl font-bold tracking-tight text-center">
-          Create Account
-        </h2>
-        <p className="text-sm text-muted-foreground text-center">
-          Join {org?.name} with your invitation code
-        </p>
-      </CardHeader>
-
-      <CardContent>
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription className="ml-2">{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {message && (
-          <Alert variant="default" className="mb-6 bg-green-50 text-green-900 border border-green-200">
-            <div className="flex flex-col space-y-4 w-full">
-              <div className="flex items-center">
-                <Check className="h-4 w-4 mr-2" />
-                <span className="font-medium">{message}</span>
-              </div>
-              <Separator className="my-2" />
-              <Link
-                className="flex items-center text-green-800 hover:underline"
-                href={`/login?orgslug=${org?.slug}`}
-              >
-                <User size={14} className="mr-2" />
-                <span>Login to your account</span>
-              </Link>
+    <AuthCard className="max-w-[95vw] sm:max-w-[45rem] md:max-w-[52.5rem]">
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="ml-2">{error}</AlertDescription>
+        </Alert>
+      )}
+      {message && (
+        <Alert
+          variant="default"
+          className="mb-6 bg-green-50 text-green-800 border-green-200"
+        >
+          <div className="flex flex-col w-full space-y-4">
+            <div className="flex items-center space-x-2">
+              <Check className="h-4 w-4" />
+              <span className="font-medium">{message}</span>
             </div>
-          </Alert>
-        )}
-
-        <form onSubmit={formik.handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium">
-              Email
-            </Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="your@email.com"
-                className={`pl-10 ${formik.touched.email && formik.errors.email ? 'border-red-500' : ''}`}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.email}
-              />
-            </div>
-            {formik.touched.email && formik.errors.email && (
-              <p className="text-xs text-red-500 mt-1">{formik.errors.email}</p>
-            )}
+            <div className="w-full border-t border-green-200 my-2" />
+            <Link
+              href={`/login?orgslug=${org?.slug}`}
+              className="flex items-center text-green-800 hover:underline"
+            >
+              <UserRound size={14} className="mr-2" />
+              <span>Login to your account</span>
+            </Link>
           </div>
+        </Alert>
+      )}
 
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-medium">
-              Password
-            </Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                className={`pl-10 ${formik.touched.password && formik.errors.password ? 'border-red-500' : ''}`}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.password}
-              />
-            </div>
-            {formik.touched.password && formik.errors.password && (
-              <p className="text-xs text-red-500 mt-1">{formik.errors.password}</p>
-            )}
+      <form onSubmit={formik.handleSubmit} className="space-y-4">
+        {/* Email */}
+        <div className="space-y-1">
+          <label htmlFor="email" className="block text-sm font-medium text-[#454545]">
+            Email
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-[#707070]" />
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="you@example.com"
+              className={`pl-10 h-10 border border-[#626262] rounded-md w-full ${formik.touched.email && formik.errors.email
+                  ? 'border-red-500'
+                  : ''
+                }`}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              value={formik.values.email}
+            />
           </div>
+          {formik.touched.email && formik.errors.email && (
+            <p className="text-xs text-red-500 mt-1">{formik.errors.email}</p>
+          )}
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="username" className="text-sm font-medium">
-              Username
-            </Label>
-            <div className="relative">
-              <UserRound className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="username"
-                name="username"
-                type="text"
-                placeholder="mik-mueller"
-                className={`pl-10 ${formik.touched.username && formik.errors.username ? 'border-red-500' : ''}`}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.username}
-              />
-            </div>
-            {formik.touched.username && formik.errors.username && (
-              <p className="text-xs text-red-500 mt-1">{formik.errors.username}</p>
-            )}
+        {/* Password */}
+        <div className="space-y-1">
+          <label htmlFor="password" className="block text-sm font-medium text-[#454545]">
+            Password
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#707070]" />
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="●●●●●●●●"
+              className={`pl-10 h-10 border border-[#626262] rounded-md w-full ${formik.touched.password && formik.errors.password
+                  ? 'border-red-500'
+                  : ''
+                }`}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              value={formik.values.password}
+            />
           </div>
+          {formik.touched.password && formik.errors.password && (
+            <p className="text-xs text-red-500 mt-1">{formik.errors.password}</p>
+          )}
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="bio" className="text-sm font-medium">
-              Bio
-            </Label>
-            <div className="relative">
-              <FileText className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Textarea
-                id="bio"
-                name="bio"
-                placeholder="Tell us about yourself"
-                className={`pl-10 min-h-24 ${formik.touched.bio && formik.errors.bio ? 'border-red-500' : ''}`}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.bio}
-              />
-            </div>
-            {formik.touched.bio && formik.errors.bio && (
-              <p className="text-xs text-red-500 mt-1">{formik.errors.bio}</p>
-            )}
+        {/* Username */}
+        <div className="space-y-1">
+          <label htmlFor="username" className="block text-sm font-medium text-[#454545]">
+            Username
+          </label>
+          <div className="relative">
+            <UserRound className="absolute left-3 top-1/2 -translate-y-1/2 text-[#707070]" />
+            <Input
+              id="username"
+              name="username"
+              type="text"
+              placeholder="your.username"
+              className={`pl-10 h-10 border border-[#626262] rounded-md w-full ${formik.touched.username && formik.errors.username
+                  ? 'border-red-500'
+                  : ''
+                }`}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              value={formik.values.username}
+            />
           </div>
+          {formik.touched.username && formik.errors.username && (
+            <p className="text-xs text-red-500 mt-1">{formik.errors.username}</p>
+          )}
+        </div>
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating account...
-              </>
-            ) : (
-              "Create Account & Join"
-            )}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+        {/* Bio */}
+        <div className="space-y-1">
+          <label htmlFor="bio" className="block text-sm font-medium text-[#454545]">
+            Bio
+          </label>
+          <div className="relative">
+            <FileText className="absolute left-3 top-2 text-[#707070]" />
+            <Textarea
+              id="bio"
+              name="bio"
+              placeholder="Briefly describe yourself"
+              className={`pl-10 min-h-[80px] border border-[#626262] rounded-md w-full ${formik.touched.bio && formik.errors.bio
+                  ? 'border-red-500'
+                  : ''
+                }`}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              value={formik.values.bio}
+            />
+          </div>
+          {formik.touched.bio && formik.errors.bio && (
+            <p className="text-xs text-red-500 mt-1">{formik.errors.bio}</p>
+          )}
+        </div>
+
+        {/* Submit */}
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full h-10 bg-[#e25a26] rounded-md shadow-[0_4px_0_#c94918] text-white font-semibold flex items-center justify-center"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="animate-spin mr-2 h-4 w-4" />
+              Creating account...
+            </>
+          ) : (
+            'Create Account & Join'
+          )}
+        </Button>
+      </form>
+
+      <p className="mt-4 text-center text-sm text-[#454545]">
+        Already have an account?{' '}
+        <Link
+          href={`/login?orgslug=${org?.slug}`}
+          className="font-semibold text-[#e25a26] hover:underline"
+        >
+          Sign In
+        </Link>
+      </p>
+    </AuthCard>
   )
 }
-
-export default InviteOnlySignUpComponent

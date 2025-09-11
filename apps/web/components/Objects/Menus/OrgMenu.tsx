@@ -31,7 +31,7 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
   // Unauthenticated
   if (session?.status !== 'authenticated') {
     return (
-      <header className="fixed inset-x-0 z-50 flex justify-center top-4 px-4 sm:px-0">
+      <header className="fixed inset-x-0 z-50 flex justify-center top-8 px-4 sm:px-0">
         <div className="relative w-full sm:w-3/4 md:w-2/3 lg:w-1/2">
           <div
             className="relative flex h-12 sm:h-14 md:h-16 lg:h-[71px] w-full
