@@ -81,6 +81,7 @@ function CreateExerciseModal({
   const [isGenerating, setIsGenerating] = React.useState(false)
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = React.useState(false)
   const [generateExtraInput, setGenerateExtraInput] = React.useState('')
+  const [mcQuestion, setMcQuestion] = React.useState('')
 
   const formik = useFormik({
     initialValues: {
@@ -165,6 +166,7 @@ function CreateExerciseModal({
           }
         } else {
           payload.multiple_choice_data = {
+            user_question: mcQuestion,
             answers: choices
               .filter(c => c.text.trim() !== '')
               .map(c => ({ text: c.text.trim(), is_correct: c.correct })),
@@ -592,6 +594,14 @@ function CreateExerciseModal({
 
                 <TabsContent value="multiple_choice">
                   <div className="space-y-3 mt-2">
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">User question</label>
+                      <Input
+                        value={mcQuestion}
+                        placeholder="Enter the question shown to the user"
+                        onChange={(e) => setMcQuestion(e.target.value)}
+                      />
+                    </div>
                     {choices.map((choice, idx) => (
                       <div key={choice.id} className="flex items-center gap-2">
                         <input

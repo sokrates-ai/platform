@@ -60,7 +60,7 @@ class SessionResponse(BaseModel):
 async def workspace_system_obtain_token(
     user: PublicUser, task_id: int, activity_uuid: str, config: WorkspaceConfig
 ) -> str:
-    url = f'http://{config.workspace_api_host}:{config.workspace_api_port}/api/createSession'
+    url = f'http://{config.workspace_api_host}:{config.workspace_api_port}/v1/sessions'
     body = {
         'activity_uuid': activity_uuid,
         'exercise_id': task_id,
@@ -144,6 +144,9 @@ async def api_create_session(
     workspace_config: WorkspaceConfig = (
         request.app.learnhouse_config.workspace_config
     )
+
+    print(f'GET token... | Workspace_URL={workspace_config.workspace_external_base_url}')
+
     token = await workspace_system_obtain_token(
         user=current_user,
         task_id=task_id,
