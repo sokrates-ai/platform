@@ -149,9 +149,23 @@ async def get_chapter(
 
     activities = db_session.exec(statement).all()
 
+    #
+    # Predecessors.
+    #
+
+    statement = (
+        select(CourseChapter_Graph)
+        .where(CourseChapter_Graph.course_id == chapter.course_id)
+        .where(CourseChapter_Graph.chapter_id == chapter.id)
+    )
+
+    incoming_edges = db_session.exec(statement).all()
+    print(f"INCOMING of {chapter.id} = {incoming_edges}")
+
     chapter = ChapterRead(
         **chapter.model_dump(),
         activities=[ActivityRead(**activity.model_dump()) for activity in activities],
+        predecessors=[ch.predecessor_id for ch in incoming_edges],
     )
 
     return chapter
