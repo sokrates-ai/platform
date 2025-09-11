@@ -7,6 +7,7 @@ type Props = {
   searchParams: { orgslug: string; inviteCode?: string }
 }
 
+
 export async function generateMetadata(): Promise<Metadata> {
   return { title: 'Sokrates Sign Up' }
 }

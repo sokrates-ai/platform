@@ -36,7 +36,7 @@ docker_setup() {
     }
 }
 
-teardown() {
+docker_teardown() {
     check
 
     (docker compose -f docker-compose-dev.yml down -v) || {
@@ -56,8 +56,8 @@ setup() {
 }
 
 reset() {
-    teardown
-    setup
+    docker_teardown
+    docker_setup
 }
 
 #

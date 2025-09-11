@@ -57,7 +57,7 @@ def install(
         print("Creating default organization user...")
         # Generate random 6 digit password
         email = "admin@school.dev"
-        password = generate_password(8)
+        password = "admin" #generate_password(8)
         user = UserCreate(
             username="admin", email=EmailStr(email), password=password
         )

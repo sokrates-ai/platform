@@ -21,7 +21,7 @@ export async function generateMetadata({
 		tags: ['organizations'],
 	})
 
-	let title = org.name
+	let title = "Home - Sokrates"
 	let description = org.description
 	let imageUrl = null
 

@@ -74,9 +74,9 @@ function WorkspaceActivity({
 
     // Fetch redirect URL here
     createSession(activity.activity_uuid, task_id, access_token).then((res) => {
-      const url = `${res.workspace_url}?token=${encodeURIComponent(
+      const url = `${res.workspace_url}/w/${encodeURIComponent(
         res.token
-      )}&backlink=${encodeURIComponent(backlink)}`
+      )}?backlink=${encodeURIComponent(backlink)}`
       setURL(url)
       setProgress(100)
       clearInterval(interval)

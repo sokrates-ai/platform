@@ -6,6 +6,8 @@ import {
   Pencil,
   Save,
   Trash2,
+  Coins,
+  Medal,
 } from 'lucide-react'
 import React from 'react'
 import { Droppable } from 'react-beautiful-dnd'
@@ -40,10 +42,26 @@ function ChapterElement(props: ChapterElementProps) {
     string | undefined
   >(undefined)
 
+  const [xpReward, setXpReward] = React.useState<number>(props.chapter?.xp_reward ?? 0)
+  const [coinReward, setCoinReward] = React.useState<number>(props.chapter?.coin_reward ?? 0)
+
+  React.useEffect(() => {
+    setXpReward(props.chapter?.xp_reward ?? 0)
+    setCoinReward(props.chapter?.coin_reward ?? 0)
+  }, [props.chapter?.xp_reward, props.chapter?.coin_reward])
+
   const router = useRouter()
 
   const deleteChapterUI = async () => {
     await deleteChapter(props.chapter.id, access_token)
+    mutate(`${getAPIUrl()}courses/${props.course_uuid}/meta`)
+    await revalidateTags(['courses'], props.orgslug)
+    router.refresh()
+  }
+
+  async function persistRewards(chapterId: string, xp: number, coins: number) {
+    const data: any = { xp_reward: xp, coin_reward: coins }
+    await updateChapter(chapterId, data, access_token)
     mutate(`${getAPIUrl()}courses/${props.course_uuid}/meta`)
     await revalidateTags(['courses'], props.orgslug)
     router.refresh()
@@ -63,7 +81,7 @@ function ChapterElement(props: ChapterElementProps) {
   }
 
   return (
-    <div>
+    <div className="rounded-lg border border-neutral-200/80 bg-white shadow-sm p-3 sm:p-4">
           <div className="flex flex-wrap items-center justify-between pb-3">
             <div className="flex grow items-center space-x-2 mb-2 sm:mb-0">
               <div className="bg-neutral-100 rounded-md p-2">
@@ -111,6 +129,34 @@ function ChapterElement(props: ChapterElementProps) {
                 />
               </div>
             </div>
+            <div className="flex items-center space-x-4 mb-2 sm:mb-0">
+              <div className="flex flex-col items-start space-y-1 bg-neutral-50 rounded-md px-2 py-1">
+                <span className="flex items-center gap-1 text-[10px] sm:text-xs text-neutral-600">
+                  <Medal size={12} className="text-yellow-600" /> XP: {xpReward}
+                </span>
+                <input
+                  type="range"
+                  min={0}
+                  max={50}
+                  value={xpReward}
+                  onChange={(e) => setXpReward(Number(e.target.value))}
+                  onBlur={() => persistRewards(props.chapter.id, xpReward, coinReward)}
+                />
+              </div>
+              <div className="flex flex-col items-start space-y-1 bg-neutral-50 rounded-md px-2 py-1">
+                <span className="flex items-center gap-1 text-[10px] sm:text-xs text-neutral-600">
+                  <Coins size={12} className="text-amber-500" /> Coins: {coinReward}
+                </span>
+                <input
+                  type="range"
+                  min={0}
+                  max={10}
+                  value={coinReward}
+                  onChange={(e) => setCoinReward(Number(e.target.value))}
+                  onBlur={() => persistRewards(props.chapter.id, xpReward, coinReward)}
+                />
+              </div>
+            </div>
             <div className="flex items-center space-x-2">
               <MoreVertical size={15} className="text-gray-300" />
               <ConfirmationModal
@@ -130,6 +176,7 @@ function ChapterElement(props: ChapterElementProps) {
               />
             </div>
           </div>
+          <div className="border-t border-neutral-200/70 my-2" />
           <Droppable
             key={props.chapter.chapter_uuid}
             droppableId={props.chapter.chapter_uuid}

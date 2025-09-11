@@ -50,7 +50,7 @@ export async function generateMetadata({
           url: getOrgThumbnailMediaDirectory(org?.org_uuid, org?.thumbnail_image),
           width: 800,
           height: 600,
-          alt: org.name,
+          alt: "Sokrates",
         },
       ],
     },

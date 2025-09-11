@@ -8,7 +8,7 @@ import useAdminStatus from '@components/Hooks/useAdminStatus'
 import CourseCard from '@components/Objects/StyledElements/Cards/CourseCard'
 import NoCoursesAlert from '@components/Objects/StyledElements/Alerts/NoCourseAlert'
 
-import AnnouncementCarousel from '@components/Objects/AnnouncementCarousel'
+import AnnouncementCarousel, { type Slide } from '@components/Objects/AnnouncementCarousel'
 import { LayoutGrid } from 'lucide-react'
 
 import {
@@ -25,7 +25,7 @@ interface CoursesClientProps {
   orgslug: string
   courses: any[]
   org_id: string
-  slides: Array<{ color: string; text: string }>
+  slides: Slide[]
 }
 
 const CoursesClient: React.FC<CoursesClientProps> = ({

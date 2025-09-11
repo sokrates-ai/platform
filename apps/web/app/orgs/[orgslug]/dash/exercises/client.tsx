@@ -17,6 +17,7 @@ import { Plus } from 'lucide-react'
 import CourseCard from './courseCard'
 import { getCourseThumbnailMediaDirectory } from '@services/media/media'
 import type { ApiExercise } from './types'
+import { Tabs, TabsList, TabsTrigger } from '@components/ui/tabs'
 
 type ExerciseProps = {
   orgslug: string
@@ -55,6 +56,8 @@ function ExerciseHome(params: ExerciseProps) {
 
   const { data: tags, isLoading: tagsLoading } = useSWR(TAGS_URL, (url: string) => swrFetcher(url, access_token))
 
+  const [selectedTaskType, setSelectedTaskType] = React.useState<'ai' | 'multiple_choice'>('ai')
+
   if (coursesLoading || exercisesLoading || tagsLoading) {
     return;
   }
@@ -63,57 +66,65 @@ function ExerciseHome(params: ExerciseProps) {
     <div className="h-full w-full pl-10 pr-10">
       <div className="mb-6">
         <BreadCrumbs type="exercises" />
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4 gap-4">
           <h1 className="text-3xl font-bold mb-4 sm:mb-0">Exercise Library</h1>
-          <AuthenticatedClientElement
-            checkMethod="roles"
-            action="create"
-            ressourceType="courses"
-            orgId={params.org_id}
-          >
-            <div className="flex gap-5">
-              <Dialog open={editTagsModalOpen} onOpenChange={setEditTagsModalOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="default">Edit Tags</Button>
-                </DialogTrigger>
-                <DialogContent className="min-h-[500px] overflow-auto">
-                  <DialogHeader>
-                    <DialogTitle>Edit Tags</DialogTitle>
-                    <DialogDescription>Edit task tags</DialogDescription>
-                  </DialogHeader>
-                  <EditTagsModal
-                    closeModal={() => setEditTagsModalOpen(false)}
-                    orgslug={params.orgslug}
-                    mutateURL={TAGS_URL}
-                    tags={tags}
-                  />
-                </DialogContent>
-              </Dialog>
+          <div className="flex items-center gap-4">
+            <Tabs value={selectedTaskType} onValueChange={(v: any) => setSelectedTaskType(v)}>
+              <TabsList>
+                <TabsTrigger value="ai">AI</TabsTrigger>
+                <TabsTrigger value="multiple_choice">Multiple Choice</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <AuthenticatedClientElement
+              checkMethod="roles"
+              action="create"
+              ressourceType="courses"
+              orgId={params.org_id}
+            >
+              <div className="flex gap-5">
+                <Dialog open={editTagsModalOpen} onOpenChange={setEditTagsModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="default" size="lg">Edit Tags</Button>
+                  </DialogTrigger>
+                  <DialogContent className="min-h-[500px] overflow-auto">
+                    <DialogHeader>
+                      <DialogTitle>Edit Tags</DialogTitle>
+                      <DialogDescription>Edit task tags</DialogDescription>
+                    </DialogHeader>
+                    <EditTagsModal
+                      closeModal={() => setEditTagsModalOpen(false)}
+                      orgslug={params.orgslug}
+                      mutateURL={TAGS_URL}
+                      tags={tags}
+                    />
+                  </DialogContent>
+                </Dialog>
 
-              <Dialog open={newExerciseModal} onOpenChange={setNewExerciseModal}>
-                <DialogTrigger asChild>
-                  <Button variant="default" className="space-x-2">
-                    <span>New Exercise</span>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="min-h-[500px] overflow-auto">
-                  <DialogHeader>
-                    <DialogTitle>Create Exercise</DialogTitle>
-                    <DialogDescription>Create a new exercise</DialogDescription>
-                  </DialogHeader>
-                  <CreateExerciseModal
-                    closeModal={closeNewCourseModal}
-                    orgslug={params.orgslug}
-                    mutateURL={TASKS_URL}
-                    courses={courses}
-                    tags={tags}
-                    courseID={null}
-                  />
-                </DialogContent>
-              </Dialog>
-            </div>
-          </AuthenticatedClientElement>
+                <Dialog open={newExerciseModal} onOpenChange={setNewExerciseModal}>
+                  <DialogTrigger asChild>
+                    <Button variant="default" size="lg" className="space-x-2">
+                      <span>New Exercise</span>
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="min-h-[500px] overflow-auto max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>Create Exercise</DialogTitle>
+                      <DialogDescription>Create a new exercise</DialogDescription>
+                    </DialogHeader>
+                    <CreateExerciseModal
+                      closeModal={closeNewCourseModal}
+                      orgslug={params.orgslug}
+                      mutateURL={TASKS_URL}
+                      courses={courses}
+                      tags={tags}
+                      courseID={null}
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </AuthenticatedClientElement>
+          </div>
         </div>
       </div>
 
@@ -129,7 +140,7 @@ function ExerciseHome(params: ExerciseProps) {
               title={course.name}
               description={course.description}
               imageUrl={thumbnailImage}
-              onClick={() => { window.location.href = `/dash/exercises/${course.id}` }}
+              onClick={() => { window.location.href = `/dash/exercises/${course.id}?type=${selectedTaskType}` }}
             >
             </CourseCard>
           </div>
@@ -141,7 +152,7 @@ function ExerciseHome(params: ExerciseProps) {
               title={"Unassigned"}
               description={"Exercises without a course"}
               imageUrl={undefined}
-              onClick={() => { window.location.href = `/dash/exercises/unassigned` }}
+              onClick={() => { window.location.href = `/dash/exercises/unassigned?type=${selectedTaskType}` }}
             >
             </CourseCard>
           </div>

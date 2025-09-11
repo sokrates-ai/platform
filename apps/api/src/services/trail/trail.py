@@ -12,6 +12,20 @@ from src.db.trails import Trail, TrailCreate, TrailRead
 from src.db.users import AnonymousUser, PublicUser
 
 
+def chapter_completed(
+    request: Request,
+    user: PublicUser,
+    chapter_id: int,
+    course_id: int,
+    trailrun_id: int,
+    db_session: Session,
+) -> None:
+    # Dummy implementation for now. Extend to grant rewards, etc.
+    print(
+        f"[chapter_completed] user={user.id} chapter={chapter_id} course={course_id} trailrun={trailrun_id}"
+    )
+
+
 async def create_user_trail(
     request: Request,
     user: PublicUser,
@@ -279,6 +293,48 @@ async def add_activity_to_trail(
         db_session.commit()
         db_session.refresh(trailstep)
 
+    # After recording this activity, check if the containing chapter is now complete
+    # 1) Find the chapter for this activity within this course
+    ca_stmt = select(ChapterActivity).where(
+        (ChapterActivity.activity_id == activity.id)
+        & (ChapterActivity.course_id == course.id)
+    )
+    chapter_activity = db_session.exec(ca_stmt).first()
+
+    if chapter_activity:
+        chapter_id = chapter_activity.chapter_id
+        # 2) Get all activities in this chapter
+        chapter_acts_stmt = select(ChapterActivity).where(
+            (ChapterActivity.chapter_id == chapter_id)
+            & (ChapterActivity.course_id == course.id)
+        )
+        chapter_activities = db_session.exec(chapter_acts_stmt).all()
+        chapter_activity_ids = [ca.activity_id for ca in chapter_activities]
+
+        if chapter_activity_ids:
+            # 3) Check if the user has trail steps for all activities in the chapter (complete=True)
+            steps_stmt = select(TrailStep).where(
+                (TrailStep.trailrun_id == trailrun.id)
+                & (TrailStep.user_id == user.id)
+            )
+            user_steps = db_session.exec(steps_stmt).all()
+            completed_ids = set(
+                ts.activity_id for ts in user_steps if ts.complete is True
+            )
+            chapter_all_completed = all(
+                aid in completed_ids for aid in chapter_activity_ids
+            )
+
+            if chapter_all_completed:
+                chapter_completed(
+                    request=request,
+                    user=user,
+                    chapter_id=chapter_id,
+                    course_id=course.id if course.id is not None else 0,
+                    trailrun_id=trailrun.id if trailrun.id is not None else 0,
+                    db_session=db_session,
+                )
+
     statement = select(TrailRun).where(
         TrailRun.trail_id == trail.id, TrailRun.user_id == user.id
     )
@@ -509,6 +565,9 @@ async def mark_activity_task_complete(
     org_id: int,
     db_session: Session,
 ):
+    # TODO: release XP + coins attached to this activity
+
+
     marker = Assignment_Task_Complete(
         complete=True,
         task_id=task_id,
@@ -535,5 +594,5 @@ async def mark_activity_task_complete(
 #         Assignment_Task_Complete.user_id == user.id
 #     )
 #     markers = db_session.exec(statement).all()
-
+#
 #     return markers

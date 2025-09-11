@@ -3,9 +3,10 @@
 import React from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-interface Slide {
+export interface Slide {
   color: string
   text: string
+  bgImage?: string
 }
 
 interface AnnouncementCarouselProps {
@@ -19,19 +20,57 @@ const AnnouncementCarousel: React.FC<AnnouncementCarouselProps> = ({
   intervalMs = 5000,
 }) => {
   const [currentSlide, setCurrentSlide] = React.useState(0)
+  const [progress, setProgress] = React.useState(0) // % progress of current timer
 
-  // auto-rotate
-  React.useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((i) => (i + 1) % slides.length)
-    }, intervalMs)
-    return () => clearInterval(timer)
+  const rafRef = React.useRef<number | null>(null)
+  const startTimeRef = React.useRef<number | null>(null)
+
+  const startTimer = React.useCallback(() => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    setProgress(0)
+    startTimeRef.current = performance.now()
+
+    const tick = (now: number) => {
+      if (!startTimeRef.current) return
+      const elapsed = now - startTimeRef.current
+      const pct = Math.min((elapsed / intervalMs) * 100, 100)
+      setProgress(pct)
+
+      if (pct >= 100) {
+        // move to next slide and restart
+        setCurrentSlide((i) => (i + 1) % slides.length)
+        startTimer()
+      } else {
+        rafRef.current = requestAnimationFrame(tick)
+      }
+    }
+
+    rafRef.current = requestAnimationFrame(tick)
   }, [slides.length, intervalMs])
 
-  const prevSlide = () =>
+  React.useEffect(() => {
+    startTimer()
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    }
+  }, [startTimer])
+
+  const prevSlide = () => {
     setCurrentSlide((i) => (i - 1 + slides.length) % slides.length)
-  const nextSlide = () =>
+    startTimer()
+  }
+
+  const nextSlide = () => {
     setCurrentSlide((i) => (i + 1) % slides.length)
+    startTimer()
+  }
+
+  const goToSlide = (idx: number) => {
+    setCurrentSlide(idx)
+    startTimer()
+  }
+
+  const current = slides[currentSlide]
 
   return (
     <div
@@ -40,10 +79,19 @@ const AnnouncementCarousel: React.FC<AnnouncementCarouselProps> = ({
         border-y-2 sm:border-b-2 mt-36 sm:mt-0 overflow-hidden
         h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[80vh]
       "
-      style={{ backgroundColor: slides[currentSlide].color }}
+      style={
+        current.bgImage
+          ? { backgroundImage: `url(${current.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+          : { backgroundColor: current.color }
+      }
     >
+      {/* overlay only if bgImage exists */}
+      {current.bgImage && (
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      )}
+
       <span className="z-10 px-4 text-center text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-[#F5F5F5]">
-        {slides[currentSlide].text}
+        {current.text}
       </span>
 
       <button
@@ -66,22 +114,33 @@ const AnnouncementCarousel: React.FC<AnnouncementCarouselProps> = ({
       </button>
 
       <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex space-x-2 z-10">
-        {slides.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => setCurrentSlide(idx)}
-            className={`
-              transition-all duration-200
-              ${currentSlide === idx
-                ? 'w-6 h-3 sm:w-8 sm:h-4 rounded-full'
-                : 'w-2 h-2 sm:w-3 sm:h-3 rounded-full opacity-50'}
-              bg-[#F5F5F5]
-            `}
-          />
-        ))}
+        {slides.map((_, idx) => {
+          const isActive = currentSlide === idx
+          return (
+            <button
+              key={idx}
+              onClick={() => goToSlide(idx)}
+              className={`
+                relative overflow-hidden transition-all duration-200
+                ${isActive
+                  ? 'w-6 h-3 sm:w-8 sm:h-4 rounded-full'
+                  : 'w-2 h-2 sm:w-3 sm:h-3 rounded-full opacity-50'}
+                bg-[#F5F5F5]
+              `}
+            >
+              {/* progress bar for active dot */}
+              {isActive && (
+                <div
+                  className="absolute left-0 top-0 h-full bg-[#00000050]"
+                  style={{ width: `${progress}%` }}
+                />
+              )}
+            </button>
+          )
+        })}
       </div>
     </div>
   )
 }
 
-export default AnnouncementCarousel 
+export default AnnouncementCarousel

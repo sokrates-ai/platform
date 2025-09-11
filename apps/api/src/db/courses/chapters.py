@@ -15,6 +15,8 @@ class ChapterBase(SQLModel):
     course_id: int = Field(
         sa_column=Column("course_id", Integer, ForeignKey("course.id", ondelete="CASCADE"))
     )
+    xp_reward: int = 0
+    coin_reward: int = 0
 
 
 class Chapter(ChapterBase, table=True):

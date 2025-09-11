@@ -4,11 +4,14 @@ from typing import List, Optional
 from config.config import WorkspaceConfig
 from src.db.courses.activities import Activity, ActivityTypeEnum
 from src.services.courses.activities.activities import get_activity
-
 from src.db.tasks import TaskBase
 
-from src.services.courses.activities.workspaces_gen import (TaskGradingCriteria,
-    generate_task_grading_criteria)
+from src.services.courses.activities.workspaces_gen import (
+        TaskGradingCriteria,
+        GenerateGradingCriteria,
+        TaskGradingCriteriaCollection,
+        generate_task_grading_criteria,
+)
 
 from src.services.courses.activities.workspaces import (
     Tags,
@@ -57,7 +60,7 @@ class SessionResponse(BaseModel):
 async def workspace_system_obtain_token(
     user: PublicUser, task_id: int, activity_uuid: str, config: WorkspaceConfig
 ) -> str:
-    url = f'http://{config.workspace_api_host}:{config.workspace_api_port}/api/createSession'
+    url = f'http://{config.workspace_api_host}:{config.workspace_api_port}/v1/sessions'
     body = {
         'activity_uuid': activity_uuid,
         'exercise_id': task_id,
@@ -141,6 +144,9 @@ async def api_create_session(
     workspace_config: WorkspaceConfig = (
         request.app.learnhouse_config.workspace_config
     )
+
+    print(f'GET token... | Workspace_URL={workspace_config.workspace_external_base_url}')
+
     token = await workspace_system_obtain_token(
         user=current_user,
         task_id=task_id,
@@ -185,14 +191,15 @@ async def api_modify_task(
 @router.post('/criteria')
 async def api_generate_grading_criteria(
     request: Request,
-    task_obj: TaskBase,
+    body: GenerateGradingCriteria,
     current_user: PublicUser = Depends(get_current_user),
     db_session: Session = Depends(get_db_session),
-) -> TaskGradingCriteria:
+) -> TaskGradingCriteriaCollection:
     """
     Generate task grading criteria
     """
-    return await generate_task_grading_criteria(task_obj)
+
+    return await generate_task_grading_criteria(body)
 
 
 @router.get('/id/{id}')
