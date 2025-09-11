@@ -127,7 +127,7 @@ async def get_chapter(
             status_code=status.HTTP_409_CONFLICT, detail="Chapter does not exist"
         )
 
-    # get COurse
+    # Get course
     statement = select(Course).where(Course.id == chapter.course_id)
     course = db_session.exec(statement).first()
 

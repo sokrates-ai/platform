@@ -20,8 +20,12 @@ class TaskBase(SQLModel):
             nullable=False,
         ),
     )
-    _type_ai_instruction: str = ''
-    _type_multiple_choice_data: dict = Field(default={}, sa_column=Column(JSON))
+    # Only when using type=AI
+    ai_instruction: dict = Field(default={}, sa_column=Column(JSON))
+    # Only when using type=Multiple Choice
+    multiple_choice_data: dict = Field(default={}, sa_column=Column(JSON))
+    xp_reward: int = 0
+    coin_reward: int = 0
 
 
 class Task(TaskBase, table=True):

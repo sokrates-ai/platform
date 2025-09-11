@@ -219,4 +219,9 @@ async def api_ws_record_solution(
             complete=True,
         )
 
+    # TODO: check if all activities from a chapter are completed, then trigger chapter completion.
+    # TODO: this is better done in the general add activity to trail function.
+
+    # TODO: here: get the XP attached to a task and record it.
+
     return None
