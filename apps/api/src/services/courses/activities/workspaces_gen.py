@@ -5,6 +5,7 @@ from src.db.tasks import TaskBase, TaskType
 from src.services.courses.activities.workspaces_prompts import GENERATE_GRADING_CRITERIA
 import asyncio
 
+
 class TaskGradingCriteria(BaseModel):
     id_slug: str
     short: str
@@ -23,7 +24,7 @@ class GenerateGradingCriteria(TaskBase):
 
 async def generate_task_grading_criteria(
     inputs: GenerateGradingCriteria,
-) -> TaskGradingCriteria:
+) -> TaskGradingCriteriaCollection:
     # Prompt the LLM to get the grading criteria
     client = OpenAI()
 
@@ -34,11 +35,10 @@ async def generate_task_grading_criteria(
 
     text = (
         f"{GENERATE_GRADING_CRITERIA}\n"
-        f"Furthermore, respect the following input when generating your answer. Respect this input AT ALL COST: {inputs.user_input}\n"
-        f"Finally, here is the task:\n"
-        f"Title: {inputs.title}\n"
-        f"Description: {inputs.description}\n"
-        f"Task Instructions: {inputs.ai_instruction}\n"
+        f"START OF TASK: Task Title: {inputs.title}\n"
+        f"Task Description: {inputs.description}\n"
+        f"Task Data: {inputs.ai_instruction}\n"
+        f"END OF TASK. Furthermore, add an additional grading criterion based on the following requirements MUST be generated. Do not mention that this information is not from the task context. Here is the additional information: {inputs.user_input}\n"
     )
     print(f"Gen with user input: {text}")
 
@@ -57,8 +57,15 @@ async def generate_task_grading_criteria(
                 ]
             }
         ],
-        text_format=TaskGradingCriteria,
+        text_format=TaskGradingCriteriaCollection,
     )
+
+    output: TaskGradingCriteriaCollection = response.output_parsed
+
+    for item in output.list:
+        if item.weight > 1.0:
+            print(f"WARN: generated weight is > 1.0 ({item.weight}), ceiling it")
+            item.weight = 1.0
 
     return response.output_parsed
 

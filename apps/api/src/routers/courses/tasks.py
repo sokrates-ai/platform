@@ -9,6 +9,7 @@ from src.db.tasks import TaskBase
 from src.services.courses.activities.workspaces_gen import (
         TaskGradingCriteria,
         GenerateGradingCriteria,
+        TaskGradingCriteriaCollection,
         generate_task_grading_criteria,
 )
 
@@ -190,7 +191,7 @@ async def api_generate_grading_criteria(
     body: GenerateGradingCriteria,
     current_user: PublicUser = Depends(get_current_user),
     db_session: Session = Depends(get_db_session),
-) -> TaskGradingCriteria:
+) -> TaskGradingCriteriaCollection:
     """
     Generate task grading criteria
     """

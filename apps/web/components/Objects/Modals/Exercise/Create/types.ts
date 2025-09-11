@@ -19,7 +19,7 @@ export async function generateGradingCriteria(
   data: Exercise & { user_input: string },
   access_token: string,
 ) {
-  let urlComplete = `${getAPIUrl()}api/v1/tasks/criteria`
+  let urlComplete = `${getAPIUrl()}tasks/criteria/`
   // TODO: use relative URL if not in localhost!!!
 
   console.log('generate grading criteria url, ', urlComplete)

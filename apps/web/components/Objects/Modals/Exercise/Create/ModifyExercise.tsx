@@ -13,13 +13,15 @@ import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import toast from 'react-hot-toast'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
-import { X } from 'lucide-react'
+import { X, Wand2 } from 'lucide-react'
 import { modifyExercise } from '@services/courses/workspaces'
 import { mutate } from 'swr'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs'
 import { Separator } from '@components/ui/separator'
 import { Button } from '@components/ui/button'
 import { Switch } from '@components/ui/switch'
+import { generateGradingCriteria } from './types'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@components/ui/dialog'
 
 const validationSchema = Yup.object().shape({
   title: Yup.string()
@@ -64,6 +66,9 @@ function ModifyExerciseModal({
   type Choice = { id: string; text: string; correct: boolean }
   const [choices, setChoices] = React.useState<Choice[]>([])
   const [submitError, setSubmitError] = React.useState<string | null>(null)
+  const [isGenerating, setIsGenerating] = React.useState(false)
+  const [isGenerateDialogOpen, setIsGenerateDialogOpen] = React.useState(false)
+  const [generateExtraInput, setGenerateExtraInput] = React.useState('')
 
   // Hydrate type-specific state from incoming exercise
   React.useEffect(() => {
@@ -272,6 +277,49 @@ function ModifyExerciseModal({
     setChoices(prev => (prev.length <= 2 ? prev : prev.filter(c => c.id !== id)))
   }
 
+  async function handleGenerate(extra: string) {
+    setSubmitError(null)
+    setIsGenerating(true)
+    try {
+      const combinedUserInput = [formik.values.description || '', (extra || '').trim()].filter(Boolean).join('\n\n')
+      const data: any = {
+        title: formik.values.title,
+        description: formik.values.description,
+        task_type: 'ai',
+        ai_instruction: {
+          task_instruction: aiInstruction,
+          proposed_solution: aiProposedSolution,
+        },
+        multiple_choice_data: {},
+        xp_reward: 0,
+        coin_reward: 0,
+        user_input: combinedUserInput,
+      }
+      const res = await generateGradingCriteria(data, (session as any).data?.tokens?.access_token)
+      const list = Array.isArray(res?.list)
+        ? res.list : alert("AI error")
+      if (!Array.isArray(list) || list.length === 0) {
+        toast.error('No criteria generated')
+      } else {
+        const mapped = list.map((c: any) => ({
+          id_slug: c?.id_slug || '',
+          short: c?.short || '',
+          detail: c?.detail || '',
+          must_fix: !!c?.must_fix,
+          weight: typeof c?.weight === 'number' ? c.weight : 1,
+        }))
+        setCriteria(prev => [...prev, ...mapped])
+        toast.success('Generated criteria added')
+      }
+    } catch (e) {
+      toast.error('Failed to generate criteria')
+    } finally {
+      setIsGenerating(false)
+      setIsGenerateDialogOpen(false)
+      setGenerateExtraInput('')
+    }
+  }
+
   return (
     <FormLayout onSubmit={formik.handleSubmit}>
       <div className="flex flex-col min-h-[560px]">
@@ -439,12 +487,31 @@ function ModifyExerciseModal({
                       </FormField>
                     </div>
 
-                    <div className='h-1/2'>
+                    <div className={`h-1/2 ${isGenerating ? 'pointer-events-none opacity-50' : ''}`}>
                       <FormField name="ai_grading_criteria">
                         <FormLabelAndMessage
                           label="Grading Criteria"
                           message={''}
                         />
+                        <div className="flex items-center justify-between mb-3">
+                          <div />
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            disabled={isGenerating}
+                            onClick={() => {
+                              setSubmitError(null)
+                              setIsGenerateDialogOpen(true)
+                            }}
+                          >
+                            {isGenerating ? (
+                              <div className="flex items-center gap-2"><BarLoader width={40} color="#000000" /><span className="text-xs">Generating…</span></div>
+                            ) : (
+                              <div className="flex items-center gap-2"><Wand2 size={14} /> <span>Generate</span></div>
+                            )}
+                          </Button>
+                        </div>
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="text-sm text-muted-foreground">
@@ -567,6 +634,37 @@ function ModifyExerciseModal({
           </Button>
         </div>
       </div>
+
+      <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Additional details for generation</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Textarea
+              placeholder="Add any extra context for the LLM (optional)"
+              value={generateExtraInput}
+              onChange={(e) => setGenerateExtraInput(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setIsGenerateDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => handleGenerate(generateExtraInput)}
+              disabled={isGenerating}
+            >
+              {isGenerating ? 'Generating…' : 'Generate'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </FormLayout>
   )
 }
