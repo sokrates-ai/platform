@@ -30,9 +30,7 @@ const Login = async (params: MetadataProps) => {
   })
 
   return (
-    <div>
-      <LoginClient org={org}></LoginClient>
-    </div>
+    <LoginClient org={org}></LoginClient>
   )
 }
 

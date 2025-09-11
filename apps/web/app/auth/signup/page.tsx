@@ -1,42 +1,25 @@
+// app/[orgslug]/signup/page.tsx  (or pages/signup.tsx)
 import { Metadata } from 'next'
 import { getOrganizationContextInfo } from '@services/organizations/orgs'
 import SignUpClient from './signup'
-import { Suspense } from 'react'
-import PageLoading from '@components/Objects/Loaders/PageLoading'
 
-type MetadataProps = {
-  params: { orgslug: string; courseid: string }
-  searchParams: { [key: string]: string | string[] | undefined }
+type Props = {
+  searchParams: { orgslug: string; inviteCode?: string }
 }
 
-export async function generateMetadata(
-  params
-    : MetadataProps): Promise<Metadata> {
-  const orgslug = params.searchParams.orgslug
-  // Get Org context information
-  const org = await getOrganizationContextInfo(orgslug, {
-    revalidate: 0,
-    tags: ['organizations'],
-  })
 
-  return {
-    title: 'Sign up' + ` — Sokrate`,
-  }
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: 'Sokrates Sign Up' }
 }
 
-const SignUp = async (params: any) => {
-  const orgslug = params.searchParams.orgslug
+export default async function SignUpPage({ searchParams }: Props) {
+  const orgslug = searchParams.orgslug
   const org = await getOrganizationContextInfo(orgslug, {
     revalidate: 0,
     tags: ['organizations'],
   })
 
   return (
-    <>
-      <Suspense fallback={<PageLoading />}>
-        <SignUpClient org={org} />
-      </Suspense>
-    </>
+    <SignUpClient org={org} inviteCode={searchParams.inviteCode} />
   )
 }
-export default SignUp
