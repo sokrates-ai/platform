@@ -16,8 +16,8 @@ CONCURRENT_THREADS = 5  # Number of concurrent threads for creation/login
 # HARDCODED VALUES (replace with real values as needed)
 BASE="http://localhost:3000"
 API_BASE = "http://localhost:1338/api/v1"
-ORG_ID = 'default'  # Set your org id here
-INVITE_CODE = "0gnUj"  # Set your invite code here
+ORG_ID = 1
+INVITE_CODE = "AZhMA"  # Set your invite code here
 ADMIN_EMAIL = "admin@school.dev"
 ADMIN_PASSWORD = "06uKPg1L"  # Set your admin password here
 

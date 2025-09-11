@@ -1,7 +1,7 @@
 from typing import List, Optional
 from sqlmodel import SQLModel, Field
 from pydantic import BaseModel
-from sqlalchemy import JSON, Column, ForeignKey, Integer, String, Enum as SqlEnum
+from sqlalchemy import JSON, Column, Enum as SqlEnum
 from enum import Enum
 
 
@@ -13,7 +13,13 @@ class TaskType(Enum):
 class TaskBase(SQLModel):
     title: str = ''
     description: str = ''
-    task_type = Field(default=TaskType.AI, sa_column= Column(SqlEnum(TaskType), nullable=False))
+    task_type: TaskType = Field(
+        default=TaskType.AI,
+        sa_column=Column(
+            SqlEnum(TaskType, native_enum=False, values_callable=lambda e: [i.value for i in e]),
+            nullable=False,
+        ),
+    )
     _type_ai_instruction: str = ''
     _type_multiple_choice_data: dict = Field(default={}, sa_column=Column(JSON))
 

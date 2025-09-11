@@ -4,7 +4,6 @@ from sqlmodel import Field, SQLModel
 from src.db.roles import RoleRead
 
 
-
 class UserBase(SQLModel):
     username: str
     first_name: str
@@ -12,6 +11,10 @@ class UserBase(SQLModel):
     email: EmailStr
     avatar_image: Optional[str] = ""
     bio: Optional[str] = ""
+    # Gamefication and so on
+    coins: int = 0          # Can buy stuff from the shop
+    level: int = 0          # General level (no effect just jet)
+    level_progress: int = 0 # How far the user is in the current level (0-100)
 
 
 class UserCreate(UserBase):
