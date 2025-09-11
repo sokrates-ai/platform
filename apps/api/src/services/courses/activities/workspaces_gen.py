@@ -5,21 +5,12 @@ from src.db.tasks import TaskBase, TaskType
 from src.services.courses.activities.workspaces_prompts import GENERATE_GRADING_CRITERIA
 import asyncio
 
-class Evidence(BaseModel):
-    targets: List[str]
-    methods: List[str]
-    forms: List[str]
-
-
 class TaskGradingCriteria(BaseModel):
     id_slug: str
-    type: str
     short: str
     detail: str
     must_fix: bool
     weight: float
-    prereqs: List[str]
-    evidence: Evidence
 
 
 class TaskGradingCriteriaCollection(BaseModel):
@@ -28,6 +19,7 @@ class TaskGradingCriteriaCollection(BaseModel):
 
 class GenerateGradingCriteria(TaskBase):
     user_input: str
+
 
 async def generate_task_grading_criteria(
     inputs: GenerateGradingCriteria,

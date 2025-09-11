@@ -154,7 +154,8 @@ const AdminEditOptions = ({ exercise, orgId, orgSlug, mutateURL, deleteExercise,
       <Modal
         isDialogOpen={modifyExerciseModal}
         onOpenChange={setModifyExerciseModal}
-        minHeight="md"
+        minHeight="lg"
+        minWidth="xl"
         dialogContent={
           <ModifyExerciseModal
             orgslug={orgSlug}

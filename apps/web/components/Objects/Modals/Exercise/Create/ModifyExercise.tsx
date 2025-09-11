@@ -3,6 +3,7 @@ import { Input } from '@components/ui/input'
 import { Textarea } from '@components/ui/textarea'
 import FormLayout, {
   FormField,
+  FormLabel,
   FormLabelAndMessage,
 } from '@components/Objects/StyledElements/Form/Form'
 import * as Form from '@radix-ui/react-form'
@@ -18,6 +19,7 @@ import { mutate } from 'swr'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs'
 import { Separator } from '@components/ui/separator'
 import { Button } from '@components/ui/button'
+import { Switch } from '@components/ui/switch'
 
 const validationSchema = Yup.object().shape({
   title: Yup.string()
@@ -25,6 +27,14 @@ const validationSchema = Yup.object().shape({
     .max(100, 'Must be 100 characters or less'),
   description: Yup.string().max(1000, 'Must be 1000 characters or less'),
 })
+
+type TaskGradingCriteria = {
+  id_slug: string,
+  short: string,
+  detail: string,
+  must_fix: boolean,
+  weight: number,
+}
 
 function ModifyExerciseModal({
   closeModal,
@@ -44,7 +54,11 @@ function ModifyExerciseModal({
   // AI state
   const [aiInstruction, setAiInstruction] = React.useState('')
   const [aiProposedSolution, setAiProposedSolution] = React.useState('')
-  const [aiGradingCriteriaText, setAiGradingCriteriaText] = React.useState('')
+  const [criteria, setCriteria] = React.useState<TaskGradingCriteria[]>([{
+    id_slug: '', short: '', detail: '', must_fix: false, weight: 1,
+  }])
+  const [currentCriterionIndex, setCurrentCriterionIndex] = React.useState(0)
+  const [showCriterionFlash, setShowCriterionFlash] = React.useState(false)
 
   // Multiple choice state
   type Choice = { id: string; text: string; correct: boolean }
@@ -57,9 +71,18 @@ function ModifyExerciseModal({
       const ai = exercise.ai_instruction || {}
       setAiInstruction(ai.task_instruction || '')
       setAiProposedSolution(ai.proposed_solution || '')
-      setAiGradingCriteriaText(
-        ai.grading_criteria ? JSON.stringify(ai.grading_criteria, null, 2) : ''
-      )
+      const incoming = ai.grading_criteria?.criteria
+      if (Array.isArray(incoming)) {
+        const mapped = incoming.map((c: any) => ({
+          id_slug: c?.id_slug || '',
+          short: c?.short || '',
+          detail: c?.detail || '',
+          must_fix: !!c?.must_fix,
+          weight: typeof c?.weight === 'number' ? c.weight : 1,
+        }))
+        setCriteria(mapped.length > 0 ? mapped : [{ id_slug: '', short: '', detail: '', must_fix: false, weight: 1 }])
+        setCurrentCriterionIndex(0)
+      }
     } else if (exercise?.task_type === 'multiple_choice') {
       const answers = exercise.multiple_choice_data?.answers || []
       const mapped = answers.map((a: any) => ({ id: crypto.randomUUID(), text: a.text || '', correct: !!a.is_correct }))
@@ -79,6 +102,18 @@ function ModifyExerciseModal({
       ])
     }
   }, [exercise])
+
+  React.useEffect(() => {
+    if (currentCriterionIndex > criteria.length - 1) {
+      setCurrentCriterionIndex(Math.max(0, criteria.length - 1))
+    }
+  }, [criteria.length])
+
+  React.useEffect(() => {
+    setShowCriterionFlash(true)
+    const t = setTimeout(() => setShowCriterionFlash(false), 900)
+    return () => clearTimeout(t)
+  }, [currentCriterionIndex])
 
   const formik = useFormik({
     initialValues: {
@@ -131,18 +166,7 @@ function ModifyExerciseModal({
         }
 
         if (taskType === 'ai') {
-          let gradingCriteria: any = {}
-          if (aiGradingCriteriaText.trim()) {
-            try {
-              gradingCriteria = JSON.parse(aiGradingCriteriaText)
-            } catch (e) {
-              toast.error('Grading criteria must be valid JSON')
-              setSubmitError('Grading criteria must be valid JSON')
-              toast.dismiss(toast_loading)
-              setSubmitting(false)
-              return
-            }
-          }
+          const gradingCriteria = { criteria }
           payload.ai_instruction = {
             task_instruction: aiInstruction,
             proposed_solution: aiProposedSolution,
@@ -229,7 +253,7 @@ function ModifyExerciseModal({
         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-start flex-1">
           <div>
             {courses && (
-              <FormField name="course_id">
+              <FormField name="course_id" className='border-orange-400 border-2 bg-gray-200 p-4 rounded-lg'>
                 <FormLabelAndMessage label="Move to Course" message="" />
                 <Form.Control asChild>
                   <select
@@ -248,8 +272,6 @@ function ModifyExerciseModal({
                 </Form.Control>
               </FormField>
             )}
-
-            <Separator className="my-10" />
 
             <FormField name="title">
               <FormLabelAndMessage
@@ -363,46 +385,99 @@ function ModifyExerciseModal({
                 </TabsList>
 
                 <TabsContent value="ai">
-                  <div className="space-y-4 mt-2">
-                    <FormField name="ai_instruction">
-                      <FormLabelAndMessage
-                        label="Task Instruction"
-                        message={''}
-                      />
-                      <Form.Control asChild>
-                        <Textarea
-                          value={aiInstruction}
-                          onChange={(e) => setAiInstruction(e.target.value)}
-                        />
-                      </Form.Control>
-                    </FormField>
+                  <div className="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="flex flex-col h-full w-full">
+                      <FormField name="ai_instruction" className='h-1/2 w-full'>
+                        <div className='flex flex-col justify-start h-full w-full'>
+                        <span className="text-sm">{'Task Instruction'}</span>
+                        <Form.Control asChild>
+                          <Textarea
+                            className='h-full w-full'
+                            value={aiInstruction}
+                            onChange={(e) => setAiInstruction(e.target.value)}
+                          />
+                        </Form.Control>
+                        </div>
+                      </FormField>
 
-                    <FormField name="ai_proposed_solution">
-                      <FormLabelAndMessage
-                        label="Proposed Solution"
-                        message={''}
-                      />
-                      <Form.Control asChild>
-                        <Textarea
-                          value={aiProposedSolution}
-                          onChange={(e) => setAiProposedSolution(e.target.value)}
-                        />
-                      </Form.Control>
-                    </FormField>
+                      <FormField name="ai_proposed_solution" className='h-1/2'>
+                        <div className='flex flex-col justify-start h-full'>
+                            <span className="text-sm">{'Sample Solution'}</span>
+                            <Form.Control asChild>
+                            <Textarea
+                                className='h-full w-full'
+                                value={aiProposedSolution}
+                                onChange={(e) => setAiProposedSolution(e.target.value)}
+                            />
+                            </Form.Control>
+                        </div>
+                      </FormField>
+                    </div>
 
-                    <FormField name="ai_grading_criteria">
-                      <FormLabelAndMessage
-                        label="Grading Criteria (JSON)"
-                        message={''}
-                      />
-                      <Form.Control asChild>
-                        <Textarea
-                          placeholder='{"criteria": [{"name": "Correctness", "weight": 0.7}]}'
-                          value={aiGradingCriteriaText}
-                          onChange={(e) => setAiGradingCriteriaText(e.target.value)}
+                    <div className='h-1/2'>
+                      <FormField name="ai_grading_criteria">
+                        <FormLabelAndMessage
+                          label="Grading Criteria"
+                          message={''}
                         />
-                      </Form.Control>
-                    </FormField>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm text-muted-foreground">
+                              Criterion {criteria.length === 0 ? 0 : currentCriterionIndex + 1} of {criteria.length}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button type="button" variant="outline" size="sm" disabled={currentCriterionIndex <= 0} onClick={() => setCurrentCriterionIndex((i) => Math.max(0, i - 1))}>Previous</Button>
+                              <Button type="button" variant="outline" size="sm" disabled={currentCriterionIndex >= criteria.length - 1} onClick={() => setCurrentCriterionIndex((i) => Math.min(criteria.length - 1, i + 1))}>Next</Button>
+                            </div>
+                          </div>
+
+                          {criteria.length > 0 && (<>
+                            <div className="relative rounded-md border p-3 space-y-3">
+                              <div className={`pointer-events-none absolute -top-3 right-2 select-none rounded-full bg-black/80 px-2 py-0.5 text-[11px] font-semibold text-white shadow transition-all duration-300 ${showCriterionFlash ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+                                {`#${currentCriterionIndex + 1} / ${criteria.length}`}
+                              </div>
+                              {(() => { const idx = currentCriterionIndex; const c = criteria[idx]; return (<>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="text-xs text-muted-foreground">ID Slug</label>
+                                    <Input value={c.id_slug} onChange={(e) => { const v = e.target.value; setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, id_slug: v } : pc)) }} />
+                                  </div>
+                                  <div>
+                                    <label className="text-xs text-muted-foreground">Weight</label>
+                                    <Input type="number" value={c.weight} onChange={(e) => { const v = Number(e.target.value); setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, weight: v } : pc)) }} />
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="text-xs text-muted-foreground">Short</label>
+                                  <Input value={c.short} onChange={(e) => { const v = e.target.value; setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, short: v } : pc)) }} />
+                                </div>
+                                <div>
+                                  <label className="text-xs text-muted-foreground">Detail</label>
+                                  <Textarea value={c.detail} onChange={(e) => { const v = e.target.value; setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, detail: v } : pc)) }} />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Switch checked={c.must_fix} onCheckedChange={(checked) => { setCriteria(prev => prev.map((pc, i) => i === idx ? { ...pc, must_fix: !!checked } : pc)) }} />
+                                  <span className="text-sm">Essential for Task</span>
+                                </div>
+
+                                <Separator className='my-10'/>
+
+                                <div className="flex justify-between">
+                                  <Button type="button" variant="secondary" size="sm" onClick={() => { const blank = { id_slug: '', short: '', detail: '', must_fix: false, weight: 1 }; setCriteria(prev => { const next = [...prev]; next.splice(idx + 1, 0, blank); return next }); setCurrentCriterionIndex(idx + 1) }}>Add After</Button>
+                                  <Button type="button" variant="secondary" size="sm" onClick={() => { setCriteria(prev => prev.length > 0 ? prev.filter((_, i) => i !== idx) : prev); setCurrentCriterionIndex((i) => Math.max(0, Math.min(i, criteria.length - 2))) }} disabled={criteria.length === 0}>Remove Criterion</Button>
+                                </div>
+                              </>) })()}
+                            </div>
+                          </>)}
+
+                          {criteria.length === 0 ? (
+                            <div className="flex items-center justify-between">
+                              <div />
+                              <Button type="button" variant="secondary" size="sm" onClick={() => { const blank = { id_slug: '', short: '', detail: '', must_fix: false, weight: 1 }; setCriteria(prev => ([...prev, blank])); setCurrentCriterionIndex(criteria.length); }}>Add Criterion</Button>
+                            </div>) : (<></>)}
+                        </div>
+                      </FormField>
+                    </div>
                   </div>
                 </TabsContent>
 
