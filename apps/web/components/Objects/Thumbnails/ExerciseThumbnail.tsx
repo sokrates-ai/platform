@@ -18,6 +18,11 @@ import {
 import { deleteExerciseFromBE } from '@services/courses/workspaces'
 import { mutate } from 'swr'
 import ModifyExerciseModal from '../Modals/Exercise/Create/ModifyExercise'
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card"
+import { Button } from '@components/ui/button'
 
 export type Exercise = {
   id: number
@@ -65,7 +70,8 @@ function ExerciseThumbnail(props: PropsType) {
   //   : '../empty_thumbnail.png'
 
   return (
-    <div className="relative bg-gray-200 p-2 rounded-l">
+      <Card  className="relative bg-gray-200 p-2 rounded-l overflow-hidden">
+     <CardContent>
       <AdminEditOptions
         exercise={props.exercise}
         orgSlug={props.orgslug}
@@ -96,7 +102,8 @@ function ExerciseThumbnail(props: PropsType) {
           </div>
         )}
       </div>
-    </div >
+     </CardContent>
+     </Card>
   )
 }
 
@@ -142,14 +149,14 @@ const AdminEditOptions = ({ exercise, orgId, orgSlug, mutateURL, deleteExercise,
             <DropdownMenuItem asChild>
               <Modal
                 isDialogOpen={modifyExerciseModal}
-                onOpenChange={setModifyExerciseModal}
+                onOpenChange={(open) => { setModifyExerciseModal(open);}}
                 minHeight="md"
                 dialogContent={
                   <ModifyExerciseModal
                     orgslug={orgSlug}
                     mutateURL={mutateURL}
                     exercise={exercise}
-                    closeModal={() => { setModifyExerciseModal(false); setDropdownOpen(false) }}
+                    closeModal={() => { setModifyExerciseModal(false); setDropdownOpen(false); console.log('closed'); }}
                     tags={tags}
                     courses={courses}
                   >
@@ -164,19 +171,14 @@ const AdminEditOptions = ({ exercise, orgId, orgSlug, mutateURL, deleteExercise,
                 dialogTitle="Modify Exercise"
                 dialogDescription="Modify this exercise"
                 dialogTrigger={
-                  // <button>
-                  // <button className="rounded-lg bg-black hover:scale-105 transition-all duration-100 ease-linear antialiased ring-offset-purple-800 p-2 px-5 my-auto font text-xs font-bold text-white drop-shadow-lg flex space-x-2 items-center">
-                  //   Modify Exercise
-                  //   {/* <div className="text-md bg-neutral-800 px-1 rounded-full">+</div> */}
-                  // </button>
-                  <button className="w-full text-left flex items-center px-2 py-1 rounded-md text-sm bg-gray-500/10 hover:bg-gray-500/20 transition-colors text-white-600">
+                  <Button variant={"outline"}>
                     <Pencil className="mr-4 h-4 w-4" /> Modify Exercise
-                  </button>
-                  // </button>
+                  </Button>
                 }
               />
             </DropdownMenuItem>
 
+            <div className="my-2"></div>
 
             <DropdownMenuItem asChild>
               <ConfirmationModal
@@ -184,17 +186,14 @@ const AdminEditOptions = ({ exercise, orgId, orgSlug, mutateURL, deleteExercise,
                 confirmationMessage="Are you sure you want to delete this exercise?"
                 dialogTitle={`Delete ${exercise.title}?`}
                 dialogTrigger={
-                  <button className="w-full text-left flex items-center px-2 py-1 rounded-md text-sm bg-rose-500/10 hover:bg-rose-500/20 transition-colors text-red-600">
+                  <Button variant={"outline"}>
                     <BookMinus className="mr-4 h-4 w-4" /> Delete Exercise
-                  </button>
+                  </Button>
                 }
                 functionToExecute={deleteExercise}
                 status="warning"
               />
             </DropdownMenuItem>
-
-
-
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

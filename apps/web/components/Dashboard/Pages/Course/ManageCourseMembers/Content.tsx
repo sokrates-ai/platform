@@ -819,6 +819,7 @@ export default function Component(props: {apiStudents: ApiStudent[], orgslug: st
               className="p-0 border-b-[2px] border-gray-400"
               style={{ backgroundColor: '#EBEBEB' }}
             >
+            {currentStudent ? (
               <div className="p-6 flex items-center gap-4 mb-4">
                 <img
                   src={currentStudent.avatar || '/placeholder.svg'}
@@ -849,6 +850,8 @@ export default function Component(props: {apiStudents: ApiStudent[], orgslug: st
                   </Button>
                 </div>
               </div>
+            ) : (<span>No student selected</span>)
+            }
             </CardContent>
           </Card>
 
@@ -856,16 +859,20 @@ export default function Component(props: {apiStudents: ApiStudent[], orgslug: st
             {/* Interactive Performance Chart */}
             <Card className="rounded-2xl mt-4 border-2">
               <CardContent className="p-0">
-                <div
-                  className="mb-6 px-6 pt-6"
-                  style={{ marginBottom: '-1rem' }}
-                >
-                  <h3 className="font-semibold text-lg">Performance</h3>
-                  <p className="text-xs text-gray-500">
-                    Performance comparison to class
-                  </p>
-                </div>
-                <InteractivePerformanceChart studentData={currentStudent} />
+                {currentStudent ? (<>
+                                   <div
+                    className="mb-6 px-6 pt-6"
+                    style={{ marginBottom: '-1rem' }}
+                    >
+                    <h3 className="font-semibold text-lg">Performance</h3>
+                    <p className="text-xs text-gray-500">
+                        Performance comparison to class
+                    </p>
+                    </div>
+                    <InteractivePerformanceChart studentData={currentStudent} />
+                    </>
+                ) : (<span>No Student selected</span>)
+                }
               </CardContent>
             </Card>
 
@@ -878,7 +885,7 @@ export default function Component(props: {apiStudents: ApiStudent[], orgslug: st
                     <CardContent className="text-center py-4 px-2 bg-gray-50 rounded-xl flex flex-col items-center">
                       <div className="text-3xl font-bold flex items-center text-gray-900 gap-1">
                         <NotebookPen color={'#848484'} className="w-10 h-10" />
-                        {currentStudent.exercises}
+                        {currentStudent?.exercises || 0}
                       </div>
                       <div className="text-xs text-gray-500 mt-2">
                         Exercises this week
@@ -890,7 +897,7 @@ export default function Component(props: {apiStudents: ApiStudent[], orgslug: st
                     <CardContent className="text-center py-4 px-2 bg-gray-50 rounded-xl flex flex-col items-center">
                       <div className="text-3xl font-bold flex items-center h-full text-gray-900 gap-1">
                         <Backpack color="#848484" className="w-10 h-10" />
-                        {currentStudent.homework}
+                         {currentStudent?.homework || 0}
                       </div>
                       <div className="text-xs text-gray-500 mt-2">
                         Homework this week
@@ -902,7 +909,7 @@ export default function Component(props: {apiStudents: ApiStudent[], orgslug: st
                     <CardContent className="text-center py-4 px-2 bg-gray-50 rounded-xl flex flex-col items-center">
                       <div className="text-3xl font-bold flex items-center text-gray-900 gap-1">
                         <Smile color="#848484" className="w-10 h-10" />
-                        {currentStudent.satisfaction}%
+                        {currentStudent?.satisfaction || 0}%
                       </div>
                       <div className="text-xs text-gray-500 mt-2">
                         Exercise satisfaction
@@ -931,12 +938,12 @@ export default function Component(props: {apiStudents: ApiStudent[], orgslug: st
                         fill="none"
                         stroke="#E25A26"
                         strokeWidth="2"
-                        strokeDasharray={`${currentStudent.performance}, 100`}
+                        strokeDasharray={`${currentStudent?.performance || 0}, 100`}
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                       <span className="text-3xl font-bold text-gray-900">
-                        {currentStudent.performance}%
+                        {currentStudent?.performance || 0}%
                       </span>
                       <div className="text-xs text-gray-500">Proficiency</div>
                     </div>
@@ -956,7 +963,7 @@ export default function Component(props: {apiStudents: ApiStudent[], orgslug: st
                 </div>
 
                 <div className="space-y-3 max-h-[18rem] overflow-y-auto">
-                  {currentStudent.exerciseHistory.map((exercise, index) => (
+                  { (currentStudent ? currentStudent.exerciseHistory : []).map((exercise, index) => (
                     <div
                       key={index}
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200"

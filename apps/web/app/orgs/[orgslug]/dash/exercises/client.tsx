@@ -74,7 +74,7 @@ function ExerciseHome(params: ExerciseProps) {
             <div className="flex gap-5">
               <Dialog open={editTagsModalOpen} onOpenChange={setEditTagsModalOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="default">Edit Tags</Button>
+                  <Button variant="default" size="lg">Edit Tags</Button>
                 </DialogTrigger>
                 <DialogContent className="min-h-[500px] overflow-auto">
                   <DialogHeader>
@@ -92,12 +92,12 @@ function ExerciseHome(params: ExerciseProps) {
 
               <Dialog open={newExerciseModal} onOpenChange={setNewExerciseModal}>
                 <DialogTrigger asChild>
-                  <Button variant="default" className="space-x-2">
+                  <Button variant="default" size="lg" className="space-x-2">
                     <span>New Exercise</span>
                     <Plus className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="min-h-[500px] overflow-auto">
+                <DialogContent className="min-h-[500px] overflow-auto max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>Create Exercise</DialogTitle>
                     <DialogDescription>Create a new exercise</DialogDescription>

@@ -13,6 +13,7 @@ import { swrFetcher } from '@services/utils/ts/requests'
 import CreateExerciseModal from '@components/Objects/Modals/Exercise/Create/CreateExercise'
 import EditTagsModal from '@components/Objects/Modals/Exercise/Create/EditTags'
 import CourseListing from '../courseListing'
+import { Button } from '@components/ui/button'
 
 type ExerciseProps = {
   params: {
@@ -135,12 +136,9 @@ function ExerciseCourseHome(params: ExerciseProps) {
                 dialogTitle="Edit Tags"
                 dialogDescription="Edit task tags"
                 dialogTrigger={
-                  <button>
-                    <button className="rounded-lg bg-black hover:scale-105 transition-all duration-100 ease-linear antialiased ring-offset-purple-800 p-2 px-5 my-auto font text-xs font-bold text-white drop-shadow-lg flex space-x-2 items-center">
-                      <div>Edit Tags</div>
-                      {/* <div className="text-md bg-neutral-800 px-1 rounded-full">+</div> */}
-                    </button>
-                  </button>
+                    <Button>
+                        Edit Tags
+                    </Button>
                 }
               />
 
@@ -161,14 +159,12 @@ function ExerciseCourseHome(params: ExerciseProps) {
                 dialogTitle="Create Exercise"
                 dialogDescription="Create a new exercise"
                 dialogTrigger={
-                  <button>
-                    <button className="rounded-lg bg-black hover:scale-105 transition-all duration-100 ease-linear antialiased ring-offset-purple-800 p-2 px-5 my-auto font text-xs font-bold text-white drop-shadow-lg flex space-x-2 items-center">
+                  <Button>
                       <div>New Exercise</div>
-                      <div className="text-md bg-neutral-800 px-1 rounded-full">
+                      <div className="">
                         +
                       </div>
-                    </button>
-                  </button>
+                  </Button>
                 }
               />
             </div>

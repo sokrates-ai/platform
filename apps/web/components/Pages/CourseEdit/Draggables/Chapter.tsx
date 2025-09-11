@@ -25,6 +25,22 @@ function Chapter(props: any) {
     string | undefined
   >(undefined)
 
+  const [xpReward, setXpReward] = React.useState<number>(props.info.list.chapter?.xp_reward ?? 0)
+  const [coinReward, setCoinReward] = React.useState<number>(props.info.list.chapter?.coin_reward ?? 0)
+
+  React.useEffect(() => {
+    setXpReward(props.info.list.chapter?.xp_reward ?? 0)
+    setCoinReward(props.info.list.chapter?.coin_reward ?? 0)
+  }, [props.info.list.chapter?.xp_reward, props.info.list.chapter?.coin_reward])
+
+  async function persistRewards(chapterId: string, xp: number, coins: number) {
+    const data: any = { xp_reward: xp, coin_reward: coins }
+    await updateChapter(chapterId, data, session.data?.tokens?.access_token)
+    await mutate(`${getAPIUrl()}chapters/course/${props.course_uuid}/meta`)
+    await revalidateTags(['courses'], props.orgslug)
+    router.refresh()
+  }
+
   async function updateChapterName(chapterId: string) {
     if (modifiedChapter?.chapterId === chapterId) {
       let modifiedChapterCopy = {
@@ -105,6 +121,30 @@ function Chapter(props: any) {
                   size={15}
                   className="text-neutral-600 hover:cursor-pointer"
                   onClick={() => setSelectedChapter(props.info.list.chapter.id)}
+                />
+              </div>
+            </div>
+            <div className="flex items-center space-x-6 pr-4">
+              <div className="flex flex-col items-start space-y-1">
+                <span className="text-xs text-neutral-500">XP: {xpReward}</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={50}
+                  value={xpReward}
+                  onChange={(e) => setXpReward(Number(e.target.value))}
+                  onBlur={() => persistRewards(props.info.list.chapter.id, xpReward, coinReward)}
+                />
+              </div>
+              <div className="flex flex-col items-start space-y-1">
+                <span className="text-xs text-neutral-500">Coins: {coinReward}</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={10}
+                  value={coinReward}
+                  onChange={(e) => setCoinReward(Number(e.target.value))}
+                  onBlur={() => persistRewards(props.info.list.chapter.id, xpReward, coinReward)}
                 />
               </div>
             </div>
