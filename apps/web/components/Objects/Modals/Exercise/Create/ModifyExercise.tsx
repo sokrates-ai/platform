@@ -137,6 +137,31 @@ function ModifyExerciseModal({
             setSubmitting(false)
             return
           }
+          // Validate grading criteria
+          const slugs = new Set<string>()
+          let hasError = false
+          for (const c of criteria) {
+            const id = (c.id_slug || '').trim()
+            const short = (c.short || '').trim()
+            const detail = (c.detail || '').trim()
+            if (!id || !short || !detail) {
+              hasError = true
+              break
+            }
+            if (slugs.has(id)) {
+              hasError = true
+              break
+            }
+            slugs.add(id)
+          }
+          if (hasError) {
+            const err = 'All criteria must have a unique id slug, and non-empty short and detail.'
+            toast.error(err)
+            setSubmitError(err)
+            toast.dismiss(toast_loading)
+            setSubmitting(false)
+            return
+          }
         } else if (taskType === 'multiple_choice') {
           const nonEmpty = choices.filter(c => c.text.trim() !== '')
           const hasCorrect = nonEmpty.some(c => c.correct)

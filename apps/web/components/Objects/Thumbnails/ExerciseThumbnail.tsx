@@ -3,7 +3,7 @@ import { useOrg } from '@components/Contexts/OrgContext'
 import AuthenticatedClientElement from '@components/Security/AuthenticatedClientElement'
 import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationModal/ConfirmationModal'
 import { revalidateTags } from '@services/utils/ts/requests'
-import { BookMinus, MoreVertical, Pencil } from 'lucide-react'
+import { BookMinus, MoreVertical, Pencil, Eye } from 'lucide-react'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useRouter } from 'next/navigation'
 import React from 'react'
@@ -18,6 +18,7 @@ import {
 import { deleteExerciseFromBE } from '@services/courses/workspaces'
 import { mutate } from 'swr'
 import ModifyExerciseModal from '../Modals/Exercise/Create/ModifyExercise'
+import ViewExerciseModal from '../Modals/Exercise/Create/ViewExercise'
 import {
   Card,
   CardContent,
@@ -46,6 +47,7 @@ function ExerciseThumbnail(props: PropsType) {
   const router = useRouter()
   const org = useOrg() as any
   const session = useSokratesSession() as any;
+  const [viewExerciseModal, setViewExerciseModal] = React.useState(false)
 
   const deleteExercise = async () => {
     const toastId = toast.loading('Deleting exercise...')
@@ -72,6 +74,7 @@ function ExerciseThumbnail(props: PropsType) {
           deleteExercise={deleteExercise}
           tags={props.tags}
           courses={props.courses}
+          onView={() => setViewExerciseModal(true)}
         />
         <div className='flex flex-col w-full pt-3 space-y-2'>
           <h2 className="font-bold text-gray-800 line-clamp-2 leading-tight text-lg capitalize">{props.exercise.title}</h2>
@@ -95,18 +98,35 @@ function ExerciseThumbnail(props: PropsType) {
           )}
         </div>
       </CardContent>
+      <Modal
+        isDialogOpen={viewExerciseModal}
+        onOpenChange={setViewExerciseModal}
+        minHeight="lg"
+        minWidth="xl"
+        dialogContent={
+          <ViewExerciseModal
+            exercise={props.exercise}
+            tags={props.tags}
+            courses={props.courses}
+            closeModal={() => setViewExerciseModal(false)}
+          />
+        }
+        dialogTitle="Exercise Details"
+        dialogDescription="View exercise details"
+      />
     </Card>
   )
 }
 
-const AdminEditOptions = ({ exercise, orgId, orgSlug, mutateURL, deleteExercise, tags, courses }: {
+const AdminEditOptions = ({ exercise, orgId, orgSlug, mutateURL, deleteExercise, tags, courses, onView }: {
   exercise: Exercise,
   orgId: string,
   orgSlug: string,
   mutateURL: string,
   tags: any[],
   courses: any[],
-  deleteExercise: () => Promise<void>
+  deleteExercise: () => Promise<void>,
+  onView: () => void,
 }) => {
   const [modifyExerciseModal, setModifyExerciseModal] = React.useState(false)
   const [dropdownOpen, setDropdownOpen] = React.useState(false)
@@ -118,14 +138,35 @@ const AdminEditOptions = ({ exercise, orgId, orgSlug, mutateURL, deleteExercise,
       checkMethod="roles"
       orgId={orgId}
     >
-      <div className="absolute top-2 right-2 z-20">
+      <div className="absolute top-2 right-2 z-20 flex items-center gap-2">
+        <button
+          className="p-1 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-md"
+          aria-label="View exercise"
+          onClick={(e) => { e.stopPropagation(); onView(); }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <Eye size={20} className="text-gray-700" />
+        </button>
         <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
           <DropdownMenuTrigger asChild>
-            <button className="p-1 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-md">
+            <button
+              className="p-1 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-md"
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+              aria-label="More options"
+            >
               <MoreVertical size={20} className="text-gray-700" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent
+            align="end"
+            className="w-56"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
             <DropdownMenuItem onSelect={() => setModifyExerciseModal(true)}>
               <Pencil className="mr-4 h-4 w-4" /> Modify Exercise
             </DropdownMenuItem>
@@ -138,7 +179,12 @@ const AdminEditOptions = ({ exercise, orgId, orgSlug, mutateURL, deleteExercise,
                 confirmationMessage="Are you sure you want to delete this exercise?"
                 dialogTitle={`Delete ${exercise.title}?`}
                 dialogTrigger={
-                  <button className="w-full text-left flex items-center px-2 py-1 rounded-md text-sm bg-rose-500/10 hover:bg-rose-500/20 transition-colors text-red-600">
+                  <button
+                    className="w-full text-left flex items-center px-2 py-1 rounded-md text-sm bg-rose-500/10 hover:bg-rose-500/20 transition-colors text-red-600"
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
                     <BookMinus className="mr-4 h-6 w-4" /> Delete Exercise
                   </button>
                 }
