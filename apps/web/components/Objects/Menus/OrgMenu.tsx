@@ -153,26 +153,74 @@ function RightRail() {
 /* ─── AVATAR ──────────────────────────────────────────────────────────────── */
 
 function Avatar({ session, org, isUserAdmin, onLogout }: any) {
-  const xp = session?.data?.user?.level_progress ?? -1
-  const pct = xp / 100.0
+  const [xp, setXp] = React.useState(0)
+
+  React.useEffect(() => {
+    const xp_ = session?.data?.user?.level_progress ?? -1
+    setTimeout(() => {
+        setXp(xp_)
+    }, 200)
+  }, [])
+
+  const pct = Math.max(0, Math.min(1, xp / 100))
   console.log(`got percent: ${pct}`)
-  const deg = 360 * pct
+  const strokeWidth = 6
 
   return (
     <div className="relative z-10 -mx-4 sm:-mx-5 md:-mx-6 lg:-mx-8">
       <div className="relative aspect-square w-24 sm:w-28 md:w-32 lg:w-[150px]">
-        {/* progress ring */}
-        <div
-          className="absolute inset-0 rounded-full border-2"
-          style={{
-            borderColor: 'var(--color-SokratesGrayBorder)',
-            boxShadow: SHADOW,
-            background: [
-              `conic-gradient(from 180deg at 50% 50%, var(--color-SokratesOrange) 0deg, var(--color-SokratesOrange) ${deg}deg, transparent ${deg}deg)`,
-              GRADIENT
-            ].join(',')
-          }}
+        {/* SVG progress ring (behind the avatar) */}
+        <svg
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="xMidYMid meet"
+        style={{ transform: 'rotate(90deg)' }}
+        aria-hidden
+        >
+        {/* track */}
+        <circle
+            cx={50}
+            cy={50}
+            r={42}
+            stroke="#eaeaea"
+            strokeWidth={strokeWidth}
+            fill="none"
         />
+
+        {/* glow ring */}
+        <circle
+            cx={50}
+            cy={50}
+            r={42}
+            stroke="#e25a26"
+            strokeWidth={strokeWidth + 6} // strokeWidth + 6
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={2 * Math.PI * 42}
+            strokeDashoffset={2 * Math.PI * 42 * (1 - pct)}
+            style={{
+            transition: 'stroke-dashoffset 700ms ease, opacity 700ms ease, filter 700ms ease',
+            opacity: pct > 0 ? 0.6 : 0,
+            }}
+        />
+
+        {/* solid progress ring */}
+        <circle
+            cx={50}
+            cy={50}
+            r={42}
+            stroke="#e25a26"
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={2 * Math.PI * 42}
+            strokeDashoffset={2 * Math.PI * 42 * (1 - pct)}
+            style={{
+            transition: 'stroke-dashoffset 700ms ease',
+            willChange: 'stroke-dashoffset'
+            }}
+        />
+        </svg>
 
         <AvatarDropdownMenu
           session={session}
@@ -181,7 +229,7 @@ function Avatar({ session, org, isUserAdmin, onLogout }: any) {
           onLogout={onLogout}
         >
           <div
-            className="absolute inset-[6%] rounded-full overflow-hidden border-2 cursor-pointer"
+            className="absolute inset-[9%] rounded-full overflow-hidden border-2 cursor-pointer"
             style={{
               borderColor: 'var(--color-SokratesGrayBorder)',
               background: 'linear-gradient(135deg,#fff,#f3f3f3)'
