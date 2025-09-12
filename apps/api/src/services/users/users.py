@@ -467,6 +467,26 @@ async def read_user_by_id(
     return user
 
 
+async def read_user_by_uuid_unauth(
+    request: Request,
+    db_session: Session,
+    user_uuid: str,
+) -> UserRead:
+    # Get user
+    statement = select(User).where(User.user_uuid == user_uuid)
+    user = db_session.exec(statement).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=400,
+            detail="User does not exist",
+        )
+
+    user = UserRead.model_validate(user)
+
+    return user
+
+
 async def read_user_by_uuid(
     request: Request,
     db_session: Session,

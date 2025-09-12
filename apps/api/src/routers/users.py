@@ -6,6 +6,7 @@ from src.services.users.password_reset import (
     change_password_with_reset_code,
     send_reset_password_code,
 )
+from src.services.users.users import read_user_by_uuid_unauth
 from src.services.orgs.orgs import get_org_join_mechanism
 from src.security.auth import get_current_user
 from src.core.events.database import get_db_session
@@ -35,6 +36,19 @@ from src.services.users.users import (
 
 
 router = APIRouter()
+
+
+@router.get("/progression/{user_uuid}")
+async def api_get_foreign_profile(request: Request, user_uuid: str, db_session: Session = Depends(get_db_session)):
+    """
+    Get other user
+    """
+    user = await read_user_by_uuid_unauth(request, db_session, user_uuid)
+    return {
+        "coins": user.coins,
+        "level": user.level,
+        "xp": user.level_progress,
+    }
 
 
 @router.get("/profile")
