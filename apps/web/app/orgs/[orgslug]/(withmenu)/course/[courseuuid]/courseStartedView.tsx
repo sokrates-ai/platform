@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation' // ✅ import hook
 import { Button } from '@/components/ui/button'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import Canvas, { LayoutState } from '@components/Objects/ContentMap/Canvas'
@@ -29,6 +30,10 @@ const CourseStartedView = ({
   course,
   selectedChapterId,
 }: Props) => {
+  const searchParams = useSearchParams()
+  const chapterParam = searchParams.get('chapter') // ✅ read from URL
+  const chapterFromUrl = chapterParam ? parseInt(chapterParam, 10) : null
+
   const courseIdWithoutPrefix = courseuuid.replace('course_', '')
 
   const chapterStates = useMemo(() => {
@@ -64,11 +69,12 @@ const CourseStartedView = ({
     [course],
   )
 
+  // ✅ Initialize from URL param first, then fall back to prop
   const [chapterDialogOpen, setChapterDialogOpen] = useState(
-    selectedChapterId != null,
+    chapterFromUrl != null || selectedChapterId != null,
   )
   const [selectedChapter, setSelectedChapter] = useState(
-    selectedChapterId ?? 0,
+    chapterFromUrl ?? selectedChapterId ?? 0,
   )
 
   const session = useSokratesSession() as any
@@ -76,16 +82,11 @@ const CourseStartedView = ({
 
   useEffect(() => {
     updateCourseCanvasInteractionState({
-      courseUuid: `course_${courseuuid}`, // TODO: verify naming scheme
+      courseUuid: `course_${courseuuid}`,
       selectedChapter: chapterDialogOpen ? selectedChapter : null,
       access_token,
     })
-  }, [
-    selectedChapter,
-    chapterDialogOpen,
-    access_token,
-    courseuuid,
-  ])
+  }, [selectedChapter, chapterDialogOpen, access_token, courseuuid])
 
   if (!course) return <PageLoading />
 
@@ -102,8 +103,7 @@ const CourseStartedView = ({
           orgslug={orgslug}
           chapterID={selectedChapter}
           access_token={access_token ?? ''}
-        />
-        }
+        />}
       />
 
       <Link href={getUriWithOrg(orgslug, '/')}>

@@ -83,7 +83,11 @@ function WorkspaceActivity({
 
       // Short delay before redirect to show 100% progress
       setTimeout(() => {
-        window.location.href = url
+          if (!window.location.href.includes("localhost")) {
+             window.location.replace(url);
+          } else {
+              console.log(url)
+          }
       }, 50)
     })
 
@@ -113,7 +117,7 @@ function WorkspaceActivity({
               variant="outline"
               size="sm"
               className="border-blue-500 text-blue-500 hover:bg-blue-50"
-              onClick={() => (window.location.href = url)}
+              onClick={() => (window.location.replace(url))}
             >
               Open Workspace Now
             </Button>

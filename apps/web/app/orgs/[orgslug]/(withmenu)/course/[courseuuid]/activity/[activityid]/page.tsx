@@ -65,19 +65,6 @@ const ActivityPage = async (params: any) => {
   const courseuuid = params.params.courseuuid
   const orgslug = params.params.orgslug
 
-  let backlink = "/"
-  if (typeof window === 'undefined') {
-      backlink = `${LEARNHOUSE_BASE_URL()}/course/${courseuuid}`
-  } else {
-    const searchParams = new URLSearchParams(window.location.search)
-    let backlinkT = searchParams.get('backlink')
-    if (!backlinkT) {
-      backlinkT = window.location.origin
-    }
-
-    backlink = backlinkT
- }
-
   const course_meta = await getCourseMetadata(
     courseuuid,
     { revalidate: 0, tags: ['courses'] },
@@ -88,6 +75,22 @@ const ActivityPage = async (params: any) => {
     { revalidate: 0, tags: ['activities'] },
     access_token ? access_token : null
   )
+
+  const chapterID = activity.course_id
+
+  let backlink = "/"
+  if (typeof window === 'undefined') {
+      backlink = `${LEARNHOUSE_BASE_URL()}/course/${courseuuid}?chapter=${chapterID}`
+  } else {
+    const searchParams = new URLSearchParams(window.location.search)
+    let backlinkT = searchParams.get('backlink')
+    if (!backlinkT) {
+      backlinkT = window.location.origin
+    }
+
+    backlink = backlinkT
+ }
+
   return (
     <>
       <ActivityClient
