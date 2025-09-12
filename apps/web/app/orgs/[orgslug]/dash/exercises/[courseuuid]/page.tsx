@@ -66,11 +66,6 @@ function ExerciseCourseHome(params: ExerciseProps) {
     (url: string) => swrFetcher(url, access_token)
   )
 
-  // const router = useRouter()
-  // console.log(router)
-  // const path = usePathname()
-  // const course_uuid = router.query.courseuuid as string
-
   console.log(COURSES_URL)
   const courseIDString = params.params.courseuuid
   let course_id = 100000000
@@ -88,17 +83,6 @@ function ExerciseCourseHome(params: ExerciseProps) {
   if (!course && course_id != -1) {
     return
   }
-
-  // {(!!exercises && !!tags) ?
-  //   (<div>
-  //     {courses.map((course: any) => (
-  //       <div>
-  //         {course.name}
-  //       </div>
-  //     ))}
-  //   </div>)
-  //   : (<span>LOADING...</span>)
-  // }
 
   return (
     <div className="h-full w-full pl-10 pr-10">

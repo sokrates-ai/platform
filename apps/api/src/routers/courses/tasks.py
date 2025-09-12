@@ -1,10 +1,10 @@
 from src.db.tasks import DeleteTag
-import httpx
 from typing import List, Optional
 from config.config import WorkspaceConfig
 from src.db.courses.activities import Activity, ActivityTypeEnum
 from src.services.courses.activities.activities import get_activity
 from src.db.tasks import TaskBase
+from src.services.courses.activities.workspaces import workspace_system_obtain_token
 
 from src.services.courses.activities.workspaces_gen import (
         TaskGradingCriteria,
@@ -55,36 +55,6 @@ class SessionCreate(BaseModel):
 class SessionResponse(BaseModel):
     token: str
     workspace_url: str
-
-
-async def workspace_system_obtain_token(
-    user: PublicUser, task_id: int, activity_uuid: str, config: WorkspaceConfig
-) -> str:
-    url = f'http://{config.workspace_api_host}:{config.workspace_api_port}/v1/sessions'
-    body = {
-        'activity_uuid': activity_uuid,
-        'exercise_id': task_id,
-        'user_uuid': user.user_uuid,
-    }
-    # print(f"CREATING WS SESSION FOR USER={user} and TASK={task_id}...", url, body)
-    print(f'user={user.user_uuid}')
-    async with httpx.AsyncClient() as client:
-        res = await client.post(url, json=body)
-        # print(res)
-
-        if res.status_code != 200:
-            print(f"WS_RESPONSE: {res.text}")
-            raise Exception(res.text)
-
-        parsed = res.json()
-
-        if 'token' not in parsed:
-            print(f"WS_RESPONSE: {res.text}")
-            raise ('Illegal response: ' + res.text)
-
-        token = parsed['token']
-
-        return token
 
 
 @router.post('/session')
@@ -185,7 +155,10 @@ async def api_modify_task(
     """
     Modify task
     """
-    return await modify_task(request, current_user, task_obj, db_session)
+    workspace_config: WorkspaceConfig = (
+        request.app.learnhouse_config.workspace_config
+    )
+    return await modify_task(request, current_user, task_obj, db_session, workspace_config)
 
 
 @router.post('/criteria')

@@ -10,8 +10,6 @@ from src.db.tasks import (
     Tasks_Tags,
 )
 from src.db.task_log import TaskLogBase, TaskLog
-# from src.services.courses.activities.workspaces_gen import TaskGradingCriteriaCollection
-# from src.services.courses.activities.workspaces_prompts import GENERATE_GRADING_CRITERIA
 
 from sqlmodel import Session, select
 from src.security.rbac.rbac import (
@@ -20,6 +18,57 @@ from src.security.rbac.rbac import (
 )
 from src.db.users import AnonymousUser, PublicUser
 from fastapi import HTTPException, status, Request
+import httpx
+from config.config import WorkspaceConfig
+
+
+# Required cuz the workspace caches tasks per-session.
+# When we change a task, we might as well re-fetch all sessions :D
+async def workspace_system_reload_all_sessions(config: WorkspaceConfig):
+    url = f'http://{config.workspace_api_host}:{config.workspace_api_port}/v1/sessions/refresh'
+
+    print(f"Refreshing all WS sessions: at {url}")
+
+    async with httpx.AsyncClient() as client:
+        res = await client.post(url, json=None)
+        # print(res)
+
+        if res.status_code != 200:
+            print(f"WS_RESPONSE: {res.text}")
+            raise Exception(res.text)
+
+        parsed = res.json()
+        print(parsed)
+
+
+async def workspace_system_obtain_token(
+    user: PublicUser, task_id: int, activity_uuid: str, config: WorkspaceConfig
+) -> str:
+    url = f'http://{config.workspace_api_host}:{config.workspace_api_port}/v1/sessions'
+    body = {
+        'activity_uuid': activity_uuid,
+        'exercise_id': task_id,
+        'user_uuid': user.user_uuid,
+    }
+    # print(f"CREATING WS SESSION FOR USER={user} and TASK={task_id}...", url, body)
+    print(f'user={user.user_uuid}')
+    async with httpx.AsyncClient() as client:
+        res = await client.post(url, json=body)
+        # print(res)
+
+        if res.status_code != 200:
+            print(f"WS_RESPONSE: {res.text}")
+            raise Exception(res.text)
+
+        parsed = res.json()
+
+        if 'token' not in parsed:
+            print(f"WS_RESPONSE: {res.text}")
+            raise ('Illegal response: ' + res.text)
+
+        token = parsed['token']
+
+        return token
 
 
 async def add_course_task_association(
@@ -221,7 +270,7 @@ async def get_tasks(
     for task, cid in results:
         # Get tags belonging to this task.
         tags = await get_task_tags(db_session=db_session, task_id=task.id)
-        print(f'task: {task} | tags={tags}')
+        # print(f'task: {task} | tags={tags}')
 
         tasks_with_course_id.append(
             TaskWithCourseIDAndTags(
@@ -268,6 +317,7 @@ async def modify_task(
     current_user: PublicUser | AnonymousUser,
     data: TaskWithCourseIDAndTags,
     db_session: Session,
+    config: WorkspaceConfig
 ):
     # RBAC check
     await rbac_check(request, 'activity_x', current_user, 'update', db_session)
@@ -277,7 +327,7 @@ async def modify_task(
 
     statement = select(Task).where(Task.id == data.id)
     task = db_session.exec(statement).first()
-    print(f'task={task}')
+    print('MODIFY task')
 
     if not task:
         raise HTTPException(
@@ -320,6 +370,9 @@ async def modify_task(
             await delete_task_tag(
                 db_session=db_session, task_id=task.id, tag_value=tag
             )
+
+    # Trigger workspace refresh.
+    await workspace_system_reload_all_sessions(config)
 
     return task
 

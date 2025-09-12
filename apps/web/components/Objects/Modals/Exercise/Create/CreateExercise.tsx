@@ -73,15 +73,23 @@ function CreateExerciseModal({
 
   // Multiple choice fields
   type Choice = { id: string; text: string; correct: boolean }
-  const [choices, setChoices] = React.useState<Choice[]>([
-    { id: crypto.randomUUID(), text: '', correct: false },
-    { id: crypto.randomUUID(), text: '', correct: false },
+  type McQuestion = { id: string; user_question: string; choices: Choice[] }
+  const [questions, setQuestions] = React.useState<McQuestion[]>([
+    {
+      id: crypto.randomUUID(),
+      user_question: '',
+      choices: [
+        { id: crypto.randomUUID(), text: '', correct: false },
+        { id: crypto.randomUUID(), text: '', correct: false },
+      ],
+    },
   ])
+  const [currentQuestionIndex, setCurrentQuestionIndex] = React.useState(0)
   const [submitError, setSubmitError] = React.useState<string | null>(null)
   const [isGenerating, setIsGenerating] = React.useState(false)
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = React.useState(false)
   const [generateExtraInput, setGenerateExtraInput] = React.useState('')
-  const [mcQuestion, setMcQuestion] = React.useState('')
+  
 
   const formik = useFormik({
     initialValues: {
@@ -130,18 +138,28 @@ function CreateExerciseModal({
             return
           }
         } else if (taskType === 'multiple_choice') {
-          const nonEmpty = choices.filter(c => c.text.trim() !== '')
-          const hasCorrect = nonEmpty.some(c => c.correct)
-          if (nonEmpty.length < 2) {
-            toast.error('Provide at least two answer options')
-            setSubmitError('Provide at least two answer options')
+          // Validate all questions
+          if (questions.length === 0) {
+            const err = 'Add at least one question'
+            toast.error(err)
+            setSubmitError(err)
             toast.dismiss(toast_loading)
             setSubmitting(false)
             return
           }
-          if (!hasCorrect) {
-            toast.error('Select at least one correct answer')
-            setSubmitError('Select at least one correct answer')
+          let invalid = false
+          for (const q of questions) {
+            const nonEmpty = q.choices.filter(c => c.text.trim() !== '')
+            const hasCorrect = nonEmpty.some(c => c.correct)
+            if (!q.user_question.trim() || nonEmpty.length < 2 || !hasCorrect) {
+              invalid = true
+              break
+            }
+          }
+          if (invalid) {
+            const err = 'Each question must have text, ≥2 options, and ≥1 correct'
+            toast.error(err)
+            setSubmitError(err)
             toast.dismiss(toast_loading)
             setSubmitting(false)
             return
@@ -166,10 +184,12 @@ function CreateExerciseModal({
           }
         } else {
           payload.multiple_choice_data = {
-            user_question: mcQuestion,
-            answers: choices
-              .filter(c => c.text.trim() !== '')
-              .map(c => ({ text: c.text.trim(), is_correct: c.correct })),
+            questions: questions.map(q => ({
+              user_question: q.user_question,
+              answers: q.choices
+                .filter(c => c.text.trim() !== '')
+                .map(c => ({ text: c.text.trim(), is_correct: c.correct })),
+            })),
           }
         }
 
@@ -227,19 +247,7 @@ function CreateExerciseModal({
 
   const addButtonDisabled = tagInput.trim() === '' || availableTags.length === 0
 
-  function updateChoiceText(id: string, text: string) {
-    setChoices(prev => prev.map(c => (c.id === id ? { ...c, text } : c)))
-  }
-  function toggleChoiceCorrect(id: string) {
-    setChoices(prev => prev.map(c => (c.id === id ? { ...c, correct: !c.correct } : c)))
-  }
-  function addChoice() {
-    setChoices(prev => [...prev, { id: crypto.randomUUID(), text: '', correct: false }])
-  }
-  function removeChoice(id: string) {
-    setChoices(prev => (prev.length <= 2 ? prev : prev.filter(c => c.id !== id)))
-  }
-
+  
   async function handleGenerate(extra: string) {
     setSubmitError(null)
     setIsGenerating(true)
@@ -594,48 +602,121 @@ function CreateExerciseModal({
 
                 <TabsContent value="multiple_choice">
                   <div className="space-y-3 mt-2">
-                    <div className="space-y-1">
-                      <label className="text-xs text-muted-foreground">User question</label>
-                      <Input
-                        value={mcQuestion}
-                        placeholder="Enter the question shown to the user"
-                        onChange={(e) => setMcQuestion(e.target.value)}
-                      />
-                    </div>
-                    {choices.map((choice, idx) => (
-                      <div key={choice.id} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={choice.correct}
-                          onChange={() => toggleChoiceCorrect(choice.id)}
-                          className="h-4 w-4"
-                        />
-                        <Input
-                          value={choice.text}
-                          placeholder={`Answer ${idx + 1}`}
-                          onChange={(e) => updateChoiceText(choice.id, e.target.value)}
-                        />
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-muted-foreground">
+                        Question {questions.length === 0 ? 0 : currentQuestionIndex + 1} of {questions.length}
+                      </div>
+                      <div className="flex gap-2">
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          disabled={choices.length <= 2}
-                          onClick={() => removeChoice(choice.id)}
+                          disabled={currentQuestionIndex <= 0}
+                          onClick={() => setCurrentQuestionIndex(i => Math.max(0, i - 1))}
                         >
-                          Remove
+                          Previous
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={currentQuestionIndex >= questions.length - 1}
+                          onClick={() => setCurrentQuestionIndex(i => Math.min(questions.length - 1, i + 1))}
+                        >
+                          Next
                         </Button>
                       </div>
-                    ))}
-                    <div>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={addChoice}
-                      >
-                        Add Answer
-                      </Button>
                     </div>
+
+                    {questions.length > 0 && (() => { const idx = currentQuestionIndex; const q = questions[idx]; return (
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <label className="text-xs text-muted-foreground">User question</label>
+                          <Input
+                            value={q.user_question}
+                            placeholder="Enter the question shown to the user"
+                            onChange={(e) => {
+                              const v = e.target.value
+                              setQuestions(prev => prev.map((pq, i) => i === idx ? { ...pq, user_question: v } : pq))
+                            }}
+                          />
+                        </div>
+                        {q.choices.map((choice, cidx) => (
+                          <div key={choice.id} className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={choice.correct}
+                              onChange={() => setQuestions(prev => prev.map((pq, i) => i === idx ? { ...pq, choices: pq.choices.map(ch => ch.id === choice.id ? { ...ch, correct: !ch.correct } : ch) } : pq))}
+                              className="h-4 w-4"
+                            />
+                            <Input
+                              value={choice.text}
+                              placeholder={`Answer ${cidx + 1}`}
+                              onChange={(e) => {
+                                const v = e.target.value
+                                setQuestions(prev => prev.map((pq, i) => i === idx ? { ...pq, choices: pq.choices.map(ch => ch.id === choice.id ? { ...ch, text: v } : ch) } : pq))
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              disabled={q.choices.length <= 2}
+                              onClick={() => setQuestions(prev => prev.map((pq, i) => i === idx ? { ...pq, choices: pq.choices.length <= 2 ? pq.choices : pq.choices.filter(ch => ch.id !== choice.id) } : pq))}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        ))}
+                        <div className="flex justify-between">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setQuestions(prev => prev.map((pq, i) => i === idx ? { ...pq, choices: [...pq.choices, { id: crypto.randomUUID(), text: '', correct: false }] } : pq))}
+                          >
+                            Add Answer
+                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => {
+                                const blank: McQuestion = { id: crypto.randomUUID(), user_question: '', choices: [ { id: crypto.randomUUID(), text: '', correct: false }, { id: crypto.randomUUID(), text: '', correct: false } ] }
+                                setQuestions(prev => { const next = [...prev]; next.splice(idx + 1, 0, blank); return next })
+                                setCurrentQuestionIndex(idx + 1)
+                              }}
+                            >
+                              Add After
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => { setQuestions(prev => prev.length > 0 ? prev.filter((_, i) => i !== idx) : prev); setCurrentQuestionIndex(i => Math.max(0, Math.min(i, questions.length - 2))) }}
+                              disabled={questions.length === 0}
+                            >
+                              Remove Question
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ) })()}
+
+                    {questions.length === 0 ? (
+                      <div className="flex items-center justify-between">
+                        <div />
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => { const blank: McQuestion = { id: crypto.randomUUID(), user_question: '', choices: [ { id: crypto.randomUUID(), text: '', correct: false }, { id: crypto.randomUUID(), text: '', correct: false } ] }; setQuestions(prev => ([...prev, blank])); setCurrentQuestionIndex(questions.length); }}
+                        >
+                          Add Question
+                        </Button>
+                      </div>
+                    ) : (<></>)}
                   </div>
                 </TabsContent>
               </Tabs>

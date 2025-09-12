@@ -30,7 +30,7 @@ import {
 import { getAvatarUrl } from '@components/Objects/avatar'
 import { getMediaUrl } from '@services/media/media'
 import { getUriWithOrg } from '@services/config/config'
-import { ApiStudent } from './shared'
+import { ApiExercise, ApiStudent, ExerciseLog } from './shared'
 
 
 // Classroom performance data
@@ -107,7 +107,7 @@ function InteractivePerformanceChart({
             color: '#3b82f6',
           },
           student: {
-            label: studentData.name.split(' ')[0],
+            label: studentData.first_name,
             color: '#3b82f6',
           },
         }}
@@ -238,12 +238,11 @@ export interface PerformancePoint {
        score: number,
 }
 
-export interface ExerciseLog {
-      name: string,
-      passed: boolean,
-}
-
-export default function Component(props: {apiStudents: ApiStudent[], orgslug: string}) {
+export default function Component(props: {
+    apiStudents: ApiStudent[],
+    apiExercises: ApiExercise[],
+    orgslug: string,
+}) {
   const students = props.apiStudents.map((s) => {
       console.dir(s)
       const displayName = (s.first_name) ? (
@@ -253,6 +252,8 @@ export default function Component(props: {apiStudents: ApiStudent[], orgslug: st
 
       const avatar = s.avatar_image ? `${getMediaUrl()}content/users/${s.user_uuid}/avatars/${s.avatar_image}` : '/empty_avatar.png'
       console.log(avatar)
+
+      console.dir(s.log)
 
       return {
         id: s.id,
@@ -265,13 +266,9 @@ export default function Component(props: {apiStudents: ApiStudent[], orgslug: st
         satisfaction: 0,
         performance: 0,
         performanceHistory: [],
-        exerciseHistory: [],
+        exerciseHistory: s.log,
       } as ContentStudent
   })
-
-  // const classroom = students.map((value, index) => {
-  //
-  // })
 
   let desks = []
 
@@ -303,25 +300,9 @@ export default function Component(props: {apiStudents: ApiStudent[], orgslug: st
 
   const classroom = { desks }
 
-  // const classroooom = {
-  // desks: [
-  //   // Row 1
-  //   { id: 1, students: [1, 2], position: { row: 1, col: 1 } },
-  //   { id: 2, students: [3, 4], position: { row: 1, col: 2 } },
-  //   { id: 3, students: [5, 6], position: { row: 1, col: 3 } },
-  //   // Single desk: TODO
-  //   // { id: 13, students: [null], position: { row: 4, col: 3 } },
-  // ],
-
   const [currentStudent, setCurrentStudent] = useState(students[0])
   const [searchTerm, setSearchTerm] = useState('')
 
-  // const students = fetch(
-  //   `${getAPIUrl()}courses/students/list?course_uuid=${course_id}`,
-  //   RequestBodyFormWithAuthHeader('POST', formData, null, access_token)
-  // )
-  //   .then((result) => result.json())
-  //   .catch((error) => console.log('error', error))
 
   const handleStudentClick = (studentId: number | null) => {
     if (studentId) {
@@ -358,8 +339,6 @@ export default function Component(props: {apiStudents: ApiStudent[], orgslug: st
                 }}
               >
                 <CardContent className="flex items-center justify-between px-10 py-5 rounded-2xl">
-                  {/* <div className=""> */}
-
                   <div className="flex items-center gap-4">
                     <h1 className="text-2xl font-semibold text-gray-800">
                         Student Overview
@@ -385,7 +364,6 @@ export default function Component(props: {apiStudents: ApiStudent[], orgslug: st
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  {/* </div> */}
                 </CardContent>
               </Card>
             </div>
@@ -963,16 +941,18 @@ export default function Component(props: {apiStudents: ApiStudent[], orgslug: st
                 </div>
 
                 <div className="space-y-3 max-h-[18rem] overflow-y-auto">
-                  { (currentStudent ? currentStudent.exerciseHistory : []).map((exercise, index) => (
+                  { (currentStudent ? currentStudent.exerciseHistory : []).map((exercise, index) =>{
+                      const ex = props.apiExercises.find((e) => e.id === exercise.id)
+                      return (
                     <div
                       key={index}
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200"
                     >
-                      <span className="text-sm font-medium truncate flex-1 mr-3">
-                        {exercise.name}
+                      <span className={`text-sm font-medium truncate flex-1 mr-3 ${ex ? 'text-black' : 'text-gray-400'}`}>
+                        {ex?.title || "Deleted Exercise"}
                       </span>
                       <div className="flex-shrink-0">
-                        {exercise.passed ? (
+                        {exercise.correct ? (
                           <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
                             <svg
                               className="w-4 h-4 text-green-600"
@@ -1007,7 +987,7 @@ export default function Component(props: {apiStudents: ApiStudent[], orgslug: st
                         )}
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
               </CardContent>
             </Card>

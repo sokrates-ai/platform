@@ -8,7 +8,7 @@ import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import React, { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import Content from './Content'
-import { ApiStudent } from './shared'
+import { ApiStudent, ApiExercise } from './shared'
 
 type EditCourseAccessProps = {
   orgslug: string
@@ -22,19 +22,19 @@ function ManageCourseMembers(props: EditCourseAccessProps) {
   const { isLoading, courseStructure } = course as any
   const dispatchCourse = useCourseDispatch() as any
 
+  const tasks_page = 1
+  const tasks_limit = 1000000000000 // Sloww ass code, fuck it
+  const TASKS_URL = `${getAPIUrl()}tasks/list/page/${tasks_page}/limit/${tasks_limit}`
+  const { data: tasks }: { data: ApiExercise[] } = useSWR(TASKS_URL, (url: string) => swrFetcher(url, access_token))
+
+  console.log('tasks', tasks)
+
   const { data: students }: { data: ApiStudent[] } = useSWR(
     courseStructure
       ? `${getAPIUrl()}courses/students/list?course_uuid=${courseStructure.course_uuid}`
       : null,
     (url: string) => swrFetcher(url, access_token)
   )
-
-  // const { data: usergroups } = useSWR(
-  //   courseStructure
-  //     ? `${getAPIUrl()}usergroups/resource/${courseStructure.course_uuid}`
-  //     : null,
-  //   (url: string) => swrFetcher(url, access_token)
-  // )
 
   const [isClientPublic, setIsClientPublic] = useState<boolean | undefined>(
     undefined
@@ -66,7 +66,7 @@ function ManageCourseMembers(props: EditCourseAccessProps) {
   return (
     <div className="py-4 box-border overflow-hidden h-full bg-white">
         {
-            courseStructure && students ? (<Content orgslug={props.orgslug} apiStudents={students}></Content>) : null
+            courseStructure && students ? (<Content orgslug={props.orgslug} apiStudents={students} apiExercises={tasks}></Content>) : null
         }
     </div>
   )
