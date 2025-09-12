@@ -15,7 +15,7 @@ export function isChapterLocked(chapterID: number, course: any) {
         }
 
         const lastActivity = pred.activities[pred.activities.length - 1]
-        if (!isActivityDone(course, lastActivity.id)) {
+        if (!isActivityDone(course, lastActivity.activity_uuid)) {
             return true
         }
     }
@@ -23,8 +23,9 @@ export function isChapterLocked(chapterID: number, course: any) {
     return false
 }
 
-export function isActivityLocked(course: any, chapter: any, activityID: number) {
-    const activityIndex = chapter.activities.findIndex((act: any) => act.id === activityID)
+export function isActivityLocked(course: any, chapter: any, activityUUID: string) {
+    console.log(chapter.activities, activityUUID)
+    const activityIndex = chapter.activities.findIndex((act: any) => act.activity_uuid === activityUUID)
     if (activityIndex === 0) {
         return false
     }
@@ -32,19 +33,19 @@ export function isActivityLocked(course: any, chapter: any, activityID: number) 
     const previousIndex = activityIndex - 1
     const previous = chapter.activities[previousIndex]
 
-    if (isActivityDone(course, previous.id)) {
+    if (isActivityDone(course, previous.activity_uuid)) {
         return false
     }
 
     return true
 }
 
-export function isActivityDone(course: any, activityID: number) {
+export function isActivityDone(course: any, activityUUID: string) {
     let run = course.trail?.runs.find(
         (run: any) => run.course_id == course.id
     )
     if (run) {
-        const step = run.steps.find((step: any) => step.activity_id == activityID)
+        const step = run.steps.find((step: any) => step.activity_uuid == activityUUID)
         if (!step) {
             return false
         }

@@ -123,7 +123,6 @@ async def get_task(
 ) -> Optional[Task]:
     statement = select(Task).where(Task.id == id)
     task = db_session.exec(statement).first()
-    print(f'task={task}')
     return task
 
 
@@ -391,8 +390,6 @@ async def delete_task(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail='Unprocessable entity: task does not exist',
         )
-
-    print(f'task={task}')
 
     # TODO: protect this route a bit.
     # await rbac_check(request, course.course_uuid, current_user, "delete", db_session)

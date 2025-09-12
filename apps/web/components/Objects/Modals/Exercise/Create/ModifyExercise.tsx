@@ -53,6 +53,10 @@ function ModifyExerciseModal({
   // task type and type-specific state
   const [taskType, setTaskType] = React.useState<'ai' | 'multiple_choice'>(exercise.task_type || 'ai')
 
+  // Rewards
+  const [xpReward, setXpReward] = React.useState<number>(exercise?.xp_reward ?? 0)
+  const [coinReward, setCoinReward] = React.useState<number>(exercise?.coin_reward ?? 0)
+
   // AI state
   const [aiInstruction, setAiInstruction] = React.useState('')
   const [aiProposedSolution, setAiProposedSolution] = React.useState('')
@@ -243,6 +247,8 @@ function ModifyExerciseModal({
           tags: internalTags,
           task_type: taskType,
           course_id: values.course_id !== '' ? values.course_id : null,
+          xp_reward: xpReward,
+          coin_reward: coinReward,
         }
 
         if (taskType === 'ai') {
@@ -481,6 +487,32 @@ function ModifyExerciseModal({
                       </div>
                     )
                   })}
+                </div>
+              </div>
+            </FormField>
+
+            <FormField name="rewards">
+              <FormLabelAndMessage label="Rewards" message="" />
+              <div className="flex items-center space-x-6 pr-4">
+                <div className="flex flex-col items-start space-y-1">
+                  <span className="text-xs text-neutral-500">XP: {xpReward}</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={50}
+                    value={xpReward}
+                    onChange={(e) => setXpReward(Number(e.target.value))}
+                  />
+                </div>
+                <div className="flex flex-col items-start space-y-1">
+                  <span className="text-xs text-neutral-500">Coins: {coinReward}</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={10}
+                    value={coinReward}
+                    onChange={(e) => setCoinReward(Number(e.target.value))}
+                  />
                 </div>
               </div>
             </FormField>

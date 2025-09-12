@@ -129,13 +129,12 @@ function LeftRail({ orgslug, org, session, isUserAdmin }: any) {
       <div className="flex items-center pr-1 lg:pr-5 gap-2 sm:gap-3 ml-auto">
         <Badge>
           <span className="mr-1">🪙</span>
-          {session?.data?.user?.hintCoins ?? 42}
+          {session?.data?.user?.coins ?? -1}
         </Badge>
-        {isUserAdmin?.isAdmin && (
-          <Badge className="hidden xl:flex" style={{ backgroundColor: '#E25A26', borderColor: '#E25A26', color: 'white' }}>
+        {isUserAdmin.isAdmin ? (<Badge className="hidden xl:flex" style={{ backgroundColor: '#E25A26', borderColor: '#E25A26', color: 'white' }}>
             Admin
-          </Badge>
-        )}
+          </Badge>) : <></>
+        }
       </div>
     </div>
   )
@@ -154,9 +153,9 @@ function RightRail() {
 /* ─── AVATAR ──────────────────────────────────────────────────────────────── */
 
 function Avatar({ session, org, isUserAdmin, onLogout }: any) {
-  const xp = session?.data?.user?.xp ?? 0.42
-  const next = session?.data?.user?.nextLevelXp ?? 1
-  const pct = Math.min(1, xp / next)
+  const xp = session?.data?.user?.level_progress ?? -1
+  const pct = xp / 100.0
+  console.log(`got percent: ${pct}`)
   const deg = 360 * pct
 
   return (

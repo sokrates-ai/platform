@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Optional
 from sqlmodel import Field, SQLModel
-from sqlalchemy import ForeignKey, JSON, Column, Integer
+from sqlalchemy import ForeignKey, JSON, Column, Integer, String
 
 
 class TrailStepTypeEnum(str, Enum):
@@ -12,6 +12,7 @@ class TrailStepTypeEnum(str, Enum):
 #
 # TODO: make trailstep more atomic!
 #
+
 
 class TrailStep(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -26,8 +27,8 @@ class TrailStep(SQLModel, table=True):
     trail_id: int = Field(
         sa_column=Column(Integer, ForeignKey("trail.id", ondelete="CASCADE"))
     )
-    activity_id: int = Field(
-        sa_column=Column(Integer, ForeignKey("activity.id", ondelete="CASCADE"))
+    activity_uuid: str = Field(
+        sa_column=Column(String)
     )
     course_id: int = Field(
         sa_column=Column(Integer, ForeignKey("course.id", ondelete="CASCADE"))
@@ -53,8 +54,8 @@ class Assignment_Task_Complete(SQLModel, table=True):
     task_id: int = Field(
         sa_column=Column(Integer, ForeignKey("task.id", ondelete="CASCADE"))
     )
-    activity_id: int = Field(
-        sa_column=Column(Integer, ForeignKey("activity.id", ondelete="CASCADE"))
+    activity_uuid: str = Field(
+        sa_column=Column(String)
     )
     course_id: int = Field(
         sa_column=Column(Integer, ForeignKey("course.id", ondelete="CASCADE"))

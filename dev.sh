@@ -75,6 +75,8 @@ dev_web() {
 }
 
 dev_backend() {
+    env | rg PLATFORM
+    env | rg REDIS
     bash -c 'cd ./apps/api/ && poetry run python3 app.py'
 }
 

@@ -24,8 +24,8 @@ export default function ChapterActivities({
 
 	const stateOf = (idx: number): ACTIVITY_STATE => {
 		const a = activities[idx]
-		if (isActivityLocked(course, chapter, a.id)) return 'locked'
-		return isActivityDone(course, a.id) ? 'done' : 'available'
+		if (isActivityLocked(course, chapter, a.activity_uuid)) return 'locked'
+		return isActivityDone(course, a.activity_uuid) ? 'done' : 'available'
 	}
 
 	return (

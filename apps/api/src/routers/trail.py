@@ -5,6 +5,8 @@ from src.services.courses.activities.workspaces import create_task_log
 from fastapi import APIRouter, Depends, Request
 from src.core.events.database import get_db_session
 from src.db.trails import TrailCreate, TrailRead
+from src.services.users.users import release_user_coin_reward, release_user_xp_reward
+from src.services.courses.activities.workspaces import get_task
 from src.security.auth import get_current_user
 from pydantic import BaseModel
 from src.services.trail.trail import (
@@ -167,7 +169,7 @@ async def api_ws_record_solution(
     markers = await get_activity_task_markers_of_activity(
         request=request,
         user=user,
-        activity_id=activity.id,
+        activity_uuid=activity.activity_uuid,
         course_id=activity.course_id,
         org_id=activity.org_id,
         db_session=db_session,
@@ -175,7 +177,7 @@ async def api_ws_record_solution(
 
     markers_flat = [marker.task_id for marker in markers]
 
-    # Ensure that the activity is added to the trail.
+    # Ensure that the activity is added to the trail if not already.
     await add_activity_to_trail(
         request=request,
         user=user,
@@ -189,7 +191,7 @@ async def api_ws_record_solution(
             request=request,
             user=user,
             task_id=body.task_id,
-            activity_id=activity.id,
+            activity_uuid=activity.activity_uuid,
             org_id=activity.org_id,
             course_id=activity.course_id,
             db_session=db_session,
@@ -211,7 +213,7 @@ async def api_ws_record_solution(
     # If everything is marked, we can add the activity to the trail
     if everything_marked:
         print('!!!everything except last one marked, adding activity to trail')
-        await add_activity_to_trail(
+        shall_release_rewards = await add_activity_to_trail(
             request=request,
             user=user,
             activity_uuid=body.activity_uuid,
@@ -219,9 +221,18 @@ async def api_ws_record_solution(
             complete=True,
         )
 
-    # TODO: check if all activities from a chapter are completed, then trigger chapter completion.
-    # TODO: this is better done in the general add activity to trail function.
+        if shall_release_rewards:
+            # TODO: check if all activities from a chapter are completed, then trigger chapter completion.
+            # TODO: this is better done in the general add activity to trail function.
 
-    # TODO: here: get the XP attached to a task and record it.
+            # TODO: here: get the XP attached to a task and record it.
+            task = await get_task(request, db_session, task_id)
+
+            await release_user_xp_reward(request, db_session, user_uuid, task.xp_reward)
+            await release_user_coin_reward(request, db_session, user_uuid, task.coin_reward)
+
+            print(f"Rewarded user: {user_uuid} with {task.xp_reward} xp | {task.coin_reward} coins")
+        else:
+            print(f"DID NOT rewarded user: {user_uuid}")
 
     return None

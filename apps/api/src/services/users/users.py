@@ -374,6 +374,75 @@ async def update_user_password(
     return user
 
 
+async def release_user_coin_reward(
+    request: Request,
+    db_session: Session,
+    user_uuid: str,
+    coins: int,
+) -> UserRead:
+    # Get user
+    statement = select(User).where(User.user_uuid == user_uuid)
+    user = db_session.exec(statement).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=400,
+            detail="User does not exist",
+        )
+
+    # Apply reward
+    user.coins = int(user.coins) + int(coins)
+    user.update_date = str(datetime.now())
+
+    # Persist
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+
+    return UserRead.model_validate(user)
+
+
+async def release_user_xp_reward(
+    request: Request,
+    db_session: Session,
+    user_uuid: str,
+    xp: int,
+) -> UserRead:
+    # Get user
+    statement = select(User).where(User.user_uuid == user_uuid)
+    user = db_session.exec(statement).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=400,
+            detail="User does not exist",
+        )
+
+    # Normalize inputs
+    added_xp = int(xp)
+    if added_xp < 0:
+        added_xp = 0
+
+    # Current progress is 0-100
+    current_progress = int(user.level_progress)
+    total = current_progress + added_xp
+
+    # Compute level ups and new progress with wrapping to 0-100 range
+    levels_gained = total // 100
+    new_progress = total % 100
+
+    user.level = int(user.level) + int(levels_gained)
+    user.level_progress = int(new_progress)
+    user.update_date = str(datetime.now())
+
+    # Persist
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+
+    return UserRead.model_validate(user)
+
+
 async def read_user_by_id(
     request: Request,
     db_session: Session,

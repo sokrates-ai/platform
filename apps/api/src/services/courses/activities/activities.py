@@ -114,19 +114,31 @@ async def get_activity(
     # RBAC check
     await rbac_check(request, course.course_uuid, current_user, "read", db_session)
 
-    # Paid access check
-    has_paid_access = await check_activity_paid_access(
-        request=request,
-        activity_id=activity.id if activity.id else 0,
-        user=current_user,
-        db_session=db_session
-    )
-
     activity_read = ActivityRead.model_validate(activity)
-    activity_read.content = activity_read.content if has_paid_access else { "paid_access": False }
     activity = activity_read
 
     return activity
+
+
+async def get_activity_by_id_and_course(
+    request: Request,
+    activity_id: int,
+    course_id: int,
+    db_session: Session,
+):
+    statement = select(Activity).where(Activity.id == activity_id, Activity.course_id == course_id)
+    activity = db_session.exec(statement).first()
+
+    if not activity:
+        raise HTTPException(
+            status_code=404,
+            detail="Activity not found",
+        )
+
+    activity = ActivityRead.model_validate(activity)
+
+    return activity
+
 
 async def get_activityby_id(
     request: Request,
