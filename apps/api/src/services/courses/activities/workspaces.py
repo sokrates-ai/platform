@@ -5,7 +5,6 @@ from src.db.tasks import (
     Tags,
     Task,
     TaskCreate,
-    TaskBase,
     TaskWithCourseIDAndTags,
     Tasks_Tags,
 )

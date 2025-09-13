@@ -14,8 +14,6 @@ from fastapi import HTTPException, Request
 from uuid import uuid4
 from datetime import datetime
 
-from src.services.payments.payments_access import check_activity_paid_access
-
 
 ####################################################
 # CRUD

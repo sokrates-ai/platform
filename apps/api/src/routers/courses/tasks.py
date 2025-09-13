@@ -3,16 +3,12 @@ from typing import List, Optional
 from config.config import WorkspaceConfig
 from src.db.courses.activities import Activity, ActivityTypeEnum
 from src.services.courses.activities.activities import get_activity
-from src.db.tasks import TaskBase
 from src.services.courses.activities.workspaces import workspace_system_obtain_token
-
 from src.services.courses.activities.workspaces_gen import (
-        TaskGradingCriteria,
         GenerateGradingCriteria,
         TaskGradingCriteriaCollection,
         generate_task_grading_criteria,
 )
-
 from src.services.courses.activities.workspaces import (
     Tags,
     Task,
@@ -28,7 +24,6 @@ from src.services.courses.activities.workspaces import (
     modify_tag,
     modify_task,
 )
-
 from fastapi import (
     APIRouter,
     Depends,
