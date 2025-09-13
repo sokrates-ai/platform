@@ -7,7 +7,7 @@ from typing import List, Optional, Tuple
 import requests
 
 # CONFIGURABLE GLOBALS
-NUM_USERS = 10  # Number of users to create and enroll
+NUM_USERS = 90  # Number of users to create and enroll
 CONCURRENT_THREADS = 5  # Number of concurrent threads
 
 # HARDCODED VALUES (replace with real values as needed)
@@ -15,7 +15,7 @@ BASE = "http://localhost:3000"
 API_BASE = "http://localhost:1338/api/v1"
 ORG_ID = 1
 ORG_SLUG = "default"
-INVITE_CODE = "AZhMA"  # Set your invite code here
+INVITE_CODE = "pob3z"  # Set your invite code here
 
 # Admin (used for cleanup only)
 ADMIN_EMAIL = "admin@school.dev"

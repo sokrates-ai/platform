@@ -17,6 +17,9 @@ export interface ApiStudent {
     last_name: string,
     email: string,
     avatar_image: string, // URL of the avatar image
+    coins: number
+    level: number
+    level_progress: number
     log: ExerciseLog[]
 }
 

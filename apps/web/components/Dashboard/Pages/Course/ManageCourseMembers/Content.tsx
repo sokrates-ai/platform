@@ -10,6 +10,7 @@ import {
   BarChart3,
   NotebookPen,
   Backpack,
+  Coins,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -44,6 +45,12 @@ const classroomPerformance = [
   { week: 7, score: 79 },
   { week: 8, score: 77 },
 ]
+
+// TODO: big todo: make performance chart actually work.
+// record how many successfull tasks the student solved grouped by day
+// NOTE: only record distinct task_ids, otherise it shits itself
+// TODO: also fix the student counts in the top
+// and NAN
 
 // Classroom layout - defines which students sit at which desks
 
@@ -225,10 +232,10 @@ interface ContentStudent {
         age: number,
         grade: string,
         avatar: string,
-        exercises: number,
-        homework: number,
-        satisfaction: number,
         performance: number,
+        coins: number
+        level: number
+        level_progress: number
         performanceHistory: PerformancePoint[],
         exerciseHistory: ExerciseLog[],
 }
@@ -251,9 +258,6 @@ export default function Component(props: {
 
 
       const avatar = s.avatar_image ? `${getMediaUrl()}content/users/${s.user_uuid}/avatars/${s.avatar_image}` : '/empty_avatar.png'
-      console.log(avatar)
-
-      console.dir(s.log)
 
       return {
         id: s.id,
@@ -261,10 +265,10 @@ export default function Component(props: {
         age: 0,
         grade: "",
         avatar,
-        exercises: 0,
-        homework: 0,
-        satisfaction: 0,
         performance: 0,
+        coins: s.coins,
+        level: s.level,
+        level_progress: s.level_progress,
         performanceHistory: [],
         exerciseHistory: s.log,
       } as ContentStudent
@@ -861,36 +865,36 @@ export default function Component(props: {
                 <CardContent className="p-6 grid grid-cols-3 gap-4 items-center h-full">
                   <Card>
                     <CardContent className="text-center py-4 px-2 bg-gray-50 rounded-xl flex flex-col items-center">
-                      <div className="text-3xl font-bold flex items-center text-gray-900 gap-1">
+                      <div className="text-3xl font-bold flex items-center text-gray-900 gap-2">
                         <NotebookPen color={'#848484'} className="w-10 h-10" />
-                        {currentStudent?.exercises || 0}
+                        {currentStudent?.exerciseHistory.length || 0}
                       </div>
                       <div className="text-xs text-gray-500 mt-2">
-                        Exercises this week
+                        Exercises so far
                       </div>
                     </CardContent>
                   </Card>
 
                   <Card>
                     <CardContent className="text-center py-4 px-2 bg-gray-50 rounded-xl flex flex-col items-center">
-                      <div className="text-3xl font-bold flex items-center h-full text-gray-900 gap-1">
-                        <Backpack color="#848484" className="w-10 h-10" />
-                         {currentStudent?.homework || 0}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-2">
-                        Homework this week
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="text-center py-4 px-2 bg-gray-50 rounded-xl flex flex-col items-center">
-                      <div className="text-3xl font-bold flex items-center text-gray-900 gap-1">
+                      <div className="text-3xl font-bold flex items-center text-gray-900 gap-2">
                         <Smile color="#848484" className="w-10 h-10" />
-                        {currentStudent?.satisfaction || 0}%
+                        {(currentStudent?.exerciseHistory.filter((e) => e.correct).length / currentStudent?.exerciseHistory.length * 100).toFixed(0) || 0}%
                       </div>
                       <div className="text-xs text-gray-500 mt-2">
-                        Exercise satisfaction
+                        Exercise success rate
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="text-center py-4 px-2 bg-gray-50 rounded-xl flex flex-col items-center">
+                      <div className="text-3xl font-bold flex items-center h-full text-gray-900 gap-2">
+                        <Coins color="#848484" className="w-10 h-10" />
+                         {currentStudent?.coins || 0}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-2">
+                        Coins
                       </div>
                     </CardContent>
                   </Card>
@@ -902,7 +906,7 @@ export default function Component(props: {
                 <CardContent className="px-6 py-2 text-center">
                   <div className="relative w-22 h-22 mx-auto mb-3">
                     <svg
-                      className="w-full h-full transform -rotate-90"
+                      className="w-full h-full transform -rotate-180"
                       viewBox="0 0 36 36"
                     >
                       <path
@@ -916,14 +920,14 @@ export default function Component(props: {
                         fill="none"
                         stroke="#E25A26"
                         strokeWidth="2"
-                        strokeDasharray={`${currentStudent?.performance || 0}, 100`}
+                        strokeDasharray={`${currentStudent?.level_progress || 0}, 100`}
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                       <span className="text-3xl font-bold text-gray-900">
-                        {currentStudent?.performance || 0}%
+                        {currentStudent?.level_progress || 0} XP
                       </span>
-                      <div className="text-xs text-gray-500">Proficiency</div>
+                      <div className="text-sm text-gray-500">Level <span className="font-extrabold">{currentStudent?.level || 0}</span></div>
                     </div>
                   </div>
                 </CardContent>
@@ -941,8 +945,9 @@ export default function Component(props: {
                 </div>
 
                 <div className="space-y-3 max-h-[18rem] overflow-y-auto">
-                  { (currentStudent ? currentStudent.exerciseHistory : []).map((exercise, index) =>{
-                      const ex = props.apiExercises.find((e) => e.id === exercise.id)
+                  { (currentStudent ? currentStudent.exerciseHistory : []).map((log, index) =>{
+                      const ex = props.apiExercises.find((e) => e.id === log.task_id)
+
                       return (
                     <div
                       key={index}
@@ -952,7 +957,7 @@ export default function Component(props: {
                         {ex?.title || "Deleted Exercise"}
                       </span>
                       <div className="flex-shrink-0">
-                        {exercise.correct ? (
+                        {log.correct ? (
                           <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
                             <svg
                               className="w-4 h-4 text-green-600"
@@ -987,7 +992,7 @@ export default function Component(props: {
                         )}
                       </div>
                     </div>
-                  )})}
+                  )}).reverse()}
                 </div>
               </CardContent>
             </Card>
