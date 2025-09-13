@@ -1,3 +1,4 @@
+import { Exercise } from "@components/Objects/Thumbnails/ExerciseThumbnail";
 import { getAPIUrl } from "@services/config/config";
 import { RequestBodyWithAuthHeader } from "@services/utils/ts/requests";
 

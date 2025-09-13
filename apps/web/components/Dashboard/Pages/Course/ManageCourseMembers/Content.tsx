@@ -58,7 +58,7 @@ const classroomPerformance = [
 function InteractivePerformanceChart({
   studentData,
 }: {
-  studentData: ApiStudent
+  studentData: ContentStudent,
 }) {
   // Combine classroom and student data for the chart
   const chartData = classroomPerformance.map((classPoint, index) => ({
@@ -114,7 +114,7 @@ function InteractivePerformanceChart({
             color: '#3b82f6',
           },
           student: {
-            label: studentData.first_name,
+            label: studentData.name,
             color: '#3b82f6',
           },
         }}

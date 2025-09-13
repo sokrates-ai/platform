@@ -1,7 +1,5 @@
 import React from 'react'
 import { Editor } from '@tiptap/core'
-import learnhouseAI_icon from 'public/learnhouse_ai_simple.png'
-import Image from 'next/image'
 import { BookOpen, FormInput, Languages, MoreVertical } from 'lucide-react'
 import { BubbleMenu } from '@tiptap/react'
 import ToolTip from '@components/Objects/StyledElements/Tooltip/Tooltip'
@@ -48,13 +46,6 @@ function AICanvaToolkit(props: AICanvaToolkitProps) {
             className="py-1 h-10 px-2 w-max text-white rounded-xl shadow-md cursor-pointer flex items-center space-x-2 antialiased"
           >
             <div className="flex w-full space-x-2 font-bold text-white/80">
-              <Image
-                className="outline outline-1 outline-neutral-200/10 rounded-lg"
-                width={24}
-                src={learnhouseAI_icon}
-                alt=""
-              />{' '}
-              <div>AI</div>{' '}
             </div>
             <div>
               <MoreVertical className="text-white/50" size={12} />

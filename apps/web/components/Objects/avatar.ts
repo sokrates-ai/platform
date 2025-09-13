@@ -25,7 +25,7 @@ export function getAvatarUrl(orgslug: string, predefined_avatar: string, avatar_
   )
 
     if (predefined_avatar) {
-      return predefinedAvatar
+      return predefinedAvatar!
     } else {
       if (avatar_url) {
         return avatar_url

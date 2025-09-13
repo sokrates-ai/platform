@@ -7,8 +7,6 @@ import { AlertTriangle, BadgeInfo, NotebookTabs } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FlaskConical, MessageCircle, X } from 'lucide-react'
 import Image from 'next/image'
-import learnhouseAI_icon from 'public/learnhouse_ai_simple.png'
-import learnhouseAI_logo_black from 'public/learnhouse_ai_black_logo.png'
 import React, { useEffect, useRef } from 'react'
 import {
   AIChatBotStateTypes,
@@ -48,12 +46,6 @@ function AIActivityAsk(props: AIActivityAskProps) {
           >
             {' '}
             <i>
-              <Image
-                className="outline outline-1 outline-neutral-200/20 rounded-md"
-                width={20}
-                src={learnhouseAI_icon}
-                alt=""
-              />
             </i>{' '}
             <i className="not-italic text-xs font-bold">Ask AI</i>
           </div>
@@ -225,17 +217,6 @@ function ActivityChatMessageBox(props: ActivityChatMessageBoxProps) {
                   className={`flex space-x-2 items-center -ml-[100px] ${aiChatBotState.isWaitingForResponse ? 'animate-pulse' : ''
                     }`}
                 >
-                  <Image
-                    className={`outline outline-1 outline-neutral-200/20 rounded-lg ${aiChatBotState.isWaitingForResponse ? 'animate-pulse' : ''
-                      }`}
-                    width={24}
-                    src={learnhouseAI_icon}
-                    alt=""
-                  />
-                  <span className="text-sm font-semibold text-white/70">
-                    {' '}
-                    AI
-                  </span>
                 </div>
                 <div className="bg-white/5 text-white/40 py-0.5 px-3 flex space-x-1 rounded-full items-center">
                   <FlaskConical size={14} />
@@ -399,12 +380,6 @@ const AIMessagePlaceHolder = (props: {
               delay: 0.17,
             }}
           >
-            <Image
-              width={100}
-              className="mx-auto"
-              src={learnhouseAI_logo_black}
-              alt=""
-            />
             <p className="pt-3 text-2xl font-semibold text-white/70 flex justify-center space-x-2 items-center">
               <span className="items-center">Hello</span>
               <span className="capitalize flex space-x-2 items-center">

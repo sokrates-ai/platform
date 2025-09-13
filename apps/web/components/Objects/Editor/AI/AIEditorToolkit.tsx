@@ -1,5 +1,4 @@
 import React from 'react'
-import learnhouseAI_icon from 'public/learnhouse_ai_simple.png'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import {
@@ -90,21 +89,6 @@ function AIEditorToolkit(props: AIEditorToolkitProps) {
                   >
                     <div className="flex space-x-2">
                       <div className="pr-1">
-                        <div className="flex w-full space-x-2 font-bold text-white/80 items-center">
-                          <Image
-                            className="outline outline-1 outline-neutral-200/20 rounded-lg"
-                            width={24}
-                            src={learnhouseAI_icon}
-                            alt=""
-                          />
-                          <div className="flex items-center">
-                            AI Editor{' '}
-                            <span className="text-[10px] px-2 py-1 rounded-3xl ml-3 bg-white/10 uppercase">
-                              PRE-ALPHA
-                            </span>
-                          </div>
-                          <MoreVertical className="text-white/50" size={12} />
-                        </div>
                       </div>
                       <div className="tools flex space-x-2">
                         <AiEditorToolButton label="Writer" />
@@ -450,12 +434,6 @@ const UserFeedbackModal = (props: AIEditorToolkitProps) => {
         className="backdrop-blur-md	z-50 rounded-2xl max-w-screen-2xl my-10 mx-auto w-[500px] h-[200px] fixed bottom-16 left-1/2 transform -translate-x-1/2 shadow-xl ring-1 ring-inset ring-white/10 text-white p-3 flex-col-reverse"
       >
         <div className="flex space-x-2 justify-center">
-          <Image
-            className="outline outline-1 outline-neutral-200/20 rounded-lg"
-            width={24}
-            src={learnhouseAI_icon}
-            alt=""
-          />
         </div>
         <div className="flex h-[115px] justify-center mx-auto antialiased">
           <div className="flex items-center justify-center ">

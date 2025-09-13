@@ -2,13 +2,12 @@
 import React from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import learnhouseIcon from 'public/learnhouse_icon.png'
+import learnhouseIcon from 'public/dark_logo.svg'
 import { ToolbarButtons } from './Toolbar/ToolbarButtons'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import styled from 'styled-components'
 import { DividerVerticalIcon, SlashIcon } from '@radix-ui/react-icons'
-import learnhouseAI_icon from 'public/learnhouse_ai_simple.png'
 import {
   AIEditorStateTypes,
   useAIEditor,
@@ -232,15 +231,6 @@ function Editor(props: Editor) {
                       className="rounded-md px-3 py-2 drop-shadow-md flex  items-center space-x-1.5 text-sm text-white hover:cursor-pointer transition delay-150 duration-300 ease-in-out hover:scale-105"
                     >
                       {' '}
-                      <i>
-                        <Image
-                          className=""
-                          width={20}
-                          src={learnhouseAI_icon}
-                          alt=""
-                        />
-                      </i>{' '}
-                      <i className="not-italic text-xs font-bold">AI Editor</i>
                     </div>
                   )}
                 </div>

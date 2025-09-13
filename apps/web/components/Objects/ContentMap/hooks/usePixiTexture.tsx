@@ -9,25 +9,25 @@ export default function usePixiTexture(url: string): PIXI.Texture | null {
 
   console.log('usePixiTexture', url);
 
-  useEffect(() => {
-    if (!url) return null;
+    useEffect(() => {
+    if (!url) return; // <-- just return, not null
 
     const cached = PIXI.Assets.get(url);
     if (cached) {
-      setTexture(cached);
-      return;
+        setTexture(cached);
+        return;
     }
 
     let active = true;
 
     PIXI.Assets.load(url)
-      .then((tex) => active && setTexture(tex as PIXI.Texture))
-      .catch(console.error);
+        .then((tex) => active && setTexture(tex as PIXI.Texture))
+        .catch(console.error);
 
     return () => {
-      active = false;
+        active = false;
     };
-  }, [url]);
+    }, [url]);
 
   return texture;
 }
