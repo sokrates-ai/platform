@@ -115,8 +115,11 @@ docker-build() {
 
     echo "Using DOMAIN: ${DOMAIN} for build..."
 
-    docker build --build-arg DOMAIN="${DOMAIN}" -t "ghcr.io/${OWNER}/sk-platform:${TAG}" .
-    docker push "ghcr.io/${OWNER}/sk-platform:${TAG}"
+    docker build --build-arg DOMAIN=app.sokrates.ae.org --progress=plain -t "ghcr.io/${OWNER}/sk-platform-frontend:${TAG}" -f Dockerfile.web .
+    docker build --progress=plain -t "ghcr.io/${OWNER}/sk-platform-backend:${TAG}" -f Dockerfile.api .
+
+    docker push "ghcr.io/${OWNER}/sk-platform-frontend:${TAG}"
+    docker push "ghcr.io/${OWNER}/sk-platform-backend:${TAG}"
 }
 
 #
