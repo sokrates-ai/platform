@@ -33,7 +33,7 @@ const CourseIntroView = ({ courseuuid, orgslug, course }: Props) => {
         course.course_uuid,
         course.thumbnail_image,
       )
-    : '../empty_thumbnail.png'
+    : '../empty_thumbnail.webp'
 
   if (!org || !course) return null
 

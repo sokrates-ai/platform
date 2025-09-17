@@ -8,7 +8,7 @@ import { useOrg } from '@components/Contexts/OrgContext'
 import { getCourseThumbnailMediaDirectory } from '@services/media/media'
 import Link from 'next/link'
 import Image from 'next/image'
-import EmptyThumbnailImage from '../../../public/empty_thumbnail.png'
+import EmptyThumbnailImage from '../../../public/empty_thumbnail.webp'
 
 export function CourseOverviewTop({
   params,

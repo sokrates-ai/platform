@@ -51,7 +51,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, orgslug }) => {
         course.course_uuid,
         course.thumbnail_image
       )
-    : "/empty_thumbnail.png"
+    : "/empty_thumbnail.webp"
 
   return (
     <div>
