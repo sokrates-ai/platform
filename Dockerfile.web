@@ -1,0 +1,55 @@
+# Base image
+FROM node:20-alpine as base
+
+RUN npm install -g corepack pm2
+
+RUN addgroup --system --gid 1001 system \
+    && adduser --system --uid 1001 app \
+    && mkdir .next \
+    && chown app:system .next
+
+# Frontend Build
+FROM base AS deps
+
+ARG DOMAIN
+
+ENV NEXT_PUBLIC_LEARNHOUSE_API_URL=https://${DOMAIN}/api/v1/
+ENV NEXT_PUBLIC_LEARNHOUSE_BASE_URL=https://${DOMAIN}
+ENV NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL=http://${DOMAIN}
+ENV NEXT_PUBLIC_LEARNHOUSE_DOMAIN=https://${DOMAIN}
+ENV NEXT_PUBLIC_LEARNHOUSE_MEDIA_URL=https://${DOMAIN}/
+ENV NEXT_PUBLIC_LEARNHOUSE_HTTPS=true
+
+COPY ./apps/web/ /app/web
+WORKDIR /app/web
+RUN ls -lah
+COPY ./apps/web/package.json ./apps/web/pnpm-lock.yaml ./
+RUN rm -f .env*
+RUN if [ -f pnpm-lock.yaml ]; then corepack enable pnpm;  \
+    else echo "Lockfile not found." && exit 1; \
+    fi
+
+# No build approvals
+ENV CI=true
+
+RUN pnpm approve-builds
+RUN pnpm i --frozen-lockfile
+
+RUN pnpm run build;
+
+# Final image
+FROM base AS runner
+WORKDIR /
+COPY --from=deps /app/web/ ./app/web/
+COPY --from=deps /app/web/public ./app/web/public
+COPY --from=deps --chown=app:system /app/web/.next/standalone ./app/web/
+COPY --from=deps --chown=app:system /app/web/.next/static ./app/web/.next/static
+RUN ls -lah
+
+
+ARG DOMAIN
+ENV NEXT_PUBLIC_LEARNHOUSE_DOMAIN=https://${DOMAIN}
+RUN env
+
+COPY ./extra/start.sh start.sh
+CMD ["sh", "start.sh"]

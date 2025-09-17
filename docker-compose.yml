@@ -9,7 +9,7 @@ services:
     #
     #
     sk-workspace-redis:
-        image: redis:latest
+        image: docker.io/redis:latest
         container_name: sk-workspace-redis
         restart: always
         healthcheck:
@@ -20,45 +20,113 @@ services:
         volumes:
             - ./workspace_redis_data:/data
 
-    sk-workspace-caddy:
-        container_name: sk-workspace-caddy
-        image: ghcr.io/sokrates-ai/sk-workspace-caddy:latest
-        restart: unless-stopped
-        environment:
-            - "SK_BACKEND_HOST=http://sk-workspace-backend"
-            - "SK_BACKEND_PORT=8000"
-            - "SK_FRONTEND_HOST=http://sk-workspace-frontend"
-            - "SK_FRONTEND_PORT=3000"
-        ports:
-            - 7001:80
-        depends_on:
-            - sk-workspace-backend
-            - sk-workspace-frontend
-
     sk-workspace-frontend:
-        container_name: sk-workspace-fe
-        image: ghcr.io/sokrates-ai/sk-workspace-fe:latest
+        container_name: sk-workspace-frontend
+        image: ghcr.io/sokrates-ai/sk-workspace-fe:staging
         restart: unless-stopped
+        ports:
+          - "6001:3000"
+        environment:
+          - NEXT_PUBLIC_API_BASE_URL=http://sk-workspace-backend:80
+          - NEXT_PUBLIC_LSP_WS_URL=TODO
+          - NEXT_PUBLIC_COLLAB_WS_URL=ws://sk-workspace-collab:80
+        depends_on:
+          - sk-workspace-backend
 
     sk-workspace-backend:
-        container_name: sk-workspace-be
-        image: ghcr.io/sokrates-ai/sk-workspace-be:latest
+        container_name: sk-workspace-backend
+        image: ghcr.io/sokrates-ai/sk-workspace-be:staging
         restart: unless-stopped
-        env_file:
-            - ./.workspace.env
+        ports:
+          - "6002:8000"
         environment:
-            - PLATFORM_HOST=sk-platform
-            - PLATFORM_PORT=80
+            # Platform
+            - API_PLATFORM_HOST=sk-platform-backend
+            - API_PLATFORM_PORT=1338
 
-            - REDIS_HOST=sk-workspace-redis
-            - REDIS_PORT=6379
+            # Databases
+            - API_REDIS_HOST=sk-workspace-redis
+            - API_REDIS_PORT=6379
 
-            - RATE_LIMIT_SECONDS=10
-            - IMAGE_UPLOAD_PATH=/uploads
-        volumes:
-          - ./workspace_images:/uploads
+            # Run config
+            - API_DEV_MODE=false
+            - WORKERS=12
+            - LOG_LEVEL=debug
+            - LOG_PRETTY=true
+            - LOG_FORMAT=console
+
+            # Telemetry
+            - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+            - OTEL_EXPORTER_OTLP_HEADERS=api-key=your-dev-key
+            - OTEL_SERVICE_NAME=sokrates-collab
+            - ENABLE_TRACING=false
+
+            # Rate limit
+            - API_EXERCISE_REFRESH_MINUTES=5
+            - API_RATE_LIMIT_SECONDS=60
+            - API_RATE_LIMIT_TEXT_EVAL_MAX=1
+            - API_RATE_LIMIT_TEXT_EVAL_WINDOW_SEC=60
+            - API_RATE_LIMIT_CODE_RUN_MAX=10
+            - API_RATE_LIMIT_CODE_RUN_WINDOW_SEC=60
+            - API_RATE_LIMIT_CODE_JUDGE_MAX=4
+            - API_RATE_LIMIT_CODE_JUDGE_WINDOW_SEC=60
+            - API_RATE_LIMIT_FLASHCARD_VALIDATE_MAX=2
+            - API_RATE_LIMIT_FLASHCARD_VALIDATE_WINDOW_SEC=2
+
+            # Collab + co
+            - API_COLLAB_BRIDGE_URL=http://sk-workspace-collab:81
+            - SHARED_COLLAB_JWT_SECRET=collab-secret
+
+            - API_JWT_TTL_MIN=30
+            - API_PROMETHEUS_MULTIPROC_DIR=./prometheus_multiproc
+
+            # Judge0 (used by API)
+            - API_JUDGE0_BASE_URL=TODO
+            - API_JUDGE0_TOKEN=TODO
+            - API_JUDGE0_WEBHOOK_SECRET=TODO
+
+            # Analytics
+            - API_ANALYTICS_HOST=https://analytics.sokrates.ae.org
+        env_file:
+            - ./workspace-secrets.env
         depends_on:
             - sk-workspace-redis
+            - sk-workspace-collab
+
+    sk-workspace-collab:
+        container_name: sk-workspace-collab
+        image: ghcr.io/sokrates-ai/sk-workspace-collab:staging
+        restart: unless-stopped
+        ports:
+          - "6003:80"
+        environment:
+          - NODE_ENV=production
+          - LOG_LEVEL=debug
+          - LOG_PRETTY=true
+          - LOG_FORMAT=console
+
+          - COLLAB_WS_PORT=80
+          - COLLAB_BRIDGE_PORT=81
+          - COLLAB_BIND_ADDRESS=0.0.0.0
+          - COLLAB_INSTANCE_NAME=collab-local
+          - COLLAB_REDIS_HOST=sk-workspace-redis
+          - COLLAB_REDIS_PORT=6379
+          - COLLAB_REDIS_PREFIX="collab:"
+          - COLLAB_PERSIST_PREFIX="y:doc:"
+          - COLLAB_API_BASE_URL=http://sk-workspace-backend:8000
+          - COLLAB_STORE_DEBOUNCE_MS=3000
+          - COLLAB_STORE_MAX_DEBOUNCE_MS=15000
+          - COLLAB_DIRECT_CONN_IDLE_MS=1500
+          - COLLAB_BODY_LIMIT_BYTES=1048576
+          - SHARED_COLLAB_JWT_SECRET=collab-secret
+
+          - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+          - OTEL_EXPORTER_OTLP_HEADERS=api-key=your-dev-key
+          - OTEL_SERVICE_NAME=sokrates-collab
+          - ENABLE_TRACING=false
+        depends_on:
+            - sk-workspace-redis
+    
 
     #
     #
@@ -69,27 +137,67 @@ services:
     #
     #
     #
-    sk-platform:
-      container_name: sk-platform
-      image: ghcr.io/sokrates-ai/sk-platform:latest
+    sk-platform-frontend:
+      container_name: sk-platform-frontend
+      image: ghcr.io/sokrates-ai/sk-platform-frontend:staging
       ports:
-        - "8000:80"
+        - "8001:3000"
+      env_file:
+        - platform-secrets.env
+      environment:
+        # External reachability config
+        - NEXT_PUBLIC_LEARNHOUSE_TOP_DOMAIN=sokrates.ae.org
+        - SK_PUBLIC_URL=https://app.sokrates.ae.org
+        - NEXT_PUBLIC_LEARNHOUSE_TOP_DOMAIN=app.sokrates.ae.org
+        - LEARNHOUSE_WORKSPACE_EXTERNAL_BASE_URL=https://ws1.app.sokrates.ae.org
+        - LEARNHOUSE_COOKIE_DOMAIN=.sokrates.ae.org
+
+        - NEXT_PUBLIC_LEARNHOUSE_MULTI_ORG=false
+        - NEXT_PUBLIC_LEARNHOUSE_DEFAULT_ORG=default
+
+        - TODO_BACKEND=1
+      depends_on:
+        - sk-platform-backend
+
+    sk-platform-backend:
+      container_name: sk-platform-backend
+      image: ghcr.io/sokrates-ai/sk-platform-backend:staging
+      ports:
+        - "8000:1338"
       volumes:
         - ./learnhouse_data:/usr/learnhouse
+        - ./learnhouse_content:/app/api/content
       env_file:
-        - ./extra/example-learnhouse-conf.env
+        - platform-secrets.env
       environment:
+        # Workspace connection
         - LEARNHOUSE_WORKSPACE_API_HOST=sk-workspace-backend
         - LEARNHOUSE_WORKSPACE_API_PORT=8000
-        - LEARNHOUSE_WORKSPACE_EXTERNAL_BASE_URL=http://localhost:7001
-        - LEARNHOUSE_OPENAI_API_KEY=foobar
+
+        # External reachability config
+        - NEXT_PUBLIC_LEARNHOUSE_TOP_DOMAIN=sokrates.ae.org
+        - SK_PUBLIC_URL=https://app.sokrates.ae.org
+        - NEXT_PUBLIC_LEARNHOUSE_TOP_DOMAIN=app.sokrates.ae.org
+        - LEARNHOUSE_WORKSPACE_EXTERNAL_BASE_URL=https://ws1.app.sokrates.ae.org
+        - LEARNHOUSE_COOKIE_DOMAIN=.sokrates.ae.org
+
+        - NEXT_PUBLIC_LEARNHOUSE_MULTI_ORG=false
+        - NEXT_PUBLIC_LEARNHOUSE_DEFAULT_ORG=default
+
+        # Databases
+        - LEARNHOUSE_SQL_CONNECTION_STRING=postgresql://learnhouse:learnhouse@sk-platform-postgres:5432/learnhouse
+        - LEARNHOUSE_REDIS_CONNECTION_STRING=redis://sk-platform-redis:6379/learnhouse
+        - LEARNHOUSE_CHROMADB_HOST=sk-platform-chroma
+
       depends_on:
-        db:
+        sk-platform-postgres:
           condition: service_healthy
-        redis:
+        sk-platform-redis:
           condition: service_healthy
-    db:
-      image: postgres:16-alpine
+
+    sk-platform-postgres:
+      container_name: sk-platform-postgres
+      image: docker.io/postgres:16-alpine
       restart: always
       environment:
         - POSTGRES_USER=learnhouse
@@ -102,8 +210,10 @@ services:
         interval: 5s
         timeout: 4s
         retries: 5
-    redis:
-      image: redis:7.2.3
+
+    sk-platform-redis:
+      container_name: sk-platform-redis
+      image: docker.io/redis:latest
       restart: always
       healthcheck:
         test: ["CMD", "redis-cli", "ping"]
@@ -112,5 +222,8 @@ services:
         retries: 5
       volumes:
           - ./platform_redis:/data
-    chromadb:
-      image: chromadb/chroma:0.5.16
+
+    sk-platform-chroma:
+      container_name: sk-platform-chroma
+      image: docker.io/chromadb/chroma:0.5.16
+

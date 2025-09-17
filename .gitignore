@@ -56,3 +56,9 @@ platform_postgres
 load_test2/.venv
 prometheus_multiproc
 .direnv
+
+
+workspace-secrets.env
+platform-secrets.env
+platform_redis
+workspace_redis_data
