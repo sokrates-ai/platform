@@ -131,7 +131,7 @@ const Actions = ({ courseuuid, orgslug, course }: CourseActionsProps) => {
 
   const handleCourseAction = async () => {
     if (!session.data?.user) {
-      router.push(getUriWithOrg(orgslug, '/signup?orgslug=' + orgslug))
+      router.push(getUriWithOrg(orgslug, '/login?orgslug=' + orgslug))
       return
     }
     const action = isStarted ? removeCourse : startCourse
