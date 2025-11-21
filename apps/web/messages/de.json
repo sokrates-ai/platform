@@ -1,0 +1,1030 @@
+{
+    "CoursesHome": {
+      "courses": "Kurse",
+      "createCourse": "Kurs erstellen",
+      "noCoursesYet": "Noch keine Kurse",
+      "createCourseToAddContent": "Erstelle einen Kurs, um Inhalte hinzuzufügen",
+      "noCoursesAvailableYet": "Noch keine Kurse verfügbar"
+    },
+    "CoursesClient": {
+      "courses": "Kurse",
+      "newCourse": "Neuer Kurs",
+      "createNewCourse": "Erstelle einen neuen Kurs"
+    },
+    "CourseIntroView": {
+      "courseBadge": "Kurs",
+      "about": "Über diesen Kurs",
+      "whatYouWillLearn": "Das wirst du lernen"
+    },
+    "UsersSettingsPage": {
+      "users": "Benutzer",
+      "manageUsers": "Verwalte die Benutzer deiner Organisation, weise Rollen und Berechtigungen zu",
+      "signups": "Anmeldungen & Einladungscodes",
+      "chooseSignups": "Wähle, von wo aus sich Benutzer deiner Organisation anschließen können",
+      "inviteMembers": "Mitglieder einladen",
+      "inviteMembersDesc": "Lade Mitglieder ein, deiner Organisation beizutreten",
+      "userGroups": "Benutzergruppen",
+      "manageUserGroups": "Erstelle und verwalte Benutzergruppen",
+      "desktopOnly": "Nur Desktop",
+      "desktopOnlyDesc1": "Diese Seite ist nur auf einem Desktop-Gerät zugänglich.",
+      "desktopOnlyDesc2": "Bitte wechsle zu einem Desktop, um die Benutzereinstellungen zu verwalten."
+    },
+    "UserAccountSettingsPage": {
+      "accountSettings": "Kontoeinstellungen",
+      "general": "Allgemein",
+      "password": "Passwort"
+    },
+    "OrgSettingsPage": {
+      "general": "Allgemein",
+      "manageOrgSettings": "Verwalte die Einstellungen deiner Organisation"
+    },
+    "CourseListing": {
+      "loading": "Lädt...",
+      "noExercisesYet": "Noch keine Übungen",
+      "createExerciseToAddContent": "Erstelle eine Übung, um Inhalte hinzuzufügen",
+      "noExerciseAvailableYet": "Noch keine Übung verfügbar"
+    },
+    "ExerciseHome": {
+      "loading": "Lädt...",
+      "exerciseLibrary": "Übungsbibliothek",
+      "editTags": "Tags bearbeiten",
+      "editTaskTags": "Aufgaben-Tags bearbeiten",
+      "newExercise": "Neue Übung",
+      "createExercise": "Übung erstellen",
+      "createNewExercise": "Neue Übung erstellen",
+      "unassigned": "Nicht zugewiesen",
+      "exercisesWithoutCourse": "Übungen ohne Kurs"
+    },
+    "ExerciseCourseHome": {
+      "courseNotFound": "Kurs nicht gefunden",
+      "courseExercises": "Kursübungen",
+      "unassignedExercises": "Nicht zugewiesene Übungen",
+      "editTags": "Tags bearbeiten",
+      "editTaskTags": "Aufgaben-Tags bearbeiten",
+      "newExercise": "Neue Übung",
+      "createExercise": "Übung erstellen",
+      "createNewExercise": "Neue Übung erstellen"
+    },
+    "CourseOverviewPage": {
+      "general": "Allgemein",
+      "access": "Zugriff",
+      "content": "Inhalt",
+      "map": "Karte",
+      "students": "Teilnehmer"
+    },
+    "AssignmentsHome": {
+      "assignments": "Aufgaben",
+      "course": "Kurs",
+      "courseEditor": "Kurseditor",
+      "assignment": "Aufgabe",
+      "editor": "Editor",
+      "submissions": "Abgaben",
+      "noAssignments": "Keine Aufgaben für diesen Kurs verfügbar, erstelle Aufgaben im Kurseditor"
+    },
+    "WorkspaceActivityBody": {
+      "selectExercise": "Übung auswählen",
+      "completed": "Abgeschlossen",
+      "description": "Beschreibung"
+    },
+    "stateConfig": {
+      "available": "Verfügbar",
+      "locked": "Gesperrt",
+      "completed": "Abgeschlossen",
+      "start": "Starten",
+      "review": "Überprüfen"
+    },
+    "ChapterActivity": {
+      "untitled": "Unbenannte Aktivität",
+      "noDescription": "Keine Beschreibung verfügbar"
+    },
+    "ActivityIndicators": {
+      "completed": "Abgeschlossen",
+      "currentActivity": "Aktuelle Aktivität",
+      "notStarted": "Nicht gestartet"
+    },
+    "CourseEditChapter": {
+      "chapterNamePlaceholder": "Kapitelname",
+      "deleteChapter": "Kapitel löschen",
+      "confirmDeleteChapter": "Möchtest du dieses Kapitel wirklich löschen?",
+      "deleteChapterTitle": "{name} löschen?",
+      "addActivity": "Aktivität hinzufügen"
+    },
+     "CourseEditActivity": {
+      "typeVideo": "Video",
+      "typeDocument": "Dokument",
+      "typeDynamic": "Dynamisch",
+      "activityNamePlaceholder": "Aktivitätsname",
+      "edit": "Bearbeiten",
+      "confirmDeleteActivity": "Möchtest du diese Aktivität wirklich löschen?",
+      "deleteActivity": "Aktivität löschen",
+      "deleteActivityTitle": "{name} löschen?"
+    },
+    "ExerciseThumbnail": {
+      "modifyExercise": "Übung bearbeiten",
+      "modifyExerciseDescription": "Diese Übung bearbeiten",
+      "deleteExercise": "Übung löschen",
+      "deleteExerciseQuestion": "Möchtest du diese Übung wirklich löschen?",
+      "deleteExerciseTitle": "{title} löschen?"
+    },
+    "CourseThumbnail": {
+      "menuLabel": "Kursaktionen",
+      "editContent": "Inhalt bearbeiten",
+      "settings": "Einstellungen",
+      "deleteCourse": "Kurs löschen",
+      "deleteCourseQuestion": "Möchtest du diesen Kurs wirklich löschen?",
+      "deleteCourseTitle": "{name} löschen?",
+      "toastDeleting": "Kurs wird gelöscht...",
+      "toastDeleted": "Kurs erfolgreich gelöscht",
+      "toastDeleteFailed": "Kurs konnte nicht gelöscht werden"
+    },
+    "ModifyExerciseModal": {
+      "loading": "lädt...",
+      "labels": {
+        "moveToCourse": "In Kurs verschieben",
+        "exerciseTitle": "Übungstitel",
+        "exerciseDescription": "Übungsbeschreibung",
+        "tags": "Tags",
+        "exerciseTask": "Aufgabenstellung",
+        "exerciseSolution": "Lösung",
+        "none": "- Keine -",
+        "addTag": "Tag hinzufügen",
+        "submit": "Übung ändern"
+      },
+      "messages": {
+        "selectOptionalCourse": "Optionalen Kurs aus der Liste wählen."
+      },
+      "tags": {
+        "notFound": "Tag nicht gefunden",
+        "remove": "Tag {tag} entfernen"
+      },
+      "toast": {
+        "modifying": "Übung wird geändert...",
+        "modified": "Übung erfolgreich geändert",
+        "failed": "Übung konnte nicht geändert werden"
+      },
+      "errors": {
+        "titleRequired": "Übungsname ist erforderlich",
+        "max100": "Maximal 100 Zeichen",
+        "max1000": "Maximal 1000 Zeichen"
+      }
+    },
+    "EditTagsModal": {
+      "labels": {
+        "newTag": "Neuer Tag",
+        "createTag": "Tag erstellen",
+        "existingTags": "Bestehende Tags",
+        "noTags": "Keine Tags vorhanden."
+      },
+      "table": {
+        "tagName": "Tag-Name",
+        "color": "Farbe",
+        "actions": "Aktionen"
+      },
+      "actions": {
+        "delete": "Löschen",
+        "pickColor": "Farbe wählen"
+      },
+      "toast": {
+        "deleting": "Tag wird gelöscht...",
+        "deleted": "Tag erfolgreich gelöscht",
+        "deleteFailed": "Tag konnte nicht gelöscht werden",
+        "creating": "Tag wird erstellt...",
+        "created": "Tag erfolgreich erstellt",
+        "createFailed": "Tag konnte nicht erstellt werden"
+      },
+      "errors": {
+        "nameRequired": "Tag-Name ist erforderlich",
+        "max20": "Weniger als 20 Zeichen"
+      }
+    },
+    "CreateExerciseModal": {
+      "labels": {
+        "exerciseTitle": "Übungstitel",
+        "exerciseDescription": "Übungsbeschreibung",
+        "tags": "Tags",
+        "exerciseTask": "Aufgabenstellung",
+        "exerciseSolution": "Lösung",
+        "none": "- Keine -",
+        "addTag": "Tag hinzufügen",
+        "submit": "Übung erstellen"
+      },
+      "toast": {
+        "creating": "Übung wird erstellt...",
+        "created": "Übung erfolgreich erstellt",
+        "failed": "Übung konnte nicht erstellt werden"
+      },
+      "tags": {
+        "notFound": "Tag nicht gefunden",
+        "remove": "Tag {tag} entfernen"
+      },
+      "errors": {
+        "titleRequired": "Übungsname ist erforderlich",
+        "max100": "Maximal 100 Zeichen",
+        "max1000": "Maximal 1000 Zeichen"
+      }
+    },
+    "RolesUpdate": {
+      "title": "Rollen",
+      "chooseRole": "Bitte wähle eine Rolle für den Benutzer",
+      "roleAdmin": "Admin",
+      "roleMaintainer": "Maintainer",
+      "roleUser": "Benutzer",
+      "updateButton": "Benutzerrolle aktualisieren",
+      "errorPrefix": "Fehler"
+    },
+    "ManageUsers": {
+      "table": {
+        "user": "Benutzer",
+        "linked": "Verknüpft",
+        "actions": "Aktionen"
+      },
+      "status": {
+        "linked": "Verknüpft",
+        "notLinked": "Nicht verknüpft"
+      },
+      "buttons": {
+        "link": "Verknüpfen",
+        "unlink": "Verbindung trennen"
+      },
+      "toast": {
+        "linked": "Benutzer erfolgreich verknüpft",
+        "unlinked": "Benutzer-Verknüpfung entfernt",
+        "errorPrefix": "Fehler"
+      }
+    },
+    "EditUserGroup": {
+      "labels": {
+        "name": "Name",
+        "description": "Beschreibung"
+      },
+      "errors": {
+        "nameRequired": "Name ist erforderlich"
+      },
+      "toast": {
+        "saved": "Benutzergruppe erfolgreich gespeichert",
+        "saveError": "Fehler beim Speichern der Benutzergruppe, bitte später erneut versuchen."
+      },
+      "buttons": {
+        "save": "Benutzergruppe speichern",
+        "saving": "Speichert..."
+      }
+    },
+    "AddUserGroup": {
+      "labels": {
+        "name": "Name",
+        "description": "Beschreibung"
+      },
+      "errors": {
+        "nameRequired": "Name ist erforderlich"
+      },
+      "buttons": {
+        "create": "Benutzergruppe erstellen",
+        "creating": "Lädt..."
+      }
+    },
+    "OrgInviteCodeGenerate": {
+      "withGroup": {
+        "title": "Einladungscode mit Benutzergruppe verknüpft",
+        "subtitle": "Beim Registrieren werden Benutzer automatisch der ausgewählten Benutzergruppe zugeordnet",
+        "noGroups": "Keine Benutzergruppen vorhanden",
+        "createGroup": "Benutzergruppe erstellen",
+        "selectLabel": "Benutzergruppe auswählen"
+      },
+      "normal": {
+        "title": "Normaler Einladungscode",
+        "subtitle": "Beim Registrieren wird der Benutzer keiner Benutzergruppe zugeordnet"
+      },
+      "buttons": {
+        "generate": "Generieren",
+        "generateWithGroup": "Code mit Benutzergruppe generieren",
+        "generateNormal": "Normalen Code generieren"
+      },
+      "error": "Fehler {status}: {detail}"
+    },
+    "LinkToUserGroup": {
+      "notice": "Benutzer, die nicht zur Benutzergruppe gehören, haben keinen Zugriff mehr auf diesen Kurs",
+      "labels": {
+        "usergroupName": "Name der Benutzergruppe"
+      },
+      "noGroups": "Keine Benutzergruppen vorhanden",
+      "createGroup": "Benutzergruppe erstellen",
+      "buttons": {
+        "link": "Verknüpfen"
+      },
+      "toast": {
+        "linked": "Erfolgreich mit Benutzergruppe verknüpft",
+        "error": "Fehler {status}: {detail}"
+      }
+    },
+    "CreateCourseModal": {
+      "labels": {
+        "name": "Kurstitel",
+        "description": "Beschreibung",
+        "thumbnail": "Kurs-Vorschaubild",
+        "tags": "Kurs-Tags",
+        "visibility": "Kurssichtbarkeit"
+      },
+      "buttons": {
+        "uploadImage": "Bild hochladen",
+        "chooseFromGallery": "Aus Galerie wählen",
+        "create": "Kurs erstellen"
+      },
+      "placeholders": {
+        "tagsInput": "Tags durch Kommas getrennt eingeben",
+        "selectVisibility": "Sichtbarkeit auswählen"
+      },
+      "visibility": {
+        "public": "Öffentlich (Im Internet sichtbar)",
+        "private": "Privat (Nur für Benutzer sichtbar)"
+      },
+      "toast": {
+        "creating": "Kurs wird erstellt...",
+        "created": "Kurs erfolgreich erstellt",
+        "failed": "Kurs konnte nicht erstellt werden",
+        "unsplashFailed": "Bild von Unsplash konnte nicht geladen werden"
+      },
+      "errors": {
+        "nameRequired": "Kurstitel ist erforderlich",
+        "max100": "Maximal 100 Zeichen",
+        "max1000": "Maximal 1000 Zeichen"
+      }
+    },
+    "NewChapterModal": {
+      "labels": {
+        "name": "Kapitelname",
+        "description": "Kapitelbeschreibung"
+      },
+      "messages": {
+        "nameRequired": "Bitte gib einen Kapitelnamen an",
+        "descriptionRequired": "Bitte gib eine Kapitelbeschreibung an"
+      },
+      "buttons": {
+        "create": "Kapitel erstellen"
+      }
+    },
+    "NewActivityModal": {
+      "options": {
+        "dynamic": "Dynamische Seite",
+        "video": "Video",
+        "document": "Dokument",
+        "workspace": "Workspace"
+      },
+      "alt": {
+        "dynamic": "Dynamische Seite",
+        "video": "Video-Seite",
+        "document": "Dokument PDF Seite",
+        "workspace": "Workspace-Seite"
+      }
+    },
+    "NewWorkspaceModal": {
+      "labels": {
+        "title": "Workspace-Titel",
+        "selectExercise": "Übung auswählen"
+      },
+      "messages": {
+        "titleRequired": "Bitte gib einen Namen für den Workspace an.",
+        "exerciseRequired": "Bitte wähle eine Übung aus der Bibliothek."
+      },
+      "placeholders": {
+        "title": "Workspace-Titel eingeben",
+        "selectTask": "- Aufgabe auswählen -"
+      },
+      "autoTitle": {
+        "anyOrder": "Beliebige Reihenfolge - {count} Aufgaben"
+      },
+      "loading": "lädt...",
+      "empty": {
+        "noTasks": "Noch keine Aufgaben.",
+        "addInstruction": "Nutze das Menü, um eine Aufgabe hinzuzufügen."
+      },
+      "buttons": {
+        "create": "Workspace erstellen",
+        "removeTask": "Aufgabe entfernen"
+      },
+      "toast": {
+        "creating": "Workspace wird erstellt...",
+        "created": "Workspace erfolgreich erstellt"
+      }
+    },
+    "VideoActivityModal": {
+      "labels": {
+        "videoName": "Videoname",
+        "videoFile": "Videodatei",
+        "youtubeUrl": "YouTube-URL"
+      },
+      "messages": {
+        "nameRequired": "Bitte gib einen Namen für die Videoaktivität an",
+        "videoRequired": "Bitte stelle ein Video für die Aktivität bereit"
+      },
+      "tabs": {
+        "upload": "Video-Upload",
+        "youtube": "YouTube-Video"
+      },
+      "buttons": {
+        "create": "Aktivität erstellen"
+      }
+    },
+    "DynamicCanvaModal": {
+      "labels": {
+        "activityName": "Aktivitätsname",
+        "activityDescription": "Aktivitätsbeschreibung"
+      },
+      "placeholders": {
+        "activityName": "Aktivitätsname eingeben",
+        "activityDescription": "Aktivitätsbeschreibung eingeben (optional)"
+      },
+      "messages": {
+        "nameRequired": "Bitte gib einen Namen für die Aktivität an",
+        "descriptionRequired": "Bitte gib eine Beschreibung für die Aktivität an"
+      },
+      "buttons": {
+        "create": "Aktivität erstellen"
+      }
+    },
+    "DocumentPdfActivityModal": {
+      "labels": {
+        "pdfName": "PDF-Dokumentname",
+        "pdfFile": "PDF-Dokumentdatei"
+      },
+      "placeholders": {
+        "name": "Name der PDF-Aktivität eingeben"
+      },
+      "messages": {
+        "nameRequired": "Bitte gib einen Namen für die PDF-Dokumentaktivität an",
+        "fileRequired": "Bitte füge ein PDF-Dokument für die Aktivität hinzu"
+      },
+      "buttons": {
+        "create": "Aktivität erstellen"
+      }
+    },
+    "AssignmentActivityModal": {
+      "labels": {
+        "title": "Aufgabentitel",
+        "description": "Aufgabenbeschreibung",
+        "dueDate": "Fälligkeitsdatum",
+        "gradingType": "Bewertungsart"
+      },
+      "messages": {
+        "titleRequired": "Bitte gib einen Namen für die Aufgabe an",
+        "descriptionRequired": "Bitte gib eine Beschreibung für die Aufgabe an",
+        "dueDateRequired": "Bitte gib ein Fälligkeitsdatum an",
+        "gradingTypeRequired": "Bitte wähle eine Bewertungsart"
+      },
+      "grading": {
+        "alphabet": "Alphabet (A, B, C ...)",
+        "numeric": "Numerisch",
+        "percentage": "Prozent"
+      },
+      "buttons": {
+        "create": "Aktivität erstellen"
+      },
+      "toast": {
+        "creating": "Aufgabe wird erstellt...",
+        "created": "Aufgabe erfolgreich erstellt",
+        "failed": "Aufgabe konnte nicht erstellt werden"
+      }
+    },
+    "OrgMenu": {
+      "buttons": {
+        "login": "Anmelden",
+        "signup": "Registrieren"
+      },
+      "badges": {
+        "admin": "Admin"
+      },
+      "alts": {
+        "logo": "Organisationslogo",
+        "mascot": "Sokrates-Maskottchen"
+      }
+    },
+    "AvatarDropdownMenu": {
+      "dashboard": "Dashboard",
+      "settings": "Einstellungen",
+      "exercises": "Übungen",
+      "users": "Benutzer",
+      "school": "Schule",
+      "logout": "Abmelden",
+      "login": "Anmelden",
+      "signup": "Registrieren"
+    },
+    "FileUploadBlock": {
+      "messages": {
+        "noPreview": "Keine Datei zur Vorschau verfügbar."
+      },
+      "buttons": {
+        "submit": "Senden"
+      },
+      "aria": {
+        "fileInput": "Datei zum Hochladen auswählen",
+        "submit": "Datei senden",
+        "loading": "Lädt"
+      }
+    },
+    "EditorWrapper": {
+      "toast": {
+        "saving": "Wird gespeichert...",
+        "saved": "Aktivität gespeichert!",
+        "error": "Konnte nicht gespeichert werden."
+      }
+    },
+    "Editor": {
+      "mobile": {
+        "title": "Nur Desktop",
+        "description": "Der Editor ist nur auf Desktop-Geräten verfügbar.",
+        "action": "Bitte wechsle zu einem Desktop, um fortzufahren."
+      },
+      "buttons": {
+        "save": "Speichern",
+        "aiEditor": "KI-Editor"
+      },
+      "tooltips": {
+        "preview": "Vorschau"
+      },
+      "alts": {
+        "learnhouseLogo": "Learnhouse-Logo",
+        "courseThumbnail": "Kurs-Vorschaubild",
+        "aiIcon": "KI-Symbol"
+      }
+    },
+    "ToolbarButtons": {
+      "prompts": {
+        "youtubeUrl": "YouTube-URL eingeben"
+      },
+      "headings": {
+        "label": "Überschriftsebene",
+        "h1": "Überschrift 1",
+        "h2": "Überschrift 2",
+        "h3": "Überschrift 3",
+        "h4": "Überschrift 4",
+        "h5": "Überschrift 5",
+        "h6": "Überschrift 6"
+      },
+      "tooltips": {
+        "undo": "Rückgängig",
+        "redo": "Wiederholen",
+        "bold": "Fett",
+        "italic": "Kursiv",
+        "strike": "Durchgestrichen",
+        "orderedList": "Nummerierte Liste",
+        "createTable": "Tabelle erstellen",
+        "insertRow": "Zeile einfügen",
+        "insertColumn": "Spalte einfügen",
+        "removeColumn": "Spalte entfernen",
+        "removeRow": "Zeile entfernen",
+        "infoCallout": "Info-Hinweis",
+        "warningCallout": "Warnhinweis",
+        "image": "Bild",
+        "video": "Video",
+        "youtube": "YouTube-Video",
+        "math": "Mathematische Gleichung (LaTeX)",
+        "pdf": "PDF-Dokument",
+        "quiz": "Interaktives Quiz",
+        "codeBlock": "Codeblock",
+        "embed": "Externes Objekt (Embed)",
+        "badges": "Badges",
+        "button": "Button"
+      },
+      "defaults": {
+        "badgeText": "Dies ist ein Badge",
+        "buttonText": "Klick mich"
+      }
+    },
+    "CoursesActions": {
+      "labels": {
+        "author": "Autor"
+      },
+      "ownCourse": {
+        "title": "Du besitzt diesen Kurs",
+        "description": "Du hast diesen Kurs gekauft und vollen Zugriff auf alle Inhalte."
+      },
+      "paidCourse": {
+        "title": "Kostenpflichtiger Kurs",
+        "description": "Für diesen Kurs ist ein Kauf erforderlich, um auf die Inhalte zuzugreifen."
+      },
+      "purchaseModal": {
+        "title": "Kurs kaufen",
+        "description": "Wähle eine Zahlungsoption, um auf diesen Kurs zuzugreifen"
+      },
+      "buttons": {
+        "start": "Kurs starten",
+        "leave": "Kurs verlassen",
+        "purchase": "Kurs kaufen",
+        "authenticate": "Anmelden, um den Kurs zu starten"
+      }
+    },
+    "WorkspaceActivity": {
+      "heading": {
+        "redirecting": "Weiterleitung zum Workspace...",
+        "creating": "Workspace wird erstellt"
+      },
+      "messages": {
+        "redirectSoon": "Du wirst in Kürze automatisch weitergeleitet",
+        "pleaseWait": "Bitte warte, während wir deine Umgebung vorbereiten"
+      },
+      "buttons": {
+        "openNow": "Workspace jetzt öffnen"
+      },
+      "aria": {
+        "progress": "Fortschritt der Workspace-Erstellung",
+        "openNow": "Workspace sofort öffnen"
+      }
+    },
+    "OrgUsersAdd": {
+      "headings": {
+        "inviteUsersTitle": "Benutzer zu deiner Organisation einladen",
+        "inviteUsersSubtitle": "Einladungen per E‑Mail senden, durch Kommas getrennt",
+        "invitedUsersTitle": "Eingeladene Benutzer",
+        "invitedUsersSubtitle": "Benutzer, die zur Organisation eingeladen wurden"
+      },
+      "placeholders": {
+        "emailsExample": "Beispiel: spike.spiegel@bebop.space, michael.scott@dundermifflin.com"
+      },
+      "labels": {
+        "inviteCode": "Einladungscode"
+      },
+      "buttons": {
+        "sendInvites": "Einladungen per E‑Mail senden"
+      },
+      "tooltips": {
+        "inviteCode": "Verwende einen der Einladungscodes, die du auf der Zugangsseite für die Registrierung erzeugt hast"
+      },
+      "table": {
+        "email": "E‑Mail",
+        "signupStatus": "Registrierungsstatus",
+        "emailSent": "E‑Mail gesendet"
+      },
+      "status": {
+        "pending": "Ausstehend",
+        "signed": "Registriert",
+        "sent": "Gesendet",
+        "no": "Nein"
+      },
+      "toast": {
+        "failed": "Fehler {status}: {detail}"
+      }
+    },
+    "OrgUsers": {
+      "headings": {
+        "activeUsers": "Aktive Benutzer",
+        "manage": "Verwalte die Benutzer deiner Organisation, weise Rollen und Berechtigungen zu"
+      },
+      "table": {
+        "user": "Benutzer",
+        "role": "Rolle",
+        "actions": "Aktionen"
+      },
+      "buttons": {
+        "editRole": "Rolle bearbeiten",
+        "removeFromOrg": "Aus Organisation entfernen"
+      },
+      "modals": {
+        "updateRole": {
+          "title": "Rolle aktualisieren",
+          "description": "Rolle von @{username} aktualisieren"
+        },
+        "removeUser": {
+          "dialogTitle": "{username} entfernen?",
+          "confirmationMessage": "Möchtest du diesen Benutzer wirklich aus der Organisation entfernen?",
+          "confirmButton": "Benutzer entfernen"
+        }
+      },
+      "toast": {
+        "failed": "Fehler {status}: {detail}"
+      }
+    },
+    "UserEditPassword": {
+      "labels": {
+        "oldPassword": "Altes Passwort",
+        "newPassword": "Neues Passwort"
+      },
+      "placeholders": {
+        "oldPassword": "Aktuelles Passwort eingeben",
+        "newPassword": "Neues Passwort eingeben"
+      },
+      "buttons": {
+        "submit": "Passwort aktualisieren"
+      },
+      "toast": {
+        "success": "Passwort erfolgreich aktualisiert.",
+        "error": "Fehler {status}: {detail}"
+      }
+    },
+    "UserEditGeneral": {
+      "form": {
+        "email": { "label": "E‑Mail", "placeholder": "Gib deine E‑Mail ein" },
+        "username": { "label": "Benutzername", "placeholder": "Gib deinen Benutzernamen ein" },
+        "firstName": { "label": "Vorname", "placeholder": "Gib deinen Vornamen ein" },
+        "lastName": { "label": "Nachname", "placeholder": "Gib deinen Nachnamen ein" },
+        "bio": { "label": "Bio", "placeholder": "Erzähle kurz etwas über dich" }
+      },
+      "sections": {
+        "avatar": "Avatar"
+      },
+      "buttons": {
+        "submit": "Senden",
+        "changeAvatar": "Avatar ändern"
+      },
+      "statuses": {
+        "uploading": "Wird hochgeladen"
+      },
+      "hints": {
+        "avatarRecommendedSize": "Empfohlene Größe {size}"
+      },
+      "success": {
+        "avatarUpdated": "Avatar aktualisiert"
+      }
+    },
+    "OrgEditGeneral": {
+      "form": {
+        "name": { "label": "Name", "placeholder": "Name der Organisation" },
+        "description": { "label": "Beschreibung", "placeholder": "Kurze Beschreibung" },
+        "slug": { "label": "Slug", "placeholder": "Slug der Organisation" },
+        "email": { "label": "E‑Mail", "placeholder": "Kontakt-E‑Mail" }
+      },
+      "buttons": {
+        "submit": "Senden",
+        "changeLogo": "Logo ändern",
+        "changeThumbnail": "Thumbnail ändern"
+      },
+      "tabs": {
+        "logo": "Logo",
+        "thumbnail": "Thumbnail"
+      },
+      "hints": {
+        "accepts": "Akzeptiert {types}"
+      },
+      "toasts": {
+        "uploadLogo": {
+          "loading": "Logo wird hochgeladen...",
+          "success": "Logo aktualisiert",
+          "error": "Logo konnte nicht hochgeladen werden"
+        },
+        "uploadThumbnail": {
+          "loading": "Thumbnail wird hochgeladen...",
+          "success": "Thumbnail aktualisiert",
+          "error": "Thumbnail konnte nicht hochgeladen werden"
+        },
+        "updateOrg": {
+          "loading": "Organisation wird aktualisiert...",
+          "success": "Organisation aktualisiert",
+          "error": "Organisation konnte nicht aktualisiert werden"
+        }
+      }
+    },
+    "EditCourseStructure": {
+      "toolbar": {
+        "zoomOut": "Herauszoomen",
+        "zoomIn": "Hineinzoomen",
+        "fitView": "Ansicht anpassen",
+        "autoLayout": "Automatisches Layout",
+        "addChapter": "Kapitel hinzufügen"
+      },
+      "graph": {
+        "valid": "Gültig",
+        "error": "Fehler",
+        "validHint": "Graph-Semantik ist gültig",
+        "cyclicDependency": "Zyklische Abhängigkeit"
+      },
+      "modal": {
+        "newChapter": {
+          "title": "Kapitel erstellen",
+          "description": "Füge dem Kurs ein neues Kapitel hinzu"
+        }
+      }
+    },
+    "ChapterElement": {
+      "fields": {
+        "chapterName": "Kapitelname"
+      },
+      "buttons": {
+        "save": "Speichern",
+        "editName": "Kapitelname bearbeiten",
+        "deleteChapter": "Kapitel löschen"
+      },
+      "modal": {
+        "delete": {
+          "title": "{name} löschen?",
+          "confirmationMessage": "Möchtest du dieses Kapitel wirklich löschen?",
+          "confirmButton": "Kapitel löschen"
+        }
+      }
+    },
+    "ActivityElement": {
+      "fields": {
+        "activityName": "Aktivitätsname"
+      },
+      "buttons": {
+        "save": "Speichern",
+        "editName": "Aktivitätsname bearbeiten",
+        "publish": "Veröffentlichen",
+        "unpublish": "Verbergen",
+        "deleteActivity": "Aktivität löschen"
+      },
+      "tooltips": {
+        "preview": "Aktivität ansehen"
+      },
+      "options": {
+        "editPage": "Seite bearbeiten",
+        "editAssignment": "Aufgabe bearbeiten"
+      },
+      "toast": {
+        "deleting": "Aktivität wird gelöscht...",
+        "deleted": "Aktivität erfolgreich gelöscht",
+        "updating": "Aktivität wird aktualisiert...",
+        "updated": "Die Aktivität wurde erfolgreich aktualisiert"
+      },
+      "modal": {
+        "delete": {
+          "title": "{name} löschen?",
+          "message": "Möchtest du diese Aktivität wirklich löschen?",
+          "confirm": "Aktivität löschen"
+        }
+      },
+      "types": {
+        "video": "Video",
+        "document": "Dokument",
+        "assignment": "Aufgabe",
+        "dynamic": "Dynamisch",
+        "workspace": "Workspace",
+        "custom": "Benutzerdefiniert"
+      }
+    },
+    "NewActivityButton": {
+      "modal": {
+        "title": "Aktivität erstellen",
+        "description": "Wähle einen Aktivitätstyp aus, den du zum Kurs hinzufügen möchtest"
+      },
+      "buttons": {
+        "add": "Aktivität hinzufügen"
+      },
+      "toast": {
+        "creating": "Aktivität wird erstellt...",
+        "created": "Aktivität erfolgreich erstellt",
+        "uploadingAndCreating": "Datei wird hochgeladen und Aktivität erstellt...",
+        "fileUploaded": "Datei erfolgreich hochgeladen"
+      }
+    },
+    "EditCourseMapToolbar": {
+      "aria": {
+        "undo": "Rückgängig",
+        "redo": "Wiederholen",
+        "copy": "Kopieren",
+        "cut": "Ausschneiden",
+        "paste": "Einfügen",
+        "resetState": "Zurücksetzen",
+        "mapSize": "Kartengröße {width} × {height}"
+      },
+      "tooltips": {
+        "undo": "Rückgängig (Strg+Z)",
+        "redo": "Wiederholen (Strg+Y)",
+        "copy": "Kopieren (Strg+C)",
+        "cut": "Ausschneiden (Strg+X)",
+        "paste": "Einfügen (Strg+V)",
+        "resetState": "Zustand zurücksetzen",
+        "mapBoundaries": "Kartengrenzen",
+        "gridVisibility": "Raster ein-/ausblenden",
+        "snapToGrid": "Am Raster einrasten",
+        "clampToMap": "An Kartengrenzen begrenzen"
+      },
+      "map": {
+        "boundariesTitle": "Kartengrenzen"
+      },
+      "labels": {
+        "grid": "Raster",
+        "snap": "Einrasten",
+        "clamp": "Begrenzen",
+        "size": "Größe"
+      },
+      "buttons": {
+        "apply": "Übernehmen"
+      },
+      "shortcuts": {
+        "title": "Tastaturkürzel",
+        "undo": "Rückgängig",
+        "redo": "Wiederholen",
+        "selectAll": "Alles auswählen",
+        "copy": "Kopieren",
+        "cut": "Ausschneiden",
+        "paste": "Einfügen",
+        "delete": "Löschen",
+        "moveSelection": "Auswahl bewegen",
+        "moveFaster": "Schneller bewegen",
+        "multiSelect": "Mehrfachauswahl"
+      }
+    },
+    "EditCourseMap": {
+      "loading": "Karte wird geladen...",
+      "buttons": {
+        "openAssetBrowser": "Asset-Browser öffnen",
+        "closeAssetBrowser": "Asset-Browser schließen"
+      },
+      "assetBrowser": {
+        "title": "Asset-Browser",
+        "subtitle": "Ziehe Assets auf die Karte"
+      }
+    },
+    "ThumbnailUpdate": {
+      "status": {
+        "uploading": "Wird hochgeladen"
+      },
+      "buttons": {
+        "uploadImage": "Bild hochladen",
+        "chooseFromGallery": "Aus Galerie wählen"
+      },
+      "alt": {
+        "previewThumbnail": "Vorschaubild",
+        "courseThumbnail": "Kursvorschaubild"
+      }
+    },
+    "EditCourseGeneral": {
+      "form": {
+        "name": { "label": "Name" },
+        "description": { "label": "Beschreibung" },
+        "about": { "label": "Über den Kurs" },
+        "learnings": { "label": "Lernziele" },
+        "tags": { "label": "Tags" },
+        "thumbnail": { "label": "Vorschaubild" }
+      },
+      "validation": {
+        "required": "Erforderlich",
+        "max": "Darf höchstens {count} Zeichen lang sein"
+      },
+      "errors": {
+        "saveFailed": "Kursstruktur konnte nicht gespeichert werden."
+      }
+    },
+    "EditCourseAccess": {
+      "access": {
+        "header": {
+          "title": "Zugriff auf den Kurs",
+          "subtitle": "Wähle, ob dein Kurs öffentlich im Internet verfügbar ist oder nur für angemeldete Nutzer zugänglich ist"
+        }
+      },
+      "public": {
+        "title": "Öffentlich",
+        "description": "Der Kurs ist öffentlich im Internet verfügbar, wird von Suchmaschinen indexiert und kann von jedem aufgerufen werden",
+        "confirm": {
+          "title": "Zu Öffentlich wechseln?",
+          "message": "Möchtest du diesen Kurs wirklich öffentlich im Internet verfügbar machen?",
+          "button": "Zu Öffentlich wechseln"
+        }
+      },
+      "usersOnly": {
+        "title": "Nur für Benutzer",
+        "description": "Der Kurs ist nur für angemeldete Nutzer zugänglich; du kannst festlegen, welche Benutzergruppen Zugriff haben",
+        "confirm": {
+          "title": "Zu Nur für Benutzer wechseln?",
+          "message": "Möchtest du diesen Kurs wirklich nur für angemeldete Nutzer zugänglich machen?",
+          "button": "Zu Nur für Benutzer wechseln"
+        }
+      },
+      "labels": {
+        "active": "Aktiv"
+      },
+      "usergroups": {
+        "header": {
+          "title": "Benutzergruppen",
+          "subtitle": "Verknüpfe diesen Kurs mit bestimmten Benutzergruppen, um den Zugriff einzuschränken"
+        },
+        "unlink": {
+          "title": "Verknüpfung mit Benutzergruppe lösen?",
+          "message": "Benutzer dieser Benutzergruppe haben keinen Zugriff mehr auf diesen Kurs.",
+          "confirmButton": "Verknüpfung löschen"
+        },
+        "linkModal": {
+          "title": "Kurs mit Benutzergruppe verknüpfen",
+          "description": "Wähle eine Benutzergruppe aus. Nutzer dieser Gruppe erhalten Zugriff auf den Kurs."
+        }
+      },
+      "table": {
+        "name": "Name",
+        "actions": "Aktionen"
+      },
+      "buttons": {
+        "deleteLink": "Verknüpfung löschen",
+        "linkToUserGroup": "Mit Benutzergruppe verknüpfen"
+      },
+      "toasts": {
+        "unlinkSuccess": "Erfolgreich von Benutzergruppe getrennt",
+        "unlinkErrorDetailed": "Fehler {status}: {detail}",
+        "unlinkException": "Beim Lösen der Verknüpfung ist ein Fehler aufgetreten."
+      }
+    },
+    "SaveState": {
+      "status": {
+        "unsaved": "Nicht gespeicherte Änderungen"
+      },
+      "buttons": {
+        "save": "Speichern",
+        "saved": "Gespeichert"
+      }
+    },
+    "CourseOverviewTop": {
+      "labels": {
+        "course": "Kurs"
+      },
+      "alt": {
+        "courseThumbnail": "Kursvorschaubild"
+      }
+    }
+  }

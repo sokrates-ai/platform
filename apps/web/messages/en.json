@@ -1,0 +1,1030 @@
+{
+  "CoursesHome": {
+    "courses": "Courses",
+    "createCourse": "Create Course",
+    "noCoursesYet": "No courses yet",
+    "createCourseToAddContent": "Create a course to add content",
+    "noCoursesAvailableYet": "No courses available yet"
+  },
+  "CoursesClient": {
+    "courses": "Courses",
+    "newCourse": "New Course",
+    "createNewCourse": "Create a new course"
+  },
+  "CourseIntroView": {
+    "courseBadge": "Course",
+    "about": "About",
+    "whatYouWillLearn": "What you will learn"
+  },
+  "UsersSettingsPage": {
+    "users": "Users",
+    "manageUsers": "Manage your organization users, assign roles and permissions",
+    "signups": "Signups & Invite Codes",
+    "chooseSignups": "Choose from where users can join your organization",
+    "inviteMembers": "Invite Members",
+    "inviteMembersDesc": "Invite members to join your organization",
+    "userGroups": "UserGroups",
+    "manageUserGroups": "Create and manage user groups",
+    "desktopOnly": "Desktop Only",
+    "desktopOnlyDesc1": "This page is only accessible from a desktop device.",
+    "desktopOnlyDesc2": "Please switch to a desktop to view and manage user settings."
+  },
+  "UserAccountSettingsPage": {
+    "accountSettings": "Account Settings",
+    "general": "General",
+    "password": "Password"
+  },
+  "OrgSettingsPage": {
+    "general": "General",
+    "manageOrgSettings": "Manage your organization settings"
+  },
+  "CourseListing": {
+    "loading": "Loading...",
+    "noExercisesYet": "No exercises yet",
+    "createExerciseToAddContent": "Create an exercise to add content",
+    "noExerciseAvailableYet": "No exercise available yet"
+  },
+  "ExerciseHome": {
+    "loading": "Loading...",
+    "exerciseLibrary": "Exercise Library",
+    "editTags": "Edit Tags",
+    "editTaskTags": "Edit task tags",
+    "newExercise": "New Exercise",
+    "createExercise": "Create Exercise",
+    "createNewExercise": "Create a new exercise",
+    "unassigned": "Unassigned",
+    "exercisesWithoutCourse": "Exercises without a course"
+  },
+  "ExerciseCourseHome": {
+    "courseNotFound": "Course not found",
+    "courseExercises": "Course Exercises",
+    "unassignedExercises": "Unassigned Exercises",
+    "editTags": "Edit Tags",
+    "editTaskTags": "Edit task tags",
+    "newExercise": "New Exercise",
+    "createExercise": "Create Exercise",
+    "createNewExercise": "Create a new exercise"
+  },
+  "CourseOverviewPage": {
+    "general": "General",
+    "access": "Access",
+    "content": "Content",
+    "map": "Map",
+    "students": "Students"
+  },
+  "AssignmentsHome": {
+    "assignments": "Assignments",
+    "course": "Course",
+    "courseEditor": "Course Editor",
+    "assignment": "Assignment",
+    "editor": "Editor",
+    "submissions": "Submissions",
+    "noAssignments": "No assignments available for this course, create course assignments from the course editor"
+  },
+  "WorkspaceActivityBody": {
+    "selectExercise": "Select exercise",
+    "completed": "Completed",
+    "description": "Description"
+  },
+  "stateConfig": {
+    "available": "Available",
+    "locked": "Locked",
+    "completed": "Completed",
+    "start": "Start",
+    "review": "Review"
+  },
+  "ChapterActivity": {
+    "untitled": "Untitled activity",
+    "noDescription": "No description available"
+  },
+  "ActivityIndicators": {
+    "completed": "Completed",
+    "currentActivity": "Current activity",
+    "notStarted": "Not started"
+  },
+  "CourseEditChapter": {
+    "chapterNamePlaceholder": "Chapter name",
+    "deleteChapter": "Delete chapter",
+    "confirmDeleteChapter": "Are you sure you want to delete this chapter?",
+    "deleteChapterTitle": "Delete {name}?",
+    "addActivity": "Add activity"
+  },
+  "CourseEditActivity": {
+    "typeVideo": "Video",
+    "typeDocument": "Document",
+    "typeDynamic": "Dynamic",
+    "activityNamePlaceholder": "Activity name",
+    "edit": "Edit",
+    "confirmDeleteActivity": "Are you sure you want to delete this activity?",
+    "deleteActivity": "Delete activity",
+    "deleteActivityTitle": "Delete {name}?"
+  },
+  "ExerciseThumbnail": {
+    "modifyExercise": "Modify exercise",
+    "modifyExerciseDescription": "Modify this exercise",
+    "deleteExercise": "Delete exercise",
+    "deleteExerciseQuestion": "Are you sure you want to delete this exercise?",
+    "deleteExerciseTitle": "Delete {title}?"
+  },
+  "CourseThumbnail": {
+    "menuLabel": "Course actions",
+    "editContent": "Edit Content",
+    "settings": "Settings",
+    "deleteCourse": "Delete Course",
+    "deleteCourseQuestion": "Are you sure you want to delete this course?",
+    "deleteCourseTitle": "Delete {name}?",
+    "toastDeleting": "Deleting course...",
+    "toastDeleted": "Course deleted successfully",
+    "toastDeleteFailed": "Failed to delete course"
+  },
+  "ModifyExerciseModal": {
+    "loading": "loading...",
+    "labels": {
+      "moveToCourse": "Move to Course",
+      "exerciseTitle": "Exercise Title",
+      "exerciseDescription": "Exercise Description",
+      "tags": "Tags",
+      "exerciseTask": "Exercise Task",
+      "exerciseSolution": "Exercise Solution",
+      "none": "- None -",
+      "addTag": "Add Tag",
+      "submit": "Modify Exercise"
+    },
+    "messages": {
+      "selectOptionalCourse": "Select optional course from the courses list."
+    },
+    "tags": {
+      "notFound": "Tag not found",
+      "remove": "Remove {tag}"
+    },
+    "toast": {
+      "modifying": "Modifying exercise...",
+      "modified": "Exercise modified successfully",
+      "failed": "Failed to modify exercise"
+    },
+    "errors": {
+      "titleRequired": "Exercise name is required",
+      "max100": "Must be 100 characters or less",
+      "max1000": "Must be 1000 characters or less"
+    }
+  },
+  "EditTagsModal": {
+    "labels": {
+      "newTag": "New Tag",
+      "createTag": "Create Tag",
+      "existingTags": "Existing Tags",
+      "noTags": "No tags available."
+    },
+    "table": {
+      "tagName": "Tag Name",
+      "color": "Color",
+      "actions": "Actions"
+    },
+    "actions": {
+      "delete": "Delete",
+      "pickColor": "Pick a color"
+    },
+    "toast": {
+      "deleting": "Deleting tag...",
+      "deleted": "Tag deleted successfully",
+      "deleteFailed": "Failed to delete tag",
+      "creating": "Creating tag...",
+      "created": "Tag created successfully",
+      "createFailed": "Failed to create tag"
+    },
+    "errors": {
+      "nameRequired": "Tag name is required",
+      "max20": "Less than 20 characters"
+    }
+  },
+  "CreateExerciseModal": {
+    "labels": {
+      "exerciseTitle": "Exercise Title",
+      "exerciseDescription": "Exercise Description",
+      "tags": "Tags",
+      "exerciseTask": "Exercise Task",
+      "exerciseSolution": "Exercise Solution",
+      "none": "- None -",
+      "addTag": "Add Tag",
+      "submit": "Create Exercise"
+    },
+    "toast": {
+      "creating": "Creating exercise...",
+      "created": "Exercise created successfully",
+      "failed": "Failed to create exercise"
+    },
+    "tags": {
+      "notFound": "Tag not found",
+      "remove": "Remove {tag}"
+    },
+    "errors": {
+      "titleRequired": "Exercise name is required",
+      "max100": "Must be 100 characters or less",
+      "max1000": "Must be 1000 characters or less"
+    }
+  },
+  "RolesUpdate": {
+    "title": "Roles",
+    "chooseRole": "Please choose a role for the user",
+    "roleAdmin": "Admin",
+    "roleMaintainer": "Maintainer",
+    "roleUser": "User",
+    "updateButton": "Update user role",
+    "errorPrefix": "Error"
+  },
+  "ManageUsers": {
+    "table": {
+      "user": "User",
+      "linked": "Linked",
+      "actions": "Actions"
+    },
+    "status": {
+      "linked": "Linked",
+      "notLinked": "Not linked"
+    },
+    "buttons": {
+      "link": "Link",
+      "unlink": "Unlink"
+    },
+    "toast": {
+      "linked": "User linked successfully",
+      "unlinked": "User unlinked successfully",
+      "errorPrefix": "Error"
+    }
+  },
+  "EditUserGroup": {
+    "labels": {
+      "name": "Name",
+      "description": "Description"
+    },
+    "errors": {
+      "nameRequired": "Name is required"
+    },
+    "toast": {
+      "saved": "User group saved successfully",
+      "saveError": "Error saving user group, please retry later."
+    },
+    "buttons": {
+      "save": "Save user group",
+      "saving": "Saving..."
+    }
+  },
+  "AddUserGroup": {
+    "labels": {
+      "name": "Name",
+      "description": "Description"
+    },
+    "errors": {
+      "nameRequired": "Name is required"
+    },
+    "buttons": {
+      "create": "Create user group",
+      "creating": "Loading..."
+    }
+  },
+  "OrgInviteCodeGenerate": {
+    "withGroup": {
+      "title": "Invite code linked to a user group",
+      "subtitle": "On signup, users will be automatically linked to the selected user group",
+      "noGroups": "No user groups available",
+      "createGroup": "Create a user group",
+      "selectLabel": "Select user group"
+    },
+    "normal": {
+      "title": "Normal invite code",
+      "subtitle": "On signup, users will not be linked to any user group"
+    },
+    "buttons": {
+      "generate": "Generate",
+      "generateWithGroup": "Generate invite code with user group",
+      "generateNormal": "Generate normal invite code"
+    },
+    "error": "Error {status}: {detail}"
+  },
+  "LinkToUserGroup": {
+    "notice": "Users that are not part of the user group will no longer have access to this course",
+    "labels": {
+      "usergroupName": "User group name"
+    },
+    "noGroups": "No user groups available",
+    "createGroup": "Create a user group",
+    "buttons": {
+      "link": "Link"
+    },
+    "toast": {
+      "linked": "Successfully linked to user group",
+      "error": "Error {status}: {detail}"
+    }
+  },
+  "CreateCourseModal": {
+    "labels": {
+      "name": "Course Name",
+      "description": "Description",
+      "thumbnail": "Course Thumbnail",
+      "tags": "Course Tags",
+      "visibility": "Course Visibility"
+    },
+    "buttons": {
+      "uploadImage": "Upload Image",
+      "chooseFromGallery": "Choose from Gallery",
+      "create": "Create Course"
+    },
+    "placeholders": {
+      "tagsInput": "Enter tags separated by commas",
+      "selectVisibility": "Select visibility"
+    },
+    "visibility": {
+      "public": "Public (Available to see on the internet)",
+      "private": "Private (Private to users)"
+    },
+    "toast": {
+      "creating": "Creating course...",
+      "created": "Course created successfully",
+      "failed": "Failed to create course",
+      "unsplashFailed": "Failed to load image from Unsplash"
+    },
+    "errors": {
+      "nameRequired": "Course name is required",
+      "max100": "Must be 100 characters or less",
+      "max1000": "Must be 1000 characters or less"
+    }
+  },
+  "NewChapterModal": {
+    "labels": {
+      "name": "Chapter name",
+      "description": "Chapter description"
+    },
+    "messages": {
+      "nameRequired": "Please provide a chapter name",
+      "descriptionRequired": "Please provide a chapter description"
+    },
+    "buttons": {
+      "create": "Create Chapter"
+    }
+  },
+  "NewActivityModal": {
+    "options": {
+      "dynamic": "Dynamic Page",
+      "video": "Video",
+      "document": "Document",
+      "workspace": "Workspace"
+    },
+    "alt": {
+      "dynamic": "Dynamic Page",
+      "video": "Video Page",
+      "document": "Document PDF Page",
+      "workspace": "Workspaces Page"
+    }
+  },
+  "NewWorkspaceModal": {
+    "labels": {
+      "title": "Workspace Title",
+      "selectExercise": "Select Exercise"
+    },
+    "messages": {
+      "titleRequired": "Please provide a name for your workspace session.",
+      "exerciseRequired": "Please select an exercise from the exercise library."
+    },
+    "placeholders": {
+      "title": "Enter workspace title",
+      "selectTask": "- Select Task -"
+    },
+    "autoTitle": {
+      "anyOrder": "Any Order - {count} Tasks"
+    },
+    "loading": "loading...",
+    "empty": {
+      "noTasks": "No tasks yet.",
+      "addInstruction": "Use the menu to add a task."
+    },
+    "buttons": {
+      "create": "Create workspace",
+      "removeTask": "Remove task"
+    },
+    "toast": {
+      "creating": "Creating workspace...",
+      "created": "Workspace created successfully"
+    }
+  },
+  "VideoActivityModal": {
+    "labels": {
+      "videoName": "Video name",
+      "videoFile": "Video file",
+      "youtubeUrl": "YouTube URL"
+    },
+    "messages": {
+      "nameRequired": "Please provide a name for your video activity",
+      "videoRequired": "Please provide a video for your activity"
+    },
+    "tabs": {
+      "upload": "Video upload",
+      "youtube": "YouTube Video"
+    },
+    "buttons": {
+      "create": "Create activity"
+    }
+  },
+  "DynamicCanvaModal": {
+    "labels": {
+      "activityName": "Activity name",
+      "activityDescription": "Activity description"
+    },
+    "placeholders": {
+      "activityName": "Enter activity name",
+      "activityDescription": "Enter activity description (optional)"
+    },
+    "messages": {
+      "nameRequired": "Please provide a name for your activity",
+      "descriptionRequired": "Please provide a description for your activity"
+    },
+    "buttons": {
+      "create": "Create activity"
+    }
+  },
+  "DocumentPdfActivityModal": {
+    "labels": {
+      "pdfName": "PDF document name",
+      "pdfFile": "PDF document file"
+    },
+    "placeholders": {
+      "name": "Enter PDF activity name"
+    },
+    "messages": {
+      "nameRequired": "Please provide a name for your PDF document activity",
+      "fileRequired": "Please provide a PDF document for your activity"
+    },
+    "buttons": {
+      "create": "Create activity"
+    }
+  },
+  "AssignmentActivityModal": {
+    "labels": {
+      "title": "Assignment Title",
+      "description": "Assignment Description",
+      "dueDate": "Due Date",
+      "gradingType": "Grading Type"
+    },
+    "messages": {
+      "titleRequired": "Please provide a name for your assignment",
+      "descriptionRequired": "Please provide a description for your assignment",
+      "dueDateRequired": "Please provide a due date for your assignment",
+      "gradingTypeRequired": "Please select a grading type"
+    },
+    "grading": {
+      "alphabet": "Alphabet (A, B, C ...)",
+      "numeric": "Numeric",
+      "percentage": "Percentage"
+    },
+    "buttons": {
+      "create": "Create activity"
+    },
+    "toast": {
+      "creating": "Creating assignment...",
+      "created": "Assignment created successfully",
+      "failed": "Failed to create assignment"
+    }
+  },
+  "OrgMenu": {
+    "buttons": {
+      "login": "Login",
+      "signup": "Sign up"
+    },
+    "badges": {
+      "admin": "Admin"
+    },
+    "alts": {
+      "logo": "Organization logo",
+      "mascot": "Sokrates mascot"
+    }
+  },
+  "AvatarDropdownMenu": {
+    "dashboard": "Dashboard",
+    "settings": "Settings",
+    "exercises": "Exercises",
+    "users": "Users",
+    "school": "School",
+    "logout": "Logout",
+    "login": "Login",
+    "signup": "Sign up"
+  },
+  "FileUploadBlock": {
+    "messages": {
+      "noPreview": "No file available for preview."
+    },
+    "buttons": {
+      "submit": "Submit"
+    },
+    "aria": {
+      "fileInput": "Choose a file to upload",
+      "submit": "Submit file",
+      "loading": "Loading"
+    }
+  },
+  "EditorWrapper": {
+    "toast": {
+      "saving": "Saving...",
+      "saved": "Activity saved!",
+      "error": "Could not save."
+    }
+  },
+  "Editor": {
+    "mobile": {
+      "title": "Desktop Only",
+      "description": "The editor is only accessible from a desktop device.",
+      "action": "Please switch to a desktop to view."
+    },
+    "buttons": {
+      "save": "Save",
+      "aiEditor": "AI Editor"
+    },
+    "tooltips": {
+      "preview": "Preview"
+    },
+    "alts": {
+      "learnhouseLogo": "Learnhouse logo",
+      "courseThumbnail": "Course thumbnail",
+      "aiIcon": "AI icon"
+    }
+  },
+  "ToolbarButtons": {
+    "prompts": {
+      "youtubeUrl": "Enter YouTube URL"
+    },
+    "headings": {
+      "label": "Heading level",
+      "h1": "Heading 1",
+      "h2": "Heading 2",
+      "h3": "Heading 3",
+      "h4": "Heading 4",
+      "h5": "Heading 5",
+      "h6": "Heading 6"
+    },
+    "tooltips": {
+      "undo": "Undo",
+      "redo": "Redo",
+      "bold": "Bold",
+      "italic": "Italic",
+      "strike": "Strikethrough",
+      "orderedList": "Ordered list",
+      "createTable": "Create table",
+      "insertRow": "Insert row",
+      "insertColumn": "Insert column",
+      "removeColumn": "Remove column",
+      "removeRow": "Remove row",
+      "infoCallout": "Info Callout",
+      "warningCallout": "Warning Callout",
+      "image": "Image",
+      "video": "Video",
+      "youtube": "YouTube video",
+      "math": "Math Equation (LaTeX)",
+      "pdf": "PDF Document",
+      "quiz": "Interactive Quiz",
+      "codeBlock": "Code Block",
+      "embed": "External Object (Embed)",
+      "badges": "Badges",
+      "button": "Button"
+    },
+    "defaults": {
+      "badgeText": "This is a Badge",
+      "buttonText": "Click me"
+    }
+  },
+  "CoursesActions": {
+    "labels": {
+      "author": "Author"
+    },
+    "ownCourse": {
+      "title": "You Own This Course",
+      "description": "You have purchased this course and have full access to all content."
+    },
+    "paidCourse": {
+      "title": "Paid Course",
+      "description": "This course requires purchase to access its content."
+    },
+    "purchaseModal": {
+      "title": "Purchase Course",
+      "description": "Select a payment option to access this course"
+    },
+    "buttons": {
+      "start": "Start Course",
+      "leave": "Leave Course",
+      "purchase": "Purchase Course",
+      "authenticate": "Authenticate to start course"
+    }
+  },
+  "WorkspaceActivity": {
+    "heading": {
+      "redirecting": "Redirecting to Workspace...",
+      "creating": "Creating Your Workspace"
+    },
+    "messages": {
+      "redirectSoon": "You'll be redirected automatically in a moment",
+      "pleaseWait": "Please wait while we set up your environment"
+    },
+    "buttons": {
+      "openNow": "Open Workspace Now"
+    },
+    "aria": {
+      "progress": "Workspace creation progress",
+      "openNow": "Open workspace immediately"
+    }
+  },
+  "OrgUsersAdd": {
+    "headings": {
+      "inviteUsersTitle": "Invite users to your organization",
+      "inviteUsersSubtitle": "Send invites via email, separated by commas",
+      "invitedUsersTitle": "Invited users",
+      "invitedUsersSubtitle": "Users who have been invited to join your organization"
+    },
+    "placeholders": {
+      "emailsExample": "Example: spike.spiegel@bebop.space, michael.scott@dundermifflin.com"
+    },
+    "labels": {
+      "inviteCode": "Invite code"
+    },
+    "buttons": {
+      "sendInvites": "Send invites via email"
+    },
+    "tooltips": {
+      "inviteCode": "Use one of the invite codes that you generated from the signup access page"
+    },
+    "table": {
+      "email": "Email",
+      "signupStatus": "Signup status",
+      "emailSent": "Email sent"
+    },
+    "status": {
+      "pending": "Pending",
+      "signed": "Registered",
+      "sent": "Sent",
+      "no": "No"
+    },
+    "toast": {
+      "failed": "Error {status}: {detail}"
+    }
+  },
+  "OrgUsers": {
+    "headings": {
+      "activeUsers": "Active users",
+      "manage": "Manage your organization users, assign roles and permissions"
+    },
+    "table": {
+      "user": "User",
+      "role": "Role",
+      "actions": "Actions"
+    },
+    "buttons": {
+      "editRole": "Edit role",
+      "removeFromOrg": "Remove from organization"
+    },
+    "modals": {
+      "updateRole": {
+        "title": "Update role",
+        "description": "Update @{username}'s role"
+      },
+      "removeUser": {
+        "dialogTitle": "Remove {username}?",
+        "confirmationMessage": "Are you sure you want to remove this user from the organization?",
+        "confirmButton": "Remove user"
+      }
+    },
+    "toast": {
+      "failed": "Error {status}: {detail}"
+    }
+  },
+  "UserEditPassword": {
+    "labels": {
+      "oldPassword": "Old password",
+      "newPassword": "New password"
+    },
+    "placeholders": {
+      "oldPassword": "Enter your current password",
+      "newPassword": "Enter your new password"
+    },
+    "buttons": {
+      "submit": "Update password"
+    },
+    "toast": {
+      "success": "Password updated successfully.",
+      "error": "Error {status}: {detail}"
+    }
+  },
+  "UserEditGeneral": {
+    "form": {
+      "email": { "label": "Email", "placeholder": "Enter your email" },
+      "username": { "label": "Username", "placeholder": "Enter your username" },
+      "firstName": { "label": "First name", "placeholder": "Enter your first name" },
+      "lastName": { "label": "Last name", "placeholder": "Enter your last name" },
+      "bio": { "label": "Bio", "placeholder": "Tell us a bit about yourself" }
+    },
+    "sections": {
+      "avatar": "Avatar"
+    },
+    "buttons": {
+      "submit": "Submit",
+      "changeAvatar": "Change avatar"
+    },
+    "statuses": {
+      "uploading": "Uploading"
+    },
+    "hints": {
+      "avatarRecommendedSize": "Recommended size {size}"
+    },
+    "success": {
+      "avatarUpdated": "Avatar updated"
+    }
+  },
+  "OrgEditGeneral": {
+    "form": {
+      "name": { "label": "Name", "placeholder": "Organization name" },
+      "description": { "label": "Description", "placeholder": "Short description" },
+      "slug": { "label": "Slug", "placeholder": "Organization slug" },
+      "email": { "label": "Email", "placeholder": "Contact email" }
+    },
+    "buttons": {
+      "submit": "Submit",
+      "changeLogo": "Change Logo",
+      "changeThumbnail": "Change Thumbnail"
+    },
+    "tabs": {
+      "logo": "Logo",
+      "thumbnail": "Thumbnail"
+    },
+    "hints": {
+      "accepts": "Accepts {types}"
+    },
+    "toasts": {
+      "uploadLogo": {
+        "loading": "Uploading logo...",
+        "success": "Logo updated",
+        "error": "Failed to upload logo"
+      },
+      "uploadThumbnail": {
+        "loading": "Uploading thumbnail...",
+        "success": "Thumbnail updated",
+        "error": "Failed to upload thumbnail"
+      },
+      "updateOrg": {
+        "loading": "Updating organization...",
+        "success": "Organization updated",
+        "error": "Failed to update organization"
+      }
+    }
+  },
+  "EditCourseStructure": {
+    "toolbar": {
+      "zoomOut": "Zoom out",
+      "zoomIn": "Zoom in",
+      "fitView": "Fit view",
+      "autoLayout": "Auto layout",
+      "addChapter": "Add chapter"
+    },
+    "graph": {
+      "valid": "Valid",
+      "error": "Error",
+      "validHint": "Graph semantics are valid",
+      "cyclicDependency": "Cyclic dependency"
+    },
+    "modal": {
+      "newChapter": {
+        "title": "Create chapter",
+        "description": "Add a new chapter to the course"
+      }
+    }
+  },
+  "ChapterElement": {
+    "fields": {
+      "chapterName": "Chapter name"
+    },
+    "buttons": {
+      "save": "Save",
+      "editName": "Edit chapter name",
+      "deleteChapter": "Delete chapter"
+    },
+    "modal": {
+      "delete": {
+        "title": "Delete {name}?",
+        "confirmationMessage": "Are you sure you want to delete this chapter?",
+        "confirmButton": "Delete chapter"
+      }
+    }
+  },
+  "ActivityElement": {
+    "fields": {
+      "activityName": "Activity name"
+    },
+    "buttons": {
+      "save": "Save",
+      "editName": "Edit activity name",
+      "publish": "Publish",
+      "unpublish": "Unpublish",
+      "deleteActivity": "Delete activity"
+    },
+    "tooltips": {
+      "preview": "Preview activity"
+    },
+    "options": {
+      "editPage": "Edit page",
+      "editAssignment": "Edit assignment"
+    },
+    "toast": {
+      "deleting": "Deleting activity...",
+      "deleted": "Activity deleted successfully",
+      "updating": "Updating activity...",
+      "updated": "The activity has been updated successfully"
+    },
+    "modal": {
+      "delete": {
+        "title": "Delete {name}?",
+        "message": "Are you sure you want to delete this activity?",
+        "confirm": "Delete activity"
+      }
+    },
+    "types": {
+      "video": "Video",
+      "document": "Document",
+      "assignment": "Assignment",
+      "dynamic": "Dynamic",
+      "workspace": "Workspace",
+      "custom": "Custom"
+    }
+  },
+  "NewActivityButton": {
+    "modal": {
+      "title": "Create activity",
+      "description": "Choose between types of activities to add to the course"
+    },
+    "buttons": {
+      "add": "Add activity"
+    },
+    "toast": {
+      "creating": "Creating activity...",
+      "created": "Activity created successfully",
+      "uploadingAndCreating": "Uploading file and creating activity...",
+      "fileUploaded": "File uploaded successfully"
+    }
+  },
+  "EditCourseMapToolbar": {
+    "aria": {
+      "undo": "Undo",
+      "redo": "Redo",
+      "copy": "Copy",
+      "cut": "Cut",
+      "paste": "Paste",
+      "resetState": "Reset state",
+      "mapSize": "Map size {width} × {height}"
+    },
+    "tooltips": {
+      "undo": "Undo (Ctrl+Z)",
+      "redo": "Redo (Ctrl+Y)",
+      "copy": "Copy (Ctrl+C)",
+      "cut": "Cut (Ctrl+X)",
+      "paste": "Paste (Ctrl+V)",
+      "resetState": "Reset State",
+      "mapBoundaries": "Map Boundaries",
+      "gridVisibility": "Show/Hide Grid",
+      "snapToGrid": "Snap to Grid",
+      "clampToMap": "Clamp to Map Boundaries"
+    },
+    "map": {
+      "boundariesTitle": "Map Boundaries"
+    },
+    "labels": {
+      "grid": "Grid",
+      "snap": "Snap",
+      "clamp": "Clamp",
+      "size": "Size"
+    },
+    "buttons": {
+      "apply": "Apply"
+    },
+    "shortcuts": {
+      "title": "Keyboard Shortcuts",
+      "undo": "Undo",
+      "redo": "Redo",
+      "selectAll": "Select All",
+      "copy": "Copy",
+      "cut": "Cut",
+      "paste": "Paste",
+      "delete": "Delete",
+      "moveSelection": "Move Selection",
+      "moveFaster": "Move Faster",
+      "multiSelect": "Multiple Select"
+    }
+  },
+  "EditCourseMap": {
+    "loading": "Loading map...",
+    "buttons": {
+      "openAssetBrowser": "Open asset browser",
+      "closeAssetBrowser": "Close asset browser"
+    },
+    "assetBrowser": {
+      "title": "Asset browser",
+      "subtitle": "Drag assets onto the map"
+    }
+  },
+  "ThumbnailUpdate": {
+    "status": {
+      "uploading": "Uploading"
+    },
+    "buttons": {
+      "uploadImage": "Upload image",
+      "chooseFromGallery": "Choose from gallery"
+    },
+    "alt": {
+      "previewThumbnail": "Preview thumbnail",
+      "courseThumbnail": "Course thumbnail"
+    }
+  },
+  "EditCourseGeneral": {
+    "form": {
+      "name": { "label": "Name" },
+      "description": { "label": "Description" },
+      "about": { "label": "About" },
+      "learnings": { "label": "Learnings" },
+      "tags": { "label": "Tags" },
+      "thumbnail": { "label": "Thumbnail" }
+    },
+    "validation": {
+      "required": "Required",
+      "max": "Must be {count} characters or less"
+    },
+    "errors": {
+      "saveFailed": "Failed to save course structure."
+    }
+  },
+  "EditCourseAccess": {
+    "access": {
+      "header": {
+        "title": "Access to the course",
+        "subtitle": "Choose if you want your course to be publicly available on the internet or only accessible to signed in users"
+      }
+    },
+    "public": {
+      "title": "Public",
+      "description": "The course is publicly available on the internet, it is indexed by search engines and can be accessed by anyone",
+      "confirm": {
+        "title": "Change to Public?",
+        "message": "Are you sure you want this course to be publicly available on the internet?",
+        "button": "Change to Public"
+      }
+    },
+    "usersOnly": {
+      "title": "Users Only",
+      "description": "The course is only accessible to signed in users; you can choose which user groups can access this course",
+      "confirm": {
+        "title": "Change to Users Only?",
+        "message": "Are you sure you want this course to be only accessible to signed in users?",
+        "button": "Change to Users Only"
+      }
+    },
+    "labels": {
+      "active": "Active"
+    },
+    "usergroups": {
+      "header": {
+        "title": "User groups",
+        "subtitle": "Link this course to specific user groups to restrict access"
+      },
+      "unlink": {
+        "title": "Unlink user group?",
+        "message": "Users from this user group will no longer have access to this course.",
+        "confirmButton": "Delete link"
+      },
+      "linkModal": {
+        "title": "Link course to a user group",
+        "description": "Choose a user group to link this course to. Users in that group will have access to this course."
+      }
+    },
+    "table": {
+      "name": "Name",
+      "actions": "Actions"
+    },
+    "buttons": {
+      "deleteLink": "Delete link",
+      "linkToUserGroup": "Link to a user group"
+    },
+    "toasts": {
+      "unlinkSuccess": "Successfully unlinked from user group",
+      "unlinkErrorDetailed": "Error {status}: {detail}",
+      "unlinkException": "An error occurred while unlinking the user group."
+    }
+  },
+  "SaveState": {
+    "status": {
+      "unsaved": "Unsaved changes"
+    },
+    "buttons": {
+      "save": "Save",
+      "saved": "Saved"
+    }
+  },
+  "CourseOverviewTop": {
+    "labels": {
+      "course": "Course"
+    },
+    "alt": {
+      "courseThumbnail": "Course thumbnail"
+    }
+  }
+}
