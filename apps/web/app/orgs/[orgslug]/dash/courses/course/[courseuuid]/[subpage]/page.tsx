@@ -11,6 +11,7 @@ import EditCourseGeneral from '@components/Dashboard/Pages/Course/EditCourseGene
 import EditCourseAccess from '@components/Dashboard/Pages/Course/EditCourseAccess/EditCourseAccess'
 import EditCourseMap from '@components/Dashboard/Pages/Course/EditCourseMap/EditCourseMap'
 import ManageCourseMembers from '@components/Dashboard/Pages/Course/ManageCourseMembers/ManageCourseMembers'
+import { useTranslations } from 'next-intl'
 
 export type CourseOverviewParams = {
 	orgslug: string
@@ -19,7 +20,7 @@ export type CourseOverviewParams = {
 }
 
 function CourseOverviewPage({ params }: { params: CourseOverviewParams }) {
-	console.log(params.subpage)
+	const t = useTranslations('CourseOverviewPage')
 
 	function getEntireCourseUUID(courseuuid: string) {
 		// add course_ to uuid
@@ -46,7 +47,7 @@ function CourseOverviewPage({ params }: { params: CourseOverviewParams }) {
 							>
 								<div className="flex items-center space-x-2.5 mx-2">
 									<Info size={16} />
-									<div>General</div>
+										<div>{t('general')}</div>
 								</div>
 							</div>
 						</Link>
@@ -64,7 +65,7 @@ function CourseOverviewPage({ params }: { params: CourseOverviewParams }) {
 							>
 								<div className="flex items-center space-x-2.5 mx-2">
 									<UserRoundCog size={16} />
-									<div>Access</div>
+										<div>{t('access')}</div>
 								</div>
 							</div>
 						</Link>
@@ -82,7 +83,7 @@ function CourseOverviewPage({ params }: { params: CourseOverviewParams }) {
 							>
 								<div className="flex items-center space-x-2.5 mx-2">
 									<GalleryVerticalEnd size={16} />
-									<div>Content</div>
+										<div>{t('content')}</div>
 								</div>
 							</div>
 						</Link>
@@ -100,7 +101,7 @@ function CourseOverviewPage({ params }: { params: CourseOverviewParams }) {
 							>
 								<div className="flex items-center space-x-2.5 mx-2">
 									<Map size={16} />
-									<div>Map</div>
+										<div>{t('map')}</div>
 								</div>
 							</div>
 						</Link>
@@ -118,7 +119,7 @@ function CourseOverviewPage({ params }: { params: CourseOverviewParams }) {
 							>
 								<div className="flex items-center space-x-2.5 mx-2">
 									<Users size={16}></Users>
-									<div>Students</div>
+										<div>{t('students')}</div>
 								</div>
 							</div>
 						</Link>

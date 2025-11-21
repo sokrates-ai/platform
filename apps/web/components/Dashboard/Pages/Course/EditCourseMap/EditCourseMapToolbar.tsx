@@ -9,6 +9,7 @@ import { useState, useEffect } from "react"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useTranslations } from 'next-intl'
 
 export interface CourseMapEditorToolbarProps {
 	undo: Function
@@ -34,6 +35,8 @@ export interface CourseMapEditorToolbarProps {
 }
 
 export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
+	const t = useTranslations('EditCourseMapToolbar')
+
 	const defaultBoundaries = {
 		left: -1000,
 		right: 1000,
@@ -139,11 +142,11 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 						<TooltipTrigger asChild>
 							<Button variant="outline" size="icon" className="h-8 w-8" onClick={() => props.undo()} disabled={props.canUndo === false}>
 								<Undo2 className="h-4 w-4" />
-								<span className="sr-only">Undo</span>
+								<span className="sr-only">{t('aria.undo')}</span>
 							</Button>
 						</TooltipTrigger>
 						<TooltipContent>
-							<p>Undo (Ctrl+Z)</p>
+							<p>{t('tooltips.undo')}</p>
 						</TooltipContent>
 					</Tooltip>
 				</TooltipProvider>
@@ -153,11 +156,11 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 						<TooltipTrigger asChild>
 							<Button variant="outline" size="icon" className="h-8 w-8" onClick={() => props.redo()} disabled={props.canRedo === false}>
 								<Redo2 className="h-4 w-4" />
-								<span className="sr-only">Redo</span>
+								<span className="sr-only">{t('aria.redo')}</span>
 							</Button>
 						</TooltipTrigger>
 						<TooltipContent>
-							<p>Redo (Ctrl+Y)</p>
+							<p>{t('tooltips.redo')}</p>
 						</TooltipContent>
 					</Tooltip>
 				</TooltipProvider>
@@ -169,23 +172,20 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 				<TooltipProvider delayDuration={300}>
 					<Tooltip>
 						<TooltipTrigger asChild>
-							<Button variant="outline" size="icon" className="h-8 w-8" 
-								onClick={(e) => {
-									// Simulate Ctrl+C key press
-									const keyEvent = new KeyboardEvent('keydown', {
-										key: 'c',
-										code: 'KeyC',
-										ctrlKey: true,
-										bubbles: true
-									});
+								<Button
+								variant="outline"
+								size="icon"
+								className="h-8 w-8"
+								onClick={() => {
+									const keyEvent = new KeyboardEvent('keydown', { key: 'c', code: 'KeyC', ctrlKey: true, bubbles: true });
 									document.dispatchEvent(keyEvent);
 								}}>
 								<CopyIcon className="h-4 w-4" />
-								<span className="sr-only">Copy</span>
+								<span className="sr-only">{t('aria.copy')}</span>
 							</Button>
 						</TooltipTrigger>
 						<TooltipContent>
-							<p>Copy (Ctrl+C)</p>
+							<p>{t('tooltips.copy')}</p>
 						</TooltipContent>
 					</Tooltip>
 				</TooltipProvider>
@@ -193,23 +193,20 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 				<TooltipProvider delayDuration={300}>
 					<Tooltip>
 						<TooltipTrigger asChild>
-							<Button variant="outline" size="icon" className="h-8 w-8"
-								onClick={(e) => {
-									// Simulate Ctrl+X key press
-									const keyEvent = new KeyboardEvent('keydown', {
-										key: 'x',
-										code: 'KeyX',
-										ctrlKey: true,
-										bubbles: true
-									});
+							<Button
+								variant="outline"
+								size="icon"
+								className="h-8 w-8"
+								onClick={() => {
+									const keyEvent = new KeyboardEvent('keydown', { key: 'x', code: 'KeyX', ctrlKey: true, bubbles: true });
 									document.dispatchEvent(keyEvent);
 								}}>
 								<Scissors className="h-4 w-4" />
-								<span className="sr-only">Cut</span>
+								<span className="sr-only">{t('aria.cut')}</span>
 							</Button>
 						</TooltipTrigger>
 						<TooltipContent>
-							<p>Cut (Ctrl+X)</p>
+							<p>{t('tooltips.cut')}</p>
 						</TooltipContent>
 					</Tooltip>
 				</TooltipProvider>
@@ -217,23 +214,20 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 				<TooltipProvider delayDuration={300}>
 					<Tooltip>
 						<TooltipTrigger asChild>
-							<Button variant="outline" size="icon" className="h-8 w-8"
-								onClick={(e) => {
-									// Simulate Ctrl+V key press
-									const keyEvent = new KeyboardEvent('keydown', {
-										key: 'v',
-										code: 'KeyV',
-										ctrlKey: true,
-										bubbles: true
-									});
+							<Button
+								variant="outline"
+								size="icon"
+								className="h-8 w-8"
+								onClick={() => {
+									const keyEvent = new KeyboardEvent('keydown', { key: 'v', code: 'KeyV', ctrlKey: true, bubbles: true });
 									document.dispatchEvent(keyEvent);
 								}}>
 								<ClipboardPaste className="h-4 w-4" />
-								<span className="sr-only">Paste</span>
+								<span className="sr-only">{t('aria.paste')}</span>
 							</Button>
 						</TooltipTrigger>
 						<TooltipContent>
-							<p>Paste (Ctrl+V)</p>
+							<p>{t('tooltips.paste')}</p>
 						</TooltipContent>
 					</Tooltip>
 				</TooltipProvider>
@@ -246,11 +240,11 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 					<TooltipTrigger asChild>
 						<Button variant="outline" size="icon" className="h-8 w-8" onClick={() => props.reset()}>
 							<Trash2 className="h-4 w-4 text-destructive" />
-							<span className="sr-only">Reset State</span>
+							<span className="sr-only">{t('aria.resetState')}</span>
 						</Button>
 					</TooltipTrigger>
 					<TooltipContent>
-						<p>Reset State</p>
+						<p>{t('tooltips.resetState')}</p>
 					</TooltipContent>
 				</Tooltip>
 			</TooltipProvider>
@@ -262,21 +256,25 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 					<Tooltip>
 						<TooltipTrigger asChild>
 							<PopoverTrigger asChild>
-								<Button variant="outline" className="h-8">
+								<Button
+									variant="outline"
+									className="h-8"
+									aria-label={t('aria.mapSize', { width: getWorldWidth(), height: getWorldHeight() })}
+								>
 									<Maximize className="h-4 w-4 mr-2" />
 									<span>{getWorldWidth()} × {getWorldHeight()}</span>
 								</Button>
 							</PopoverTrigger>
 						</TooltipTrigger>
 						<TooltipContent>
-							<p>Map Boundaries</p>
+							<p>{t('tooltips.mapBoundaries')}</p>
 						</TooltipContent>
 					</Tooltip>
 				</TooltipProvider>
 				<PopoverContent className="w-72 p-3">
 					<div className="space-y-2">
 						<div className="flex justify-between items-center mb-1">
-							<h4 className="font-medium text-sm">Map Boundaries</h4>
+							<h4 className="font-medium text-sm">{t('map.boundariesTitle')}</h4>
 							<div className="text-xs text-muted-foreground">
 								{getWorldWidth()} × {getWorldHeight()}
 							</div>
@@ -406,7 +404,7 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 							</div>
 
 							<div className="flex justify-end mt-1">
-								<Button size="sm" className="h-6 text-xs px-2" onClick={handleBoundariesUpdate}>Apply</Button>
+								<Button size="sm" className="h-6 text-xs px-2" onClick={handleBoundariesUpdate}>{t('buttons.apply')}</Button>
 							</div>
 						</div>
 					</div>
@@ -420,7 +418,7 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 					<Tooltip>
 						<TooltipTrigger asChild>
 							<div className="flex items-center space-x-2">
-								<Label htmlFor="show-grid" className="text-xs font-medium">Grid</Label>
+								<Label htmlFor="show-grid" className="text-xs font-medium">{t('labels.grid')}</Label>
 								<Switch 
 									id="show-grid" 
 									checked={props.showGrid} 
@@ -429,7 +427,7 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 							</div>
 						</TooltipTrigger>
 						<TooltipContent>
-							<p>Show/Hide Grid</p>
+							<p>{t('tooltips.gridVisibility')}</p>
 						</TooltipContent>
 					</Tooltip>
 				</TooltipProvider>
@@ -438,7 +436,7 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 					<Tooltip>
 						<TooltipTrigger asChild>
 							<div className="flex items-center space-x-2">
-								<Label htmlFor="snap-grid" className="text-xs font-medium">Snap</Label>
+								<Label htmlFor="snap-grid" className="text-xs font-medium">{t('labels.snap')}</Label>
 								<Switch 
 									id="snap-grid" 
 									checked={props.snapToGrid} 
@@ -447,7 +445,7 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 							</div>
 						</TooltipTrigger>
 						<TooltipContent>
-							<p>Snap to Grid</p>
+							<p>{t('tooltips.snapToGrid')}</p>
 						</TooltipContent>
 					</Tooltip>
 				</TooltipProvider>
@@ -456,7 +454,7 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 					<Tooltip>
 						<TooltipTrigger asChild>
 							<div className="flex items-center space-x-2">
-								<Label htmlFor="clamp-map" className="text-xs font-medium">Clamp</Label>
+								<Label htmlFor="clamp-map" className="text-xs font-medium">{t('labels.clamp')}</Label>
 								<Switch 
 									id="clamp-map" 
 									checked={props.clampToMap} 
@@ -465,13 +463,13 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 							</div>
 						</TooltipTrigger>
 						<TooltipContent>
-							<p>Clamp to Map Boundaries</p>
+							<p>{t('tooltips.clampToMap')}</p>
 						</TooltipContent>
 					</Tooltip>
 				</TooltipProvider>
 
 				<div className="flex items-center space-x-2">
-					<Label htmlFor="granularity" className="text-xs font-medium">Size</Label>
+					<Label htmlFor="granularity" className="text-xs font-medium">{t('labels.size')}</Label>
 					<Slider 
 						id="granularity"
 						value={[props.gridGranularity || 5]} 
@@ -488,42 +486,42 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 
 			<Popover>
 				<PopoverTrigger asChild>
-					<Button variant="outline" size="icon" className="rounded-full h-8 w-8">
+					<Button variant="outline" size="icon" className="rounded-full h-8 w-8" aria-label={t('shortcuts.title')}>
 						<HelpCircle className="h-4 w-4" />
 					</Button>
 				</PopoverTrigger>
 				<PopoverContent className="w-80">
 					<div className="space-y-2">
-						<h4 className="font-medium">Keyboard Shortcuts</h4>
+						<h4 className="font-medium">{t('shortcuts.title')}</h4>
 						<div className="grid grid-cols-2 gap-2">
-							<div className="text-sm text-muted-foreground">Undo</div>
+							<div className="text-sm text-muted-foreground">{t('shortcuts.undo')}</div>
 							<div className="text-sm font-semibold">Ctrl+Z</div>
 							
-							<div className="text-sm text-muted-foreground">Redo</div>
+							<div className="text-sm text-muted-foreground">{t('shortcuts.redo')}</div>
 							<div className="text-sm font-semibold">Ctrl+Y / Ctrl+Shift+Z</div>
 							
-							<div className="text-sm text-muted-foreground">Select All</div>
+							<div className="text-sm text-muted-foreground">{t('shortcuts.selectAll')}</div>
 							<div className="text-sm font-semibold">Ctrl+A</div>
 							
-							<div className="text-sm text-muted-foreground">Copy</div>
+							<div className="text-sm text-muted-foreground">{t('shortcuts.copy')}</div>
 							<div className="text-sm font-semibold">Ctrl+C</div>
 							
-							<div className="text-sm text-muted-foreground">Cut</div>
+							<div className="text-sm text-muted-foreground">{t('shortcuts.cut')}</div>
 							<div className="text-sm font-semibold">Ctrl+X</div>
 							
-							<div className="text-sm text-muted-foreground">Paste</div>
+							<div className="text-sm text-muted-foreground">{t('shortcuts.paste')}</div>
 							<div className="text-sm font-semibold">Ctrl+V</div>
 							
-							<div className="text-sm text-muted-foreground">Delete</div>
+							<div className="text-sm text-muted-foreground">{t('shortcuts.delete')}</div>
 							<div className="text-sm font-semibold">Delete</div>
 							
-							<div className="text-sm text-muted-foreground">Move Selection</div>
+							<div className="text-sm text-muted-foreground">{t('shortcuts.moveSelection')}</div>
 							<div className="text-sm font-semibold">Arrow Keys</div>
 							
-							<div className="text-sm text-muted-foreground">Move Faster</div>
+							<div className="text-sm text-muted-foreground">{t('shortcuts.moveFaster')}</div>
 							<div className="text-sm font-semibold">Shift+Arrow Keys</div>
 							
-							<div className="text-sm text-muted-foreground">Multiple Select</div>
+							<div className="text-sm text-muted-foreground">{t('shortcuts.multiSelect')}</div>
 							<div className="text-sm font-semibold">Shift+Click</div>
 						</div>
 					</div>

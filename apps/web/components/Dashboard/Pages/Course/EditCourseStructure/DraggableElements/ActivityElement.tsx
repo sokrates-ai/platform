@@ -28,6 +28,7 @@ import { useCourse } from '@components/Contexts/CourseContext'
 import toast from 'react-hot-toast'
 import { useMediaQuery } from 'usehooks-ts'
 import ToolTip from '@components/Objects/StyledElements/Tooltip/Tooltip'
+import { useTranslations } from 'next-intl'
 
 type ActivitiyElementProps = {
   orgslug: string
@@ -52,9 +53,10 @@ function ActivityElement(props: ActivitiyElementProps) {
   >(undefined)
   const activityUUID = props.activity.activity_uuid
   const isMobile = useMediaQuery('(max-width: 767px)')
+  const t = useTranslations('ActivityElement')
 
   async function deleteActivityUI() {
-    const toast_loading = toast.loading('Deleting activity...')
+    const toast_loading = toast.loading(t('toast.deleting'))
     // Assignments 
     if (props.activity.activity_type === 'TYPE_ASSIGNMENT') {
       await deleteAssignmentUsingActivityUUID(props.activity.activity_uuid, access_token)
@@ -64,12 +66,12 @@ function ActivityElement(props: ActivitiyElementProps) {
     mutate(`${getAPIUrl()}courses/${props.course_uuid}/meta`)
     await revalidateTags(['courses'], props.orgslug)
     toast.dismiss(toast_loading)
-    toast.success('Activity deleted successfully')
+    toast.success(t('toast.deleted'))
     router.refresh()
   }
 
   async function changePublicStatus() {
-    const toast_loading = toast.loading('Updating assignment...')
+    const toast_loading = toast.loading(t('toast.updating'))
     await updateActivity(
       {
         ...props.activity,
@@ -80,7 +82,7 @@ function ActivityElement(props: ActivitiyElementProps) {
     )
     mutate(`${getAPIUrl()}courses/${props.course_uuid}/meta`)
     toast.dismiss(toast_loading)
-    toast.success('The activity has been updated successfully')
+    toast.success(t('toast.updated'))
     await revalidateTags(['courses'], props.orgslug)
     router.refresh()
   }
@@ -128,7 +130,8 @@ function ActivityElement(props: ActivitiyElementProps) {
                 <input
                   type="text"
                   className="bg-transparent outline-none text-xs text-gray-500"
-                  placeholder="Activity name"
+                  placeholder={t('fields.activityName')}
+                  aria-label={t('fields.activityName')}
                   value={
                     modifiedActivity
                       ? modifiedActivity?.activityName
@@ -144,6 +147,8 @@ function ActivityElement(props: ActivitiyElementProps) {
                 <button
                   onClick={() => updateActivityName(props.activity.id)}
                   className="bg-transparent text-neutral-700 hover:cursor-pointer hover:text-neutral-900"
+                  aria-label={t('buttons.save')}
+                  title={t('buttons.save')}
                 >
                   <Save size={12} />
                 </button>
@@ -154,6 +159,7 @@ function ActivityElement(props: ActivitiyElementProps) {
             <Pencil
               onClick={() => setSelectedActivity(props.activity.id)}
               className="text-neutral-400 hover:cursor-pointer size-3 min-w-3"
+              aria-label={t('buttons.editName')}
             />
           </div>
 
@@ -168,16 +174,18 @@ function ActivityElement(props: ActivitiyElementProps) {
                   : 'bg-gradient-to-bl text-gray-800 from-gray-400/50 to-gray-200/80 border-gray-600/10 hover:from-gray-500/50 hover:to-gray-300/80'
               }`}
               onClick={() => changePublicStatus()}
+              aria-label={!props.activity.published ? t('buttons.publish') : t('buttons.unpublish')}
+              title={!props.activity.published ? t('buttons.publish') : t('buttons.unpublish')}
             >
               {!props.activity.published ? (
                 <Globe strokeWidth={2} size={12} className="text-green-600" />
               ) : (
                 <Lock strokeWidth={2} size={12} className="text-gray-600" />
               )}
-              <span>{!props.activity.published ? 'Publish' : 'Unpublish'}</span>
+              <span>{!props.activity.published ? t('buttons.publish') : t('buttons.unpublish')}</span>
             </button>
             <div className="w-px h-3 bg-gray-300 mx-1 self-center rounded-full hidden sm:block" />
-            <ToolTip content="Preview Activity" sideOffset={8}>
+            <ToolTip content={t('tooltips.preview')} sideOffset={8}>
               <Link
                 href={
                   getUriWithOrg(props.orgslug, '') +
@@ -192,19 +200,23 @@ function ActivityElement(props: ActivitiyElementProps) {
                 prefetch
                 className="p-1 px-2 sm:px-3 bg-gradient-to-bl text-cyan-800 from-sky-400/50 to-cyan-200/80 border border-cyan-600/10 shadow-md rounded-md font-bold text-xs flex items-center space-x-1 transition-colors duration-200 hover:from-sky-500/50 hover:to-cyan-300/80"
                 rel="noopener noreferrer"
+                aria-label={t('tooltips.preview')}
+                title={t('tooltips.preview')}
               >
                 <Eye strokeWidth={2} size={14} className="text-sky-600" />
               </Link>
             </ToolTip>
             {/*   Delete Button  */}
             <ConfirmationModal
-              confirmationMessage="Are you sure you want to delete this activity ?"
-              confirmationButtonText="Delete Activity"
-              dialogTitle={'Delete ' + props.activity.name + ' ?'}
+              confirmationMessage={t('modal.delete.message')}
+              confirmationButtonText={t('modal.delete.confirm')}
+              dialogTitle={t('modal.delete.title', { name: props.activity.name })}
               dialogTrigger={
                 <button
                   className="p-1 px-2 sm:px-3 bg-red-600 rounded-md flex items-center space-x-1 shadow-md transition-colors duration-200 hover:bg-red-700"
                   rel="noopener noreferrer"
+                  aria-label={t('buttons.deleteActivity')}
+                  title={t('buttons.deleteActivity')}
                 >
                   <X size={15} className="text-rose-200 font-bold" />
                 </button>
@@ -247,17 +259,27 @@ const ACTIVITIES = {
 }
 
 const ActivityTypeIndicator = ({activityType, isMobile} : { activityType: keyof typeof ACTIVITIES, isMobile: boolean}) => {
-  console.log(activityType)
-  const {displayName, Icon} = ACTIVITIES[activityType]
+  const { Icon } = ACTIVITIES[activityType]
+  const t = useTranslations('ActivityElement')
+
+  const labelMap: Record<string, string> = {
+    TYPE_VIDEO: t('types.video'),
+    TYPE_DOCUMENT: t('types.document'),
+    TYPE_ASSIGNMENT: t('types.assignment'),
+    TYPE_DYNAMIC: t('types.dynamic'),
+    TYPE_WORKSPACE: t('types.workspace'),
+    TYPE_CUSTOM: t('types.custom'),
+  }
+  const displayName = labelMap[activityType] ?? activityType
 
   return (
     <div className={`px-3 text-gray-300 space-x-1 w-28 flex ${isMobile ? 'flex-col' : ''}`}>
       <div className="flex space-x-2 items-center">
-            <Icon className="size-4" />{' '}
-            <div className="text-xs bg-gray-200 text-gray-400 font-bold px-2 py-1 rounded-full mx-auto justify-center align-middle">
-              {displayName}
-            </div>{' '}
-          </div>
+        <Icon className="size-4" />{' '}
+        <div className="text-xs bg-gray-200 text-gray-400 font-bold px-2 py-1 rounded-full mx-auto justify-center align-middle">
+          {displayName}
+        </div>{' '}
+      </div>
     </div>
   )
 }
@@ -267,6 +289,7 @@ const ActivityElementOptions = ({ activity, isMobile }: { activity: any; isMobil
   const org = useOrg() as any;
   const course = useCourse() as any;
   const session = useSokratesSession() as any;  const access_token = session?.data?.tokens?.access_token;
+  const t = useTranslations('ActivityElement')
 
   async function getAssignmentUUIDFromActivityUUID(activityUUID: string):  Promise<string | undefined> {
     const activity = await getAssignmentFromActivityUUID(activityUUID, access_token);
@@ -305,9 +328,11 @@ const ActivityElementOptions = ({ activity, isMobile }: { activity: any; isMobil
             prefetch
             className={`hover:cursor-pointer p-1 ${isMobile ? 'px-2' : 'px-3'} bg-sky-700 rounded-md items-center`}
             target='_blank'
+            aria-label={t('options.editPage')}
+            title={t('options.editPage')}
           >
             <div className="text-sky-100 font-bold text-xs flex items-center space-x-1">
-              <FilePenLine size={12} />  <span>Edit Page</span>
+              <FilePenLine size={12} />  <span>{t('options.editPage')}</span>
             </div>
           </Link>
         </>
@@ -321,9 +346,11 @@ const ActivityElementOptions = ({ activity, isMobile }: { activity: any; isMobil
             }
             prefetch
             className={`hover:cursor-pointer p-1 ${isMobile ? 'px-2' : 'px-3'} bg-teal-700 rounded-md items-center`}
+            aria-label={t('options.editAssignment')}
+            title={t('options.editAssignment')}
           >
             <div className="text-sky-100 font-bold text-xs flex items-center space-x-1">
-              <FilePenLine size={12} /> {!isMobile && <span>Edit Assignment</span>}
+              <FilePenLine size={12} /> {!isMobile && <span>{t('options.editAssignment')}</span>}
             </div>
           </Link>
         </>

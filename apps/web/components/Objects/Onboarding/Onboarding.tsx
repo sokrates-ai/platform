@@ -1,3 +1,5 @@
+//Nicht überetzt da nicht in Benutzung
+  
 import Image, { StaticImageData } from 'next/image';
 import React, { useEffect, useState } from 'react';
 import OnBoardLogin from '@public/onboarding/OnBoardLogin.png';

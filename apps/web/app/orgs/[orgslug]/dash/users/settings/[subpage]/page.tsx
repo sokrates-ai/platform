@@ -12,6 +12,7 @@ import OrgUsers from '@components/Dashboard/Pages/Users/OrgUsers/OrgUsers'
 import OrgAccess from '@components/Dashboard/Pages/Users/OrgAccess/OrgAccess'
 import OrgUsersAdd from '@components/Dashboard/Pages/Users/OrgUsersAdd/OrgUsersAdd'
 import OrgUserGroups from '@components/Dashboard/Pages/Users/OrgUserGroups/OrgUserGroups'
+import { useTranslations } from 'next-intl'
 
 export type SettingsParams = {
   subpage: string
@@ -19,6 +20,7 @@ export type SettingsParams = {
 }
 
 function UsersSettingsPage({ params }: { params: SettingsParams }) {
+  const t = useTranslations('UsersSettingsPage')
   const session = useSokratesSession() as any
   const org = useOrg() as any
   const [H1Label, setH1Label] = React.useState('')
@@ -27,20 +29,20 @@ function UsersSettingsPage({ params }: { params: SettingsParams }) {
 
   function handleLabels() {
     if (params.subpage == 'users') {
-      setH1Label('Users')
-      setH2Label('Manage your organization users, assign roles and permissions')
+      setH1Label(t('users'))
+      setH2Label(t('manageUsers'))
     }
     if (params.subpage == 'signups') {
-      setH1Label('Signups & Invite Codes')
-      setH2Label('Choose from where users can join your organization')
+      setH1Label(t('signups'))
+      setH2Label(t('chooseSignups'))
     }
     if (params.subpage == 'add') {
-      setH1Label('Invite Members')
-      setH2Label('Invite members to join your organization')
+      setH1Label(t('inviteMembers'))
+      setH2Label(t('inviteMembersDesc'))
     }
     if (params.subpage == 'usergroups') {
-      setH1Label('UserGroups')
-      setH2Label('Create and manage user groups')
+      setH1Label(t('userGroups'))
+      setH2Label(t('manageUserGroups'))
     }
   }
 
@@ -53,10 +55,10 @@ function UsersSettingsPage({ params }: { params: SettingsParams }) {
     return (
       <div className="h-screen w-full bg-[#f8f8f8] flex items-center justify-center p-4">
         <div className="bg-white p-6 rounded-lg shadow-md text-center">
-          <h2 className="text-xl font-bold mb-4">Desktop Only</h2>
+          <h2 className="text-xl font-bold mb-4">{t('desktopOnly')}</h2>
           <Monitor className='mx-auto my-5' size={60} />
-          <p>This page is only accessible from a desktop device.</p>
-          <p>Please switch to a desktop to view and manage user settings.</p>
+          <p>{t('desktopOnlyDesc1')}</p>
+          <p>{t('desktopOnlyDesc2')}</p>
         </div>
       </div>
     )
@@ -90,7 +92,7 @@ function UsersSettingsPage({ params }: { params: SettingsParams }) {
             >
               <div className="flex items-center space-x-2.5 mx-2">
                 <Users size={16} />
-                <div>Users</div>
+                <div>{t('users')}</div>
               </div>
             </div>
           </Link>
@@ -107,7 +109,7 @@ function UsersSettingsPage({ params }: { params: SettingsParams }) {
             >
               <div className="flex items-center space-x-2.5 mx-2">
                 <SquareUserRound size={16} />
-                <div>UserGroups</div>
+                <div>{t('userGroups')}</div>
               </div>
             </div>
           </Link>
@@ -124,7 +126,7 @@ function UsersSettingsPage({ params }: { params: SettingsParams }) {
             >
               <div className="flex items-center space-x-2.5 mx-2">
                 <ScanEye size={16} />
-                <div>Signups & Invite Codes</div>
+                <div>{t('signups')}</div>
               </div>
             </div>
           </Link>
@@ -141,11 +143,10 @@ function UsersSettingsPage({ params }: { params: SettingsParams }) {
             >
               <div className="flex items-center space-x-2.5 mx-2">
                 <UserPlus size={16} />
-                <div>Invite Members</div>
+                <div>{t('inviteMembers')}</div>
               </div>
             </div>
           </Link>
-          
         </div>
       </div>
       <motion.div

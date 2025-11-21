@@ -341,6 +341,22 @@ export default function Component(props: {apiStudents: ApiStudent[], orgslug: st
     student.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  // Guard: Only render right panel if currentStudent exists
+  if (!currentStudent) {
+    return (
+      <div className="flex gap-6 px-6 h-full">
+        {/* Left Panel - Classroom Layout */}
+        <div className="flex-1 w-7/12">
+          {/* ...existing left panel code... */}
+        </div>
+        {/* Right Panel - Student Details */}
+        <div className="w-5/12 flex items-center justify-center">
+          <span className="text-gray-500 text-lg">No student selected.</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex gap-6 px-6 h-full">
       {/* Left Panel - Classroom Layout */}

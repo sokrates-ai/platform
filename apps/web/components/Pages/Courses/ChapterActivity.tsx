@@ -6,7 +6,8 @@ import { ArrowRight, Lock } from 'lucide-react'
 import clsx from 'clsx'
 import { Button } from '@/components/ui/button'
 import { getUriWithOrg } from '@services/config/config'
-import { stateConfig } from './stateConfig'
+import { getStateConfig } from './stateConfig'
+import { useTranslations } from 'next-intl'
 
 export type ACTIVITY_STATE = 'locked' | 'available' | 'done'
 
@@ -34,6 +35,10 @@ export default function ChapterActivity({
   topColour = '#DFDFDF',
   bottomColour = '#DFDFDF',
 }: Props) {
+  const tState = useTranslations('stateConfig')
+  const tChapter = useTranslations('ChapterActivity')
+  const cfg = getStateConfig(tState)
+
   const isFreeSelect =
     activity.activity_type === 'TYPE_WORKSPACE' &&
     activity.content?.task_ids?.length > 1
@@ -43,16 +48,14 @@ export default function ChapterActivity({
 
   const activityUrl =
     getUriWithOrg(orgslug, '') +
-    `/course/${courseUuid}/activity/${activityUuid}${isFreeSelect ? '?task_id=TASK_ID_PLACEHOLDER' : ''
+    `/course/${courseUuid}/activity/${activityUuid}${
+      isFreeSelect ? '?task_id=TASK_ID_PLACEHOLDER' : ''
     }`
 
-  const { buttonText = 'Review', buttonVariant: cfgButtonVariant } =
-    stateConfig[state] ?? {}
+  const { buttonText = tState('review'), buttonVariant: cfgButtonVariant } =
+    cfg[state] ?? {}
 
-  const bulletSizeClass = clsx(
-    'h-6 w-6',
-    'sm:h-9 sm:w-9'
-  )
+  const bulletSizeClass = clsx('h-6 w-6', 'sm:h-9 sm:w-9')
 
   const bullet =
     state === 'done' ? (
@@ -65,7 +68,7 @@ export default function ChapterActivity({
       >
         <Image
           src="/checkmark-green.svg"
-          alt="Completed"
+          alt={tState('completed')}
           fill
           className="object-contain"
         />
@@ -82,7 +85,7 @@ export default function ChapterActivity({
       >
         <Image
           src="/available-circle.svg"
-          alt="Available"
+          alt={tState('available')}
           fill
           className="object-contain"
         />
@@ -106,8 +109,6 @@ export default function ChapterActivity({
     'h-8 w-24 text-xs',
     'sm:h-10 sm:w-36 sm:text-sm'
   )
-
-  console.log(activity)
 
   return (
     <div
@@ -148,7 +149,7 @@ export default function ChapterActivity({
             selected ? 'text-[#3C3C3C]' : 'text-[#727272]'
           )}
         >
-          {activity.title ?? activity.name ?? 'Untitled activity'}
+          {activity.title ?? activity.name ?? tChapter('untitled')}
         </h3>
         <p
           className={clsx(
@@ -157,8 +158,7 @@ export default function ChapterActivity({
             'truncate sm:whitespace-normal'
           )}
         >
-          {activity.description ??
-            'Lorem Ipsum set dolor sit amet, nucti consentur…'}
+          {activity.description ?? tChapter('noDescription')}
         </p>
       </div>
 
@@ -166,10 +166,7 @@ export default function ChapterActivity({
         <Link href={activityUrl} prefetch={false} className="pr-3 sm:pr-[33px]">
           <Button variant={buttonVariant} className={buttonClass}>
             <span className="flex-1 text-center">{buttonText}</span>
-            <ArrowRight
-              strokeWidth={3}
-              className="sm:h-4 sm:w-4 h-3 w-3"
-            />
+            <ArrowRight strokeWidth={3} className="sm:h-4 sm:w-4 h-3 w-3" />
           </Button>
         </Link>
       )}

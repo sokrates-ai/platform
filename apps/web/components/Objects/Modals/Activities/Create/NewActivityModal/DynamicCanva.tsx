@@ -10,8 +10,10 @@ import React, { useState } from 'react'
 import * as Form from '@radix-ui/react-form'
 import BarLoader from 'react-spinners/BarLoader'
 import { Button } from "@components/ui/button";
+import { useTranslations } from 'next-intl' // added
 
 function DynamicCanvaModal({ submitActivity, chapterId, course }: any) {
+  const t = useTranslations('DynamicCanvaModal') // added
   const [activityName, setActivityName] = useState('')
   const [activityDescription, setActivityDescription] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -42,30 +44,38 @@ function DynamicCanvaModal({ submitActivity, chapterId, course }: any) {
     <FormLayout onSubmit={handleSubmit}>
       <FormField name="dynamic-activity-name">
         <Flex css={{ alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <FormLabel>Activity name</FormLabel>
+          <FormLabel>{t('labels.activityName')}</FormLabel>
           <FormMessage match="valueMissing">
-            Please provide a name for your activity
+            {t('messages.nameRequired')}
           </FormMessage>
         </Flex>
         <Form.Control asChild>
-          <Input onChange={handleActivityNameChange} type="text" required />
+          <Input
+            onChange={handleActivityNameChange}
+            type="text"
+            required
+            placeholder={t('placeholders.activityName')}
+          />
         </Form.Control>
       </FormField>
       <FormField name="dynamic-activity-desc">
         <Flex css={{ alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <FormLabel>Activity description</FormLabel>
+          <FormLabel>{t('labels.activityDescription')}</FormLabel>
           <FormMessage match="valueMissing">
-            Please provide a description for your activity
+            {t('messages.descriptionRequired')}
           </FormMessage>
         </Flex>
         <Form.Control asChild>
-          <Textarea onChange={handleActivityDescriptionChange}  />
+          <Textarea
+            onChange={handleActivityDescriptionChange}
+            placeholder={t('placeholders.activityDescription')}
+          />
         </Form.Control>
       </FormField>
 
       <Flex css={{ marginTop: 25, justifyContent: 'flex-end' }}>
         <Form.Submit asChild>
-          <Button >
+          <Button>
             {isSubmitting ? (
               <BarLoader
                 cssOverride={{ borderRadius: 60 }}
@@ -73,7 +83,7 @@ function DynamicCanvaModal({ submitActivity, chapterId, course }: any) {
                 color="#ffffff"
               />
             ) : (
-              'Create activity'
+              t('buttons.create')
             )}
           </Button>
         </Form.Submit>

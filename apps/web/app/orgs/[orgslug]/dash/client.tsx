@@ -8,6 +8,7 @@ import React from 'react'
 import useAdminStatus from '@components/Hooks/useAdminStatus'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { useTranslations } from 'next-intl'
 
 type CourseProps = {
   orgslug: string
@@ -16,6 +17,7 @@ type CourseProps = {
 }
 
 function CoursesHome(params: CourseProps) {
+  const t = useTranslations('CoursesHome')
   const searchParams = useSearchParams()
   const isCreatingCourse = searchParams.get('new') ? true : false
   const [newCourseModal, setNewCourseModal] = React.useState(isCreatingCourse)
@@ -32,7 +34,7 @@ function CoursesHome(params: CourseProps) {
       <div className="mb-6">
         <BreadCrumbs type="courses" />
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4">
-          <h1 className="text-3xl font-bold mb-4 sm:mb-0 text-SokratesBlackBoxShadow">Courses</h1>
+          <h1 className="text-3xl font-bold mb-4 sm:mb-0 text-SokratesBlackBoxShadow">{t('courses')}</h1>
           <AuthenticatedClientElement
             checkMethod="roles"
             action="create"
@@ -41,11 +43,11 @@ function CoursesHome(params: CourseProps) {
           >
             <Dialog open={newCourseModal} onOpenChange={setNewCourseModal}>
               <DialogTrigger asChild>
-                <Button variant="default">Create Course</Button>
+                <Button variant="default">{t('createCourse')}</Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Create Course</DialogTitle>
+                  <DialogTitle>{t('createCourse')}</DialogTitle>
                 </DialogHeader>
                 <CreateCourseModal closeModal={closeNewCourseModal} orgslug={orgslug} />
               </DialogContent>
@@ -77,13 +79,13 @@ function CoursesHome(params: CourseProps) {
                 </svg>
               </div>
               <h2 className="text-2xl font-bold text-SokratesGrayBorder2 mb-2">
-                No courses yet
+                {t('noCoursesYet')}
               </h2>
               <p className="text-lg text-SokratesGrayBorder">
                 {isUserAdmin ? (
-                  "Create a course to add content"
+                  t('createCourseToAddContent')
                 ) : (
-                  "No courses available yet"
+                  t('noCoursesAvailableYet')
                 )}
               </p>
               {isUserAdmin && (
@@ -96,11 +98,11 @@ function CoursesHome(params: CourseProps) {
                   >
                     <Dialog open={newCourseModal} onOpenChange={setNewCourseModal}>
                       <DialogTrigger asChild>
-                        <Button variant="default">Create Course</Button>
+                        <Button variant="default">{t('createCourse')}</Button>
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Create Course</DialogTitle>
+                          <DialogTitle>{t('createCourse')}</DialogTitle>
                         </DialogHeader>
                         <CreateCourseModal closeModal={closeNewCourseModal} orgslug={orgslug} />
                       </DialogContent>

@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl'
 import ExerciseThumbnail from '@components/Objects/Thumbnails/ExerciseThumbnail'
 
 interface CourseListingProps {
@@ -14,8 +15,10 @@ interface CourseListingProps {
 }
 
 const CourseListing = (props: CourseListingProps) => {
+  const t = useTranslations('CourseListing')
+
   if (!props.exercises || !props.tags || !props.courses) {
-    return <div>Loading...</div>
+    return <div>{t('loading')}</div>
   }
 
   let filteredExercises = props.exercises.filter(
@@ -34,8 +37,6 @@ const CourseListing = (props: CourseListingProps) => {
           return (
             <div key={exercise.id}>
               <ExerciseThumbnail
-                // customLink={`/dash/courses/course/${removeCoursePrefix(course.course_uuid)}/general`}
-                // course={course}
                 orgId={props.org.id}
                 orgslug={props.orgslug}
                 exercise={exercise}
@@ -52,32 +53,30 @@ const CourseListing = (props: CourseListingProps) => {
 
   return (
     <div>
-      {
-        <div className="col-span-full flex justify-center items-center py-8">
-          <div className="text-center">
-            <div className="mb-4">
-              <svg
-                width="120"
-                height="120"
-                viewBox="0 0 295 295"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="mx-auto"
-              >
-                {/* ... SVG content ... */}
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-600 mb-2">
-              No exercises yet
-            </h2>
-            <p className="text-lg text-gray-400">
-              {props.isUserAdmin
-                ? 'Create an exercise to add content'
-                : 'No exercise available yet'}
-            </p>
+      <div className="col-span-full flex justify-center items-center py-8">
+        <div className="text-center">
+          <div className="mb-4">
+            <svg
+              width="120"
+              height="120"
+              viewBox="0 0 295 295"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="mx-auto"
+            >
+              {/* ... SVG content ... */}
+            </svg>
           </div>
+          <h2 className="text-2xl font-bold text-gray-600 mb-2">
+            {t('noExercisesYet')}
+          </h2>
+          <p className="text-lg text-gray-400">
+            {props.isUserAdmin
+              ? t('createExerciseToAddContent')
+              : t('noExerciseAvailableYet')}
+          </p>
         </div>
-      }
+      </div>
     </div>
   )
 }

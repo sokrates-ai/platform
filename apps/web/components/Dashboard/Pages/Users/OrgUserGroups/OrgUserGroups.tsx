@@ -1,3 +1,4 @@
+//Nicht übersetzt da nicht in Benutzung
 'use client'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'

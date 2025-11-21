@@ -1,3 +1,4 @@
+//Nicht Übersetzt da nicht in benutzung (Alte navigationbar links)
 'use client';
 import { useOrg } from '@components/Contexts/OrgContext';
 import { Backpack, Book, BookMarked, ChevronRight, CreditCard, School, User, Users } from 'lucide-react'

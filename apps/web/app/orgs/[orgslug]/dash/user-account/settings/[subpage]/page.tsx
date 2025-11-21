@@ -8,6 +8,7 @@ import { getUriWithOrg } from '@services/config/config'
 import { Info, Lock } from 'lucide-react'
 import BreadCrumbs from '@components/Dashboard/Misc/BreadCrumbs'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
+import { useTranslations } from 'next-intl'
 
 export type SettingsParams = {
   subpage: string
@@ -16,6 +17,7 @@ export type SettingsParams = {
 
 function SettingsPage({ params }: { params: SettingsParams }) {
   const session = useSokratesSession() as any
+  const t = useTranslations('UserAccountSettingsPage')
 
   useEffect(() => {}, [session])
 
@@ -28,7 +30,7 @@ function SettingsPage({ params }: { params: SettingsParams }) {
         ></BreadCrumbs>
         <div className="my-2 tracking-tighter">
           <div className="w-100 flex justify-between">
-            <div className="pt-3 flex font-bold text-4xl">Account Settings</div>
+            <div className="pt-3 flex font-bold text-4xl">{t('accountSettings')}</div>
           </div>
         </div>
         <div className="flex space-x-5 font-black text-sm">
@@ -47,7 +49,7 @@ function SettingsPage({ params }: { params: SettingsParams }) {
             >
               <div className="flex items-center space-x-2.5 mx-2">
                 <Info size={16} />
-                <div>General</div>
+                <div>{t('general')}</div>
               </div>
             </div>
           </Link>
@@ -66,7 +68,7 @@ function SettingsPage({ params }: { params: SettingsParams }) {
             >
               <div className="flex items-center space-x-2.5 mx-2">
                 <Lock size={16} />
-                <div>Password</div>
+                <div>{t('password')}</div>
               </div>
             </div>
           </Link>

@@ -28,16 +28,17 @@ import {
 } from 'lucide-react'
 import { SiYoutube } from '@icons-pack/react-simple-icons'
 import ToolTip from '@components/Objects/StyledElements/Tooltip/Tooltip'
+import { useTranslations } from 'next-intl' // added
 
 export const ToolbarButtons = ({ editor, props }: any) => {
+  const t = useTranslations('ToolbarButtons') // added
   if (!editor) {
     return null
   }
 
   // YouTube extension
   const addYoutubeVideo = () => {
-    const url = prompt('Enter YouTube URL')
-
+    const url = prompt(t('prompts.youtubeUrl')) // translated
     if (url) {
       editor.commands.setYoutubeVideo({
         src: url,
@@ -49,36 +50,50 @@ export const ToolbarButtons = ({ editor, props }: any) => {
 
   return (
     <ToolButtonsWrapper>
-      <ToolBtn onClick={() => editor.chain().focus().undo().run()}>
-        <ArrowLeftIcon />
-      </ToolBtn>
-      <ToolBtn onClick={() => editor.chain().focus().redo().run()}>
-        <ArrowRightIcon />
-      </ToolBtn>
-      <ToolBtn
-        onClick={() => editor.chain().focus().toggleBold().run()}
-        className={editor.isActive('bold') ? 'is-active' : ''}
-      >
-        <FontBoldIcon />
-      </ToolBtn>
-      <ToolBtn
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-        className={editor.isActive('italic') ? 'is-active' : ''}
-      >
-        <FontItalicIcon />
-      </ToolBtn>
-      <ToolBtn
-        onClick={() => editor.chain().focus().toggleStrike().run()}
-        className={editor.isActive('strike') ? 'is-active' : ''}
-      >
-        <StrikethroughIcon />
-      </ToolBtn>
-      <ToolBtn
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        className={editor.isActive('orderedList') ? 'is-active' : ''}
-      >
-        <ListBulletIcon />
-      </ToolBtn>
+      <ToolTip content={t('tooltips.undo')}>
+        <ToolBtn onClick={() => editor.chain().focus().undo().run()}>
+          <ArrowLeftIcon />
+        </ToolBtn>
+      </ToolTip>
+      <ToolTip content={t('tooltips.redo')}>
+        <ToolBtn onClick={() => editor.chain().focus().redo().run()}>
+          <ArrowRightIcon />
+        </ToolBtn>
+      </ToolTip>
+
+      <ToolTip content={t('tooltips.bold')}>
+        <ToolBtn
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          className={editor.isActive('bold') ? 'is-active' : ''}
+        >
+          <FontBoldIcon />
+        </ToolBtn>
+      </ToolTip>
+      <ToolTip content={t('tooltips.italic')}>
+        <ToolBtn
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          className={editor.isActive('italic') ? 'is-active' : ''}
+        >
+          <FontItalicIcon />
+        </ToolBtn>
+      </ToolTip>
+      <ToolTip content={t('tooltips.strike')}>
+        <ToolBtn
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+          className={editor.isActive('strike') ? 'is-active' : ''}
+        >
+          <StrikethroughIcon />
+        </ToolBtn>
+      </ToolTip>
+      <ToolTip content={t('tooltips.orderedList')}>
+        <ToolBtn
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          className={editor.isActive('orderedList') ? 'is-active' : ''}
+        >
+          <ListBulletIcon />
+        </ToolBtn>
+      </ToolTip>
+
       <ToolSelect
         onChange={(e) =>
           editor
@@ -87,65 +102,66 @@ export const ToolbarButtons = ({ editor, props }: any) => {
             .toggleHeading({ level: parseInt(e.target.value) })
             .run()
         }
+        aria-label={t('headings.label')}
       >
-        <option value="1">Heading 1</option>
-        <option value="2">Heading 2</option>
-        <option value="3">Heading 3</option>
-        <option value="4">Heading 4</option>
-        <option value="5">Heading 5</option>
-        <option value="6">Heading 6</option>
+        <option value="1">{t('headings.h1')}</option>
+        <option value="2">{t('headings.h2')}</option>
+        <option value="3">{t('headings.h3')}</option>
+        <option value="4">{t('headings.h4')}</option>
+        <option value="5">{t('headings.h5')}</option>
+        <option value="6">{t('headings.h6')}</option>
       </ToolSelect>
+
       <DividerVerticalIcon
         style={{ marginTop: 'auto', marginBottom: 'auto', color: 'grey' }}
       />
-      <ToolBtn
-        content={'Create table'}
-        onClick={() =>
-          editor
-            .chain()
-            .focus()
-            .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-            .run()
-        }
-      >
-        <TableIcon />
-      </ToolBtn>
-      <ToolBtn
-        content={'Insert row'}
-        onClick={() => editor.chain().focus().addRowAfter().run()}
-      >
-        <RowsIcon />
-      </ToolBtn>
-      <ToolBtn
-        content={'Insert column'}
-        onClick={() => editor.chain().focus().addColumnAfter().run()}
-      >
-        <ColumnsIcon />
-      </ToolBtn>
-      <ToolBtn
-        content={'Remove column'}
-        onClick={() => editor.chain().focus().deleteColumn().run()}
-      >
-        <ContainerIcon />
-      </ToolBtn>
-      <ToolBtn
-        content={'Remove row'}
-        onClick={() => editor.chain().focus().deleteRow().run()}
-      >
-        <SectionIcon />
-      </ToolBtn>
-      {/* TODO: fix this : toggling only works one-way */}
+
+      <ToolTip content={t('tooltips.createTable')}>
+        <ToolBtn
+          onClick={() =>
+            editor
+              .chain()
+              .focus()
+              .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+              .run()
+          }
+        >
+          <TableIcon />
+        </ToolBtn>
+      </ToolTip>
+      <ToolTip content={t('tooltips.insertRow')}>
+        <ToolBtn onClick={() => editor.chain().focus().addRowAfter().run()}>
+          <RowsIcon />
+        </ToolBtn>
+      </ToolTip>
+      <ToolTip content={t('tooltips.insertColumn')}>
+        <ToolBtn onClick={() => editor.chain().focus().addColumnAfter().run()}>
+          <ColumnsIcon />
+        </ToolBtn>
+      </ToolTip>
+      <ToolTip content={t('tooltips.removeColumn')}>
+        <ToolBtn onClick={() => editor.chain().focus().deleteColumn().run()}>
+          <ContainerIcon />
+        </ToolBtn>
+      </ToolTip>
+      <ToolTip content={t('tooltips.removeRow')}>
+        <ToolBtn onClick={() => editor.chain().focus().deleteRow().run()}>
+          <SectionIcon />
+        </ToolBtn>
+      </ToolTip>
+
       <DividerVerticalIcon
         style={{ marginTop: 'auto', marginBottom: 'auto', color: 'grey' }}
       />
-      <ToolTip content={'Info Callout'}>
+
+      <ToolTip content={t('tooltips.infoCallout')}>
         <ToolBtn
           onClick={() => editor.chain().focus().toggleNode('calloutInfo').run()}
         >
           <AlertCircle size={15} />
         </ToolBtn>
       </ToolTip>
-      <ToolTip content={'Warning Callout'}>
+      <ToolTip content={t('tooltips.warningCallout')}>
         <ToolBtn
           onClick={() =>
             editor.chain().focus().toggleNode('calloutWarning').run()
@@ -154,7 +170,7 @@ export const ToolbarButtons = ({ editor, props }: any) => {
           <AlertTriangle size={15} />
         </ToolBtn>
       </ToolTip>
-      <ToolTip content={'Image'}>
+      <ToolTip content={t('tooltips.image')}>
         <ToolBtn
           onClick={() =>
             editor
@@ -169,7 +185,7 @@ export const ToolbarButtons = ({ editor, props }: any) => {
           <ImagePlus size={15} />
         </ToolBtn>
       </ToolTip>
-      <ToolTip content={'Video'}>
+      <ToolTip content={t('tooltips.video')}>
         <ToolBtn
           onClick={() =>
             editor
@@ -184,12 +200,12 @@ export const ToolbarButtons = ({ editor, props }: any) => {
           <Video size={15} />
         </ToolBtn>
       </ToolTip>
-      <ToolTip content={'YouTube video'}>
+      <ToolTip content={t('tooltips.youtube')}>
         <ToolBtn onClick={() => addYoutubeVideo()}>
           <SiYoutube size={15} />
         </ToolBtn>
       </ToolTip>
-      <ToolTip content={'Math Equation (LaTeX)'}>
+      <ToolTip content={t('tooltips.math')}>
         <ToolBtn
           onClick={() =>
             editor
@@ -204,7 +220,7 @@ export const ToolbarButtons = ({ editor, props }: any) => {
           <Sigma size={15} />
         </ToolBtn>
       </ToolTip>
-      <ToolTip content={'PDF Document'}>
+      <ToolTip content={t('tooltips.pdf')}>
         <ToolBtn
           onClick={() =>
             editor
@@ -219,7 +235,7 @@ export const ToolbarButtons = ({ editor, props }: any) => {
           <FileText size={15} />
         </ToolBtn>
       </ToolTip>
-      <ToolTip content={'Interactive Quiz'}>
+      <ToolTip content={t('tooltips.quiz')}>
         <ToolBtn
           onClick={() =>
             editor
@@ -234,7 +250,7 @@ export const ToolbarButtons = ({ editor, props }: any) => {
           <BadgeHelp size={15} />
         </ToolBtn>
       </ToolTip>
-      <ToolTip content={'Code Block'}>
+      <ToolTip content={t('tooltips.codeBlock')}>
         <ToolBtn
           onClick={() => editor.chain().focus().toggleCodeBlock().run()}
           className={editor.isActive('codeBlock') ? 'is-active' : ''}
@@ -242,7 +258,7 @@ export const ToolbarButtons = ({ editor, props }: any) => {
           <Code size={15} />
         </ToolBtn>
       </ToolTip>
-      <ToolTip content={'External Object (Embed)'}>
+      <ToolTip content={t('tooltips.embed')}>
         <ToolBtn
           onClick={() =>
             editor.chain().focus().insertContent({ type: 'blockEmbed' }).run()
@@ -251,7 +267,7 @@ export const ToolbarButtons = ({ editor, props }: any) => {
           <Cuboid size={15} />
         </ToolBtn>
       </ToolTip>
-      <ToolTip content={'Badges'}>
+      <ToolTip content={t('tooltips.badges')}>
         <ToolBtn
           onClick={() =>
             editor
@@ -262,7 +278,7 @@ export const ToolbarButtons = ({ editor, props }: any) => {
                 content: [
                   {
                     type: 'text',
-                    text: 'This is a Badge',
+                    text: t('defaults.badgeText'), // translated
                   },
                 ],
               })
@@ -272,7 +288,7 @@ export const ToolbarButtons = ({ editor, props }: any) => {
           <Tags size={15} />
         </ToolBtn>
       </ToolTip>
-      <ToolTip content={'Button'}>
+      <ToolTip content={t('tooltips.button')}>
         <ToolBtn
           onClick={() =>
             editor
@@ -283,7 +299,7 @@ export const ToolbarButtons = ({ editor, props }: any) => {
                 content: [
                   {
                     type: 'text',
-                    text: 'Click me',
+                    text: t('defaults.buttonText'), // translated
                   },
                 ],
               })

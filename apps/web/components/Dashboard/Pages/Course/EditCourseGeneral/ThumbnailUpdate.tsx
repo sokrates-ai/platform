@@ -9,6 +9,7 @@ import React, { useState } from 'react'
 import { mutate } from 'swr'
 import UnsplashImagePicker from './UnsplashImagePicker'
 import { Button } from "@components/ui/button";
+import { useTranslations } from 'next-intl'
 
 function ThumbnailUpdate() {
   const course = useCourse() as any
@@ -17,6 +18,7 @@ function ThumbnailUpdate() {
   const [isLoading, setIsLoading] = React.useState(false) as any
   const [error, setError] = React.useState('') as any
   const [showUnsplashPicker, setShowUnsplashPicker] = useState(false)
+  const t = useTranslations('ThumbnailUpdate')
 
   const handleFileChange = async (event: any) => {
     const file = event.target.files[0]
@@ -57,13 +59,14 @@ function ThumbnailUpdate() {
         <div className="flex flex-col justify-center items-center">
           <div className="flex flex-col justify-center items-center">
             {error && (
-              <div className="flex justify-center bg-red-200 rounded-md text-red-950 space-x-2 items-center p-2 transition-all shadow-sm">
+              <div className="flex justify-center bg-red-200 rounded-md text-red-950 space-x-2 items-center p-2 transition-all shadow-sm" role="alert" aria-live="polite">
                 <div className="text-sm font-semibold">{error}</div>
               </div>
             )}
             {localThumbnail ? (
               <img
                 src={URL.createObjectURL(localThumbnail)}
+                alt={t('alt.previewThumbnail')}
                 className={`${isLoading ? 'animate-pulse' : ''} shadow w-[200px] h-[100px] rounded-md`}
               />
             ) : (
@@ -73,6 +76,7 @@ function ThumbnailUpdate() {
                   course.courseStructure.course_uuid,
                   course.courseStructure.thumbnail_image
                 ) : '/empty_thumbnail.png'}`}
+                alt={t('alt.courseThumbnail')}
                 className="shadow w-[200px] h-[100px] rounded-md bg-gray-200"
               />
             )}
@@ -81,7 +85,7 @@ function ThumbnailUpdate() {
             <div className="flex justify-center items-center">
               <div className="font-bold animate-pulse antialiased items-center bg-green-200 text-gray text-sm rounded-md px-4 py-2 mt-4 flex">
                 <ArrowBigUpDash size={16} className="mr-2" />
-                <span>Uploading</span>
+                <span>{t('status.uploading')}</span>
               </div>
             </div>
           ) : (
@@ -91,22 +95,25 @@ function ThumbnailUpdate() {
                 id="fileInput"
                 style={{ display: 'none' }}
                 onChange={handleFileChange}
+                aria-label={t('buttons.uploadImage')}
               />
               <Button
                 variant={"outline"}
                 className="font-bold antialiased items-center  text-sm rounded-md px-4 mt-6 flex"
                 onClick={() => document.getElementById('fileInput')?.click()}
+                aria-label={t('buttons.uploadImage')}
               >
                 <UploadCloud size={16} className="mr-2" />
-                <span>Upload Image</span>
+                <span>{t('buttons.uploadImage')}</span>
               </Button>
               <Button
                 variant={"outline"}
                 className="font-bold antialiased items-center  text-sm rounded-md px-4 mt-6 flex"
                 onClick={() => setShowUnsplashPicker(true)}
+                aria-label={t('buttons.chooseFromGallery')}
               >
                 <ImageIcon size={16} className="mr-2" />
-                <span>Choose from Gallery</span>
+                <span>{t('buttons.chooseFromGallery')}</span>
               </Button>
             </div>
           )}

@@ -11,6 +11,7 @@ import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import useAdminStatus from '@components/Hooks/useAdminStatus'
 import { AvatarDropdownMenu } from './AvatarDropdownMenu'
+import { useTranslations } from 'next-intl' // added
 
 import logo_black from '@public/dark_logo.svg'
 
@@ -21,6 +22,7 @@ const SHADOW = '0 2px 0 var(--color-SokratesBlackBoxShadow)'
 const DROP_SHADOW = 'drop-shadow(0px 2px 2px rgba(69, 69, 69, 0.15))'
 
 export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
+  const t = useTranslations('OrgMenu') // added
   const session = useSokratesSession() as any
   const org = useOrg() as any
   const isUserAdmin = useAdminStatus() as any
@@ -50,12 +52,12 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
                 {org?.logo_image ? (
                   <img
                     src={getOrgLogoMediaDirectory(org.org_uuid, org.logo_image)}
-                    alt="Organisation logo"
+                    alt={t('alts.logo')}
                     className="h-full w-auto select-none"
                     draggable={false}
                   />
                 ) : (
-                  <FallbackLogo />
+                  <FallbackLogo alt={t('alts.logo')} />
                 )}
               </div>
             </Link>
@@ -63,10 +65,12 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
             {/* Login / Sign up */}
             <div className="ml-auto flex items-center gap-3">
               <Link href={getUriWithoutOrg('/login?orgslug=' + orgslug)}>
-                <Button variant="outline" className="relative top-1">Login</Button>
+                <Button variant="outline" className="relative top-1">
+                  {t('buttons.login')}
+                </Button>
               </Link>
               <Link href={getUriWithoutOrg('/signup?orgslug=' + orgslug)}>
-                <Button>Sign up</Button>
+                <Button>{t('buttons.signup')}</Button>
               </Link>
             </div>
           </div>
@@ -81,12 +85,14 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
       <div className="relative w-full sm:w-3/4 md:w-2/3 lg:w-1/2">
         <div className="relative grid w-full grid-cols-[1fr_auto_40px] sm:grid-cols-[1fr_auto_100px] lg:grid-cols-[1fr_auto_110px] items-center">
           <LeftRail
+            tKey={t} // pass translator
             orgslug={orgslug}
             org={org}
             session={session}
             isUserAdmin={isUserAdmin}
           />
           <Avatar
+            tKey={t} // pass translator
             session={session}
             org={org}
             isUserAdmin={isUserAdmin}
@@ -102,7 +108,7 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
 
 // RAIL SEGMENTS
 
-function LeftRail({ orgslug, org, session, isUserAdmin }: any) {
+function LeftRail({ orgslug, org, session, isUserAdmin, tKey }: any) {
   return (
     <div
       className="relative flex h-12 sm:h-14 md:h-16 lg:h-[71px] w-full
@@ -115,12 +121,12 @@ function LeftRail({ orgslug, org, session, isUserAdmin }: any) {
           {org?.logo_image ? (
             <img
               src={getOrgLogoMediaDirectory(org.org_uuid, org.logo_image)}
-              alt="Organisation logo"
+              alt={tKey('alts.logo')}
               className="h-full w-auto select-none"
               draggable={false}
             />
           ) : (
-            <FallbackLogo />
+            <FallbackLogo alt={tKey('alts.logo')} />
           )}
         </div>
       </Link>
@@ -133,7 +139,7 @@ function LeftRail({ orgslug, org, session, isUserAdmin }: any) {
         </Badge>
         {isUserAdmin?.isAdmin && (
           <Badge className="hidden xl:flex" style={{ backgroundColor: '#E25A26', borderColor: '#E25A26', color: 'white' }}>
-            Admin
+            {tKey('badges.admin')}
           </Badge>
         )}
       </div>
@@ -153,7 +159,7 @@ function RightRail() {
 
 /* ─── AVATAR ──────────────────────────────────────────────────────────────── */
 
-function Avatar({ session, org, isUserAdmin, onLogout }: any) {
+function Avatar({ session, org, isUserAdmin, onLogout, tKey }: any) {
   const xp = session?.data?.user?.xp ?? 0.42
   const next = session?.data?.user?.nextLevelXp ?? 1
   const pct = Math.min(1, xp / next)
@@ -190,7 +196,7 @@ function Avatar({ session, org, isUserAdmin, onLogout }: any) {
           >
             <img
               src="/sokrates-walking.svg"
-              alt="Sokrates mascot"
+              alt={tKey('alts.mascot')}
               className="absolute inset-0 p-4 w-full h-full object-contain"
               draggable={false}
             />
@@ -246,12 +252,12 @@ const Badge = ({
   </div>
 )
 
-const FallbackLogo = () => (
+const FallbackLogo = ({ alt }: { alt: string }) => (
   <Image
     width={120}
     className="h-full w-auto"
     src={logo_black || '/placeholder.svg'}
-    alt="HPI Sokrates"
+    alt={alt}
   />
 )
 

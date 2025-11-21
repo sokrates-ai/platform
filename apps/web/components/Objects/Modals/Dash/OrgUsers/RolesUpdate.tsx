@@ -14,6 +14,7 @@ import { updateUserRole } from '@services/organizations/orgs'
 import React, { useEffect } from 'react'
 import { BarLoader } from 'react-spinners'
 import { mutate } from 'swr'
+import { useTranslations } from 'next-intl' // added
 
 interface Props {
   user: any
@@ -22,9 +23,10 @@ interface Props {
 }
 
 function RolesUpdate(props: Props) {
+  const t = useTranslations('RolesUpdate') // added
   const org = useOrg() as any
-  const session = useSokratesSession() as any;
-    const access_token = session?.data?.tokens?.access_token;
+  const session = useSokratesSession() as any
+  const access_token = session?.data?.tokens?.access_token
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [assignedRole, setAssignedRole] = React.useState(
     props.alreadyAssignedRole
@@ -39,14 +41,19 @@ function RolesUpdate(props: Props) {
   const handleSubmit = async (e: any) => {
     e.preventDefault()
     setIsSubmitting(true)
-    const res = await updateUserRole(org.id, props.user.user.id, assignedRole,access_token)
+    const res = await updateUserRole(
+      org.id,
+      props.user.user.id,
+      assignedRole,
+      access_token
+    )
 
     if (res.status === 200) {
       await mutate(`${getAPIUrl()}orgs/${org.id}/users`)
       props.setRolesModal(false)
     } else {
       setIsSubmitting(false)
-      setError('Error ' + res.status + ': ' + res.data.detail)
+      setError(`${t('errorPrefix')} ${res.status}: ${res.data.detail}`)
     }
   }
 
@@ -55,7 +62,7 @@ function RolesUpdate(props: Props) {
   return (
     <div>
       <FormLayout onSubmit={handleSubmit}>
-        <FormField name="course-visibility">
+        <FormField name="user-role">
           {error ? (
             <div className="text-red-500 font-bold text-xs px-3 py-2 bg-red-100 rounded-md">
               {error}
@@ -66,9 +73,9 @@ function RolesUpdate(props: Props) {
           <Flex
             css={{ alignItems: 'baseline', justifyContent: 'space-between' }}
           >
-            <FormLabel>Roles</FormLabel>
+            <FormLabel>{t('title')}</FormLabel>
             <FormMessage match="valueMissing">
-              Please choose a role for the user
+              {t('chooseRole')}
             </FormMessage>
           </Flex>
           <Form.Control asChild>
@@ -77,10 +84,13 @@ function RolesUpdate(props: Props) {
               defaultValue={assignedRole}
               className="border border-gray-300 rounded-md p-2"
               required
+              aria-label={t('title')}
             >
-              <option value="role_global_admin">Admin </option>
-              <option value="role_global_maintainer">Maintainer</option>
-              <option value="role_global_user">User</option>
+              <option value="role_global_admin">{t('roleAdmin')}</option>
+              <option value="role_global_maintainer">
+                {t('roleMaintainer')}
+              </option>
+              <option value="role_global_user">{t('roleUser')}</option>
             </select>
           </Form.Control>
         </FormField>
@@ -95,7 +105,7 @@ function RolesUpdate(props: Props) {
                   color="#ffffff"
                 />
               ) : (
-                'Update user role'
+                t('updateButton')
               )}
             </ButtonBlack>
           </Form.Submit>

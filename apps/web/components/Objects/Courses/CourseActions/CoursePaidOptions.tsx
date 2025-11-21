@@ -1,3 +1,4 @@
+//Nicht Übersetzt da nicht in benutzung
 import React, { useState } from 'react'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'

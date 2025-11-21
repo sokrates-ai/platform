@@ -12,6 +12,7 @@ import React, { useEffect } from 'react'
 import { mutate } from 'swr'
 import { updateCourse } from '@services/courses/courses'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
+import { useTranslations } from 'next-intl'
 
 function SaveState(props: { orgslug: string }) {
   const course = useCourse() as any
@@ -19,6 +20,7 @@ function SaveState(props: { orgslug: string }) {
   const saved = course ? course.isSaved : true
   const dispatchCourse = useCourseDispatch() as any
   const course_structure = course.courseStructure
+  const t = useTranslations('SaveState')
 
   const saveCourseState = async () => {
     // Course  order
@@ -111,7 +113,7 @@ function SaveState(props: { orgslug: string }) {
       ) : (
         <div className="text-gray-600 flex space-x-2 items-center antialiased">
           <Timer size={15} />
-          <div>Unsaved changes</div>
+          <div>{t('status.unsaved')}</div>
         </div>
       )}
       <div
@@ -122,9 +124,11 @@ function SaveState(props: { orgslug: string }) {
             : 'bg-black text-white border hover:bg-gray-900 ')
         }
         onClick={saveCourseState}
+        aria-label={saved ? t('buttons.saved') : t('buttons.save')}
+        title={saved ? t('buttons.saved') : t('buttons.save')}
       >
         {saved ? <Check size={20} /> : <SaveAllIcon size={20} />}
-        {saved ? <div className="">Saved</div> : <div className="">Save</div>}
+        {saved ? <div className="">{t('buttons.saved')}</div> : <div className="">{t('buttons.save')}</div>}
       </div>
     </div>
   )

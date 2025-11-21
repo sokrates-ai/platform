@@ -1,3 +1,5 @@
+'use client'
+
 import { Loader } from 'lucide-react'
 import { UploadIcon } from '@radix-ui/react-icons'
 import React, {
@@ -6,12 +8,14 @@ import React, {
   InputHTMLAttributes,
 } from 'react'
 import { cn } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 const FileUploadBlockInput: React.FC<InputHTMLAttributes<HTMLInputElement>> = ({
   onChange,
   className,
   ...props
 }) => {
+  const t = useTranslations('FileUploadBlock')
   return (
     <input
       className={cn(
@@ -21,6 +25,7 @@ const FileUploadBlockInput: React.FC<InputHTMLAttributes<HTMLInputElement>> = ({
       onChange={onChange}
       type="file"
       required
+      aria-label={t('aria.fileInput')}
       {...props}
     />
   )
@@ -29,6 +34,7 @@ const FileUploadBlockInput: React.FC<InputHTMLAttributes<HTMLInputElement>> = ({
 const FileUploadBlockButton: React.FC<
   ButtonHTMLAttributes<HTMLButtonElement>
 > = ({ onClick, className, ...props }) => {
+  const t = useTranslations('FileUploadBlock')
   return (
     <button
       className={cn(
@@ -36,10 +42,11 @@ const FileUploadBlockButton: React.FC<
         className
       )}
       onClick={onClick}
+      aria-label={t('aria.submit')}
       {...props}
     >
-      <UploadIcon />
-      <p>Submit</p>
+      <UploadIcon aria-hidden="true" />
+      <p>{t('buttons.submit')}</p>
     </button>
   )
 }
@@ -59,21 +66,29 @@ function FileUploadBlock({
   Icon,
   children,
 }: UploadBlockComponentProps) {
+  const t = useTranslations('FileUploadBlock')
+
   if (isLoading)
-    return <Loader className="animate-spin text-gray-200" size={50} />
+    return (
+      <Loader
+        className="animate-spin text-gray-200"
+        size={50}
+        aria-label={t('aria.loading')}
+      />
+    )
 
   if (!isEditable && isEmpty)
     return (
       <div className="flex items-center gap-5">
-        {<Icon className="text-gray-200" size={50} />}
-        <p>No file available for preview.</p>
+        {<Icon className="text-gray-200" size={50} aria-hidden="true" />}
+        <p>{t('messages.noPreview')}</p>
       </div>
     )
 
   return (
     <>
-      {<Icon className="text-gray-200" size={50} />}
-        {children}
+      {<Icon className="text-gray-200" size={50} aria-hidden="true" />}
+      {children}
     </>
   )
 }
@@ -85,9 +100,14 @@ function FileUploadBlockWrapper({
 }: UploadBlockComponentProps) {
   return (
     isEmpty && (
-    <div className="flex items-center justify-center space-x-3 py-7 bg-gray-50 rounded-xl text-gray-900 px-3 border-dashed border-gray-150 border-2 text-sm" contentEditable={false}>
-      <FileUploadBlock isEmpty {...props}>{children}</FileUploadBlock>
-    </div>
+      <div
+        className="flex items-center justify-center space-x-3 py-7 bg-gray-50 rounded-xl text-gray-900 px-3 border-dashed border-gray-150 border-2 text-sm"
+        contentEditable={false}
+      >
+        <FileUploadBlock isEmpty {...props}>
+          {children}
+        </FileUploadBlock>
+      </div>
     )
   )
 }

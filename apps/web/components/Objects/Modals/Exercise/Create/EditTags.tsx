@@ -13,63 +13,59 @@ import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import { createTag, deleteTag, modifyTag } from '@services/courses/workspaces'
 import { mutate } from 'swr'
-
-const validationSchema = Yup.object().shape({
-  value: Yup.string()
-    .required('Tag name is required')
-    .max(20, 'Less than 20 characters'),
-})
+import { useTranslations } from 'next-intl'
 
 function EditTagsModal({ closeModal, orgslug, mutateURL, tags }: any) {
-  // const router = useRouter()
+  const t = useTranslations('EditTagsModal')
   const session = useSokratesSession() as any;
-  // const [orgId, setOrgId] = React.useState(null) as any
-  // const [showUnsplashPicker, setShowUnsplashPicker] = React.useState(false)
-  // const [isUploading, setIsUploading] = React.useState(false)
-  // const [tagInput, setTagInput] = React.useState('')
+
+  const validationSchema = React.useMemo(
+    () =>
+      Yup.object().shape({
+        value: Yup.string()
+          .required(t('errors.nameRequired'))
+          .max(20, t('errors.max20')),
+      }),
+    [t]
+  )
 
   async function handleDelete(value: string) {
-    const toast_loading = toast.loading('Deleting tag...')
-
+    const toast_loading = toast.loading(t('toast.deleting'))
     try {
       const res = await deleteTag(value, session.data?.tokens?.access_token)
-
       if (res === null) {
         toast.dismiss(toast_loading)
-        toast.success('Tag deleted successfully')
+        toast.success(t('toast.deleted'))
         mutate(mutateURL)
       } else {
         toast.error(res.data.detail)
       }
-    } catch (error) {
-      toast.error('Failed to delete tag')
+    } catch {
+      toast.error(t('toast.deleteFailed'))
     }
   }
 
   const formik = useFormik({
-    initialValues: {
-      value: '',
-    },
+    initialValues: { value: '' },
     validationSchema,
-    onSubmit: async (values, { setSubmitting }) => {
-      const toast_loading = toast.loading('Creating tag...')
-
+    onSubmit: async (values, { setSubmitting, resetForm }) => {
+      const toast_loading = toast.loading(t('toast.creating'))
       try {
         const res = await createTag(
           values.value,
-          0x11ff00, // TODO: other color
+          0x11ff00,
           session.data?.tokens?.access_token
         )
-
         if (res === null) {
           toast.dismiss(toast_loading)
-          toast.success('Tag created successfully')
+          toast.success(t('toast.created'))
           mutate(mutateURL)
+          resetForm()
         } else {
           toast.error(res.data.detail)
         }
-      } catch (error) {
-        toast.error('Failed to create tag')
+      } catch {
+        toast.error(t('toast.createFailed'))
       } finally {
         setSubmitting(false)
       }
@@ -80,7 +76,10 @@ function EditTagsModal({ closeModal, orgslug, mutateURL, tags }: any) {
     <div>
       <FormLayout onSubmit={formik.handleSubmit}>
         <FormField name="value">
-          <FormLabelAndMessage label="New Tag" message={formik.errors.value} />
+          <FormLabelAndMessage
+            label={t('labels.newTag')}
+            message={formik.errors.value}
+          />
           <Form.Control asChild>
             <Input
               onChange={formik.handleChange}
@@ -104,24 +103,30 @@ function EditTagsModal({ closeModal, orgslug, mutateURL, tags }: any) {
                 color="#ffffff"
               />
             ) : (
-              'Create Tag'
+              t('labels.createTag')
             )}
           </button>
         </div>
       </FormLayout>
 
       <div className="mt-10 rounded-2xl border border-muted p-4 shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">Existing Tags</h3>
+        <h3 className="text-lg font-semibold mb-4">{t('labels.existingTags')}</h3>
         {tags.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No tags available.</p>
+          <p className="text-muted-foreground text-sm">
+            {t('labels.noTags')}
+          </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm border-collapse">
               <thead>
                 <tr className="bg-muted text-left text-xs uppercase text-muted-foreground">
-                  <th className="px-4 py-2 font-medium">Tag Name</th>
-                  <th className="px-4 py-2 font-medium">Color</th>
-                  <th className="px-4 py-2 font-medium">Actions</th>
+                  <th className="px-4 py-2 font-medium">
+                    {t('table.tagName')}
+                  </th>
+                  <th className="px-4 py-2 font-medium">{t('table.color')}</th>
+                  <th className="px-4 py-2 font-medium">
+                    {t('table.actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -135,8 +140,8 @@ function EditTagsModal({ closeModal, orgslug, mutateURL, tags }: any) {
                           <div
                             className="w-10 h-6 rounded-full border-0 p-0 cursor-pointer bg-transparent"
                             style={{ backgroundColor: color }}
+                            title={t('actions.pickColor')}
                           ></div>
-
                           <input
                             type="color"
                             value={color}
@@ -150,10 +155,8 @@ function EditTagsModal({ closeModal, orgslug, mutateURL, tags }: any) {
                                 session.data?.tokens?.access_token
                               )
                             }
-                            style={{
-                              display: 'none',
-                            }}
-                            title="Pick a color"
+                            style={{ display: 'none' }}
+                            title={t('actions.pickColor')}
                           />
                         </label>
                       </td>
@@ -162,7 +165,7 @@ function EditTagsModal({ closeModal, orgslug, mutateURL, tags }: any) {
                           onClick={() => handleDelete(tag.value)}
                           className="text-xs font-medium text-red-600 hover:underline"
                         >
-                          Delete
+                          {t('actions.delete')}
                         </button>
                       </td>
                     </tr>

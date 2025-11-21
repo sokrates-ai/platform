@@ -6,6 +6,7 @@ import Link from 'next/link'
 import React, { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import OrgEditGeneral from '@components/Dashboard/Pages/Org/OrgEditGeneral/OrgEditGeneral'
+import { useTranslations } from 'next-intl'
 
 export type OrgParams = {
   subpage: string
@@ -13,13 +14,14 @@ export type OrgParams = {
 }
 
 function OrgPage({ params }: { params: OrgParams }) {
+  const t = useTranslations('OrgSettingsPage')
   const [H1Label, setH1Label] = React.useState('')
   const [H2Label, setH2Label] = React.useState('')
 
   function handleLabels() {
     if (params.subpage == 'general') {
-      setH1Label('General')
-      setH2Label('Manage your organization settings')
+      setH1Label(t('general'))
+      setH2Label(t('manageOrgSettings'))
     }
   }
 
@@ -56,7 +58,7 @@ function OrgPage({ params }: { params: OrgParams }) {
             >
               <div className="flex items-center space-x-2.5 mx-2">
                 <Info size={16} />
-                <div>General</div>
+                <div>{t('general')}</div>
               </div>
             </div>
           </Link>

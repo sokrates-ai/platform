@@ -1,3 +1,4 @@
+// Nicht übersetzt da nicht in benutzung
 'use client'
 import { Backpack, BadgeDollarSign, BookCopy, Home, School, Settings, Users } from 'lucide-react'
 import Link from 'next/link'

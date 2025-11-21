@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import GeneralWrapperStyled from '@components/Objects/StyledElements/Wrappers/GeneralWrapper'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -21,6 +22,7 @@ type Props = {
 
 const CourseIntroView = ({ courseuuid, orgslug, course }: Props) => {
   const org = useOrg() as any
+  const t = useTranslations('CourseIntroView')
 
   const learnings = useMemo(() => {
     if (!course?.learnings) return []
@@ -42,7 +44,7 @@ const CourseIntroView = ({ courseuuid, orgslug, course }: Props) => {
       <div className="flex flex-col items-start justify-between pb-3 md:flex-row md:items-center">
         <div>
           <Badge variant="secondary" className="mb-2">
-            Course
+            {t('courseBadge')}
           </Badge>
           <h1 className="text-2xl font-bold md:text-3xl">{course.name}</h1>
         </div>
@@ -65,7 +67,7 @@ const CourseIntroView = ({ courseuuid, orgslug, course }: Props) => {
         <div className="space-y-6 lg:col-span-3">
           <Card>
             <CardContent className="pt-6">
-              <h2 className="mb-3 text-xl font-bold">About</h2>
+              <h2 className="mb-3 text-xl font-bold">{t('about')}</h2>
               <p className="whitespace-pre-wrap text-gray-700">
                 {course.about}
               </p>
@@ -75,7 +77,7 @@ const CourseIntroView = ({ courseuuid, orgslug, course }: Props) => {
           {learnings.length > 0 && (
             <Card>
               <CardContent className="pt-6">
-                <h2 className="mb-3 text-xl font-bold">What you will learn</h2>
+                <h2 className="mb-3 text-xl font-bold">{t('whatYouWillLearn')}</h2>
                 <div className="space-y-2">
                   {learnings.map((learning: string, i: number) => (
                     <div key={i} className="flex items-start space-x-3">

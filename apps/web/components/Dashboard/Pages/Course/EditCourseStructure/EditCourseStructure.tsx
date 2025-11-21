@@ -29,6 +29,7 @@ import './graph.css';
 import styled from 'styled-components'
 import dynamic from 'next/dynamic'
 import { Button } from "@components/ui/button";
+import { useTranslations } from 'next-intl'
 
 // -----------------------------------------------------------------------------
 // TYPE DEFINITIONS
@@ -124,6 +125,8 @@ const EditCourseStructure = (props: { orgslug: string; course_uuid?: string }) =
   const course_structure = course ? course.courseStructure : {};
   const course_uuid = course ? course.courseStructure.course_uuid : '';
   const dispatchCourse = useCourseDispatch() as any;
+
+  const t = useTranslations('EditCourseStructure')
 
   // Refs for ReactFlow instance and container
   const reactFlowRef = React.useRef<HTMLDivElement>(null) as React.MutableRefObject<HTMLDivElement | null>;
@@ -361,12 +364,12 @@ const EditCourseStructure = (props: { orgslug: string; course_uuid?: string }) =
           );
         } catch (e: any) {
           if (e.message === 'Unprocessable Entity') {
-            setGraphError('Cyclic dependency');
+            setGraphError(t('graph.cyclicDependency'));
             setTimeout(() => setGraphError(null), 1000);
           }
         }
       },
-      [setEdges],
+      [setEdges, t],
     );
 
     const onNodesDelete = () => {} // prevent node deletion completely
@@ -394,13 +397,15 @@ const EditCourseStructure = (props: { orgslug: string; course_uuid?: string }) =
           {/* mini status indicator */}
           <div
             className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-3 py-2 shadow-sm border border-gray-100"
-            title={graphError ?? 'Graph semantics are valid'}
+            title={graphError ?? t('graph.validHint')}
           >
             <div
               className={`w-3 h-3 rounded-full ${graphError ? 'bg-red-500' : 'bg-emerald-500'}`}
               style={{ boxShadow: graphError ? '0 0 8px rgba(239, 68, 68, 0.6)' : '0 0 8px rgba(16, 185, 129, 0.6)' }}
             />
-            <span className="text-xs font-medium text-gray-600">{graphError ? 'Error' : 'Valid'}</span>
+            <span className="text-xs font-medium text-gray-600">
+              {graphError ? t('graph.error') : t('graph.valid')}
+            </span>
           </div>
 
           <MiniMap
@@ -453,14 +458,16 @@ const EditCourseStructure = (props: { orgslug: string; course_uuid?: string }) =
                 <button
                   onClick={() => reactFlowInstanceRef.current?.zoomOut?.()}
                   className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-l-md p-2 transition-all"
-                  title="Zoom Out"
+                  title={t('toolbar.zoomOut')}
+                  aria-label={t('toolbar.zoomOut')}
                 >
                   —
                 </button>
                 <button
                   onClick={() => reactFlowInstanceRef.current?.zoomIn?.()}
                   className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-r-md p-2 transition-all"
-                  title="Zoom In"
+                  title={t('toolbar.zoomIn')}
+                  aria-label={t('toolbar.zoomIn')}
                 >
                   +
                 </button>
@@ -469,7 +476,8 @@ const EditCourseStructure = (props: { orgslug: string; course_uuid?: string }) =
               <button
                 onClick={() => reactFlowInstanceRef.current?.fitView?.({ duration: 300, padding: 0.2 })}
                 className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md p-2 transition-all"
-                title="Fit View"
+                title={t('toolbar.fitView')}
+                aria-label={t('toolbar.fitView')}
               >
                 ⛶
               </button>
@@ -478,18 +486,21 @@ const EditCourseStructure = (props: { orgslug: string; course_uuid?: string }) =
                 variant="secondary"
                 onClick={() => setTriggerAutoLayout((v) => !v)}
                 className=" hover:bg-indigo-100  font-medium rounded px-4 py-2 text-xs shadow transition-all"
-                title="Auto Layout"
+                title={t('toolbar.autoLayout')}
+                aria-label={t('toolbar.autoLayout')}
               >
-                Auto Layout
+                {t('toolbar.autoLayout')}
               </Button>
               {/* Add chapter */}
               <Button
                 variant={"secondary"}
                 onClick={() => setNewChapterModal(true)}
                 className=" hover:bg-cyan-100  font-medium rounded px-4 py-2 text-xs shadow transition-all flex items-center gap-2"
+                aria-label={t('toolbar.addChapter')}
+                title={t('toolbar.addChapter')}
               >
                 <Hexagon strokeWidth={2} size={14} className="" />
-                Add Chapter
+                {t('toolbar.addChapter')}
               </Button>
             </div>
           </div>
@@ -535,8 +546,8 @@ const EditCourseStructure = (props: { orgslug: string; course_uuid?: string }) =
         onOpenChange={setNewChapterModal}
         minHeight="sm"
         dialogContent={<NewChapterModal course={course ? course.courseStructure : null} closeModal={closeNewChapterModal} submitChapter={submitChapter} />}
-        dialogTitle="Create chapter"
-        dialogDescription="Add a new chapter to the course"
+        dialogTitle={t('modal.newChapter.title')}
+        dialogDescription={t('modal.newChapter.description')}
         dialogTrigger={null}
       />
     </div>

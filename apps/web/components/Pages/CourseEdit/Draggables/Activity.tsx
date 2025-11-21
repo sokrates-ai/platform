@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation'
 import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationModal/ConfirmationModal'
 import { deleteActivity, updateActivity } from '@services/courses/activities'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
+import { useTranslations } from 'next-intl'
 
 interface ModifiedActivityInterface {
   activityId: string
@@ -26,7 +27,9 @@ interface ModifiedActivityInterface {
 
 function Activity(props: any) {
   const router = useRouter()
-  const session = useSokratesSession() as any;  const [modifiedActivity, setModifiedActivity] = React.useState<
+  const session = useSokratesSession() as any;
+  const t = useTranslations('CourseEditActivity')
+  const [modifiedActivity, setModifiedActivity] = React.useState<
     ModifiedActivityInterface | undefined
   >(undefined)
   const [selectedActivity, setSelectedActivity] = React.useState<
@@ -49,7 +52,6 @@ function Activity(props: any) {
         ...props.activity,
         name: modifiedActivity.activityName,
       }
-      
       await updateActivity(modifiedActivityCopy, activityId, session.data?.tokens?.access_token)
       await mutate(`${getAPIUrl()}chapters/meta/course_${props.courseid}`)
       await revalidateTags(['courses'], props.orgslug)
@@ -76,10 +78,10 @@ function Activity(props: any) {
             {props.activity.type === 'video' && (
               <>
                 <div className="flex space-x-2 items-center">
-                  <Video size={16} />{' '}
+                  <Video size={16} />
                   <div className="text-xs bg-gray-200 text-gray-400 font-bold px-2 py-1 rounded-full mx-auto justify-center align-middle">
-                    Video
-                  </div>{' '}
+                    {t('typeVideo')}
+                  </div>
                 </div>
               </>
             )}
@@ -87,21 +89,21 @@ function Activity(props: any) {
               <>
                 <div className="flex space-x-2 items-center">
                   <div className="w-[30px]">
-                    <File size={16} />{' '}
+                    <File size={16} />
                   </div>
                   <div className="text-xs bg-gray-200 text-gray-400 font-bold px-2 py-1 rounded-full">
-                    Document
-                  </div>{' '}
+                    {t('typeDocument')}
+                  </div>
                 </div>
               </>
             )}
             {props.activity.type === 'dynamic' && (
               <>
                 <div className="flex space-x-2 items-center">
-                  <Sparkles size={16} />{' '}
+                  <Sparkles size={16} />
                   <div className="text-xs bg-gray-200 text-gray-400 font-bold px-2 py-1 rounded-full">
-                    Dynamic
-                  </div>{' '}
+                    {t('typeDynamic')}
+                  </div>
                 </div>
               </>
             )}
@@ -113,7 +115,7 @@ function Activity(props: any) {
                 <input
                   type="text"
                   className="bg-transparent outline-none text-xs text-gray-500"
-                  placeholder="Activity name"
+                  placeholder={t('activityNamePlaceholder')}
                   value={
                     modifiedActivity
                       ? modifiedActivity?.activityName
@@ -152,24 +154,19 @@ function Activity(props: any) {
                 <Link
                   href={
                     getUriWithOrg(props.orgslug, '') +
-                    `/course/${props.courseid
-                    }/activity/${props.activity.uuid.replace(
-                      'activity_',
-                      ''
-                    )}/edit`
+                    `/course/${props.courseid}/activity/${props.activity.uuid.replace('activity_', '')}/edit`
                   }
                   className=" hover:cursor-pointer p-1 px-3 bg-sky-700 rounded-md items-center"
                   rel="noopener noreferrer"
                 >
-                  <div className="text-sky-100 font-bold text-xs">Edit </div>
+                  <div className="text-sky-100 font-bold text-xs">{t('edit')}</div>
                 </Link>
               </>
             )}
             <Link
               href={
                 getUriWithOrg(props.orgslug, '') +
-                `/course/${props.courseid
-                }/activity/${props.activity.uuid.replace('activity_', '')}`
+                `/course/${props.courseid}/activity/${props.activity.uuid.replace('activity_', '')}`
               }
               className=" hover:cursor-pointer p-1 px-3 bg-gray-200 rounded-md"
               rel="noopener noreferrer"
@@ -180,9 +177,9 @@ function Activity(props: any) {
           <div className="flex flex-row pr-3 space-x-1 items-center">
             <MoreVertical size={15} className="text-gray-300" />
             <ConfirmationModal
-              confirmationMessage="Are you sure you want to delete this activity ?"
-              confirmationButtonText="Delete Activity"
-              dialogTitle={'Delete ' + props.activity.name + ' ?'}
+              confirmationMessage={t('confirmDeleteActivity')}
+              confirmationButtonText={t('deleteActivity')}
+              dialogTitle={t('deleteActivityTitle', { name: props.activity.name })}
               dialogTrigger={
                 <div
                   className=" hover:cursor-pointer p-1 px-5 bg-red-600 rounded-md"

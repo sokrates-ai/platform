@@ -1,3 +1,4 @@
+'use client'
 import FormLayout, {
   Flex,
   FormField,
@@ -9,24 +10,20 @@ import { FormMessage } from '@radix-ui/react-form'
 import * as Form from '@radix-ui/react-form'
 import React, { useState } from 'react'
 import BarLoader from 'react-spinners/BarLoader'
-import { Button } from "@components/ui/button";
+import { Button } from '@components/ui/button'
+import { useTranslations } from 'next-intl' // added
 
 function NewChapterModal({ submitChapter, closeModal, course }: any) {
+  const t = useTranslations('NewChapterModal') // added
   const [chapterName, setChapterName] = useState('')
   const [chapterDescription, setChapterDescription] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleChapterNameChange = (e: any) => {
-    setChapterName(e.target.value)
-  }
-
-  const handleChapterDescriptionChange = (e: any) => {
-    setChapterDescription(e.target.value)
-  }
+  const handleChapterNameChange = (e: any) => setChapterName(e.target.value)
+  const handleChapterDescriptionChange = (e: any) => setChapterDescription(e.target.value)
 
   const handleSubmit = async (e: any) => {
     e.preventDefault()
-
     setIsSubmitting(true)
     const chapter_object = {
       name: chapterName,
@@ -43,26 +40,27 @@ function NewChapterModal({ submitChapter, closeModal, course }: any) {
     <FormLayout onSubmit={handleSubmit}>
       <FormField name="chapter-name">
         <Flex css={{ alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <FormLabel>Chapter name</FormLabel>
+          <FormLabel>{t('labels.name')}</FormLabel>
           <FormMessage match="valueMissing">
-            Please provide a chapter name
+            {t('messages.nameRequired')}
           </FormMessage>
         </Flex>
         <Form.Control asChild>
           <Input onChange={handleChapterNameChange} type="text" required />
         </Form.Control>
       </FormField>
+
       <FormField name="chapter-desc">
         <Flex css={{ alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <FormLabel>Chapter description</FormLabel>
+          <FormLabel>{t('labels.description')}</FormLabel>
           <FormMessage match="valueMissing">
-            Please provide a chapter description
+            {t('messages.descriptionRequired')}
           </FormMessage>
         </Flex>
         <Form.Control asChild>
           <Textarea onChange={handleChapterDescriptionChange} required />
         </Form.Control>
-      </FormField>module
+      </FormField>
 
       <Flex css={{ marginTop: 25, justifyContent: 'flex-end' }}>
         <Form.Submit asChild>
@@ -74,7 +72,7 @@ function NewChapterModal({ submitChapter, closeModal, course }: any) {
                 color="#ffffff"
               />
             ) : (
-              'Create Chapter'
+              t('buttons.create')
             )}
           </Button>
         </Form.Submit>

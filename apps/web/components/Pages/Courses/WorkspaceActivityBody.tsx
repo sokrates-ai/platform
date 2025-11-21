@@ -1,12 +1,12 @@
-// components/course/WorkspaceActivityBody.tsx
-import { getAPIUrl } from '@services/config/config'
-import Link from 'next/link'
+'use client'
 import React, { useEffect } from 'react'
 import Image from 'next/image'
 import clsx from 'clsx'
-
+import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { RequestBodyWithAuthHeader } from '@services/utils/ts/requests'
-import { stateConfig } from './stateConfig'
+import { getAPIUrl } from '@services/config/config'
+import { getStateConfig } from './stateConfig'
 
 export type ACTIVITY_STATE = 'locked' | 'available' | 'done'
 
@@ -53,6 +53,10 @@ async function fetchTasks(
 /* ------------------------------------------------------------------ */
 
 export default function WorkspaceActivityBody(props: Props) {
+  const tBody = useTranslations('WorkspaceActivityBody')
+  const tState = useTranslations('stateConfig')
+  const stateConfig = getStateConfig(tState)
+
   const { activity, course, state: parentState, access_token, baseUrl } = props
   const stepRun = course.trail?.runs.find(
     (run: any) => run.course_id === course.id
@@ -89,27 +93,24 @@ export default function WorkspaceActivityBody(props: Props) {
       {/* header line */}
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm sm:text-base font-medium">
-          Select an exercise from the following: {activity.name}
+          {tBody('selectExercise')}: {activity.name}
         </span>
         <span className="text-xs font-semibold">
-          {tasksDone}/{tasks.length}
+          {tBody('completed')}: {tasksDone}/{tasks.length}
         </span>
       </div>
 
       {/* grid of task cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {tasks.map((t) => {
-          const aState = atomicState(t.id)
-          const {
-            borderColor,     // comes from your stateConfig ('available' | 'done')
-          } = stateConfig[aState]
-
-          const url = baseUrl.replaceAll('TASK_ID_PLACEHOLDER', `${t.id}`)
+        {tasks.map((task) => {
+          const aState = atomicState(task.id)
+          const { borderColor } = stateConfig[aState]
+          const url = baseUrl.replaceAll('TASK_ID_PLACEHOLDER', `${task.id}`)
           const locked = parentState === 'locked'
 
           return (
             <Link
-              key={t.id}
+              key={task.id}
               href={locked ? '#' : url}
               className={clsx(
                 'relative flex flex-col justify-between rounded-lg bg-white shadow-sm border border-transparent p-4 min-h-[5.5rem] hover:border-gray-300 transition',
@@ -118,10 +119,10 @@ export default function WorkspaceActivityBody(props: Props) {
             >
               {/* title & (optional) description */}
               <div className="space-y-0.5">
-                <p className="text-sm font-medium leading-tight">{t.title}</p>
-                {t.description && (
+                <p className="text-sm font-medium leading-tight">{task.title}</p>
+                {task.description && (
                   <p className="text-[11px] leading-tight text-muted-foreground">
-                    {t.description}
+                    {tBody('description')}: {task.description}
                   </p>
                 )}
               </div>
@@ -131,7 +132,7 @@ export default function WorkspaceActivityBody(props: Props) {
                 {aState === 'done' ? (
                   <Image
                     src="/checkmark-green.svg"
-                    alt="completed"
+                    alt={tState('completed')}
                     width={20}
                     height={20}
                     priority

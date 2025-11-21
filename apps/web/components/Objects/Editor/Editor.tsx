@@ -14,6 +14,7 @@ import {
   useAIEditor,
   useAIEditorDispatch,
 } from '@components/Contexts/AI/AIEditorContext'
+import { useTranslations } from 'next-intl' // added
 
 // Extensions
 import InfoCallout from './Extensions/Callout/Info/InfoCallout'
@@ -32,7 +33,6 @@ import TableRow from '@tiptap/extension-table-row'
 import ToolTip from '@components/Objects/StyledElements/Tooltip/Tooltip'
 import Link from 'next/link'
 import { getCourseThumbnailMediaDirectory } from '@services/media/media'
-
 
 // Lowlight
 import { common, createLowlight } from 'lowlight'
@@ -64,17 +64,16 @@ interface Editor {
 }
 
 function Editor(props: Editor) {
+  const t = useTranslations('Editor') // added
   const dispatchAIEditor = useAIEditorDispatch() as any
   const aiEditorState = useAIEditor() as AIEditorStateTypes
   const is_ai_feature_enabled = useGetAIFeatures({ feature: 'editor' })
   const [isButtonAvailable, setIsButtonAvailable] = React.useState(false)
 
-
   React.useEffect(() => {
     if (is_ai_feature_enabled) {
       setIsButtonAvailable(true)
     }
-
   }, [is_ai_feature_enabled])
 
   // remove course_ from course_uuid
@@ -151,18 +150,16 @@ function Editor(props: Editor) {
     immediatelyRender: false,
   })
 
-  console.log(props.content)
-
   const isMobile = useMediaQuery('(max-width: 767px)')
   if (isMobile) {
     // TODO: Work on a better editor mobile experience
     return (
       <div className="h-screen w-full bg-[#f8f8f8] flex items-center justify-center p-4">
         <div className="bg-white p-6 rounded-lg shadow-md text-center">
-          <h2 className="text-xl font-bold mb-4">Desktop Only</h2>
+          <h2 className="text-xl font-bold mb-4">{t('mobile.title')}</h2>
           <Monitor className='mx-auto my-5' size={60} />
-          <p>The editor is only accessible from a desktop device.</p>
-          <p>Please switch to a desktop to view.</p>
+          <p>{t('mobile.description')}</p>
+          <p>{t('mobile.action')}</p>
         </div>
       </div>
     )
@@ -191,7 +188,7 @@ function Editor(props: Editor) {
                     width={25}
                     height={25}
                     src={learnhouseIcon}
-                    alt=""
+                    alt={t('alts.learnhouseLogo')}
                   />
                 </Link>
                 <Link target="_blank" href={`/course/${course_uuid}`}>
@@ -201,7 +198,7 @@ function Editor(props: Editor) {
                       props.course.course_uuid,
                       props.course.thumbnail_image
                     ) : getUriWithOrg(props.org?.slug,'/empty_thumbnail.png')}`}
-                    alt=""
+                    alt={t('alts.courseThumbnail')}
                   ></EditorInfoThumbnail>
                 </Link>
                 <EditorInfoDocName>
@@ -230,6 +227,7 @@ function Editor(props: Editor) {
                           'conic-gradient(from 32deg at 53.75% 50%, rgb(35, 40, 93) 4deg, rgba(20, 0, 52, 0.95) 59deg, rgba(164, 45, 238, 0.88) 281deg)',
                       }}
                       className="rounded-md px-3 py-2 drop-shadow-md flex  items-center space-x-1.5 text-sm text-white hover:cursor-pointer transition delay-150 duration-300 ease-in-out hover:scale-105"
+                      aria-label={t('buttons.aiEditor')}
                     >
                       {' '}
                       <i>
@@ -237,10 +235,10 @@ function Editor(props: Editor) {
                           className=""
                           width={20}
                           src={learnhouseAI_icon}
-                          alt=""
+                          alt={t('alts.aiIcon')}
                         />
                       </i>{' '}
-                      <i className="not-italic text-xs font-bold">AI Editor</i>
+                      <i className="not-italic text-xs font-bold">{t('buttons.aiEditor')}</i>
                     </div>
                   )}
                 </div>
@@ -257,14 +255,16 @@ function Editor(props: Editor) {
                 <div
                   className="bg-sky-600 hover:bg-sky-700 transition-all ease-linear px-3 py-2 font-black text-sm shadow text-teal-100 rounded-lg hover:cursor-pointer"
                   onClick={() => props.setContent(editor.getJSON())}
+                  aria-label={t('buttons.save')}
                 >
                   {' '}
-                  Save{' '}
+                  {t('buttons.save')}{' '}
                 </div>
-                <ToolTip content="Preview">
+                <ToolTip content={t('tooltips.preview')}>
                   <Link
                     target="_blank"
                     href={`/course/${course_uuid}/activity/${activity_uuid}`}
+                    aria-label={t('tooltips.preview')}
                   >
                     <div className="flex bg-neutral-600 hover:bg-neutral-700 transition-all ease-linear h-9 px-3 py-2 font-black justify-center items-center text-sm shadow text-neutral-100 rounded-lg hover:cursor-pointer">
                       <Eye className="mx-auto items-center" size={15} />

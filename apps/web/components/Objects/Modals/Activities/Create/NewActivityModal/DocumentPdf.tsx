@@ -9,12 +9,14 @@ import FormLayout, {
 import React, { useState } from 'react'
 import * as Form from '@radix-ui/react-form'
 import BarLoader from 'react-spinners/BarLoader'
-import { constructAcceptValue } from '@/lib/constants';ButtonBlack
+import { constructAcceptValue } from '@/lib/constants'
 import { Button } from '@components/ui/button'
+import { useTranslations } from 'next-intl' // added
 
 const SUPPORTED_FILES = constructAcceptValue(['pdf'])
 
 function DocumentPdfModal({ submitFileActivity, chapterId, course }: any) {
+  const t = useTranslations('DocumentPdfActivityModal') // added
   const [documentpdf, setDocumentPdf] = React.useState(null) as any
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [name, setName] = React.useState('')
@@ -30,11 +32,11 @@ function DocumentPdfModal({ submitFileActivity, chapterId, course }: any) {
   const handleSubmit = async (e: any) => {
     e.preventDefault()
     setIsSubmitting(true)
-    let status = await submitFileActivity(
+    await submitFileActivity(
       documentpdf,
       'documentpdf',
       {
-        name: name,
+        name,
         chapter_id: chapterId,
         activity_type: 'TYPE_DOCUMENT',
         activity_sub_type: 'SUBTYPE_DOCUMENT_PDF',
@@ -51,30 +53,43 @@ function DocumentPdfModal({ submitFileActivity, chapterId, course }: any) {
     <FormLayout onSubmit={handleSubmit}>
       <FormField name="documentpdf-activity-name">
         <Flex css={{ alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <FormLabel>PDF Document name</FormLabel>
+          <FormLabel>{t('labels.pdfName')}</FormLabel>
           <FormMessage match="valueMissing">
-            Please provide a name for your PDF Document activity
+            {t('messages.nameRequired')}
           </FormMessage>
         </Flex>
         <Form.Control asChild>
-          <Input onChange={handleNameChange} type="text" required />
+          <Input
+            onChange={handleNameChange}
+            type="text"
+            required
+            placeholder={t('placeholders.name')}
+            aria-label={t('labels.pdfName')}
+          />
         </Form.Control>
       </FormField>
+
       <FormField name="documentpdf-activity-file">
         <Flex css={{ alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <FormLabel>PDF Document file</FormLabel>
+          <FormLabel>{t('labels.pdfFile')}</FormLabel>
           <FormMessage match="valueMissing">
-            Please provide a PDF Document for your activity
+            {t('messages.fileRequired')}
           </FormMessage>
         </Flex>
         <Form.Control asChild>
-          <input accept={SUPPORTED_FILES} type="file" onChange={handleDocumentPdfChange} required />
+          <input
+            accept={SUPPORTED_FILES}
+            type="file"
+            onChange={handleDocumentPdfChange}
+            required
+            aria-label={t('labels.pdfFile')}
+          />
         </Form.Control>
       </FormField>
 
       <Flex css={{ marginTop: 25, justifyContent: 'flex-end' }}>
-        <Form.Submit asChild> 
-          <Button type="submit">
+        <Form.Submit asChild>
+          <Button type="submit" aria-label={t('buttons.create')}>
             {isSubmitting ? (
               <BarLoader
                 cssOverride={{ borderRadius: 60 }}
@@ -82,7 +97,7 @@ function DocumentPdfModal({ submitFileActivity, chapterId, course }: any) {
                 color="#ffffff"
               />
             ) : (
-              'Create activity'
+              t('buttons.create')
             )}
           </Button>
         </Form.Submit>

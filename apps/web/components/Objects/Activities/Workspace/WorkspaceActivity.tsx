@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl' // added
 
 async function createSession(
   activity_uuid: string,
@@ -44,6 +45,7 @@ function WorkspaceActivity({
   const org = useOrg() as any
   const [url, setURL] = React.useState<string | null>(null)
   const [progress, setProgress] = React.useState(0)
+  const t = useTranslations('WorkspaceActivity') // added
 
   React.useEffect(() => {}, [activity, org])
 
@@ -96,16 +98,18 @@ function WorkspaceActivity({
         <CardContent className="pt-4 pb-4 flex flex-col items-center">
           <div className="flex items-center gap-3 mb-4">
             <h2 className="text-lg font-medium text-gray-800">
-              {url ? 'Redirecting to Workspace...' : 'Creating Your Workspace'}
+              {url ? t('heading.redirecting') : t('heading.creating')}
             </h2>
           </div>
 
-          <Progress value={progress} className="w-full h-1 bg-gray-100 mb-4" />
+          <Progress
+            value={progress}
+            className="w-full h-1 bg-gray-100 mb-4"
+            aria-label={t('aria.progress')}
+          />
 
           <p className="text-gray-500 text-sm mb-2 text-center">
-            {url
-              ? "You'll be redirected automatically in a moment"
-              : 'Please wait while we set up your environment'}
+            {url ? t('messages.redirectSoon') : t('messages.pleaseWait')}
           </p>
 
           {url && (
@@ -114,8 +118,9 @@ function WorkspaceActivity({
               size="sm"
               className="border-blue-500 text-blue-500 hover:bg-blue-50"
               onClick={() => (window.location.href = url)}
+              aria-label={t('aria.openNow')}
             >
-              Open Workspace Now
+              {t('buttons.openNow')}
             </Button>
           )}
         </CardContent>

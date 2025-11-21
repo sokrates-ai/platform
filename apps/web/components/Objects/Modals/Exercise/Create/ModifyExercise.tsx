@@ -18,22 +18,7 @@ import * as Yup from 'yup'
 import { X } from 'lucide-react'
 import { modifyExercise } from '@services/courses/workspaces'
 import { mutate } from 'swr'
-
-const validationSchema = Yup.object().shape({
-  title: Yup.string()
-    .required('Exercise name is required')
-    .max(100, 'Must be 100 characters or less'),
-  description: Yup.string().max(1000, 'Must be 1000 characters or less'),
-  task: Yup.string(),
-  solution: Yup.string(),
-  course_id: Yup.mixed().nullable(),
-  tags: Yup.array().of(
-    Yup.object().shape({
-      value: Yup.string(),
-      color: Yup.number(),
-    })
-  ),
-})
+import { useTranslations } from 'next-intl'
 
 function ModifyExerciseModal({
   closeModal,
@@ -43,14 +28,29 @@ function ModifyExerciseModal({
   tags,
   exercise,
 }: any) {
-  // const router = useRouter()
+  const t = useTranslations('ModifyExerciseModal')
   const session = useSokratesSession() as any;
-  // const [orgId, setOrgId] = React.useState(null) as any
-  // const [showUnsplashPicker, setShowUnsplashPicker] = React.useState(false)
-  // const [isUploading, setIsUploading] = React.useState(false)
   const [tagInput, setTagInput] = React.useState('')
-  const [internalTags, setInternalTags] = React.useState<string[]>(
-    exercise.tags
+  const [internalTags, setInternalTags] = React.useState<string[]>(exercise.tags)
+
+  const validationSchema = React.useMemo(
+    () =>
+      Yup.object().shape({
+        title: Yup.string()
+          .required(t('errors.titleRequired'))
+          .max(100, t('errors.max100')),
+        description: Yup.string().max(1000, t('errors.max1000')),
+        task: Yup.string(),
+        solution: Yup.string(),
+        course_id: Yup.mixed().nullable(),
+        tags: Yup.array().of(
+          Yup.object().shape({
+            value: Yup.string(),
+            color: Yup.number(),
+          })
+        ),
+      }),
+    [t]
   )
 
   const formik = useFormik({
@@ -63,8 +63,7 @@ function ModifyExerciseModal({
     },
     validationSchema,
     onSubmit: async (values, { setSubmitting }) => {
-      const toast_loading = toast.loading('Modifying exercise...')
-
+      const toast_loading = toast.loading(t('toast.modifying'))
       try {
         const res = await modifyExercise(
           {
@@ -74,21 +73,20 @@ function ModifyExerciseModal({
             task: values.task,
             solution: values.solution,
             tags: internalTags,
-            course_id: values.course_id !== "" ? values.course_id : null,
+            course_id: values.course_id !== '' ? values.course_id : null,
           },
           session.data?.tokens?.access_token
         )
-
         if (res.success || res.success === undefined) {
           toast.dismiss(toast_loading)
-          toast.success('Exercise modified successfully')
+            toast.success(t('toast.modified'))
           closeModal()
           mutate(mutateURL)
         } else {
           toast.error(res.data.detail)
         }
-      } catch (error) {
-        toast.error('Failed to modify exercise')
+      } catch {
+        toast.error(t('toast.failed'))
       } finally {
         setSubmitting(false)
       }
@@ -98,75 +96,29 @@ function ModifyExerciseModal({
   function handleAddTag() {
     const newInput = tags.find((t: any) => t.value == tagInput)
     if (!newInput) {
-      throw `${newInput} not found in tags`
+      toast.error(t('tags.notFound'))
+      return
     }
-
     const newInputVal = newInput.value
-
-    if (!internalTags.find((t: any) => t.value === newInputVal)) {
+    if (!internalTags.find((tag: any) => tag === newInputVal)) {
       setInternalTags([...internalTags, newInputVal])
     }
-
-    // setTagInput("")
   }
 
   const handleRemoveTag = (tagToRemove: string) => {
     setInternalTags(internalTags.filter((tag: string) => tag !== tagToRemove))
   }
 
-  // const getOrgMetadata = async () => {
-  //   const org = await getOrganizationContextInfoWithoutCredentials(orgslug, {
-  //     revalidate: 360,
-  //     tags: ['organizations'],
-  //   })
-  //   // setOrgId(org.id)
-  // }
-
-  // useEffect(() => {
-  //   if (orgslug) {
-  //     getOrgMetadata()
-  //   }
-  // }, [orgslug, getOrgMetadata])
-
-  // const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   const file = event.target.files?.[0]
-  //   if (file) {
-  //     formik.setFieldValue('thumbnail', file)
-  //   }
-  // }
-
-  // const handleUnsplashSelect = async (imageUrl: string) => {
-  //   setIsUploading(true)
-  //   try {
-  //     const response = await fetch(imageUrl)
-  //     const blob = await response.blob()
-  //     const file = new File([blob], 'unsplash_image.jpg', { type: 'image/jpeg' })
-  //     formik.setFieldValue('thumbnail', file)
-  //   } catch (error) {
-  //     toast.error('Failed to load image from Unsplash')
-  //   }
-  //   setIsUploading(false)
-  // }
-  const availableTags = tags.filter((t: any) => {
-    const foundItem = internalTags.find((t2: any) => {
-      return t2 === t.value
-    })
-    const found = foundItem !== undefined
-    return !found
-  })
-
+  const availableTags = tags.filter((t: any) => !internalTags.includes(t.value))
   const addButtonDisabled = tagInput.trim() === '' || availableTags.length === 0
-  // if (availableTags.length === 0) {
-  //   setTagInput("")
-  // }
 
   return (
     <FormLayout onSubmit={formik.handleSubmit}>
       <FormField name="course_id">
         <Flex css={{ alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <FormLabel>Move to Course</FormLabel>
+          <FormLabel>{t('labels.moveToCourse')}</FormLabel>
           <FormMessage match="valueMissing">
-            Select optional course from the courses list.
+            {t('messages.selectOptionalCourse')}
           </FormMessage>
         </Flex>
         {courses ? (
@@ -175,27 +127,23 @@ function ModifyExerciseModal({
               className="bg-gray-100/40 rounded-lg px-1 py-2 outline outline-1 outline-gray-100"
               onChange={formik.handleChange}
               value={formik.values.course_id || ''}
-              // defaultValue={undefined}
             >
-              <option value="">- None -</option>
-
-              {courses.map((c: any) => {
-                return (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                )
-              })}
+              <option value="">{t('labels.none')}</option>
+              {courses.map((c: any) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
             </select>
           </Form.Control>
         ) : (
-          <span>loading...</span>
+          <span>{t('loading')}</span>
         )}
       </FormField>
 
       <FormField name="title">
         <FormLabelAndMessage
-          label="Exercise Title"
+          label={t('labels.exerciseTitle')}
           message={formik.errors.title as any}
         />
         <Form.Control asChild>
@@ -210,7 +158,7 @@ function ModifyExerciseModal({
 
       <FormField name="description">
         <FormLabelAndMessage
-          label="Exercise Description"
+          label={t('labels.exerciseDescription')}
           message={formik.errors.description as any}
         />
         <Form.Control asChild>
@@ -223,33 +171,24 @@ function ModifyExerciseModal({
       </FormField>
 
       <FormField name="tags">
-        <FormLabelAndMessage label="Tags" message="" />
+        <FormLabelAndMessage label={t('labels.tags')} message="" />
         <div className="space-y-2">
           <div className="flex justify-between">
             <Form.Control asChild>
               <select
                 className="bg-gray-100/40 rounded-lg px-1 py-2 outline outline-1 outline-gray-100"
-                onChange={(e) => {
-                  setTagInput(e.target.value)
-                }}
+                onChange={(e) => setTagInput(e.target.value)}
                 value={tagInput}
-                defaultValue={''}
+                defaultValue=""
               >
-                <option value="">- None -</option>
-                {availableTags.map((c: any) => {
-                  return (
-                    <option
-                      key={c.value}
-                      value={c.value}
-                      className="w-10 h-6 rounded-full border-0 p-0 cursor-pointer bg-transparent"
-                    >
-                      {c.value}
-                    </option>
-                  )
-                })}
+                <option value="">{t('labels.none')}</option>
+                {availableTags.map((c: any) => (
+                  <option key={c.value} value={c.value}>
+                    {c.value}
+                  </option>
+                ))}
               </select>
             </Form.Control>
-
             <button
               className={`px-4 py-2 ${
                 !addButtonDisabled ? 'bg-black' : 'bg-gray-600'
@@ -258,28 +197,26 @@ function ModifyExerciseModal({
               disabled={addButtonDisabled}
               type="button"
             >
-              Add Tag
+              {t('labels.addTag')}
             </button>
           </div>
 
           <div className="flex flex-wrap gap-2">
             {internalTags.map((tag: any) => {
               const tagObj = tags.find((t: any) => t.value === tag)
-              const color = `#${tagObj.color?.toString(16).padStart(6, '0')}`
-
+              const color = `#${tagObj?.color?.toString(16).padStart(6, '0')}`
               return (
                 <div
                   key={tag}
                   className="flex items-center gap-1 px-2 py-1 rounded-full text-sm"
-                  style={{
-                    backgroundColor: color,
-                  }}
+                  style={{ backgroundColor: color }}
                 >
                   <span>{tag}</span>
                   <button
                     type="button"
                     onClick={() => handleRemoveTag(tag)}
                     className="text-gray-500 hover:text-gray-700"
+                    aria-label={t('tags.remove', { tag })}
                   >
                     <X size={14} />
                   </button>
@@ -292,7 +229,7 @@ function ModifyExerciseModal({
 
       <FormField name="task">
         <FormLabelAndMessage
-          label="Exercise Task"
+          label={t('labels.exerciseTask')}
           message={formik.errors.task as any}
         />
         <Form.Control asChild>
@@ -306,7 +243,7 @@ function ModifyExerciseModal({
 
       <FormField name="solution">
         <FormLabelAndMessage
-          label="Exercise Solution"
+          label={t('labels.exerciseSolution')}
           message={formik.errors.solution as any}
         />
         <Form.Control asChild>
@@ -324,23 +261,12 @@ function ModifyExerciseModal({
           className="px-4 py-2 bg-black text-white text-sm font-bold rounded-md"
         >
           {formik.isSubmitting ? (
-            <BarLoader
-              cssOverride={{ borderRadius: 60 }}
-              width={60}
-              color="#ffffff"
-            />
+            <BarLoader cssOverride={{ borderRadius: 60 }} width={60} color="#ffffff" />
           ) : (
-            'Modify Exercise'
+            t('labels.submit')
           )}
         </button>
       </div>
-
-      {/* {showUnsplashPicker && (
-        <UnsplashImagePicker
-          onSelect={handleUnsplashSelect}
-          onClose={() => setShowUnsplashPicker(false)}
-        />
-      )} */}
     </FormLayout>
   )
 }

@@ -9,6 +9,7 @@ import VideoModal from './NewActivityModal/Video'
 import Image from 'next/image'
 import DocumentPdfModal from './NewActivityModal/DocumentPdf'
 import Workspace from './NewActivityModal/Workspace'
+import { useTranslations } from 'next-intl'
 
 function NewActivityModal({
   closeModal,
@@ -20,92 +21,73 @@ function NewActivityModal({
   access_token,
 }: any) {
   const [selectedView, setSelectedView] = useState('home')
+  const t = useTranslations('NewActivityModal')
 
   return (
     <>
       {selectedView === 'home' && (
         <div className="flex flex-row space-x-2 justify-start mt-2.5 w-full">
-          <ActivityOption
-            onClick={() => {
-              setSelectedView('dynamic')
-            }}
-          >
+          <ActivityOption onClick={() => setSelectedView('dynamic')}>
             <div className="h-20 rounded-lg m-0.5 flex flex-col items-center justify-end text-center bg-white hover:cursor-pointer">
               <Image
                 unoptimized
                 quality={100}
-                alt="Dynamic Page"
+                alt={t('alt.dynamic')}
                 src={DynamicPageActivityImage}
-              ></Image>
+              />
             </div>
             <div className="flex text-sm h-5 font-medium text-gray-500 items-center justify-center text-center">
-              Dynamic Page
+              {t('options.dynamic')}
             </div>
           </ActivityOption>
-          <ActivityOption
-            onClick={() => {
-              setSelectedView('video')
-            }}
-          >
+
+          <ActivityOption onClick={() => setSelectedView('video')}>
             <div className="h-20 rounded-lg m-0.5 flex flex-col items-center justify-end text-center bg-white hover:cursor-pointer">
               <Image
                 unoptimized
                 quality={100}
-                alt="Video Page"
+                alt={t('alt.video')}
                 src={VideoPageActivityImage}
-              ></Image>
+              />
             </div>
             <div className="flex text-sm h-5 font-medium text-gray-500 items-center justify-center text-center">
-              Video
+              {t('options.video')}
             </div>
           </ActivityOption>
 
-          <ActivityOption
-            onClick={() => {
-              setSelectedView('documentpdf')
-            }}
-          >
+          <ActivityOption onClick={() => setSelectedView('documentpdf')}>
             <div className="h-20 rounded-lg m-0.5 flex flex-col items-center justify-end text-center bg-white hover:cursor-pointer">
               <Image
                 unoptimized
                 quality={100}
-                alt="Document PDF Page"
+                alt={t('alt.document')}
                 src={DocumentPdfPageActivityImage}
-              ></Image>
+              />
             </div>
             <div className="flex text-sm h-5 font-medium text-gray-500 items-center justify-center text-center">
-              Document
+              {t('options.document')}
             </div>
           </ActivityOption>
 
-          <ActivityOption
-            onClick={() => {
-              setSelectedView('workspaces')
-            }}
-          >
+          <ActivityOption onClick={() => setSelectedView('workspaces')}>
             <div className="h-20 rounded-lg m-0.5 flex flex-col items-center justify-end text-center bg-white hover:cursor-pointer">
               <Image
                 unoptimized
                 quality={100}
-                alt="Workspaces Page"
+                alt={t('alt.workspace')}
                 src={AssignmentActivityImage}
-              ></Image>
+              />
             </div>
             <div className="flex text-sm h-5 font-medium text-gray-500 items-center justify-center text-center">
-              Workspace
+              {t('options.workspace')}
             </div>
           </ActivityOption>
         </div>
       )}
 
       {selectedView === 'dynamic' && (
-        <DynamicCanvaModal
-          submitActivity={submitActivity}
-          chapterId={chapterId}
-          course={course}
-        />
+        <DynamicCanvaModal submitActivity={submitActivity} chapterId={chapterId} course={course} />
       )}
-
       {selectedView === 'video' && (
         <VideoModal
           submitFileActivity={submitFileActivity}
@@ -114,7 +96,6 @@ function NewActivityModal({
           course={course}
         />
       )}
-
       {selectedView === 'documentpdf' && (
         <DocumentPdfModal
           submitFileActivity={submitFileActivity}
@@ -122,7 +103,6 @@ function NewActivityModal({
           course={course}
         />
       )}
-
       {selectedView === 'workspaces' && (
         <Workspace
           submitActivity={submitActivity}

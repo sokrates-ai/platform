@@ -11,6 +11,7 @@ import BarLoader from 'react-spinners/BarLoader'
 import { Youtube } from 'lucide-react'
 import { constructAcceptValue } from '@/lib/constants';
 import { Button } from '@components/ui/button'
+import { useTranslations } from 'next-intl'
 
 const SUPPORTED_FILES = constructAcceptValue(['mp4', 'webm'])
 
@@ -27,6 +28,7 @@ function VideoModal({
   chapterId,
   course,
 }: any) {
+  const t = useTranslations('VideoActivityModal')
   const [video, setVideo] = React.useState(null) as any
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [name, setName] = React.useState('')
@@ -52,7 +54,7 @@ function VideoModal({
     setIsSubmitting(true)
 
     if (selectedView === 'file') {
-      let status = await submitFileActivity(
+      await submitFileActivity(
         video,
         'video',
         {
@@ -66,18 +68,17 @@ function VideoModal({
         },
         chapterId
       )
-
       setIsSubmitting(false)
     }
     if (selectedView === 'youtube') {
-      let external_video_object: ExternalVideoObject = {
+      const external_video_object: ExternalVideoObject = {
         name,
         type: 'youtube',
         uri: youtubeUrl,
         chapter_id: chapterId,
       }
 
-      let status = await submitExternalVideo(
+      await submitExternalVideo(
         external_video_object,
         'activity',
         chapterId
@@ -86,16 +87,13 @@ function VideoModal({
     }
   }
 
-  /* TODO : implement some sort of progress bar for file uploads, it is not possible yet because i'm not using axios.
-   and the actual upload isn't happening here anyway, it's in the submitFileActivity function */
-
   return (
     <FormLayout onSubmit={handleSubmit}>
       <FormField name="video-activity-name">
         <Flex css={{ alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <FormLabel>Video name</FormLabel>
+          <FormLabel>{t('labels.videoName')}</FormLabel>
           <FormMessage match="valueMissing">
-            Please provide a name for your video activity
+            {t('messages.nameRequired')}
           </FormMessage>
         </Flex>
         <Form.Control asChild>
@@ -111,7 +109,7 @@ function VideoModal({
               }}
               className="rounded-full bg-slate-900 text-zinc-50 py-2 px-4 text-sm drop-shadow-md hover:cursor-pointer hover:bg-slate-700 "
             >
-              Video upload
+              {t('tabs.upload')}
             </div>
             <div
               onClick={() => {
@@ -119,7 +117,7 @@ function VideoModal({
               }}
               className="rounded-full bg-slate-900 text-zinc-50 py-2 px-4 text-sm drop-shadow-md hover:cursor-pointer hover:bg-slate-700"
             >
-              YouTube Video
+              {t('tabs.youtube')}
             </div>
           </div>
           {selectedView === 'file' && (
@@ -131,9 +129,9 @@ function VideoModal({
                     justifyContent: 'space-between',
                   }}
                 >
-                  <FormLabel>Video file</FormLabel>
+                  <FormLabel>{t('labels.videoFile')}</FormLabel>
                   <FormMessage match="valueMissing">
-                    Please provide a video for your activity
+                    {t('messages.videoRequired')}
                   </FormMessage>
                 </Flex>
                 <Form.Control asChild>
@@ -144,7 +142,7 @@ function VideoModal({
           )}
           {selectedView === 'youtube' && (
             <div className="p-4 justify-center m-auto align-middle">
-              <FormField name="video-activity-file">
+              <FormField name="video-activity-youtube">
                 <Flex
                   css={{
                     alignItems: 'baseline',
@@ -153,10 +151,10 @@ function VideoModal({
                 >
                   <FormLabel className="flex justify-center align-middle">
                     <Youtube className="m-auto pr-1" />
-                    <span className="flex">YouTube URL</span>
+                    <span className="flex">{t('labels.youtubeUrl')}</span>
                   </FormLabel>
                   <FormMessage match="valueMissing">
-                    Please provide a video for your activity
+                    {t('messages.videoRequired')}
                   </FormMessage>
                 </Flex>
                 <Form.Control asChild>
@@ -175,11 +173,7 @@ function VideoModal({
 
       <Flex css={{ marginTop: 25, justifyContent: 'flex-end' }}>
         <Form.Submit asChild>
-          <Button
-            
-            type="submit"
-            
-          >
+          <Button type="submit">
             {isSubmitting ? (
               <BarLoader
                 cssOverride={{ borderRadius: 60 }}
@@ -187,7 +181,7 @@ function VideoModal({
                 color="#ffffff"
               />
             ) : (
-              'Create activity'
+              t('buttons.create')
             )}
           </Button>
         </Form.Submit>

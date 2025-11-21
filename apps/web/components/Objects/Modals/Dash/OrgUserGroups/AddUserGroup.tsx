@@ -12,25 +12,26 @@ import { mutate } from 'swr'
 import { getAPIUrl } from '@services/config/config'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useFormik } from 'formik'
+import { useTranslations } from 'next-intl' // added
 
 type AddUserGroupProps = {
     setCreateUserGroupModal: any
 }
-const validate = (values: any) => {
-    const errors: any = {}
-
-    if (!values.name) {
-        errors.name = 'Name is Required'
-    }
-
-    return errors
-}
 
 function AddUserGroup(props: AddUserGroupProps) {
+    const t = useTranslations('AddUserGroup') // added
     const org = useOrg() as any;
     const session = useSokratesSession() as any;
     const access_token = session?.data?.tokens?.access_token;
     const [isSubmitting, setIsSubmitting] = React.useState(false)
+
+    const validate = (values: any) => { // moved inside to use t
+        const errors: any = {}
+        if (!values.name) {
+            errors.name = t('errors.nameRequired')
+        }
+        return errors
+    }
 
     const formik = useFormik({
         initialValues: {
@@ -46,7 +47,6 @@ function AddUserGroup(props: AddUserGroupProps) {
                 setIsSubmitting(false)
                 mutate(`${getAPIUrl()}usergroups/org/${org.id}`)
                 props.setCreateUserGroupModal(false)
-
             } else {
                 setIsSubmitting(false)
             }
@@ -57,35 +57,35 @@ function AddUserGroup(props: AddUserGroupProps) {
         <FormLayout onSubmit={formik.handleSubmit}>
             <FormField name="name">
                 <FormLabelAndMessage
-                    label="Name"
+                    label={t('labels.name')}
                     message={formik.errors.name}
                 />
                 <Form.Control asChild>
                     <Input
                         onChange={formik.handleChange}
                         value={formik.values.name}
-                        type="name"
+                        type="text"
                         required
                     />
                 </Form.Control>
             </FormField>
             <FormField name="description">
                 <FormLabelAndMessage
-                    label="Description"
+                    label={t('labels.description')}
                     message={formik.errors.description}
                 />
                 <Form.Control asChild>
                     <Input
                         onChange={formik.handleChange}
                         value={formik.values.description}
-                        type="description"
+                        type="text"
                     />
                 </Form.Control>
             </FormField>
             <div className="flex py-4">
                 <Form.Submit asChild>
                     <button className="w-full bg-black text-white font-bold text-center p-2 rounded-md shadow-md hover:cursor-pointer">
-                        {isSubmitting ? 'Loading...' : 'Create a UserGroup'}
+                        {isSubmitting ? t('buttons.creating') : t('buttons.create')}
                     </button>
                 </Form.Submit>
             </div>

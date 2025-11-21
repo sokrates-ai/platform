@@ -17,6 +17,7 @@ import toast from 'react-hot-toast'
 import { createWorkspace } from '@services/courses/workspaces'
 import { swrFetcher } from '@services/utils/ts/requests'
 import { X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 interface Exercise {
   title: string
@@ -36,53 +37,42 @@ function NewWorkspace({
   access_token,
   multi,
 }: any) {
+  const t = useTranslations('NewWorkspaceModal')
   const org = useOrg() as any
   const session = useSokratesSession() as any;
   const [activityName, setActivityName] = React.useState('')
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [activityTaskIDs, setActivityTaskIDs] = React.useState<number[]>([])
 
-  // Fetch exercise library here.
   const TASKS_URL = `${getAPIUrl()}tasks/list/page/1/limit/50`
   const { data } = useSWR(TASKS_URL, (url: string) =>
     swrFetcher(url, access_token)
   )
   const exercises = data as Exercise[]
 
-  console.log(exercises)
-
   const handleNameChange = (e: any) => {
     setActivityName(e.target.value)
   }
 
   const updateWorkspaceTitle = () => {
-    // Only set name if new length is 1
+    if (!exercises) return
     if (activityTaskIDs.length === 1) {
-      const targetExercise = exercises.find((e: any) => {
-        return e.id === activityTaskIDs[0]
-      })
-
+      const targetExercise = exercises.find((e: any) => e.id === activityTaskIDs[0])
       const title = targetExercise ? targetExercise.title : ''
       setActivityName(title)
+    } else if (activityTaskIDs.length > 1) {
+      setActivityName(t('autoTitle.anyOrder', { count: activityTaskIDs.length }))
     } else {
-      setActivityName(`Any Order - ${activityTaskIDs.length} Tasks`)
+      setActivityName('')
     }
   }
 
-  useEffect(updateWorkspaceTitle, [exercises, activityTaskIDs])
+  useEffect(updateWorkspaceTitle, [exercises, activityTaskIDs, t])
 
   const handleActivityTaskIDChange = (e: any) => {
     const id = parseInt(e.target.value)
-    console.log(id)
-
-    if (id === -1) {
-      return
-    }
-
-    if (activityTaskIDs.includes(id)) {
-      return
-    }
-
+    if (id === -1) return
+    if (activityTaskIDs.includes(id)) return
     setActivityTaskIDs([...activityTaskIDs, id])
   }
 
@@ -98,6 +88,7 @@ function NewWorkspace({
       course_id: course?.courseStructure.id,
     }
 
+    const toast_loading = toast.loading(t('toast.creating'))
     const res = await createWorkspace(
       activity,
       Array.from(activityTaskIDs),
@@ -106,11 +97,9 @@ function NewWorkspace({
       session.data?.tokens?.access_token
     )
 
-    const toast_loading = toast.loading('Creating workspace...')
-
     if (res.success || res.success === undefined) {
       toast.dismiss(toast_loading)
-      toast.success('Workspace created successfully')
+      toast.success(t('toast.created'))
     } else {
       toast.error(res.data.detail)
     }
@@ -125,9 +114,9 @@ function NewWorkspace({
       {/* Name */}
       <FormField name="assignment-activity-title">
         <Flex css={{ alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <FormLabel>Workspace Title</FormLabel>
+          <FormLabel>{t('labels.title')}</FormLabel>
           <FormMessage match="valueMissing">
-            Please provide a name for your workspace session.
+            {t('messages.titleRequired')}
             <span color="red"></span>
           </FormMessage>
         </Flex>
@@ -137,6 +126,7 @@ function NewWorkspace({
             onChange={handleNameChange}
             type="text"
             required
+            placeholder={t('placeholders.title')}
           />
         </Form.Control>
       </FormField>
@@ -144,9 +134,9 @@ function NewWorkspace({
       {/* Choose Exercise */}
       <FormField name="assignment-activity-grading-type">
         <Flex css={{ alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <FormLabel>Select Exercise</FormLabel>
+          <FormLabel>{t('labels.selectExercise')}</FormLabel>
           <FormMessage match="valueMissing">
-            Please select an exercise from the exercise library.
+            {t('messages.exerciseRequired')}
           </FormMessage>
         </Flex>
         {exercises ? (
@@ -156,40 +146,28 @@ function NewWorkspace({
               onChange={handleActivityTaskIDChange}
               required
               defaultValue={''}
+              aria-label={t('labels.selectExercise')}
             >
-              <option value={-1}>-Select Task-</option>
-
+              <option value={-1}>{t('placeholders.selectTask')}</option>
               {exercises
                 .filter((ex) => !activityTaskIDs.includes(ex.id))
-                .map((ex) => {
-                  return (
-                    <option key={ex.id} value={ex.id}>
-                      <span>{ex.title}</span>
-                      <span> | </span>
-                      <span className="text-xs">{ex.description}</span>
-                      <span> | </span>
-                      <span className="text-xs">({ex.id})</span>
-                    </option>
-                  )
-                })}
+                .map((ex) => (
+                  <option key={ex.id} value={ex.id}>
+                    {ex.title} | {ex.description} | ({ex.id})
+                  </option>
+                ))}
             </select>
           </Form.Control>
         ) : (
-          <span>loading...</span>
+          <span>{t('loading')}</span>
         )}
       </FormField>
 
       <div className="flex gap-1 min-h-40 border-gray-200 border-2 border-dashed rounded-md px-2 py-4 flex-wrap">
         {activityTaskIDs.length > 0 ? (
           activityTaskIDs.map((i) => {
-            let ex = exercises.find((e) => {
-              return e.id === i
-            })
-
-            if (!ex) {
-              throw 'Exercise not found.'
-            }
-
+            const ex = exercises?.find((e) => e.id === i)
+            if (!ex) return null
             return (
               <div
                 className="grow flex justify-between gap-4 items-center text-black rounded-md bg-gray-200 px-2 py-2 min-w-50%"
@@ -204,11 +182,13 @@ function NewWorkspace({
                 </div>
 
                 <button
-                  onClick={() => {
+                  onClick={() =>
                     setActivityTaskIDs(activityTaskIDs.filter((e) => e !== i))
-                  }}
+                  }
                   className="p-1 px-2 sm:px-3 bg-red-600 rounded-md flex items-center space-x-1 shadow-md transition-colors duration-200 hover:bg-red-700"
                   rel="noopener noreferrer"
+                  type="button"
+                  aria-label={t('buttons.removeTask')}
                 >
                   <X size={15} className="text-rose-200 font-bold" />
                 </button>
@@ -218,8 +198,10 @@ function NewWorkspace({
         ) : (
           <div className="flex items-center justify-center w-full">
             <div className="flex flex-col items-center">
-              <span className="text-gray-800 text-xl">No tasks yet.</span>
-              <span className="text-gray-500 text-s">Use the menu to add a task.</span>
+              <span className="text-gray-800 text-xl">{t('empty.noTasks')}</span>
+              <span className="text-gray-500 text-s">
+                {t('empty.addInstruction')}
+              </span>
             </div>
           </div>
         )}
@@ -230,7 +212,8 @@ function NewWorkspace({
           <ButtonBlack
             type="submit"
             css={{ marginTop: 10 }}
-            disabled={Array.from(activityTaskIDs.entries()).length === 0}
+            disabled={activityTaskIDs.length === 0}
+            aria-label={t('buttons.create')}
           >
             {isSubmitting ? (
               <BarLoader
@@ -239,7 +222,7 @@ function NewWorkspace({
                 color="#ffffff"
               />
             ) : (
-              'Create workspace'
+              t('buttons.create')
             )}
           </ButtonBlack>
         </Form.Submit>

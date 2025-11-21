@@ -17,6 +17,7 @@ import { useRouter } from 'next/navigation'
 import { getAPIUrl } from '@services/config/config'
 import { mutate } from 'swr'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
+import { useTranslations } from 'next-intl' // added
 
 type ChapterElementProps = {
   chapter: any
@@ -41,6 +42,7 @@ function ChapterElement(props: ChapterElementProps) {
   >(undefined)
 
   const router = useRouter()
+  const t = useTranslations('ChapterElement') // added
 
   const deleteChapterUI = async () => {
     await deleteChapter(props.chapter.id, access_token)
@@ -64,107 +66,115 @@ function ChapterElement(props: ChapterElementProps) {
 
   return (
     <div>
-          <div className="flex flex-wrap items-center justify-between pb-3">
-            <div className="flex grow items-center space-x-2 mb-2 sm:mb-0">
-              <div className="bg-neutral-100 rounded-md p-2">
-                <Hexagon
-                  strokeWidth={3}
-                  size={16}
-                  className="text-neutral-600"
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                {selectedChapter === props.chapter.id ? (
-                  <div className="chapter-modification-zone bg-neutral-100 py-1 px-2 sm:px-4 rounded-lg flex items-center space-x-2">
-                    <input
-                      type="text"
-                      className="bg-transparent outline-none text-sm text-neutral-700 w-full max-w-[150px] sm:max-w-none"
-                      placeholder="Chapter name"
-                      value={
-                        modifiedChapter
-                          ? modifiedChapter?.chapterName
-                          : props.chapter.name
-                      }
-                      onChange={(e) =>
-                        setModifiedChapter({
-                          chapterId: props.chapter.id,
-                          chapterName: e.target.value,
-                        })
-                      }
-                    />
-                    <button
-                      onClick={() => updateChapterName(props.chapter.id)}
-                      className="bg-transparent text-neutral-700 hover:cursor-pointer hover:text-neutral-900"
-                    >
-                      <Save size={15} />
-                    </button>
-                  </div>
-                ) : (
-                  <p className="text-neutral-700 first-letter:uppercase text-sm sm:text-base">
-                    {props.chapter.name}
-                  </p>
-                )}
-                <Pencil
-                  size={15}
-                  onClick={() => setSelectedChapter(props.chapter.id)}
-                  className="text-neutral-600 hover:cursor-pointer"
-                />
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <MoreVertical size={15} className="text-gray-300" />
-              <ConfirmationModal
-                confirmationButtonText="Delete Chapter"
-                confirmationMessage="Are you sure you want to delete this chapter?"
-                dialogTitle={'Delete ' + props.chapter.name + ' ?'}
-                dialogTrigger={
-                  <button
-                    className="hover:cursor-pointer p-1 px-2 sm:px-3 bg-red-600 rounded-md shadow flex items-center text-rose-100 text-sm"
-                    rel="noopener noreferrer"
-                  >
-                    <Trash2 size={15} className="text-rose-200" />
-                  </button>
-                }
-                functionToExecute={() => deleteChapterUI()}
-                status="warning"
-              />
-            </div>
+      <div className="flex flex-wrap items-center justify-between pb-3">
+        <div className="flex grow items-center space-x-2 mb-2 sm:mb-0">
+          <div className="bg-neutral-100 rounded-md p-2">
+            <Hexagon
+              strokeWidth={3}
+              size={16}
+              className="text-neutral-600"
+            />
           </div>
-          <Droppable
-            key={props.chapter.chapter_uuid}
-            droppableId={props.chapter.chapter_uuid}
-            type="activity"
-          >
-            {(provided) => (
-              <div {...provided.droppableProps} ref={provided.innerRef}>
-                <div className="flex flex-col">
-                  {activities.map((activity: any, index: any) => {
-                    return (
-                      <div key={activity.activity_uuid} className="flex items-center ">
-                        <ActivityElement
-                          orgslug={props.orgslug}
-                          course_uuid={props.course_uuid}
-                          activityIndex={index}
-                          activity={activity}
-                        />
-                      </div>
-                    )
-                  })}
-                  {provided.placeholder}
-                </div>
+          <div className="flex items-center space-x-2">
+            {selectedChapter === props.chapter.id ? (
+              <div className="chapter-modification-zone bg-neutral-100 py-1 px-2 sm:px-4 rounded-lg flex items-center space-x-2">
+                <input
+                  type="text"
+                  className="bg-transparent outline-none text-sm text-neutral-700 w-full max-w-[150px] sm:max-w-none"
+                  placeholder={t('fields.chapterName')} // translated
+                  aria-label={t('fields.chapterName')} // translated
+                  value={
+                    modifiedChapter
+                      ? modifiedChapter?.chapterName
+                      : props.chapter.name
+                  }
+                  onChange={(e) =>
+                    setModifiedChapter({
+                      chapterId: props.chapter.id,
+                      chapterName: e.target.value,
+                    })
+                  }
+                />
+                <button
+                  onClick={() => updateChapterName(props.chapter.id)}
+                  className="bg-transparent text-neutral-700 hover:cursor-pointer hover:text-neutral-900"
+                  aria-label={t('buttons.save')} // translated
+                  title={t('buttons.save')} // translated
+                >
+                  <Save size={15} />
+                </button>
               </div>
+            ) : (
+              <p className="text-neutral-700 first-letter:uppercase text-sm sm:text-base">
+                {props.chapter.name}
+              </p>
             )}
-          </Droppable>
-          <NewActivityButton
-            orgslug={props.orgslug}
-            chapterId={props.chapter.id}
-          />
-          <div className="h-6">
-            <div className="flex items-center">
-              <MoreHorizontal size={19} className="text-gray-300 mx-auto" />
-            </div>
+            <Pencil
+              size={15}
+              onClick={() => setSelectedChapter(props.chapter.id)}
+              className="text-neutral-600 hover:cursor-pointer"
+              aria-label={t('buttons.editName')} // translated
+              data-title={t('buttons.editName')} // translated
+              role="button"
+            />
           </div>
         </div>
+        <div className="flex items-center space-x-2">
+          <MoreVertical size={15} className="text-gray-300" />
+          <ConfirmationModal
+            confirmationButtonText={t('modal.delete.confirmButton')} // translated
+            confirmationMessage={t('modal.delete.confirmationMessage')} // translated
+            dialogTitle={t('modal.delete.title', { name: props.chapter.name })} // translated
+            dialogTrigger={
+              <button
+                className="hover:cursor-pointer p-1 px-2 sm:px-3 bg-red-600 rounded-md shadow flex items-center text-rose-100 text-sm"
+                rel="noopener noreferrer"
+                aria-label={t('buttons.deleteChapter')} // translated
+                title={t('buttons.deleteChapter')} // translated
+              >
+                <Trash2 size={15} className="text-rose-200" />
+              </button>
+            }
+            functionToExecute={() => deleteChapterUI()}
+            status="warning"
+          />
+        </div>
+      </div>
+      <Droppable
+        key={props.chapter.chapter_uuid}
+        droppableId={props.chapter.chapter_uuid}
+        type="activity"
+      >
+        {(provided) => (
+          <div {...provided.droppableProps} ref={provided.innerRef}>
+            <div className="flex flex-col">
+              {activities.map((activity: any, index: any) => {
+                return (
+                  <div key={activity.activity_uuid} className="flex items-center ">
+                    <ActivityElement
+                      orgslug={props.orgslug}
+                      course_uuid={props.course_uuid}
+                      activityIndex={index}
+                      activity={activity}
+                    />
+                  </div>
+                )
+              })}
+              {provided.placeholder}
+            </div>
+          </div>
+        )}
+      </Droppable>
+      <NewActivityButton
+        orgslug={props.orgslug}
+        chapterId={props.chapter.id}
+      />
+      <div className="h-6">
+        <div className="flex items-center">
+          <MoreHorizontal size={19} className="text-gray-300 mx-auto" />
+        </div>
+      </div>
+    </div>
   )
 }
 

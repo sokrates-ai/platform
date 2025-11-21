@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import CreateCourseModal from '@components/Objects/Modals/Course/Create/CreateCourse'
 import AuthenticatedClientElement from '@components/Security/AuthenticatedClientElement'
@@ -34,6 +35,7 @@ const CoursesClient: React.FC<CoursesClientProps> = ({
   org_id,
   slides,
 }) => {
+  const t = useTranslations('CoursesClient')
   const searchParams = useSearchParams()
   const isCreatingCourse = !!searchParams.get('new')
   const [newCourseModal, setNewCourseModal] = React.useState(isCreatingCourse)
@@ -52,7 +54,7 @@ const CoursesClient: React.FC<CoursesClientProps> = ({
           <div className="flex flex-row items-center justify-between mb-8 sm:mb-10">
             <h1 className="flex items-center text-xl sm:text-2xl md:text-3xl font-bold text-[#3C3C3C]">
               <LayoutGrid className="mr-2" size={32} />
-              Courses
+              {t('courses')}
             </h1>
 
             <AuthenticatedClientElement
@@ -64,14 +66,14 @@ const CoursesClient: React.FC<CoursesClientProps> = ({
               <Dialog open={newCourseModal} onOpenChange={setNewCourseModal}>
                 <DialogTrigger asChild>
                   <Button variant="secondary" className="relative z-50">
-                    New Course
+                    {t('newCourse')}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="relative z-50">
                   <DialogHeader>
-                    <DialogTitle>New Course</DialogTitle>
+                    <DialogTitle>{t('newCourse')}</DialogTitle>
                     <DialogDescription>
-                      Create a new course
+                      {t('createNewCourse')}
                     </DialogDescription>
                   </DialogHeader>
                   <CreateCourseModal

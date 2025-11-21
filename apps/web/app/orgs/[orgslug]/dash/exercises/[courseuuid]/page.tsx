@@ -13,6 +13,7 @@ import { swrFetcher } from '@services/utils/ts/requests'
 import CreateExerciseModal from '@components/Objects/Modals/Exercise/Create/CreateExercise'
 import EditTagsModal from '@components/Objects/Modals/Exercise/Create/EditTags'
 import CourseListing from '../courseListing'
+import { useTranslations } from 'next-intl'
 
 type ExerciseProps = {
   params: {
@@ -22,6 +23,7 @@ type ExerciseProps = {
 }
 
 function ExerciseCourseHome(params: ExerciseProps) {
+  const t = useTranslations('ExerciseCourseHome')
   const tasks_page = 1
   const tasks_limit = 100
   const TASKS_URL = `${getAPIUrl()}tasks/list/page/${tasks_page}/limit/${tasks_limit}`
@@ -65,11 +67,6 @@ function ExerciseCourseHome(params: ExerciseProps) {
     (url: string) => swrFetcher(url, access_token)
   )
 
-  // const router = useRouter()
-  // console.log(router)
-  // const path = usePathname()
-  // const course_uuid = router.query.courseuuid as string
-
   console.log(COURSES_URL)
   const courseIDString = params.params.courseuuid
   let course_id = 100000000
@@ -85,19 +82,8 @@ function ExerciseCourseHome(params: ExerciseProps) {
 
   const course = courses.find((c: any) => c.id === course_id)
   if (!course && course_id != -1) {
-    return
+    return <span>{t('courseNotFound')}</span>
   }
-
-  // {(!!exercises && !!tags) ?
-  //   (<div>
-  //     {courses.map((course: any) => (
-  //       <div>
-  //         {course.name}
-  //       </div>
-  //     ))}
-  //   </div>)
-  //   : (<span>LOADING...</span>)
-  // }
 
   return (
     <div className="h-full w-full pl-10 pr-10">
@@ -107,10 +93,10 @@ function ExerciseCourseHome(params: ExerciseProps) {
           <h1 className="text-3xl font-bold mb-4 sm:mb-0">
             {course ? (
               <>
-                Course Exercises: <q>{course.name}</q>
+                {t('courseExercises')}: <q>{course.name}</q>
               </>
             ) : (
-              <>Unassigned Exercises</>
+              <>{t('unassignedExercises')}</>
             )}
           </h1>
           <AuthenticatedClientElement
@@ -132,13 +118,12 @@ function ExerciseCourseHome(params: ExerciseProps) {
                     tags={tags}
                   />
                 }
-                dialogTitle="Edit Tags"
-                dialogDescription="Edit task tags"
+                dialogTitle={t('editTags')}
+                dialogDescription={t('editTaskTags')}
                 dialogTrigger={
                   <button>
                     <button className="rounded-lg bg-black hover:scale-105 transition-all duration-100 ease-linear antialiased ring-offset-purple-800 p-2 px-5 my-auto font text-xs font-bold text-white drop-shadow-lg flex space-x-2 items-center">
-                      <div>Edit Tags</div>
-                      {/* <div className="text-md bg-neutral-800 px-1 rounded-full">+</div> */}
+                      <div>{t('editTags')}</div>
                     </button>
                   </button>
                 }
@@ -158,12 +143,12 @@ function ExerciseCourseHome(params: ExerciseProps) {
                     courseID={course_id}
                   />
                 }
-                dialogTitle="Create Exercise"
-                dialogDescription="Create a new exercise"
+                dialogTitle={t('createExercise')}
+                dialogDescription={t('createNewExercise')}
                 dialogTrigger={
                   <button>
                     <button className="rounded-lg bg-black hover:scale-105 transition-all duration-100 ease-linear antialiased ring-offset-purple-800 p-2 px-5 my-auto font text-xs font-bold text-white drop-shadow-lg flex space-x-2 items-center">
-                      <div>New Exercise</div>
+                      <div>{t('newExercise')}</div>
                       <div className="text-md bg-neutral-800 px-1 rounded-full">
                         +
                       </div>
@@ -176,7 +161,6 @@ function ExerciseCourseHome(params: ExerciseProps) {
         </div>
       </div>
 
-      {/* <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"> */}
       <CourseListing
         isUserAdmin={isUserAdmin}
         exercises={exercises}
@@ -188,8 +172,7 @@ function ExerciseCourseHome(params: ExerciseProps) {
         COURSES_URL={COURSES_URL}
         TAGS_URL={TAGS_URL}
         course_id={course_id}
-      ></CourseListing>
-      {/* </div> */}
+      />
     </div>
   )
 }

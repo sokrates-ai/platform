@@ -9,6 +9,7 @@ import { getCourseThumbnailMediaDirectory } from '@services/media/media'
 import Link from 'next/link'
 import Image from 'next/image'
 import EmptyThumbnailImage from '../../../public/empty_thumbnail.png'
+import { useTranslations } from 'next-intl'
 
 export function CourseOverviewTop({
   params,
@@ -17,6 +18,7 @@ export function CourseOverviewTop({
 }) {
   const course = useCourse() as any
   const org = useOrg() as any
+  const t = useTranslations('CourseOverviewTop')
 
   useEffect(() => {}, [course, org])
 
@@ -39,19 +41,19 @@ export function CourseOverviewTop({
                   'course_' + params.courseuuid,
                   course.courseStructure.thumbnail_image
                 )}`}
-                alt=""
+                alt={t('alt.courseThumbnail')}
               />
             ) : (
               <Image
                 width={100}
                 className="h-[57px] rounded-md drop-shadow-md"
                 src={EmptyThumbnailImage}
-                alt=""
+                alt={t('alt.courseThumbnail')}
               />
             )}
           </Link>
           <div className="flex flex-col course_metadata justify-center pl-5">
-            <div className="text-gray-400 font-semibold text-sm">Course</div>
+            <div className="text-gray-400 font-semibold text-sm">{t('labels.course')}</div>
             <div className="text-black font-bold text-xl -mt-1 first-letter:uppercase">
               {course.courseStructure.name}
             </div>

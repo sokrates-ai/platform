@@ -3,6 +3,7 @@ import Link from "next/link"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Settings, LogOut, Home, Backpack, School, Users } from "lucide-react"
 import { getUriWithoutOrg } from '@services/config/config'
+import { useTranslations } from 'next-intl'
 
 interface AvatarDropdownMenuProps {
   children: React.ReactNode
@@ -19,6 +20,8 @@ export const AvatarDropdownMenu = ({
   isUserAdmin, 
   onLogout 
 }: AvatarDropdownMenuProps) => {
+  const t = useTranslations('AvatarDropdownMenu')
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -37,7 +40,7 @@ export const AvatarDropdownMenu = ({
               <Link href={'/'}>
                 <DropdownMenuItem>
                   <Home size={14} className="mr-2" />
-                  Dashboard
+                  {t('dashboard')}
                 </DropdownMenuItem>
               </Link>
             )}
@@ -45,14 +48,14 @@ export const AvatarDropdownMenu = ({
             <Link href={'/dash/user-account/settings/general'}>
               <DropdownMenuItem>
                 <Settings size={14} className="mr-2" />
-                Settings
+                {t('settings')}
               </DropdownMenuItem>
             </Link>
 
             <Link href={"/dash/exercises"}>
               <DropdownMenuItem>
                 <Backpack size={14} className="mr-2" />
-                Exercises
+                {t('exercises')}
               </DropdownMenuItem>
             </Link>
 
@@ -60,7 +63,7 @@ export const AvatarDropdownMenu = ({
               <Link href={"/dash/users/settings/users"}>
                 <DropdownMenuItem>
                   <Users size={14} className="mr-2" />
-                  Users
+                  {t('users')}
                 </DropdownMenuItem>
               </Link>
             )}
@@ -68,13 +71,13 @@ export const AvatarDropdownMenu = ({
             <Link href={"/dash/org/settings/general"}>
               <DropdownMenuItem>
                 <School size={14} className="mr-2" />
-                School
+                {t('school')}
               </DropdownMenuItem>
             </Link>
 
             <DropdownMenuItem onClick={onLogout}>
               <LogOut size={14} className="mr-2" />
-              Logout
+              {t('logout')}
             </DropdownMenuItem>
           </>
         ) : (
@@ -85,7 +88,7 @@ export const AvatarDropdownMenu = ({
             }}>
               <DropdownMenuItem>
                 <LogOut size={14} className="mr-2" />
-                Login
+                {t('login')}
               </DropdownMenuItem>
             </Link>
             <Link href={{
@@ -94,7 +97,7 @@ export const AvatarDropdownMenu = ({
             }}>
               <DropdownMenuItem>
                 <Users size={14} className="mr-2" />
-                Sign up
+                {t('signup')}
               </DropdownMenuItem>
             </Link>
           </>
@@ -102,4 +105,4 @@ export const AvatarDropdownMenu = ({
       </DropdownMenuContent>
     </DropdownMenu>
   )
-} 
+}

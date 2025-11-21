@@ -15,6 +15,7 @@ import { updateUserAvatar } from '@services/users/users'
 import { constructAcceptValue } from '@/lib/constants';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
+import { useTranslations } from 'next-intl'
 
 const SUPPORTED_FILES = constructAcceptValue(['image'])
 
@@ -24,6 +25,7 @@ function UserEditGeneral() {
   const [isLoading, setIsLoading] = React.useState(false) as any
   const [error, setError] = React.useState() as any
   const [success, setSuccess] = React.useState('') as any
+  const t = useTranslations('UserEditGeneral')
 
   const handleFileChange = async (event: any) => {
     const file = event.target.files[0]
@@ -37,7 +39,7 @@ function UserEditGeneral() {
     } else {
       setIsLoading(false)
       setError('')
-      setSuccess('Avatar Updated')
+      setSuccess(t('success.avatarUpdated'))
     }
   }
 
@@ -67,11 +69,11 @@ function UserEditGeneral() {
               <Form className="flex-1 min-w-0">
                 <div className="space-y-4">
                   {[
-                    { label: 'Email', name: 'email', type: 'email' },
-                    { label: 'Username', name: 'username', type: 'text' },
-                    { label: 'First Name', name: 'first_name', type: 'text' },
-                    { label: 'Last Name', name: 'last_name', type: 'text' },
-                    { label: 'Bio', name: 'bio', type: 'text' },
+                    { label: t('form.email.label'), name: 'email', type: 'email', placeholder: t('form.email.placeholder') },
+                    { label: t('form.username.label'), name: 'username', type: 'text', placeholder: t('form.username.placeholder') },
+                    { label: t('form.firstName.label'), name: 'first_name', type: 'text', placeholder: t('form.firstName.placeholder') },
+                    { label: t('form.lastName.label'), name: 'last_name', type: 'text', placeholder: t('form.lastName.placeholder') },
+                    { label: t('form.bio.label'), name: 'bio', type: 'text', placeholder: t('form.bio.placeholder') },
                   ].map((field) => (
                     <div key={field.name}>
                       <label className="block mb-2 font-bold" htmlFor={field.name}>
@@ -81,6 +83,8 @@ function UserEditGeneral() {
                         className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         type={field.type}
                         name={field.name}
+                        placeholder={field.placeholder}
+                        aria-label={field.label}
                       />
                     </div>
                   ))}
@@ -89,13 +93,14 @@ function UserEditGeneral() {
                   variant="default"
                   disabled={isSubmitting}
                   className="mt-6 px-6 py-3 text-white  rounded-lg  focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  aria-label={t('buttons.submit')}
                 >
-                  Submit
+                  {t('buttons.submit')}
                 </Button>
               </Form>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-col items-center space-y-4">
-                  <label className="font-bold">Avatar</label>
+                  <label className="font-bold">{t('sections.avatar')}</label>
                   {error && (
                     <div className="flex items-center bg-red-200 rounded-md text-red-950 px-4 py-2 text-sm">
                       <FileWarning size={16} className="mr-2" />
@@ -122,7 +127,7 @@ function UserEditGeneral() {
                       {isLoading ? (
                         <div className="font-bold animate-pulse antialiased bg-green-200 text-gray text-sm rounded-md px-4 py-2 flex items-center">
                           <ArrowBigUpDash size={16} className="mr-2" />
-                          <span>Uploading</span>
+                          <span>{t('statuses.uploading')}</span>
                         </div>
                       ) : (
                         <>
@@ -132,13 +137,15 @@ function UserEditGeneral() {
                             accept={SUPPORTED_FILES}
                             className="hidden"
                             onChange={handleFileChange}
+                            aria-label={t('buttons.changeAvatar')}
                           />
                           <button
                             className="font-bold antialiased text-gray text-sm rounded-md px-4 py-2 flex items-center"
                             onClick={() => document.getElementById('fileInput')?.click()}
+                            aria-label={t('buttons.changeAvatar')}
                           >
                             <UploadCloud size={16} className="mr-2" />
-                            <span>Change Avatar</span>
+                            <span>{t('buttons.changeAvatar')}</span>
                           </button>
                         </>
                       )}
@@ -146,7 +153,7 @@ function UserEditGeneral() {
                   </div>
                   <div className="flex items-center text-xs text-gray-500">
                     <Info size={13} className="mr-2" />
-                    <p>Recommended size 100x100</p>
+                    <p>{t('hints.avatarRecommendedSize', { size: '100x100' })}</p>
                   </div>
                 </div>
               </div>

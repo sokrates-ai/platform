@@ -1,4 +1,5 @@
 'use client'
+//Nicht Übersetzt da nicht in benutzung
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import BreadCrumbs from '@components/Dashboard/Misc/BreadCrumbs'
@@ -7,9 +8,10 @@ import { getUriWithOrg } from '@services/config/config'
 import { Settings, Users, Gem } from 'lucide-react'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
-import PaymentsConfigurationPage from '@components/Dashboard/Pages/Payments/PaymentsConfigurationPage'
-import PaymentsProductPage from '@components/Dashboard/Pages/Payments/PaymentsProductPage'
-import PaymentsCustomersPage from '@components/Dashboard/Pages/Payments/PaymentsCustomersPage'
+//Auskommentiert, da seiten nicht exitieren und fehler werfen
+//import PaymentsConfigurationPage from '@components/Dashboard/Pages/Payments/PaymentsConfigurationPage'
+//import PaymentsProductPage from '@components/Dashboard/Pages/Payments/PaymentsProductPage'
+//import PaymentsCustomersPage from '@components/Dashboard/Pages/Payments/PaymentsCustomersPage'
 import useFeatureFlag from '@components/Hooks/useFeatureFlag'
 
 export type PaymentsParams = {
@@ -68,7 +70,7 @@ function PaymentsPage({ params }: { params: PaymentsParams }) {
     }
   }
 
-  return (
+/*  return (
     <div className="h-screen w-full bg-[#f8f8f8] flex flex-col">
       <div className="pl-10 pr-10 tracking-tight bg-[#fcfbfc] z-10 shadow-[0px_4px_16px_rgba(0,0,0,0.06)]">
         <BreadCrumbs type="payments" />
@@ -121,7 +123,7 @@ function PaymentsPage({ params }: { params: PaymentsParams }) {
         {selectedSubPage === 'customers' && <PaymentsCustomersPage />}
       </motion.div>
     </div>
-  )
+  )*/
 }
 
 const TabLink = ({ href, icon, label, isActive, onClick }: { href: string, icon: React.ReactNode, label: string, isActive: boolean, onClick: () => void }) => (

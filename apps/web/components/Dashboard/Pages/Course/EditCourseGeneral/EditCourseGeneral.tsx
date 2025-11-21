@@ -10,39 +10,41 @@ import * as Form from '@radix-ui/react-form';
 import React, { useEffect, useState } from 'react';
 import ThumbnailUpdate from './ThumbnailUpdate';
 import { useCourse, useCourseDispatch } from '@components/Contexts/CourseContext';
+import { useTranslations } from 'next-intl'
 
 type EditCourseStructureProps = {
   orgslug: string
   course_uuid?: string
 }
 
-const validate = (values: any) => {
-  const errors = {} as any;
-
-  if (!values.name) {
-    errors.name = 'Required';
-  } else if (values.name.length > 100) {
-    errors.name = 'Must be 100 characters or less';
-  }
-
-  if (!values.description) {
-    errors.description = 'Required';
-  } else if (values.description.length > 1000) {
-    errors.description = 'Must be 1000 characters or less';
-  }
-
-  if (!values.learnings) {
-    errors.learnings = 'Required';
-  }
-
-  return errors;
-};
-
 function EditCourseGeneral(props: EditCourseStructureProps) {
+  const t = useTranslations('EditCourseGeneral')
   const [error, setError] = useState('');
   const course = useCourse();
   const dispatchCourse = useCourseDispatch() as any;
   const { isLoading, courseStructure } = course as any;
+
+  const validate = (values: any) => {
+    const errors = {} as any;
+
+    if (!values.name) {
+      errors.name = t('validation.required');
+    } else if (values.name.length > 100) {
+      errors.name = t('validation.max', { count: 100 });
+    }
+
+    if (!values.description) {
+      errors.description = t('validation.required');
+    } else if (values.description.length > 1000) {
+      errors.description = t('validation.max', { count: 1000 });
+    }
+
+    if (!values.learnings) {
+      errors.learnings = t('validation.required');
+    }
+
+    return errors;
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -59,7 +61,7 @@ function EditCourseGeneral(props: EditCourseStructureProps) {
         // Add your submission logic here
         dispatchCourse({ type: 'setIsSaved' });
       } catch (e) {
-        setError('Failed to save course structure.');
+        setError(t('errors.saveFailed'));
       }
     },
     enableReinitialize: true,
@@ -98,7 +100,7 @@ function EditCourseGeneral(props: EditCourseStructureProps) {
             )}
             <FormLayout onSubmit={formik.handleSubmit}>
               <FormField name="name">
-                <FormLabelAndMessage label="Name" message={formik.errors.name} />
+                <FormLabelAndMessage label={t('form.name.label')} message={formik.errors.name} />
                 <Form.Control asChild>
                   <Input
                     style={{ backgroundColor: 'white' }}
@@ -106,12 +108,13 @@ function EditCourseGeneral(props: EditCourseStructureProps) {
                     value={formik.values.name}
                     type="text"
                     required
+                    aria-label={t('form.name.label')}
                   />
                 </Form.Control>
               </FormField>
 
               <FormField name="description">
-                <FormLabelAndMessage label="Description" message={formik.errors.description} />
+                <FormLabelAndMessage label={t('form.description.label')} message={formik.errors.description} />
                 <Form.Control asChild>
                   <Input
                     style={{ backgroundColor: 'white' }}
@@ -119,48 +122,52 @@ function EditCourseGeneral(props: EditCourseStructureProps) {
                     value={formik.values.description}
                     type="text"
                     required
+                    aria-label={t('form.description.label')}
                   />
                 </Form.Control>
               </FormField>
 
               <FormField name="about">
-                <FormLabelAndMessage label="About" message={formik.errors.about} />
+                <FormLabelAndMessage label={t('form.about.label')} message={formik.errors.about} />
                 <Form.Control asChild>
                   <Textarea
                     style={{ backgroundColor: 'white' }}
                     onChange={formik.handleChange}
                     value={formik.values.about}
                     required
+                    aria-label={t('form.about.label')}
                   />
                 </Form.Control>
               </FormField>
 
               <FormField name="learnings">
-                <FormLabelAndMessage label="Learnings" message={formik.errors.learnings} />
+                <FormLabelAndMessage label={t('form.learnings.label')} message={formik.errors.learnings} />
                 <Form.Control asChild>
                   <Textarea
                     style={{ backgroundColor: 'white' }}
                     onChange={formik.handleChange}
                     value={formik.values.learnings}
                     required
+                    aria-label={t('form.learnings.label')}
                   />
                 </Form.Control>
               </FormField>
 
               <FormField name="tags">
-                <FormLabelAndMessage label="Tags" message={formik.errors.tags} />
+                <FormLabelAndMessage label={t('form.tags.label')} message={formik.errors.tags} />
                 <Form.Control asChild>
                   <Textarea
                     style={{ backgroundColor: 'white' }}
                     onChange={formik.handleChange}
                     value={formik.values.tags}
                     required
+                    aria-label={t('form.tags.label')}
                   />
                 </Form.Control>
               </FormField>
 
               <FormField name="thumbnail">
-                <FormLabelAndMessage label="Thumbnail" />
+                <FormLabelAndMessage label={t('form.thumbnail.label')} />
                 <Form.Control asChild>
                   <ThumbnailUpdate />
                 </Form.Control>

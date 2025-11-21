@@ -1,3 +1,4 @@
+//NIcht Überstzt da nicht in benutzung
 import React from 'react'
 import { AlertCircle } from 'lucide-react'
 import CoursePaidOptions from './CoursePaidOptions'

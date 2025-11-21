@@ -11,6 +11,7 @@ import { SPRITE_SCALE_FACTOR } from '@components/Objects/ContentMap/constants';
 import { LayoutState } from '@components/Objects/ContentMap/Canvas'; 
 import { AnimatePresence, motion } from "framer-motion"
 import { X, PanelRightOpen } from "lucide-react"
+import { useTranslations } from 'next-intl'
 const ContentMap = dynamic(() => import('components/Objects/ContentMap/Canvas'), { ssr: false });
 
 export interface EditCourseMapProps {
@@ -195,6 +196,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
     const [clampToMap, setClampToMap] = React.useState<boolean>(true)
     const lastInitializedUUID = React.useRef<string | undefined>(undefined);
     const [assetPanelOpen, setAssetPanelOpen] = useState(false)
+    const t = useTranslations('EditCourseMap')
 
     // Initial state for reducer
     const [state, dispatch] = useReducer(layoutReducer, {
@@ -326,7 +328,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
     const handleClampToMapChange = (clampToMap: boolean) => setClampToMap(clampToMap)
 
     if (!onMapUpdateCallbackRef.current || !state.layout) {
-        return (<div className='bg-black flex flex-col items-center justify-center h-full'>
+        return (<div className='bg-black flex flex-col items-center justify-center h-full' role="status" aria-label={t('loading')}>
             <BarLoader
                 width={600}
                 height={10}
@@ -343,6 +345,8 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
                     className="absolute top-6 right-8 z-30 bg-white/80 hover:bg-white/90 border border-gray-200 shadow-lg rounded-full p-2 transition-all"
                     onClick={() => setAssetPanelOpen(true)}
                     style={{ display: assetPanelOpen ? 'none' : 'block' }}
+                    aria-label={t('buttons.openAssetBrowser')}
+                    title={t('buttons.openAssetBrowser')}
                 >
                     <PanelRightOpen className="w-6 h-6 text-gray-700" />
                 </button>
@@ -395,16 +399,19 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
                             transition={{ type: "spring", stiffness: 200, damping: 30 }}
                             className="absolute top-0 right-0 h-full w-[350px] bg-white border-l border-gray-200 shadow-xl z-40 flex flex-col"
                             style={{ minWidth: 0 }}
+                            aria-label={t('assetBrowser.title')}
                         >
                             <button
                                 className="absolute top-4 right-4 z-50 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-full p-1 shadow"
                                 onClick={() => setAssetPanelOpen(false)}
+                                aria-label={t('buttons.closeAssetBrowser')}
+                                title={t('buttons.closeAssetBrowser')}
                             >
                                 <X className="w-5 h-5 text-gray-700" />
                             </button>
                             <div className="p-6 border-b">
-                                <h3 className="text-lg font-semibold">Asset Browser</h3>
-                                <p className="text-xs text-gray-500">Drag assets onto the map</p>
+                                <h3 className="text-lg font-semibold">{t('assetBrowser.title')}</h3>
+                                <p className="text-xs text-gray-500">{t('assetBrowser.subtitle')}</p>
                             </div>
                             <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: 'calc(100vh - 80px)' }}>
                                 <div className="grid grid-cols-2 gap-4">

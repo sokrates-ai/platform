@@ -16,21 +16,7 @@ import * as Yup from 'yup'
 import { createExercise } from '@services/courses/workspaces'
 import { mutate } from 'swr'
 import { X } from 'lucide-react'
-
-const validationSchema = Yup.object().shape({
-  title: Yup.string()
-    .required('Exercise name is required')
-    .max(100, 'Must be 100 characters or less'),
-  description: Yup.string().max(1000, 'Must be 1000 characters or less'),
-  task: Yup.string(),
-  solution: Yup.string(),
-  tags: Yup.array().of(
-    Yup.object().shape({
-      value: Yup.string(),
-      color: Yup.number(),
-    })
-  ),
-})
+import { useTranslations } from 'next-intl'
 
 function CreateExerciseModal({
   closeModal,
@@ -39,10 +25,30 @@ function CreateExerciseModal({
   courseID,
   tags,
 }: any) {
+  const t = useTranslations('CreateExerciseModal')
   const router = useRouter()
   const session = useSokratesSession() as any;
   const [tagInput, setTagInput] = React.useState('')
   const [internalTags, setInternalTags] = React.useState<string[]>([])
+
+  const validationSchema = React.useMemo(
+    () =>
+      Yup.object().shape({
+        title: Yup.string()
+          .required(t('errors.titleRequired'))
+          .max(100, t('errors.max100')),
+        description: Yup.string().max(1000, t('errors.max1000')),
+        task: Yup.string(),
+        solution: Yup.string(),
+        tags: Yup.array().of(
+          Yup.object().shape({
+            value: Yup.string(),
+            color: Yup.number(),
+          })
+        ),
+      }),
+    [t]
+  )
 
   const formik = useFormik({
     initialValues: {
@@ -50,12 +56,10 @@ function CreateExerciseModal({
       description: '',
       task: '',
       solution: '',
-      // course_id: '',
     },
     validationSchema,
     onSubmit: async (values, { setSubmitting }) => {
-      const toast_loading = toast.loading('Creating exercise...')
-
+      const toast_loading = toast.loading(t('toast.creating'))
       try {
         const res = await createExercise(
           {
@@ -68,17 +72,16 @@ function CreateExerciseModal({
           },
           session.data?.tokens?.access_token
         )
-
         if (res.success || res.success === undefined) {
           toast.dismiss(toast_loading)
-          toast.success('Exercise created successfully')
+          toast.success(t('toast.created'))
           closeModal()
           mutate(mutateURL)
         } else {
           toast.error(res.data.detail)
         }
-      } catch (error) {
-        toast.error('Failed to create exercise')
+      } catch {
+        toast.error(t('toast.failed'))
       } finally {
         setSubmitting(false)
       }
@@ -86,39 +89,31 @@ function CreateExerciseModal({
   })
 
   function handleAddTag() {
-    const newInput = tags.find((t: any) => t.value == tagInput)
+    const newInput = tags.find((tg: any) => tg.value == tagInput)
     if (!newInput) {
-      throw `${newInput} not found in tags`
+      toast.error(t('tags.notFound'))
+      return
     }
-
     const newInputVal = newInput.value
-
-    if (!internalTags.find((t: any) => t.value === newInputVal)) {
+    if (!internalTags.find((t2: any) => t2 === newInputVal)) {
       setInternalTags([...internalTags, newInputVal])
     }
-
-    // setTagInput("")
   }
 
   const handleRemoveTag = (tagToRemove: string) => {
     setInternalTags(internalTags.filter((tag: string) => tag !== tagToRemove))
   }
 
-  const availableTags = tags.filter((t: any) => {
-    const foundItem = internalTags.find((t2: any) => {
-      return t2 === t.value
-    })
-    const found = foundItem !== undefined
-    return !found
-  })
-
+  const availableTags = tags.filter(
+    (tg: any) => !internalTags.find((t2: any) => t2 === tg.value)
+  )
   const addButtonDisabled = tagInput.trim() === '' || availableTags.length === 0
 
   return (
     <FormLayout onSubmit={formik.handleSubmit}>
       <FormField name="title">
         <FormLabelAndMessage
-          label="Exercise Title"
+          label={t('labels.exerciseTitle')}
           message={formik.errors.title}
         />
         <Form.Control asChild>
@@ -133,7 +128,7 @@ function CreateExerciseModal({
 
       <FormField name="description">
         <FormLabelAndMessage
-          label="Exercise Description"
+          label={t('labels.exerciseDescription')}
           message={formik.errors.description}
         />
         <Form.Control asChild>
@@ -146,30 +141,22 @@ function CreateExerciseModal({
       </FormField>
 
       <FormField name="tags">
-        <FormLabelAndMessage label="Tags" message="" />
+        <FormLabelAndMessage label={t('labels.tags')} message="" />
         <div className="space-y-2">
           <div className="flex justify-between">
             <Form.Control asChild>
               <select
                 className="bg-gray-100/40 rounded-lg px-1 py-2 outline outline-1 outline-gray-100"
-                onChange={(e) => {
-                  setTagInput(e.target.value)
-                }}
+                onChange={(e) => setTagInput(e.target.value)}
                 value={tagInput}
-                defaultValue={''}
+                defaultValue=""
               >
-                <option value="">- None -</option>
-                {availableTags.map((c: any) => {
-                  return (
-                    <option
-                      key={c.value}
-                      value={c.value}
-                      className="w-10 h-6 rounded-full border-0 p-0 cursor-pointer bg-transparent"
-                    >
-                      {c.value}
-                    </option>
-                  )
-                })}
+                <option value="">{t('labels.none')}</option>
+                {availableTags.map((c: any) => (
+                  <option key={c.value} value={c.value}>
+                    {c.value}
+                  </option>
+                ))}
               </select>
             </Form.Control>
 
@@ -181,41 +168,39 @@ function CreateExerciseModal({
               disabled={addButtonDisabled}
               type="button"
             >
-              Add Tag
+              {t('labels.addTag')}
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {internalTags.map((tag: any) => {
-              const tagObj = tags.find((t: any) => t.value === tag)
-              const color = `#${tagObj.color?.toString(16).padStart(6, '0')}`
-
-              return (
-                <div
-                  key={tag}
-                  className="flex items-center gap-1 px-2 py-1 rounded-full text-sm"
-                  style={{
-                    backgroundColor: color,
-                  }}
-                >
-                  <span>{tag}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveTag(tag)}
-                    className="text-gray-500 hover:text-gray-700"
+            <div className="flex flex-wrap gap-2">
+              {internalTags.map((tag: any) => {
+                const tagObj = tags.find((tg: any) => tg.value === tag)
+                const color = `#${tagObj?.color?.toString(16).padStart(6, '0')}`
+                return (
+                  <div
+                    key={tag}
+                    className="flex items-center gap-1 px-2 py-1 rounded-full text-sm"
+                    style={{ backgroundColor: color }}
                   >
-                    <X size={14} />
-                  </button>
-                </div>
-              )
-            })}
-          </div>
+                    <span>{tag}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag(tag)}
+                      className="text-gray-500 hover:text-gray-700"
+                      aria-label={t('tags.remove', { tag })}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
         </div>
       </FormField>
 
       <FormField name="task">
         <FormLabelAndMessage
-          label="Exercise Task"
+          label={t('labels.exerciseTask')}
           message={formik.errors.task}
         />
         <Form.Control asChild>
@@ -229,7 +214,7 @@ function CreateExerciseModal({
 
       <FormField name="solution">
         <FormLabelAndMessage
-          label="Exercise Solution"
+          label={t('labels.exerciseSolution')}
           message={formik.errors.solution}
         />
         <Form.Control asChild>
@@ -243,17 +228,13 @@ function CreateExerciseModal({
       <div className="flex justify-end mt-6">
         <button
           type="submit"
-          disabled={formik.isSubmitting}
-          className="px-4 py-2 bg-black text-white text-sm font-bold rounded-md"
+            disabled={formik.isSubmitting}
+            className="px-4 py-2 bg-black text-white text-sm font-bold rounded-md"
         >
           {formik.isSubmitting ? (
-            <BarLoader
-              cssOverride={{ borderRadius: 60 }}
-              width={60}
-              color="#ffffff"
-            />
+            <BarLoader cssOverride={{ borderRadius: 60 }} width={60} color="#ffffff" />
           ) : (
-            'Create Exercise'
+            t('labels.submit')
           )}
         </button>
       </div>

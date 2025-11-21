@@ -10,6 +10,7 @@ import { mutate } from 'swr'
 import { getAPIUrl } from '@services/config/config'
 import { revalidateTags } from '@services/utils/ts/requests'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
+import { useTranslations } from 'next-intl'
 
 interface ModifiedChapterInterface {
   chapterId: string
@@ -18,7 +19,9 @@ interface ModifiedChapterInterface {
 
 function Chapter(props: any) {
   const router = useRouter()
-  const session = useSokratesSession() as any;  const [modifiedChapter, setModifiedChapter] = React.useState<
+  const session = useSokratesSession() as any;
+  const t = useTranslations('CourseEditChapter')
+  const [modifiedChapter, setModifiedChapter] = React.useState<
     ModifiedChapterInterface | undefined
   >(undefined)
   const [selectedChapter, setSelectedChapter] = React.useState<
@@ -49,7 +52,6 @@ function Chapter(props: any) {
           {...provided.dragHandleProps}
           {...provided.draggableProps}
           ref={provided.innerRef}
-          //  isDragging={snapshot.isDragging}
           className="max-w-screen-2xl mx-auto bg-white px-5"
           key={props.info.list.chapter.id}
         >
@@ -69,7 +71,7 @@ function Chapter(props: any) {
                     <input
                       type="text"
                       className="bg-transparent outline-none text-sm text-neutral-700"
-                      placeholder="Chapter name"
+                      placeholder={t('chapterNamePlaceholder')}
                       value={
                         modifiedChapter
                           ? modifiedChapter?.chapterName
@@ -110,16 +112,16 @@ function Chapter(props: any) {
             </div>
             <MoreVertical size={15} className="text-gray-300" />
             <ConfirmationModal
-              confirmationButtonText="Delete Chapter"
-              confirmationMessage="Are you sure you want to delete this chapter?"
-              dialogTitle={'Delete ' + props.info.list.chapter.name + ' ?'}
+              confirmationButtonText={t('deleteChapter')}
+              confirmationMessage={t('confirmDeleteChapter')}
+              dialogTitle={t('deleteChapterTitle', { name: props.info.list.chapter.name })}
               dialogTrigger={
                 <div
                   className=" hover:cursor-pointer p-1 px-4 bg-red-600 rounded-md shadow flex space-x-1 items-center text-rose-100 text-sm"
                   rel="noopener noreferrer"
                 >
                   <X size={15} className="text-rose-200 font-bold" />
-                  <p>Delete Chapter</p>
+                  <p>{t('deleteChapter')}</p>
                 </div>
               }
               functionToExecute={() =>
@@ -160,7 +162,7 @@ function Chapter(props: any) {
                   >
                     <Sparkles className="" size={17} />
                     <div className="text-sm mx-auto my-auto  items-center font-bold">
-                      Add Activity +{' '}
+                      {t('addActivity')} +
                     </div>
                   </div>
                 </div>
