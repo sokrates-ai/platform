@@ -17,7 +17,7 @@ function ClientAdminLayout({
 
     return (
         <SessionProvider>
-            <AdminAuthorization authorizationMode="page">
+            <AdminAuthorization authorizationMode="page">DashMobileMenu
                 <div className="flex flex-col md:flex-row">
                     {isMobile ? (
                         <DashMobileMenu />

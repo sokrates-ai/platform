@@ -1,3 +1,4 @@
+//Not used currently look at commented return statement
 import Image, { StaticImageData } from 'next/image';
 import React, { useEffect, useState } from 'react';
 import OnBoardLogin from '@public/onboarding/OnBoardLogin.png';

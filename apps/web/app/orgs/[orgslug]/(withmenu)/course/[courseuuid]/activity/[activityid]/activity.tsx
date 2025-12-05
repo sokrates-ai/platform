@@ -20,12 +20,9 @@ import toast from 'react-hot-toast'
 import { mutate } from 'swr'
 import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationModal/ConfirmationModal'
 import { useMediaQuery } from 'usehooks-ts'
-import PaidCourseActivityDisclaimer from '@components/Objects/Courses/CourseActions/PaidCourseActivityDisclaimer'
 import WorkspaceActivity from '@components/Objects/Activities/Workspace/WorkspaceActivity'
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-
 
 interface ActivityClientProps {
   activityid: string
@@ -49,7 +46,6 @@ function ActivityClient(props: ActivityClientProps) {
   const [bgColor, setBgColor] = React.useState('bg-white')
   const [assignment, setAssignment] = React.useState(null) as any;
   const [markStatusButtonActive, setMarkStatusButtonActive] = React.useState(false);
-
 
   function getChapterNameByActivityId(course: any, activity_id: any) {
     for (let i = 0; i < course.chapters.length; i++) {
@@ -81,22 +77,12 @@ function ActivityClient(props: ActivityClientProps) {
     else {
       setBgColor('bg-zinc-950');
     }
-  }
-    , [activity, pathname])
+  }, [activity, pathname])
 
   return (
     <>
       <CourseProvider courseuuid={course?.course_uuid}>
         <div className="container max-w-6xl mx-auto py-6 px-4 space-y-6 mt-10">
-          {/* <ActivityIndicators
-            course_uuid={courseuuid}
-            current_activity={activityid}
-            orgslug={orgslug}
-            course={course}
-          />
-
-          <Separator className="my-4" /> */}
-
           {/* Activity Content */}
           <Card className="">
             <CardHeader className="pb-2">
@@ -110,7 +96,7 @@ function ActivityClient(props: ActivityClientProps) {
                   </h1>
                 </div>
 
-                {activity && activity.published === true && activity.content.paid_access !== false && (
+                {activity && activity.published === true && (
                   <AuthenticatedClientElement checkMethod="authentication">
                     <div className="flex items-center gap-2">
                       {activity.activity_type !== 'TYPE_ASSIGNMENT' && (
@@ -150,49 +136,43 @@ function ActivityClient(props: ActivityClientProps) {
               ) : (
                 <>
                   {activity && activity.published === true && (
-                    <>
-                      {activity.content.paid_access === false ? (
-                        <PaidCourseActivityDisclaimer course={course} />
-                      ) : (
-                        <div className="rounded-lg bg-card p-6">
-                          {activity.activity_type === 'TYPE_DYNAMIC' && (
-                            <Canva content={activity.content} activity={activity} />
-                          )}
-                          {activity.activity_type === 'TYPE_VIDEO' && (
-                            <VideoActivity course={course} activity={activity} />
-                          )}
-                          {activity.activity_type === 'TYPE_DOCUMENT' && (
-                            <DocumentPdfActivity
-                              course={course}
-                              activity={activity}
-                            />
-                          )}
-                          {activity.activity_type === 'TYPE_WORKSPACE' && (
-                            <WorkspaceActivity
-                              course={course}
-                              activity={activity}
-                              access_token={access_token}
-                              backlink={props.backlink}
-                            />
-                          )}
-                          {activity.activity_type === 'TYPE_ASSIGNMENT' && (
-                            <>
-                              {assignment ? (
-                                <AssignmentProvider assignment_uuid={assignment?.assignment_uuid}>
-                                  <AssignmentsTaskProvider>
-                                    <AssignmentSubmissionProvider assignment_uuid={assignment?.assignment_uuid}>
-                                      <AssignmentStudentActivity />
-                                    </AssignmentSubmissionProvider>
-                                  </AssignmentsTaskProvider>
-                                </AssignmentProvider>
-                              ) : (
-                                <div></div>
-                              )}
-                            </>
-                          )}
-                        </div>
+                    <div className="rounded-lg bg-card p-6">
+                      {activity.activity_type === 'TYPE_DYNAMIC' && (
+                        <Canva content={activity.content} activity={activity} />
                       )}
-                    </>
+                      {activity.activity_type === 'TYPE_VIDEO' && (
+                        <VideoActivity course={course} activity={activity} />
+                      )}
+                      {activity.activity_type === 'TYPE_DOCUMENT' && (
+                        <DocumentPdfActivity
+                          course={course}
+                          activity={activity}
+                        />
+                      )}
+                      {activity.activity_type === 'TYPE_WORKSPACE' && (
+                        <WorkspaceActivity
+                          course={course}
+                          activity={activity}
+                          access_token={access_token}
+                          backlink={props.backlink}
+                        />
+                      )}
+                      {activity.activity_type === 'TYPE_ASSIGNMENT' && (
+                        <>
+                          {assignment ? (
+                            <AssignmentProvider assignment_uuid={assignment?.assignment_uuid}>
+                              <AssignmentsTaskProvider>
+                                <AssignmentSubmissionProvider assignment_uuid={assignment?.assignment_uuid}>
+                                  <AssignmentStudentActivity />
+                                </AssignmentSubmissionProvider>
+                              </AssignmentsTaskProvider>
+                            </AssignmentProvider>
+                          ) : (
+                            <div></div>
+                          )}
+                        </>
+                      )}
+                    </div>
                   )}
                 </>
               )}
@@ -337,8 +317,7 @@ function AssignmentTools(props: {
     if (submission && submission.length > 0 && submission[0].submission_status === 'GRADED') {
       getGradingBasedOnMethod();
     }
-  }
-    , [submission, props.assignment])
+  }, [submission, props.assignment])
 
   if (!submission || submission.length === 0) {
     return (
