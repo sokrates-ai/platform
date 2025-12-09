@@ -1,0 +1,406 @@
+<html><head><META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Codebase Cleanup Report//mm2html.xsl FreeplaneVersion:freeplane 1.12.1</title><style>
+          body{
+          font-size:10pt;
+          font-family:sans-serif;
+          }
+          p.info{
+          font-size:8pt;
+          text-align:right;
+          }
+        </style></head><body>
+
+<ul><li><a name="ID_1658225506"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Codebase Cleanup Report</pre>
+
+
+
+    
+    
+
+
+
+<ul><li><a name="ID_64364842"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Security Risks</pre>
+
+
+<ul><li><a name="ID_197955657"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Unsafe environment parsing enables code injection</pre>
+
+
+<ul><li><a name="ID_598539016"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/api/config/config.py:120</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_383278927"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: Using eval() on LEARNHOUSE_DEVELOPMENT_MODE lets anyone controlling that environment variable execute arbitrary Python.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_508493415"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Replace eval() with explicit string-to-bool parsing (e.g. distutils.util.strtobool) and provide a safe default.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_776992810"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Default admin credentials ship in tooling</pre>
+
+
+<ul><li><a name="ID_564075690"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/api/cli.py:60, load_test2/user_test.py:21</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_100601048"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: Installer and load test scripts hard-code production-like admin credentials, risking compromise if leaked or reused.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_263475625"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Require credentials via environment variables or prompts and strip secrets from version control.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_134461168"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Automatic installer can recreate weak admin accounts</pre>
+
+
+<ul><li><a name="ID_293614510"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/api/src/core/events/autoinstall.py:21</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1387650987"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: Empty databases trigger install(short=True), reinstating default data and weak admin credentials.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1463933755"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Remove auto-install or gate it behind an explicit feature flag with secure credential prompts.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_1688273521"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">JWT config downgrades secrets and disables expiry</pre>
+
+
+<ul><li><a name="ID_1021744355"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/api/src/security/auth.py:21-26</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1275770693"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: authjwt_secret_key defaults to "secret" in dev mode and access token expiry uses a float, potentially never expiring.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1917539119"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Always load secrets from configuration, fail fast when missing, and pass a timedelta to FastAPI-JWT Auth settings.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_152093922"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Password reset leaks credentials through URLs</pre>
+
+
+<ul><li><a name="ID_1578260011"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/web/services/auth/auth.ts:88, apps/api/src/routers/users.py:231</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_327521154"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: Frontend sends new_password via query string, exposing plaintext passwords in logs and intermediaries.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_823201159"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Move reset parameters into a JSON body over HTTPS and keep sensitive values out of URLs.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_1083076914"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Embed sanitisation allows arbitrary attributes</pre>
+
+
+<ul><li><a name="ID_464690494"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/web/components/Objects/Editor/Extensions/EmbedObjects/EmbedObjectsComponent.tsx:41-44</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1364133216"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: DOMPurify configured with ADD_ATTR: ['*'] re-enables dangerous event attributes and allows stored XSS.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_602724802"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Whitelist only required attributes (e.g. src, allow, frameborder) and rely on DOMPurify defaults otherwise.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_281352472"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Middleware sets cookies for .localhost only</pre>
+
+
+<ul><li><a name="ID_975391960"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/web/middleware.ts:75-83</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_641089315"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: Production domains never receive learnhouse_current_orgslug cookie, breaking auth flows.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_397597051"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Derive cookie domain dynamically from request host and omit domain attribute in development.</pre>
+
+
+</li></ul>
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_1042339262"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reliability &amp; Design Smells</pre>
+
+
+<ul><li><a name="ID_118288196"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Type coercion in config breaks falsy values</pre>
+
+
+<ul><li><a name="ID_1576860502"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/api/config/config.py:334-360</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1811903702"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: bool("false") is True and list(allowed_origins) fails when None; ports default to empty strings causing crashes.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1236682827"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Parse booleans/ints explicitly, default allowed_origins to [], and validate config via Pydantic.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_497708317"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Database schema mutates at import time</pre>
+
+
+<ul><li><a name="ID_1511037279"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/api/src/core/events/database.py:32-48</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1035133974"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: Importing the module triggers recursive imports and SQLModel.metadata.create_all, modifying schema unexpectedly.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1947031822"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Move model discovery and migrations into startup hooks or tooling; keep module imports side-effect free.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_1704209970"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Async services block the event loop</pre>
+
+
+<ul><li><a name="ID_1508518334"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/api/src/services/users/users.py:37-116</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_340426828"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: async handlers call Session.exec and commit synchronously, blocking FastAPI event loop under load.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_180387652"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Adopt SQLModel async engine/session or run sync work via run_in_threadpool.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_340338307"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Runtime configuration utilities rely on brittle hacks</pre>
+
+
+<ul><li><a name="ID_643378475"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/web/services/config/config.ts:12-92</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1751939974"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: Dynamic env var name rebuilding and returning "error" strings make builds fragile and leak details.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1299476840"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Standardise config loading with schemas, remove string splicing hacks, and fail fast when env vars are missing.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_232071080"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Middleware contains placeholder error handling</pre>
+
+
+<ul><li><a name="ID_1659063798"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/web/middleware.ts:149</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_973147858"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: throw("This is broken") returns opaque 500 errors, hindering production diagnostics.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_334904529"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Replace placeholders with structured errors or redirects and add test coverage.</pre>
+
+
+</li></ul>
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_965938288"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Redundant &amp; Versioned Assets</pre>
+
+
+<ul><li><a name="ID_1207424922"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Checked-in dependencies inflate the repo</pre>
+
+
+<ul><li><a name="ID_683792435"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: node_modules/.modules.yaml:1, apps/web/node_modules/.modules.yaml:1</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_941680296"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: Committed node_modules slow clones and hide dependency provenance.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_70582238"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Delete node_modules from source control and rely on lockfiles plus CI installs.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_1772564952"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Conflicting lockfiles</pre>
+
+
+<ul><li><a name="ID_365896464"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/web/package-lock.json:1, apps/web/pnpm-lock.yaml:1</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1921470035"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: Maintaining npm and pnpm locks causes drift and wasted builds.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1790940714"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Standardise on one package manager (pnpm) and remove the other lockfile.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_763432975"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Stale orchestration artefacts</pre>
+
+
+<ul><li><a name="ID_742882389"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: docker-compose.yml.old:1</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1139703333"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: Legacy compose file confuses operators and risks drift from supported deployments.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_399693415"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Archive or delete legacy file once documented elsewhere.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_1390158500"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Load-test scaffolding mixes prod credentials</pre>
+
+
+<ul><li><a name="ID_504160788"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: load_test2/user_test.py:1-140</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1480037301"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: Bespoke tooling with hard-coded hosts and secrets belongs outside the main repo.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_624116859"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Move scripts to a private ops repo or gate them behind opt-in configuration.</pre>
+
+
+</li></ul>
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_1763170509"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Software Engineering Debt</pre>
+
+
+<ul><li><a name="ID_499693052"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Configuration is recomputed on every call</pre>
+
+
+<ul><li><a name="ID_1556741667"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/api/config/config.py:108, apps/api/src/services/dev/dev.py:5, apps/api/src/security/security.py:7</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_377058271"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: Helpers repeatedly reload YAML and environment variables, adding filesystem overhead.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1160959803"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Cache parsed configuration with a singleton or lru_cache and inject settings.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_281890368"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Auth scaffolding is inconsistent and mostly dead code</pre>
+
+
+<ul><li><a name="ID_1158986543"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/api/src/security/auth.py:16, apps/api/src/security/auth.py:43-49</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1685110872"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: OAuth2PasswordBearer points at /api/auth/login while router lives under /api/v1, and dependency is unused.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_951168290"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Fix token URL, wire dependency into endpoints, or delete unused scaffolding.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_723220112"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Password hashing utilities are contradictory</pre>
+
+
+<ul><li><a name="ID_1236288977"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/api/src/security/security.py:5-17</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_101702683"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: bcrypt CryptContext is initialised but helpers call pbkdf2_sha256 directly, creating confusion.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_882721311"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Standardise on one hashing strategy and remove unused context setup.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_1402612055"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">User service is a 600+ line grab bag</pre>
+
+
+<ul><li><a name="ID_491679885"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/api/src/services/users/users.py:1-600</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1322473454"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: Mixed responsibilities and stringified timestamps hinder reasoning and testing.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_773507764"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Split module into cohesive units, use timezone-aware datetimes, and add targeted tests.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_287720997"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Production code still emits ad-hoc prints</pre>
+
+
+<ul><li><a name="ID_376020977"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/api/src/core/events/database.py:28, apps/api/app.py:69</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1220696195"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: print statements leak internal paths and bypass structured logging.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1750326173"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Replace prints with shared logger or Python logging, gating noisy messages behind debug levels.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_1867937695"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Type safety on the frontend is effectively disabled</pre>
+
+
+<ul><li><a name="ID_1995828027"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/web/services/auth/auth.ts:4-18</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1870858091"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: Literal 'string' types and any parameters remove TypeScript guardrails.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1814241344"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Define real interfaces, remove any, and share types with backend where possible.</pre>
+
+
+</li></ul>
+</li></ul>
+<ul><li><a name="ID_738676230"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Automated coverage is almost nonexistent</pre>
+
+
+<ul><li><a name="ID_1410884887"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Reference: apps/api/src/tests/test_main.py:1-49</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1402657209"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Impact: Only two backend tests cover a single happy path, leaving critical logic untested.</pre>
+
+
+</li></ul>
+<ul><li><a name="ID_1809368642"></a><pre style="color:#000000;font-family:sansserif;font-size:10;">Recommendation: Establish baseline unit and integration tests and wire them into CI.</pre>
+
+
+</li></ul>
+</li></ul>
+</li></ul>
+</li></ul>
+<p class="info">Codebase Cleanup Report//mm2html.xsl FreeplaneVersion:freeplane 1.12.1</p></body></html>
