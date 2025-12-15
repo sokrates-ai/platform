@@ -362,14 +362,14 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                               value={tab.id}
                               asChild
                               className={cn(
-                                'flex-1 rounded-md border border-gray-300 bg-white/70',
+                                'flex-1 rounded-md border border-gray-300 bg-white/70 justify-start',
                                 snapshot.isDragging && 'border-primary shadow',
                               )}
                             >
                               <div
                                 className={cn(
-                                  'flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition',
-                                  isVertical ? 'justify-start text-left' : 'justify-center text-center',
+                                  'flex w-full items-center gap-2 rounded-md px-4 py-3 text-sm transition',
+                                  isVertical ? 'justify-start text-left' : 'justify-start text-left',
                                 )}
                               >
                                 {editingTabId === tab.id ? (
@@ -402,7 +402,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                                       startEditingTab(tab);
                                     }}
                                     className={cn(
-                                      'line-clamp-1 flex-1',
+                                      'line-clamp-1 w-[50%] text-ellipsis overflow-visible',
                                       isVertical ? 'text-left' : 'text-center',
                                     )}
                                   >
