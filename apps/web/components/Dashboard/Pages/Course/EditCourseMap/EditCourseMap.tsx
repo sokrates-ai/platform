@@ -3,20 +3,26 @@ import { useCourse, useCourseDispatch } from '@components/Contexts/CourseContext
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import { CourseMapEditorToolbar } from './EditCourseMapToolbar';
 import { BarLoader } from 'react-spinners';
-
 import dynamic from 'next/dynamic';
 import { AssetData } from '@components/Objects/ContentMap/Asset/assetTypes';
-import { SPRITES} from '@components/Dashboard/Pages/Course/EditCourseMap/spriteIndex';
+import { SPRITES } from '@components/Dashboard/Pages/Course/EditCourseMap/spriteIndex';
 import { SPRITE_SCALE_FACTOR } from '@components/Objects/ContentMap/constants';
-import { LayoutState } from '@components/Objects/ContentMap/Canvas'; 
-import { AnimatePresence, motion } from "framer-motion"
-import { X, PanelRightOpen } from "lucide-react"
+import { LayoutState } from '@components/Objects/ContentMap/Canvas';
+import { CourseTab, CourseTabSelector } from '@components/Objects/Modals/Course/Create/CourseTabSelector';
+import { AnimatePresence, motion } from 'framer-motion';
+import { X, PanelRightOpen } from 'lucide-react';
 const ContentMap = dynamic(() => import('components/Objects/ContentMap/Canvas'), { ssr: false });
 
 export interface EditCourseMapProps {
     orgslug: string
     course_uuid?: string
     onChapterClick?: (chapterID: number) => void
+    tabs: CourseTab[]
+    selectedTabId: string
+    onTabsChange: (tabs: CourseTab[]) => void
+    onTabChange: (tabId: string) => void
+    mapState: any
+    onMapStateChange: (tabId: string, mapState: any) => void
 }
 
 function updateChapterStonesInContentMapState(oldState: AssetData[], chapters: any[]): AssetData[] {
@@ -65,11 +71,9 @@ function updateChapterStonesInContentMapState(oldState: AssetData[], chapters: a
 
 }
 
-function createInitialLayout(courseStructure: any): AssetData[] {
-    const layout = courseStructure.map_state.objects
-    console.log(layout)
-    // TODO: for the production version: perform a deep type verification here and fix it in case it is broken.
-    return updateChapterStonesInContentMapState(layout, courseStructure.chapters)
+function createInitialLayout(mapState: any, chapters: any[]): AssetData[] {
+    const layout = mapState?.objects ?? [];
+    return updateChapterStonesInContentMapState(layout, chapters ?? []);
 }
 
 // Default boundaries
@@ -109,6 +113,7 @@ type LayoutAction =
     | { type: 'redo' }
     | { type: 'reset'; payload: AssetData[] }
     | { type: 'set_boundaries'; payload: { left: number; right: number; top: number; bottom: number } };
+
 
 function layoutReducer(state: LayoutHistoryState, action: LayoutAction): LayoutHistoryState {
     switch (action.type) {
@@ -182,7 +187,15 @@ function layoutReducer(state: LayoutHistoryState, action: LayoutAction): LayoutH
     }
 }
 
-const EditCourseMap: React.FC<EditCourseMapProps> = () => {
+const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
+    const {
+        tabs,
+        selectedTabId,
+        onTabsChange,
+        onTabChange,
+        mapState,
+        onMapStateChange,
+    } = props;
     const session = useSokratesSession() as any;
     const access_token = session?.data?.tokens?.access_token
     const course = useCourse() as any
@@ -193,8 +206,9 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
     const [snapToGrid, setSnapToGrid] = React.useState<boolean>(true)
     const [gridGranularity, setGridGranularity] = React.useState<number>(5)
     const [clampToMap, setClampToMap] = React.useState<boolean>(true)
-    const lastInitializedUUID = React.useRef<string | undefined>(undefined);
     const [assetPanelOpen, setAssetPanelOpen] = useState(false)
+    const lastInitializedTabRef = React.useRef<string | null>(null);
+    const lastInitializedMapSignatureRef = React.useRef<string | null>(null);
 
     // Initial state for reducer
     const [state, dispatch] = useReducer(layoutReducer, {
@@ -207,46 +221,60 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
 
     // Initialize layout and history when courseStructure is loaded (only on first load or course change)
     React.useEffect(() => {
-        if (!isLoading && courseStructure?.public !== undefined) {
-            const uuid = courseStructure?.course_uuid;
-            if (lastInitializedUUID.current === uuid) return;
-            lastInitializedUUID.current = uuid;
-            onMapUpdateCallbackRef.current = (mapData: any[]) => {
-                dispatchCourse({ type: 'setIsNotSaved' })
-                const updatedCourse = {
-                    ...courseStructure,
-                    map_state: {
-                        ...courseStructure.map_state,
-                        objects: mapData
-                    }
-                }
-                dispatchCourse({ type: 'setCourseStructure', payload: updatedCourse })
-            }
-            const initialLayout = createInitialLayout(courseStructure)
-            
-            // Extract boundaries from map_state, fall back to legacy worldWidth/worldHeight if needed
-            let boundaries = courseStructure.map_state.boundaries;
-            
-            if (!boundaries && (courseStructure.map_state.worldWidth || courseStructure.map_state.worldHeight)) {
-                const width = courseStructure.map_state.worldWidth || 2000;
-                const height = courseStructure.map_state.worldHeight || 2000;
-                boundaries = {
-                    left: -width / 2,
-                    right: width / 2,
-                    top: -height / 2,
-                    bottom: height / 2
-                };
-            }
+        if (isLoading) return;
+        if (!mapState) return;
+        const mapSignature = [
+            selectedTabId,
+            Array.isArray(mapState?.objects) ? mapState.objects.length : '0',
+            mapState?.boundaries
+                ? `${mapState.boundaries.left}:${mapState.boundaries.right}:${mapState.boundaries.top}:${mapState.boundaries.bottom}`
+                : 'default',
+        ].join('|');
 
-            dispatch({
-                type: 'init',
-                payload: {
-                    layout: initialLayout,
-                    boundaries: boundaries || DEFAULT_BOUNDARIES,
-                }
-            })
+        if (lastInitializedMapSignatureRef.current === mapSignature) {
+            return;
         }
-    }, [isLoading, courseStructure])
+
+        lastInitializedTabRef.current = selectedTabId;
+        lastInitializedMapSignatureRef.current = mapSignature;
+
+        const initialLayout = createInitialLayout(mapState, courseStructure?.chapters ?? []);
+        let boundaries = mapState?.boundaries;
+
+        if (
+            !boundaries &&
+            (mapState?.worldWidth || mapState?.worldHeight)
+        ) {
+            const width = mapState?.worldWidth || 2000;
+            const height = mapState?.worldHeight || 2000;
+            boundaries = {
+                left: -width / 2,
+                right: width / 2,
+                top: -height / 2,
+                bottom: height / 2,
+            };
+        }
+
+        dispatch({
+            type: 'init',
+            payload: {
+                layout: initialLayout,
+                boundaries: boundaries || DEFAULT_BOUNDARIES,
+            },
+        });
+    }, [isLoading, mapState, courseStructure?.chapters, selectedTabId]);
+
+    React.useEffect(() => {
+        if (!mapState) return;
+        onMapUpdateCallbackRef.current = (mapData: AssetData[]) => {
+            const nextMap = {
+                ...mapState,
+                objects: mapData,
+            };
+            onMapStateChange(selectedTabId, nextMap);
+            dispatchCourse({ type: 'setIsNotSaved' });
+        };
+    }, [mapState, onMapStateChange, selectedTabId, dispatchCourse]);
 
     // Call update callback when layout changes (for saving)
     React.useEffect(() => {
@@ -257,29 +285,25 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
 
     // Call update callback when boundaries change (for saving)
     React.useEffect(() => {
-        if (state.boundaries && state.updateOriginator === 'user' && courseStructure) {
-            // Check if boundaries are actually different from what's in course structure
-            const currentBoundaries = courseStructure.map_state.boundaries;
-            if (currentBoundaries && 
-                currentBoundaries.left === state.boundaries.left &&
-                currentBoundaries.right === state.boundaries.right &&
-                currentBoundaries.top === state.boundaries.top &&
-                currentBoundaries.bottom === state.boundaries.bottom) {
-                // Skip update if boundaries are the same
-                return;
-            }
-
-            dispatchCourse({ type: 'setIsNotSaved' })
-            const updatedCourse = {
-                ...courseStructure,
-                map_state: {
-                    ...courseStructure.map_state,
-                    boundaries: state.boundaries
-                }
-            }
-            dispatchCourse({ type: 'setCourseStructure', payload: updatedCourse })
+        if (!mapState || !state.boundaries) return;
+        if (state.updateOriginator !== 'user') return;
+        const currentBoundaries = mapState?.boundaries;
+        if (
+            currentBoundaries &&
+            currentBoundaries.left === state.boundaries.left &&
+            currentBoundaries.right === state.boundaries.right &&
+            currentBoundaries.top === state.boundaries.top &&
+            currentBoundaries.bottom === state.boundaries.bottom
+        ) {
+            return;
         }
-    }, [state.boundaries, state.updateOriginator, courseStructure, dispatchCourse])
+        const nextMap = {
+            ...mapState,
+            boundaries: state.boundaries,
+        };
+        onMapStateChange(selectedTabId, nextMap);
+        dispatchCourse({ type: 'setIsNotSaved' });
+    }, [state.boundaries, state.updateOriginator, mapState, onMapStateChange, selectedTabId, dispatchCourse]);
 
     // Custom setLayout function to be passed to Canvas
     const setLayout = (updater: LayoutState | ((prev: LayoutState) => LayoutState)) => {
@@ -325,6 +349,10 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
     const handleGridGranularityChange = (value: number) => setGridGranularity(value)
     const handleClampToMapChange = (clampToMap: boolean) => setClampToMap(clampToMap)
 
+    const layoutForActiveTab = React.useMemo(() => {
+        return state;
+    }, [state]);
+
     if (!onMapUpdateCallbackRef.current || !state.layout) {
         return (<div className='bg-black flex flex-col items-center justify-center h-full'>
             <BarLoader
@@ -337,7 +365,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
         </div>)
     } else {
         return (
-            <div className="relative h-full w-full overflow-hidden">
+            <div className="relative h-full w-full overflow-hidden" data-selected-tab={selectedTabId}>
                 {/* Top-right button to open asset browser */}
                 <button
                     className="absolute top-6 right-8 z-30 bg-white/80 hover:bg-white/90 border border-gray-200 shadow-lg rounded-full p-2 transition-all"
@@ -348,8 +376,16 @@ const EditCourseMap: React.FC<EditCourseMapProps> = () => {
                 </button>
                 {/* Canvas/ContentMap - always full size */}
                 <div className="relative bg-neutral-100 h-full w-full flex flex-col">
+                    <CourseTabSelector
+                        className="mb-4"
+                        tabs={tabs}
+                        activeTab={selectedTabId}
+                        onTabsChange={onTabsChange}
+                        onActiveTabChange={onTabChange}
+                    />
+
                     <ContentMap
-                        layout={state}
+                        layout={layoutForActiveTab}
                         setLayout={setLayout}
                         readOnly={false}
                         showGrid={showGrid}

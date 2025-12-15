@@ -29,6 +29,7 @@ import './graph.css';
 import styled from 'styled-components'
 import dynamic from 'next/dynamic'
 import { Button } from "@components/ui/button";
+import { CourseTab, CourseTabSelector } from '@components/Objects/Modals/Course/Create/CourseTabSelector';
 
 // -----------------------------------------------------------------------------
 // TYPE DEFINITIONS
@@ -108,7 +109,28 @@ const BlurVignette = styled.div`
 // MAIN COMPONENT
 // -----------------------------------------------------------------------------
 
-const EditCourseStructure = (props: { orgslug: string; course_uuid?: string }) => {
+type EditCourseStructureProps = {
+  orgslug: string;
+  course_uuid?: string;
+  tabs: CourseTab[];
+  selectedTabId: string;
+  onTabsChange: (tabs: CourseTab[]) => void;
+  onTabChange: (tabId: string) => void;
+  tabContent: {
+    chapters: any[];
+  };
+  onTabContentChange: (tabId: string, chapters: any[]) => void;
+};
+
+const EditCourseStructure = (props: EditCourseStructureProps) => {
+  const {
+    tabs,
+    selectedTabId,
+    onTabsChange,
+    onTabChange,
+    tabContent,
+    onTabContentChange,
+  } = props;
   // Local state management ----------------------------------------------------
   const [chapterID, setChapterID] = useState(-1);
   const [winReady, setWinReady] = useState(false);
@@ -124,6 +146,7 @@ const EditCourseStructure = (props: { orgslug: string; course_uuid?: string }) =
   const course_structure = course ? course.courseStructure : {};
   const course_uuid = course ? course.courseStructure.course_uuid : '';
   const dispatchCourse = useCourseDispatch() as any;
+  const tabChapters = tabContent?.chapters ?? [];
 
   // Refs for ReactFlow instance and container
   const reactFlowRef = React.useRef<HTMLDivElement>(null) as React.MutableRefObject<HTMLDivElement | null>;
@@ -142,7 +165,8 @@ const EditCourseStructure = (props: { orgslug: string; course_uuid?: string }) =
     router.refresh();
     setNewChapterModal(false);
     // Optimistic UI update so the node appears immediately
-    course_structure.chapters.push(chapter);
+    const nextChapters = [...tabChapters, chapter];
+    onTabContentChange(selectedTabId, nextChapters);
   };
 
   const modifyChapterEdge = async (
@@ -164,12 +188,19 @@ const EditCourseStructure = (props: { orgslug: string; course_uuid?: string }) =
     await revalidateTags(['courses'], props.orgslug);
     router.refresh();
 
-    const chapterIdx = course_structure.chapters.findIndex((c: any) => c.id === toChapterID);
-    if (!deleteEdge) {
-      course_structure.chapters[chapterIdx].predecessors.push(fromChapterID);
-    } else {
-      course_structure.chapters[chapterIdx].predecessors = course_structure.chapters[chapterIdx].predecessors.filter((p: number) => p !== fromChapterID);
-    }
+    const updatedChapters = tabChapters.map((chapter: any) => {
+      if (chapter.id !== toChapterID) {
+        return chapter;
+      }
+      const nextPredecessors = deleteEdge
+        ? chapter.predecessors.filter((p: number) => p !== fromChapterID)
+        : [...chapter.predecessors, fromChapterID];
+      return {
+        ...chapter,
+        predecessors: Array.from(new Set(nextPredecessors)),
+      };
+    });
+    onTabContentChange(selectedTabId, updatedChapters);
   };
 
   // ---------------------------------------------------------------------------
@@ -181,22 +212,29 @@ const EditCourseStructure = (props: { orgslug: string; course_uuid?: string }) =
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
-    if (type === 'chapter') {
-      const newChapterOrder = [...course_structure.chapters];
-      newChapterOrder.splice(source.index, 1);
-      newChapterOrder.splice(destination.index, 0, course_structure.chapters[source.index]);
-      dispatchCourse({ type: 'setCourseStructure', payload: { ...course_structure, chapters: newChapterOrder } });
-      dispatchCourse({ type: 'setIsNotSaved' });
+  if (type === 'chapter') {
+      const newChapterOrder = [...tabChapters];
+      const [moved] = newChapterOrder.splice(source.index, 1);
+      if (moved) {
+        newChapterOrder.splice(destination.index, 0, moved);
+        onTabContentChange(selectedTabId, newChapterOrder);
+        dispatchCourse({ type: 'setIsNotSaved' });
+      }
     }
 
     if (type === 'activity') {
-      const newChapterOrder = [...course_structure.chapters];
+      const newChapterOrder = tabChapters.map((chapter: any) => ({
+        ...chapter,
+        activities: [...(chapter.activities ?? [])],
+      }));
       const sourceChapter = newChapterOrder.find((c: any) => c.chapter_uuid === source.droppableId) as any;
       const destinationChapter = newChapterOrder.find((c: any) => c.chapter_uuid === destination.droppableId) ?? sourceChapter;
+      if (!sourceChapter || !destinationChapter) return;
       const activity = sourceChapter.activities.find((a: any) => a.activity_uuid === draggableId);
+      if (!activity) return;
       sourceChapter.activities.splice(source.index, 1);
       destinationChapter.activities.splice(destination.index, 0, activity);
-      dispatchCourse({ type: 'setCourseStructure', payload: { ...course_structure, chapters: newChapterOrder } });
+      onTabContentChange(selectedTabId, newChapterOrder);
       dispatchCourse({ type: 'setIsNotSaved' });
     }
   };
@@ -418,15 +456,28 @@ const EditCourseStructure = (props: { orgslug: string; course_uuid?: string }) =
   // LIFECYCLE / RENDER LOGIC FOR MAIN COMPONENT
   // ---------------------------------------------------------------------------
 
-  useEffect(() => setWinReady(true), [props.course_uuid, course_structure, course]);
+  useEffect(() => setWinReady(true), [props.course_uuid, tabChapters, course]);
 
-  if (!course || !course_structure?.chapters) return <PageLoading />;
+  if (!course) return <PageLoading />;
 
-  const currentChapter = course_structure.chapters.find((c: any) => c.id === chapterID);
+  const currentChapter = tabChapters.find((c: any) => c.id === chapterID);
   const sidePanelOpen = winReady && currentChapter;
 
+  useEffect(() => {
+    if (!tabChapters.some((chapter: any) => chapter.id === chapterID)) {
+      setChapterID(-1);
+    }
+  }, [tabChapters, chapterID]);
+
   return (
-    <div className="relative h-full w-full overflow-hidden">
+    <div className="relative h-full w-full overflow-hidden" data-selected-tab={selectedTabId}>
+      <CourseTabSelector
+        className=""
+        tabs={tabs}
+        activeTab={selectedTabId}
+        onTabsChange={onTabsChange}
+        onActiveTabChange={onTabChange}
+      />
       {/* MAIN GRID */}
       <motion.div
         className="grid h-full w-full"
@@ -437,7 +488,7 @@ const EditCourseStructure = (props: { orgslug: string; course_uuid?: string }) =
         {/* GRAPH AREA */}
         <div className="relative h-full w-full bg-white">
           <NewGraph
-            chapters={course_structure.chapters}
+            chapters={tabChapters}
             setChapterID={setChapterID}
             chapterID={chapterID}
             reactFlowRef={reactFlowRef}

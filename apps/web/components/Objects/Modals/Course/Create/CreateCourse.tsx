@@ -215,25 +215,6 @@ function CreateCourseModal({ closeModal, orgslug }: any) {
         </Form.Control>
       </FormField>
 
-      <FormField name="visibility">
-        <FormLabelAndMessage 
-          label="Course Visibility"
-          message={formik.errors.visibility}
-        />
-        <Select
-          value={formik.values.visibility.toString()}
-          onValueChange={(value) => formik.setFieldValue('visibility', value === 'true')}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select visibility" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="true">Public (Available to see on the internet)</SelectItem>
-            <SelectItem value="false">Private (Private to users)</SelectItem>
-          </SelectContent>
-        </Select>
-      </FormField>
-
       <div className="flex justify-end mt-6">
         <Button
           variant={"secondary"}

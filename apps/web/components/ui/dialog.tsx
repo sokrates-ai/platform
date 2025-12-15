@@ -54,6 +54,7 @@ const DialogContent = React.forwardRef<
         aria-modal="true"
         className={cn(
           "relative z-50 grid w-full max-w-[min(90vw,40rem)]",
+          "px-[1rem] py-[0.8rem]",
           "max-h-[calc(100dvh-4rem)] overflow-y-auto gap-4 duration-200",
           "rounded-[0.875rem] border-4 border-SokratesGrayBorder bg-SokratesWhite",
           "shadow-[0_8px_0_0_var(--color-SokratesBlackBoxShadow)]",

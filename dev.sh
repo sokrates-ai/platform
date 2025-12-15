@@ -20,7 +20,7 @@ check() {
 
 api_setup() {
     echo "[SETUP]: API"
-    bash -c 'cd ./apps/api/ && poetry lock && poetry install'
+    bash -c 'cd ./apps/api/ && mkdir -p ./content && poetry lock && poetry install'
 }
 
 web_setup() {
