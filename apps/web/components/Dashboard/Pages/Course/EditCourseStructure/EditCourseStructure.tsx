@@ -29,6 +29,7 @@ import './graph.css';
 import styled from 'styled-components'
 import dynamic from 'next/dynamic'
 import { Button } from "@components/ui/button";
+import { Card, CardContent } from '@components/ui/card';
 import { CourseTab, CourseTabSelector } from '@components/Objects/Modals/Course/Create/CourseTabSelector';
 
 // -----------------------------------------------------------------------------
@@ -470,115 +471,123 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
   }, [tabChapters, chapterID]);
 
   return (
-    <div className="relative h-full w-full overflow-hidden" data-selected-tab={selectedTabId}>
-      <CourseTabSelector
-        className=""
-        tabs={tabs}
-        activeTab={selectedTabId}
-        onTabsChange={onTabsChange}
-        onActiveTabChange={onTabChange}
-      />
-      {/* MAIN GRID */}
-      <motion.div
-        className="grid h-full w-full"
-        animate={{ gridTemplateColumns: sidePanelOpen ? '1fr 0.6fr' : '1fr 0fr' }}
-        transition={{ type: 'spring', stiffness: 200, damping: 30 }}
-        style={{ gridTemplateColumns: sidePanelOpen ? '1fr 0.6fr' : '1fr 0fr' }}
-      >
-        {/* GRAPH AREA */}
-        <div className="relative h-full w-full bg-white">
-          <NewGraph
-            chapters={tabChapters}
-            setChapterID={setChapterID}
-            chapterID={chapterID}
-            reactFlowRef={reactFlowRef}
-            reactFlowInstanceRef={reactFlowInstanceRef}
-            triggerAutoLayout={triggerAutoLayout}
+    <div className="relative flex h-full w-full overflow-hidden gap-6 px-6 py-6" data-selected-tab={selectedTabId}>
+      <Card className="h-full w-64 shrink-0">
+        <CardContent className="h-full overflow-hidden px-4 py-6">
+          <CourseTabSelector
+            className="h-full overflow-y-auto"
+            tabs={tabs}
+            activeTab={selectedTabId}
+            onTabsChange={onTabsChange}
+            onActiveTabChange={onTabChange}
+            orientation="vertical"
+            renderTabContent={() => null}
           />
+        </CardContent>
+      </Card>
+      <div className="flex-1 overflow-hidden">
+        {/* MAIN GRID */}
+        <motion.div
+          className="grid h-full w-full"
+          animate={{ gridTemplateColumns: sidePanelOpen ? '1fr 0.6fr' : '1fr 0fr' }}
+          transition={{ type: 'spring', stiffness: 200, damping: 30 }}
+          style={{ gridTemplateColumns: sidePanelOpen ? '1fr 0.6fr' : '1fr 0fr' }}
+        >
+          {/* GRAPH AREA */}
+          <div className="relative h-full w-full bg-white">
+            <NewGraph
+              chapters={tabChapters}
+              setChapterID={setChapterID}
+              chapterID={chapterID}
+              reactFlowRef={reactFlowRef}
+              reactFlowInstanceRef={reactFlowInstanceRef}
+              triggerAutoLayout={triggerAutoLayout}
+            />
 
-          {/* FLOATING TOOLBAR */}
-          <div className="pointer-events-none absolute left-1/2 bottom-8 z-30 -translate-x-1/2">
-            <div className="pointer-events-auto bg-white/90 backdrop-blur-md shadow-xl rounded-2xl px-6 py-3 flex items-center gap-4 border border-gray-200 transition-all">
-              {/* Zoom controls */}
-              <div className="flex items-center gap-1">
+            {/* FLOATING TOOLBAR */}
+            <div className="pointer-events-none absolute left-1/2 bottom-8 z-30 -translate-x-1/2">
+              <div className="pointer-events-auto bg-white/90 backdrop-blur-md shadow-xl rounded-2xl px-6 py-3 flex items-center gap-4 border border-gray-200 transition-all">
+                {/* Zoom controls */}
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => reactFlowInstanceRef.current?.zoomOut?.()}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-l-md p-2 transition-all"
+                    title="Zoom Out"
+                  >
+                    —
+                  </button>
+                  <button
+                    onClick={() => reactFlowInstanceRef.current?.zoomIn?.()}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-r-md p-2 transition-all"
+                    title="Zoom In"
+                  >
+                    +
+                  </button>
+                </div>
+                {/* Fit view */}
                 <button
-                  onClick={() => reactFlowInstanceRef.current?.zoomOut?.()}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-l-md p-2 transition-all"
-                  title="Zoom Out"
+                  onClick={() => reactFlowInstanceRef.current?.fitView?.({ duration: 300, padding: 0.2 })}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md p-2 transition-all"
+                  title="Fit View"
                 >
-                  —
+                  ⛶
                 </button>
-                <button
-                  onClick={() => reactFlowInstanceRef.current?.zoomIn?.()}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-r-md p-2 transition-all"
-                  title="Zoom In"
+                {/* Auto layout */}
+                <Button
+                  variant="secondary"
+                  onClick={() => setTriggerAutoLayout((v) => !v)}
+                  className="hover:bg-indigo-100 font-medium rounded px-4 py-2 text-xs shadow transition-all"
+                  title="Auto Layout"
                 >
-                  +
-                </button>
+                  Auto Layout
+                </Button>
+                {/* Add chapter */}
+                <Button
+                  variant={"secondary"}
+                  onClick={() => setNewChapterModal(true)}
+                  className="hover:bg-cyan-100 font-medium rounded px-4 py-2 text-xs shadow transition-all flex items-center gap-2"
+                >
+                  <Hexagon strokeWidth={2} size={14} className="" />
+                  Add Chapter
+                </Button>
               </div>
-              {/* Fit view */}
-              <button
-                onClick={() => reactFlowInstanceRef.current?.fitView?.({ duration: 300, padding: 0.2 })}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md p-2 transition-all"
-                title="Fit View"
-              >
-                ⛶
-              </button>
-              {/* Auto layout */}
-              <Button
-                variant="secondary"
-                onClick={() => setTriggerAutoLayout((v) => !v)}
-                className=" hover:bg-indigo-100  font-medium rounded px-4 py-2 text-xs shadow transition-all"
-                title="Auto Layout"
-              >
-                Auto Layout
-              </Button>
-              {/* Add chapter */}
-              <Button
-                variant={"secondary"}
-                onClick={() => setNewChapterModal(true)}
-                className=" hover:bg-cyan-100  font-medium rounded px-4 py-2 text-xs shadow transition-all flex items-center gap-2"
-              >
-                <Hexagon strokeWidth={2} size={14} className="" />
-                Add Chapter
-              </Button>
             </div>
           </div>
-        </div>
 
-        {/* SIDE PANEL */}
-        <AnimatePresence>
-          {sidePanelOpen && (
-            <motion.div
-              key="side-panel"
-              initial={{ x: 400, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 400, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 200, damping: 30 }}
-              className="relative h-full w-full bg-gray-100 border-l border-gray-200 shadow-xl flex flex-col"
-              style={{ minWidth: 0 }}
-            >
-              <button
-                className="absolute top-4 right-4 z-50 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-full p-1 shadow"
-                onClick={() => setChapterID(-1)}
+          {/* SIDE PANEL */}
+          <AnimatePresence>
+            {sidePanelOpen && (
+              <motion.div
+                key="side-panel"
+                initial={{ x: 400, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: 400, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 30 }}
+                className="relative h-full w-full bg-gray-100 border-l border-gray-200 shadow-xl flex flex-col"
+                style={{ minWidth: 0 }}
               >
-                <X></X>
-              </button>
-              <div className="p-10 h-full overflow-y-auto">
-                <DragDropContext onDragEnd={updateStructure}>
-                  <ChapterElement
-                    key={currentChapter.chapter_uuid}
-                    chapterIndex={0}
-                    orgslug={props.orgslug}
-                    course_uuid={course_uuid}
-                    chapter={currentChapter}
-                  />
-                </DragDropContext>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+                <button
+                  className="absolute top-4 right-4 z-50 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-full p-1 shadow"
+                  onClick={() => setChapterID(-1)}
+                >
+                  <X></X>
+                </button>
+                <div className="p-10 h-full overflow-y-auto">
+                  <DragDropContext onDragEnd={updateStructure}>
+                    <ChapterElement
+                      key={currentChapter.chapter_uuid}
+                      chapterIndex={0}
+                      orgslug={props.orgslug}
+                      course_uuid={course_uuid}
+                      chapter={currentChapter}
+                    />
+                  </DragDropContext>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </div>
 
       {/* NEW CHAPTER MODAL */}
       <Modal

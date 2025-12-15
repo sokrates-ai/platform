@@ -11,6 +11,7 @@ import { LayoutState } from '@components/Objects/ContentMap/Canvas';
 import { CourseTab, CourseTabSelector } from '@components/Objects/Modals/Course/Create/CourseTabSelector';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, PanelRightOpen } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 const ContentMap = dynamic(() => import('components/Objects/ContentMap/Canvas'), { ssr: false });
 
 export interface EditCourseMapProps {
@@ -375,49 +376,57 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
                     <PanelRightOpen className="w-6 h-6 text-gray-700" />
                 </button>
                 {/* Canvas/ContentMap - always full size */}
-                <div className="relative bg-neutral-100 h-full w-full flex flex-col">
-                    <CourseTabSelector
-                        className="mb-4"
-                        tabs={tabs}
-                        activeTab={selectedTabId}
-                        onTabsChange={onTabsChange}
-                        onActiveTabChange={onTabChange}
-                    />
-
-                    <ContentMap
-                        layout={layoutForActiveTab}
-                        setLayout={setLayout}
-                        readOnly={false}
-                        showGrid={showGrid}
-                        snapToGrid={snapToGrid}
-                        gridGranularity={gridGranularity}
-                        clampToMap={clampToMap}
-                        undoRedo={{
-                            undo: handleUndo,
-                            redo: handleRedo
-                        }}
-                        onChapterClick={() => { }}
-                    />
-                    {/* Floating toolbar at bottom center */}
-                    <div className="pointer-events-none absolute left-1/2 bottom-8 z-20 -translate-x-1/2">
-                        <div className="pointer-events-auto bg-white/80 backdrop-blur-md shadow-xl rounded-2xl px-6 py-3 flex items-center gap-4 border border-gray-200">
-                            <CourseMapEditorToolbar
-                                undo={handleUndo}
-                                redo={handleRedo}
-                                reset={resetLayout}
-                                boundaries={state.boundaries}
-                                onBoundariesChange={handleBoundariesChange}
-                                showGrid={showGrid}
-                                onShowGridChange={handleGridToggle}
-                                snapToGrid={snapToGrid}
-                                onSnapToGridChange={handleSnapToggle}
-                                gridGranularity={gridGranularity}
-                                onGridGranularityChange={handleGridGranularityChange}
-                                clampToMap={clampToMap}
-                                onClampToMapChange={handleClampToMapChange}
-                                canUndo={state.historyIndex > 0}
-                                canRedo={state.historyIndex < state.history.length - 1}
+                <div className="relative bg-neutral-100 h-full w-full flex gap-6 px-6 py-6">
+                    <Card className="h-full w-64 shrink-0">
+                        <CardContent className="h-full overflow-hidden px-4 py-6">
+                            <CourseTabSelector
+                                className="h-full overflow-y-auto"
+                                tabs={tabs}
+                                activeTab={selectedTabId}
+                                onTabsChange={onTabsChange}
+                                onActiveTabChange={onTabChange}
+                                orientation="vertical"
+                                renderTabContent={() => null}
                             />
+                        </CardContent>
+                    </Card>
+
+                    <div className="relative flex flex-1 flex-col">
+                        <ContentMap
+                            layout={layoutForActiveTab}
+                            setLayout={setLayout}
+                            readOnly={false}
+                            showGrid={showGrid}
+                            snapToGrid={snapToGrid}
+                            gridGranularity={gridGranularity}
+                            clampToMap={clampToMap}
+                            undoRedo={{
+                                undo: handleUndo,
+                                redo: handleRedo
+                            }}
+                            onChapterClick={() => { }}
+                        />
+                        {/* Floating toolbar at bottom center */}
+                        <div className="pointer-events-none absolute left-1/2 bottom-8 z-20 -translate-x-1/2">
+                            <div className="pointer-events-auto bg-white/80 backdrop-blur-md shadow-xl rounded-2xl px-6 py-3 flex items-center gap-4 border border-gray-200">
+                                <CourseMapEditorToolbar
+                                    undo={handleUndo}
+                                    redo={handleRedo}
+                                    reset={resetLayout}
+                                    boundaries={state.boundaries}
+                                    onBoundariesChange={handleBoundariesChange}
+                                    showGrid={showGrid}
+                                    onShowGridChange={handleGridToggle}
+                                    snapToGrid={snapToGrid}
+                                    onSnapToGridChange={handleSnapToggle}
+                                    gridGranularity={gridGranularity}
+                                    onGridGranularityChange={handleGridGranularityChange}
+                                    clampToMap={clampToMap}
+                                    onClampToMapChange={handleClampToMapChange}
+                                    canUndo={state.historyIndex > 0}
+                                    canRedo={state.historyIndex < state.history.length - 1}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

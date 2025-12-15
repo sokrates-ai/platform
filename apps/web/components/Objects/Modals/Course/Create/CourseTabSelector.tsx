@@ -14,6 +14,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  DropResult,
+  type DroppableProps,
+} from 'react-beautiful-dnd';
 
 export type CourseTab = {
   id: string;
@@ -43,6 +50,21 @@ const deriveCounter = (tabs: CourseTab[]): number => {
   return Math.max(...numericIds);
 };
 
+const StrictModeDroppable: React.FC<DroppableProps> = ({ children, ...props }) => {
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    const animation = requestAnimationFrame(() => setEnabled(true));
+    return () => cancelAnimationFrame(animation);
+  }, []);
+
+  if (!enabled) {
+    return null;
+  }
+
+  return <Droppable {...props}>{children}</Droppable>;
+};
+
 export interface CourseTabSelectorProps {
   className?: string;
   initialTabs?: CourseTab[];
@@ -52,6 +74,7 @@ export interface CourseTabSelectorProps {
   onActiveTabChange?: (tabId: string) => void;
   renderTabContent?: (tab: CourseTab) => React.ReactNode;
   addButtonLabel?: string;
+  orientation?: 'horizontal' | 'vertical';
 }
 
 export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
@@ -63,6 +86,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
   onActiveTabChange,
   renderTabContent,
   addButtonLabel = 'Add tab',
+  orientation = 'horizontal',
 }) => {
   const resolvedInitialTabs = useMemo(
     () => (initialTabs?.length ? initialTabs : DEFAULT_COURSE_TABS),
@@ -92,6 +116,8 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
   const [newTabName, setNewTabName] = useState('');
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
   const [tabPendingRemoval, setTabPendingRemoval] = useState<CourseTab | null>(null);
+  const [editingTabId, setEditingTabId] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState<string>('');
 
   useEffect(() => {
     if (isTabsControlled) {
@@ -129,6 +155,8 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
 
   const handleActiveTabChange = useCallback(
     (value: string) => {
+      setEditingTabId(null);
+      setEditingValue('');
       if (!isActiveTabControlled) {
         setInternalActiveTab(value);
       }
@@ -175,6 +203,47 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
     setIsRemoveDialogOpen(true);
   };
 
+  useEffect(() => {
+    if (editingTabId && !tabs.some((tab) => tab.id === editingTabId)) {
+      setEditingTabId(null);
+      setEditingValue('');
+    }
+  }, [editingTabId, tabs]);
+
+  const startEditingTab = useCallback(
+    (tab: CourseTab) => {
+      setEditingTabId(tab.id);
+      setEditingValue(tab.name);
+    },
+    [],
+  );
+
+  const applyTabNameUpdate = useCallback(
+    (tabId: string, nextName: string) => {
+      const trimmed = nextName.trim();
+      if (!trimmed) {
+        setEditingTabId(null);
+        setEditingValue('');
+        return;
+      }
+      const nextTabs = tabs.map((tab) =>
+        tab.id === tabId ? { ...tab, name: trimmed } : tab,
+      );
+      if (!isTabsControlled) {
+        setInternalTabs(nextTabs);
+      }
+      onTabsChange?.(nextTabs);
+      setEditingTabId(null);
+      setEditingValue('');
+    },
+    [isTabsControlled, onTabsChange, tabs],
+  );
+
+  const cancelEditingTab = useCallback(() => {
+    setEditingTabId(null);
+    setEditingValue('');
+  }, []);
+
   const confirmRemoveTab = () => {
     if (!tabPendingRemoval) return;
     if (tabs.length <= 1) {
@@ -202,52 +271,179 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
     setIsRemoveDialogOpen(false);
   };
 
+  const renderContent =
+    renderTabContent ??
+    ((tab: CourseTab) => (
+      <p className="text-sm text-muted-foreground">
+        {tab.description ?? `Nothing here yet for "${tab.name}".`}
+      </p>
+    ));
+
+  const isVertical = orientation === 'vertical';
+  const listClassName = isVertical
+    ? 'flex flex-col items-stretch gap-2 w-full h-auto bg-transparent'
+    : 'flex flex-1 flex-wrap items-center gap-2 justify-start bg-transparent';
+  const wrapperClassName = isVertical
+    ? 'flex flex-col items-stretch gap-3'
+    : 'flex items-center justify-between gap-2';
+  const addButtonClassName = isVertical ? 'w-full justify-center' : 'shrink-0';
+
   return (
-    <div className={cn('w-full border-y border-solid border-black px-[3rem] py-[0.5rem]', className)}>
-      <Tabs value={activeTab} onValueChange={handleActiveTabChange} className="w-full">
-        <div className="flex items-center justify-between gap-2">
-          <TabsList className="flex flex-1 flex-wrap items-center gap-2 justify-start bg-transparent">
-            {tabs.map((tab) => {
-              const disableRemove = tabs.length === 1;
-              return (
-                <div key={tab.id} className="relative">
-                  <TabsTrigger value={tab.id} className="pr-6 border-gray-400 border-[1px] border-solid">
-                    {tab.name}
-                  </TabsTrigger>
-                  <button
-                    type="button"
-                    aria-label={`Remove ${tab.name}`}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      event.preventDefault();
-                      requestRemoveTab(tab);
-                    }}
-                    disabled={disableRemove}
-                    className={cn(
-                      'absolute right-1 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition',
-                      'hover:bg-muted-foreground/10 hover:text-destructive',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                      disableRemove && 'pointer-events-none opacity-50',
-                    )}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              );
-            })}
-          </TabsList>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="shrink-0"
-            onClick={() => setIsAddDialogOpen(true)}
-          >
-            <Plus className="h-4 w-4" />
-            {addButtonLabel}
-          </Button>
-        </div>
-      </Tabs>
+    <div className={cn(isVertical ? 'flex w-full flex-col' : 'w-full', className)}>
+      <DragDropContext
+        onDragEnd={(result: DropResult) => {
+          if (!result.destination) return;
+          if (result.destination.index === result.source.index) return;
+          const reordered = [...tabs];
+          const [moved] = reordered.splice(result.source.index, 1);
+          if (!moved) return;
+          reordered.splice(result.destination.index, 0, moved);
+          setEditingTabId(null);
+          setEditingValue('');
+          if (!isTabsControlled) {
+            setInternalTabs(reordered);
+          }
+          onTabsChange?.(reordered);
+          if (!isActiveTabControlled) {
+            const stillActive = reordered.find((tab) => tab.id === activeTab);
+            if (!stillActive) {
+              handleActiveTabChange(reordered[0]?.id ?? '');
+            }
+          }
+        }}
+      >
+        <Tabs
+          value={activeTab}
+          onValueChange={handleActiveTabChange}
+          className={cn('w-full', isVertical && 'h-full')}
+          orientation={isVertical ? 'vertical' : 'horizontal'}
+        >
+          <div className={wrapperClassName}>
+            <StrictModeDroppable
+              droppableId="course-tab-selector"
+              direction={isVertical ? 'vertical' : 'horizontal'}
+            >
+              {(dropProvided) => (
+                <TabsList
+                  ref={dropProvided.innerRef}
+                  {...dropProvided.droppableProps}
+                  className={listClassName}
+                >
+                  {tabs.map((tab, index) => {
+                    const disableRemove = tabs.length === 1;
+                    return (
+                      <Draggable key={tab.id} draggableId={tab.id} index={index}>
+                        {(dragProvided, snapshot) => (
+                          <div
+                            ref={dragProvided.innerRef}
+                            {...dragProvided.draggableProps}
+                            style={dragProvided.draggableProps.style}
+                            className={cn(
+                              'relative flex items-center gap-2 rounded-md',
+                              snapshot.isDragging && 'opacity-80 shadow-lg',
+                              isVertical ? 'w-full' : '',
+                            )}
+                          >
+                            <TabsTrigger
+                              value={tab.id}
+                              asChild
+                              className={cn(
+                                'flex-1 border border-gray-300 bg-white/70',
+                                isVertical ? 'justify-between text-left' : 'justify-center text-center',
+                                snapshot.isDragging && 'border-primary shadow',
+                              )}
+                            >
+                              <div
+                                {...dragProvided.dragHandleProps}
+                                className={cn(
+                                  'flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition',
+                                  isVertical ? 'justify-between' : 'justify-center',
+                                )}
+                              >
+                                {editingTabId === tab.id ? (
+                                  <input
+                                    value={editingValue}
+                                    onChange={(event) => setEditingValue(event.target.value)}
+                                    onBlur={() => applyTabNameUpdate(tab.id, editingValue)}
+                                    onKeyDown={(event) => {
+                                      if (event.key === 'Enter') {
+                                        event.preventDefault();
+                                        applyTabNameUpdate(tab.id, editingValue);
+                                      }
+                                      if (event.key === 'Escape') {
+                                        event.preventDefault();
+                                        cancelEditingTab();
+                                      }
+                                    }}
+                                    autoFocus
+                                    className={cn(
+                                      'w-full rounded-md border border-transparent bg-transparent text-sm outline-none focus:border-primary focus:ring-0',
+                                      isVertical ? '' : 'text-center',
+                                    )}
+                                  />
+                                ) : (
+                                  <span
+                                    onClick={(event) => {
+                                      if (tab.id !== activeTab) return;
+                                      event.preventDefault();
+                                      event.stopPropagation();
+                                      startEditingTab(tab);
+                                    }}
+                                    className={cn(
+                                      'line-clamp-1 flex-1',
+                                      isVertical ? 'text-left' : 'text-center',
+                                    )}
+                                  >
+                                    {tab.name}
+                                  </span>
+                                )}
+                              </div>
+                            </TabsTrigger>
+                            <button
+                              type="button"
+                              aria-label={`Remove ${tab.name}`}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                event.preventDefault();
+                                requestRemoveTab(tab);
+                              }}
+                              disabled={disableRemove}
+                              className={cn(
+                                'rounded-full p-0.5 text-muted-foreground transition',
+                                'hover:bg-muted-foreground/10 hover:text-destructive',
+                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                                disableRemove && 'pointer-events-none opacity-50',
+                              )}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        )}
+                      </Draggable>
+                    );
+                  })}
+                  {dropProvided.placeholder}
+                </TabsList>
+              )}
+            </StrictModeDroppable>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className={addButtonClassName}
+              onClick={() => setIsAddDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+              {addButtonLabel}
+            </Button>
+          </div>
+          {tabs.map((tab) => (
+            <TabsContent key={tab.id} value={tab.id}>
+              {renderContent(tab)}
+            </TabsContent>
+          ))}
+        </Tabs>
+      </DragDropContext>
 
       <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
         <DialogContent>
