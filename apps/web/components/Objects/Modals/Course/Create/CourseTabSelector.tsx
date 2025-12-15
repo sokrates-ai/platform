@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Plus, X } from 'lucide-react';
+import { GripVertical, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DragDropContext,
@@ -344,20 +344,32 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                               isVertical ? 'w-full' : '',
                             )}
                           >
+                            <button
+                              type="button"
+                              aria-label={`Reorder ${tab.name}`}
+                              {...dragProvided.dragHandleProps}
+                              className={cn(
+                                'flex h-8 w-8 items-center justify-center rounded-md border border-transparent bg-white/70 p-1 text-muted-foreground transition',
+                                'cursor-grab active:cursor-grabbing',
+                                'hover:bg-muted-foreground/10 hover:text-foreground',
+                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                                snapshot.isDragging && 'text-primary',
+                              )}
+                            >
+                              <GripVertical aria-hidden="true" className="h-4 w-4" />
+                            </button>
                             <TabsTrigger
                               value={tab.id}
                               asChild
                               className={cn(
-                                'flex-1 border border-gray-300 bg-white/70',
-                                isVertical ? 'justify-between text-left' : 'justify-center text-center',
+                                'flex-1 rounded-md border border-gray-300 bg-white/70',
                                 snapshot.isDragging && 'border-primary shadow',
                               )}
                             >
                               <div
-                                {...dragProvided.dragHandleProps}
                                 className={cn(
                                   'flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition',
-                                  isVertical ? 'justify-between' : 'justify-center',
+                                  isVertical ? 'justify-start text-left' : 'justify-center text-center',
                                 )}
                               >
                                 {editingTabId === tab.id ? (
