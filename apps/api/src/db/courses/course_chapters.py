@@ -21,14 +21,18 @@ class CourseChapter(SQLModel, table=True):
 
 
 class CourseChapter_Graph(SQLModel, table=True):
+    id: Optional[int] = Field(
+        default=None,
+        sa_column=Column(Integer, primary_key=True, autoincrement=True),
+    )
     course_id: int = Field(
-        sa_column=Column(Integer, ForeignKey("course.id", ondelete="CASCADE"), primary_key=True, nullable=False)
+        sa_column=Column(Integer, ForeignKey("course.id", ondelete="CASCADE"), nullable=False)
     )
     chapter_id: int = Field(
-        sa_column=Column(Integer,  ForeignKey("chapter.id", ondelete="CASCADE"), primary_key=True, nullable=False)
+        sa_column=Column(Integer,  ForeignKey("chapter.id", ondelete="CASCADE"), nullable=False)
     )
-    predecessor_id: int = Field(
-        sa_column=Column(Integer, ForeignKey("chapter.id", ondelete="CASCADE"), primary_key=True, nullable=True)
+    predecessor_id: Optional[int] = Field(
+        sa_column=Column(Integer, ForeignKey("chapter.id", ondelete="CASCADE"), nullable=True)
     )
     tab_uuid: str = Field(
         sa_column=Column("tab_uuid", String, ForeignKey("course_tab.tab_uuid", ondelete="CASCADE"), nullable=False)
