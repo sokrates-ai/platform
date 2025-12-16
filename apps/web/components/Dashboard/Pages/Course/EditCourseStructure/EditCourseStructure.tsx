@@ -32,7 +32,13 @@ import { Button } from "@components/ui/button";
 import { Input } from '@components/ui/input';
 import { Card, CardContent } from '@components/ui/card';
 import { CourseTab, CourseTabSelector } from '@components/Objects/Modals/Course/Create/CourseTabSelector';
-import { fetchInvlectRoomsImport, InvlectRoomsImportResponse } from '@services/invlectrooms';
+import {
+  applyInvlectRoomsImport,
+  fetchInvlectRoomsImport,
+  InvlectRoomsApplyResponse,
+  InvlectRoomsImportResponse,
+} from '@services/invlectrooms';
+import toast from 'react-hot-toast';
 
 // -----------------------------------------------------------------------------
 // TYPE DEFINITIONS
@@ -62,23 +68,93 @@ const MOCK_IMPORT_STEPS: Array<Omit<ImportStepState, 'status'>> = [
 
 type ImportStepId = (typeof MOCK_IMPORT_STEPS)[number]['id'];
 
-const stripHtml = (value: string): string =>
-  value
-    .replace(/<[^>]*?>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+const normalizeWhitespace = (value: string): string =>
+  value.replace(/\s+/g, ' ').trim();
+
+const extractTextSegments = (html: string): string[] => {
+  if (!html) {
+    return [];
+  }
+  try {
+    if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
+      const fallback = normalizeWhitespace(html.replace(/<[^>]+>/g, ' '));
+      return fallback ? [fallback] : [];
+    }
+    const parser = new DOMParser();
+    const document = parser.parseFromString(html, 'text/html');
+    const segments: string[] = [];
+    document.querySelectorAll('script,style,noscript').forEach((el) => el.remove());
+    const elements = document.querySelectorAll('p, li');
+    if (elements.length) {
+      elements.forEach((element) => {
+        const text = normalizeWhitespace(element.textContent ?? '');
+        if (text) {
+          segments.push(element.tagName.toLowerCase() === 'li' ? `• ${text}` : text);
+        }
+      });
+    } else {
+      const fallback = normalizeWhitespace(document.body?.textContent ?? '');
+      if (fallback) {
+        segments.push(fallback);
+      }
+    }
+    return segments;
+  } catch {
+    return [];
+  }
+};
+
+const buildPreview = (segments: string[], limit = 220): string => {
+  if (!segments.length) {
+    return '';
+  }
+  const text = segments.join(' ');
+  if (text.length <= limit) {
+    return text;
+  }
+  return `${text.slice(0, limit).trimEnd()}…`;
+};
+
+const guessChapterTitleFromUrl = (value: string): string => {
+  try {
+    const parsed = new URL(value);
+    const lastSegment =
+      parsed.pathname
+        .split('/')
+        .filter(Boolean)
+        .pop() || parsed.hostname;
+    const normalized = decodeURIComponent(lastSegment)
+      .replace(/[-_]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!normalized) {
+      return 'Imported content';
+    }
+    return normalized
+      .split(' ')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  } catch {
+    return 'Imported content';
+  }
+};
 
 type ImportCourseStructureDialogProps = {
   isOpen: boolean;
   onCancel: () => void;
   onResult?: (result: InvlectRoomsImportResponse) => void;
+  onApplied?: (result: InvlectRoomsApplyResponse) => void | Promise<void>;
+  courseUuid: string;
+  tabUuid?: string;
 };
 
 const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = ({
   isOpen,
   onCancel,
   onResult,
+  onApplied,
+  courseUuid,
+  tabUuid,
 }) => {
   const [sourceUrl, setSourceUrl] = useState('');
   const [hasStarted, setHasStarted] = useState(false);
@@ -87,6 +163,9 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
   const [touched, setTouched] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [importResult, setImportResult] = useState<InvlectRoomsImportResponse | null>(null);
+  const [chapterName, setChapterName] = useState('');
+  const [isApplying, setIsApplying] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
   const [steps, setSteps] = useState<ImportStepState[]>(() =>
     MOCK_IMPORT_STEPS.map((step) => ({ ...step, status: 'pending' })),
   );
@@ -108,6 +187,9 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
       setHasCompleted(false);
       setErrorMessage(null);
       setImportResult(null);
+      setChapterName('');
+      setIsApplying(false);
+      setApplyError(null);
       setSteps(MOCK_IMPORT_STEPS.map((step) => ({ ...step, status: 'pending' })));
     }
   }, [isOpen]);
@@ -208,9 +290,6 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
     onCancel();
   }, [isRunning, onCancel]);
 
-  const validationMessage =
-    touched && !isValidUrl ? 'Enter a valid URL (starting with http:// or https://).' : undefined;
-
   const problems = useMemo(() => {
     const list = importResult?.refresh && Array.isArray(importResult.refresh.problems)
       ? importResult.refresh.problems
@@ -223,41 +302,114 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
 
     return list.map((problem: any, index: number) => {
       const rawImg = problem?.img;
-      let image: string | undefined;
+      let imagePreview: string | undefined;
+      let imageMeta: { original?: string; local?: string } | null = null;
       if (typeof rawImg === 'string') {
-        image = rawImg;
+        imageMeta = { original: rawImg };
+        imagePreview = /^https?:\/\//i.test(rawImg) ? rawImg : `${backendUrl}${rawImg}`;
       } else if (rawImg && typeof rawImg === 'object') {
         const localImg = typeof rawImg.local === 'string' ? rawImg.local : undefined;
         const originalImg = typeof rawImg.original === 'string' ? rawImg.original : undefined;
-        image = localImg ?? originalImg;
-      }
-      if (image && !/^https?:\/\//i.test(image)) {
-        image = `${backendUrl}${image}`;
+        imageMeta = {
+          ...(originalImg ? { original: originalImg } : {}),
+          ...(localImg ? { local: localImg } : {}),
+        };
+        if (localImg) {
+          imagePreview = /^https?:\/\//i.test(localImg) ? localImg : `${backendUrl}${localImg}`;
+        } else if (originalImg) {
+          imagePreview = originalImg;
+        }
       }
       const title =
         typeof problem?.title === 'string' && problem.title.trim().length > 0
           ? problem.title.trim()
           : `Problem ${index + 1}`;
       const status = typeof problem?.status === 'string' ? problem.status : undefined;
-      const body =
-        typeof problem?.body === 'string' && problem.body.trim().length > 0
-          ? stripHtml(problem.body)
-          : '';
-      const preview =
-        body && body.length > MAX_PREVIEW_LENGTH
-          ? `${body.slice(0, MAX_PREVIEW_LENGTH).trimEnd()}…`
-          : body;
+      const html = typeof problem?.body === 'string' ? problem.body : '';
+      const segments = extractTextSegments(html);
+      const plainText = segments.join(' ');
+      const preview = buildPreview(segments, MAX_PREVIEW_LENGTH);
 
       return {
         id: problem?.id ?? index,
         title,
         status,
-        body,
+        html,
+        plainText,
         preview,
-        image,
+        image: imageMeta,
+        imagePreview,
       };
     });
   }, [importResult]);
+
+  const handleApply = useCallback(async () => {
+    if (isApplying) {
+      return;
+    }
+    if (!importResult) {
+      setApplyError('Run the import before applying changes.');
+      return;
+    }
+    if (!courseUuid) {
+      setApplyError('Course context is missing.');
+      return;
+    }
+    if (!chapterName.trim()) {
+      setApplyError('Provide a chapter name before applying.');
+      return;
+    }
+    if (!problems.length) {
+      setApplyError('No problems detected in the imported document.');
+      return;
+    }
+    setApplyError(null);
+    setIsApplying(true);
+    try {
+      const response = await applyInvlectRoomsImport(
+        {
+          url: importResult.url || sourceUrl,
+          course_uuid: courseUuid,
+          tab_uuid: tabUuid,
+          chapter_name: chapterName.trim(),
+          problems: problems.map((problem) => ({
+            id: problem.id,
+            title: problem.title,
+            status: problem.status,
+            html: problem.html,
+            plain_text: problem.plainText,
+            image: problem.image ?? null,
+          })),
+        },
+        access_token
+      );
+      if (onApplied) {
+        await onApplied(response);
+      }
+      onCancel();
+    } catch (error: any) {
+      const message =
+        error?.message && typeof error.message === 'string'
+          ? error.message
+          : 'Failed to apply import.';
+      setApplyError(message);
+      return;
+    } finally {
+      setIsApplying(false);
+    }
+  }, [isApplying, importResult, courseUuid, tabUuid, chapterName, problems, sourceUrl, access_token, onApplied]);
+
+  const validationMessage =
+    touched && !isValidUrl ? 'Enter a valid URL (starting with http:// or https://).' : undefined;
+
+  useEffect(() => {
+    if (!importResult) {
+      return;
+    }
+    const candidateSource = importResult.url || sourceUrl;
+    const suggested = guessChapterTitleFromUrl(candidateSource);
+    setChapterName((current) => (current ? current : suggested));
+  }, [importResult, sourceUrl]);
 
   const imageCount =
     importResult?.refresh && Array.isArray((importResult.refresh as any)?._images)
@@ -344,6 +496,17 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
               </a>
             )}
           </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Chapter name
+            </label>
+            <Input
+              value={chapterName}
+              onChange={(event) => setChapterName(event.target.value)}
+              placeholder="Imported chapter title"
+              disabled={isApplying}
+            />
+          </div>
           {problems.length > 0 && (
             <div className="max-h-64 overflow-y-auto pr-1 space-y-2">
               {problems.map((problem, index) => (
@@ -372,22 +535,22 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
                     )}
                   </div>
                   {problem.preview && (
-                    <p
-                      className="text-xs leading-relaxed text-muted-foreground overflow-hidden text-ellipsis"
-                      title={problem.body}
-                      style={{
-                        display: '-webkit-box',
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: 'vertical',
-                      }}
-                    >
-                      {problem.preview}
-                    </p>
-                  )}
-                  {problem.image && (
+                      <p
+                        className="text-xs leading-relaxed text-muted-foreground overflow-hidden text-ellipsis"
+                        title={problem.plainText}
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: 'vertical',
+                        }}
+                      >
+                        {problem.preview}
+                      </p>
+                    )}
+                  {problem.imagePreview && (
                     <div className="rounded-md border border-gray-100 bg-gray-50 p-2">
                       <img
-                        src={problem.image}
+                        src={problem.imagePreview}
                         alt={`Preview for ${problem.title}`}
                         className="max-h-40 w-full rounded object-contain"
                       />
@@ -410,6 +573,11 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
           Import finished successfully. You can review the changes before saving.
         </div>
       )}
+      {applyError && (
+        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {applyError}
+        </div>
+      )}
 
       <div className="flex items-center justify-end gap-2">
         {!hasCompleted && (
@@ -423,8 +591,19 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
           </Button>
         )}
         {hasCompleted ? (
-          <Button type="button" onClick={onCancel}>
-            Apply
+          <Button
+            type="button"
+            onClick={handleApply}
+            disabled={isApplying}
+          >
+            {isApplying ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Applying…
+              </>
+            ) : (
+              'Apply'
+            )}
           </Button>
         ) : (
           <Button
@@ -553,6 +732,22 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
   const course_uuid = course ? course.courseStructure.course_uuid : '';
   const dispatchCourse = useCourseDispatch() as any;
   const tabChapters = tabContent?.chapters ?? [];
+
+  const handleImportApplied = useCallback(async () => {
+    try {
+      if (course_uuid) {
+        await mutate(`${getAPIUrl()}courses/${course_uuid}/meta`);
+      }
+      await revalidateTags(['courses'], props.orgslug);
+      toast.success('Imported problems as new activities');
+    } catch (error) {
+      console.error('Failed to refresh course after applying import', error);
+      toast.error('Import applied, but refreshing the course failed.');
+    } finally {
+      setIsImportModalOpen(false);
+      router.refresh();
+    }
+  }, [course_uuid, props.orgslug, router]);
 
   // Refs for ReactFlow instance and container
   const reactFlowRef = React.useRef<HTMLDivElement>(null) as React.MutableRefObject<HTMLDivElement | null>;
@@ -1025,6 +1220,9 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
           <ImportCourseStructureDialog
             isOpen={isImportModalOpen}
             onCancel={() => setIsImportModalOpen(false)}
+            courseUuid={course_uuid}
+            tabUuid={selectedTabId}
+            onApplied={handleImportApplied}
           />
         }
         dialogTrigger={null}

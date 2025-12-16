@@ -38,3 +38,39 @@ export async function fetchInvlectRoomsImport(
   );
   return errorHandling(response);
 }
+
+export interface InvlectRoomsProblemPayload {
+  id?: number | string;
+  title?: string;
+  status?: string;
+  html?: string;
+  plain_text?: string;
+  image?: {
+    original?: string;
+    local?: string;
+  } | null;
+}
+
+export interface InvlectRoomsApplyPayload {
+  url: string;
+  course_uuid: string;
+  tab_uuid?: string;
+  chapter_name?: string;
+  problems: InvlectRoomsProblemPayload[];
+}
+
+export interface InvlectRoomsApplyResponse {
+  chapter: Record<string, unknown>;
+  activities: Array<Record<string, unknown>>;
+}
+
+export async function applyInvlectRoomsImport(
+  payload: InvlectRoomsApplyPayload,
+  accessToken?: string
+): Promise<InvlectRoomsApplyResponse> {
+  const response = await fetch(
+    `${getAPIUrl()}invlectrooms/apply`,
+    RequestBodyWithAuthHeader('POST', payload, null, accessToken)
+  );
+  return errorHandling(response);
+}

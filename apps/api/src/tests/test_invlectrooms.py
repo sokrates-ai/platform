@@ -3,6 +3,17 @@ from fastapi.testclient import TestClient
 from hashlib import sha256
 from pathlib import Path
 from typing import Optional
+from datetime import datetime
+from uuid import uuid4
+from sqlmodel import Session, select
+
+from src.db.organizations import Organization
+from src.db.users import User, PublicUser
+from src.db.courses.courses import Course, default_map_state, default_tab_store
+from src.db.courses.course_tabs import CourseTab
+from src.db.resource_authors import ResourceAuthor, ResourceAuthorshipEnum
+from src.db.courses.activities import Activity
+from src.security.auth import get_current_user
 
 
 def _test_content_dir() -> Path:
@@ -184,6 +195,112 @@ def test_scrape_invlectrooms_static_page(client: TestClient, monkeypatch):
         "https://hpi.de/friedrich/docs/InvLectRooms/mathe1/media/uploads/BiOEmoji_oDrqHh6.jpg"
         in image_mappings
     )
+
+
+def test_apply_invlectrooms_creates_activities(
+    client: TestClient,
+    session: Session,
+):
+    org = session.exec(select(Organization).where(Organization.slug == "wayne")).first()
+    assert org is not None
+
+    user = session.exec(select(User).where(User.username == "batman")).first()
+    assert user is not None
+
+    public_user = PublicUser.model_validate(user)
+
+    now = datetime.utcnow().isoformat()
+    course = Course(
+        name="Imported Course",
+        description="",
+        about="",
+        learnings="",
+        tags="",
+        thumbnail_image="",
+        map_state=default_map_state(),
+        tab_store=default_tab_store(),
+        public=False,
+        org_id=org.id,
+        course_uuid=f"course_{uuid4()}",
+        creation_date=now,
+        update_date=now,
+    )
+    session.add(course)
+    session.commit()
+    session.refresh(course)
+
+    tab = CourseTab(
+        tab_uuid="tab-1",
+        course_id=course.id,
+        course_uuid=course.course_uuid,
+        name="Content",
+        position=0,
+        creation_date=now,
+        update_date=now,
+    )
+    session.add(tab)
+    session.commit()
+
+    author = ResourceAuthor(
+        resource_uuid=course.course_uuid,
+        user_id=user.id,
+        authorship=ResourceAuthorshipEnum.CREATOR,
+        creation_date=now,
+        update_date=now,
+    )
+    session.add(author)
+    session.commit()
+
+    async def override_current_user():
+        return public_user
+
+    client.app.dependency_overrides[get_current_user] = override_current_user
+
+    try:
+        payload = {
+            "url": "https://hpi.de/friedrich/docs/InvLectRooms/example/tutorium",
+            "course_uuid": course.course_uuid,
+            "tab_uuid": "tab-1",
+            "chapter_name": "Imported Tutorium",
+            "problems": [
+                {
+                    "id": 603,
+                    "title": "Follow sequences",
+                    "status": "UNSOLVED",
+                    "html": "<p>Arrange the following terms by growth.</p>",
+                    "plain_text": "Arrange the following terms by growth.",
+                    "image": {
+                        "original": "https://example.com/image.jpg",
+                        "local": "/content/invlectrooms/sample.jpg",
+                    },
+                },
+                {
+                    "id": 732,
+                    "title": "Emoji challenge",
+                    "status": "SOLVED",
+                    "plain_text": "Consider the emoji puzzle.",
+                    "image": None,
+                },
+            ],
+        }
+
+        response = client.post("/api/v1/invlectrooms/apply", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["chapter"]["name"] == "Imported Tutorium"
+        assert len(data["activities"]) == 2
+        first_activity = data["activities"][0]
+        assert first_activity["name"] == "Follow sequences"
+        assert first_activity["activity_type"] == "TYPE_DYNAMIC"
+        assert first_activity["content"]["meta"]["source"]["provider"] == "invlectrooms"
+
+        activity_records = session.exec(
+            select(Activity).where(Activity.course_id == course.id)
+        ).all()
+        assert len(activity_records) == 2
+    finally:
+        client.app.dependency_overrides.pop(get_current_user, None)
 
 def test_scrape_invlectrooms_failure(client: TestClient, monkeypatch):
     class DummyResponse:
