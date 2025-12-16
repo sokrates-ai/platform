@@ -227,7 +227,7 @@ def build_course_read(
     payload = course.model_dump()
     payload['tab_store'] = sanitized_store
     payload['map_state'] = map_state
-    payload['tabs'] = tab_reads
+    payload['tab_metadata'] = tab_reads
 
     return CourseRead(**payload, authors=authors)
 

@@ -235,13 +235,17 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
         setEditingValue('');
         return;
       }
+      const currentTab = tabs.find((tab) => tab.id === tabId);
+      const hasChanged = !currentTab || currentTab.name !== trimmed;
       const nextTabs = tabs.map((tab) =>
         tab.id === tabId ? { ...tab, name: trimmed } : tab,
       );
       if (!isTabsControlled) {
         setInternalTabs(nextTabs);
       }
-      onTabsChange?.(nextTabs);
+      if (hasChanged) {
+        onTabsChange?.(nextTabs);
+      }
       setEditingTabId(null);
       setEditingValue('');
     },
@@ -387,12 +391,14 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                                     onChange={(event) => setEditingValue(event.target.value)}
                                     onBlur={() => applyTabNameUpdate(tab.id, editingValue)}
                                     onKeyDown={(event) => {
-                                      if (event.key === 'Enter') {
+                                      if (event.key === 'Enter' || event.key === 'NumpadEnter') {
                                         event.preventDefault();
+                                        event.stopPropagation();
                                         applyTabNameUpdate(tab.id, editingValue);
                                       }
                                       if (event.key === 'Escape') {
                                         event.preventDefault();
+                                        event.stopPropagation();
                                         cancelEditingTab();
                                       }
                                     }}
