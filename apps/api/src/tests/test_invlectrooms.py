@@ -288,12 +288,17 @@ def test_apply_invlectrooms_creates_activities(
         assert response.status_code == 200
         data = response.json()
 
-        assert data["chapter"]["name"] == "Imported Tutorium"
+        assert len(data["chapters"]) == 2
+        chapter_names = [chapter["name"] for chapter in data["chapters"]]
+        for chapter in data["chapters"]:
+            assert len(chapter.get("activities", [])) == 1
+        assert any(name.startswith("Imported Tutorium") for name in chapter_names)
         assert len(data["activities"]) == 2
         first_activity = data["activities"][0]
         assert first_activity["name"] == "Follow sequences"
         assert first_activity["activity_type"] == "TYPE_DYNAMIC"
         assert first_activity["content"]["meta"]["source"]["provider"] == "invlectrooms"
+        assert first_activity["published"] is True
 
         activity_records = session.exec(
             select(Activity).where(Activity.course_id == course.id)

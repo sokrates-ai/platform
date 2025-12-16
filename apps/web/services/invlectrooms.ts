@@ -60,7 +60,7 @@ export interface InvlectRoomsApplyPayload {
 }
 
 export interface InvlectRoomsApplyResponse {
-  chapter: Record<string, unknown>;
+  chapters: Array<Record<string, unknown>>;
   activities: Array<Record<string, unknown>>;
 }
 

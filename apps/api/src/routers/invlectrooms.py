@@ -58,7 +58,8 @@ class InvlectRoomsApplyRequest(BaseModel):
 
 
 class InvlectRoomsApplyResponse(BaseModel):
-    chapter: ChapterRead
+    chapter: Optional[ChapterRead] = None
+    chapters: List[ChapterRead]
     activities: List[ActivityRead]
 
 
@@ -205,42 +206,51 @@ async def apply_import(
             detail="Course not found.",
         )
 
-    chapter_title = payload.chapter_name or _guess_chapter_name(str(payload.url))
-    chapter_request = ChapterCreate(
-        name=chapter_title,
-        description=f"Imported from {payload.url}",
-        thumbnail_image="",
-        org_id=course.org_id,
-        course_id=course.id,
-        xp_reward=0,
-        coin_reward=0,
-        tab_uuid=payload.tab_uuid,
-    )
-
-    chapter = await create_chapter(request, chapter_request, current_user, db_session)
-
+    base_name = payload.chapter_name or _guess_chapter_name(str(payload.url))
+    chapters: List[ChapterRead] = []
     activities: List[ActivityRead] = []
     source_url = str(payload.url)
     for index, problem in enumerate(payload.problems):
-        activity_name = (
-            problem.title.strip() if problem.title and problem.title.strip() else None
-        ) or f"Problem {index + 1}"
+        problem_title = _normalize_text(problem.title or "") or f"Problem {index + 1}"
+        chapter_title = (
+            f"{base_name} — {problem_title}" if base_name else problem_title
+        )
+
+        chapter_request = ChapterCreate(
+            name=chapter_title,
+            description=f"Imported from {payload.url}",
+            thumbnail_image="",
+            org_id=course.org_id,
+            course_id=course.id,
+            xp_reward=0,
+            coin_reward=0,
+            tab_uuid=payload.tab_uuid,
+        )
+
+        chapter = await create_chapter(
+            request, chapter_request, current_user, db_session
+        )
 
         content = _build_activity_content(problem, source_url)
 
         activity_request = ActivityCreate(
             chapter_id=chapter.id,
-            name=activity_name,
+            name=problem_title,
             activity_type=ActivityTypeEnum.TYPE_DYNAMIC,
             activity_sub_type=ActivitySubTypeEnum.SUBTYPE_DYNAMIC_PAGE,
             content=content,
-            published=False,
+            published=True,
         )
 
         activity = await create_activity(
             request, activity_request, current_user, db_session
         )
         activities.append(activity)
+        chapter.activities = [activity]
+        chapters.append(chapter)
 
-    chapter.activities = activities
-    return InvlectRoomsApplyResponse(chapter=chapter, activities=activities)
+    return InvlectRoomsApplyResponse(
+        chapter=chapters[0] if chapters else None,
+        chapters=chapters,
+        activities=activities,
+    )
