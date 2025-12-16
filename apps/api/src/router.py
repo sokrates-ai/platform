@@ -3,7 +3,7 @@ from src.routers.courses import tasks
 from fastapi import APIRouter, Depends
 from src.routers import health
 from src.routers import usergroups
-from src.routers import dev, trail, users, auth, orgs, roles
+from src.routers import dev, trail, users, auth, orgs, roles, invlectrooms
 from src.routers.courses import chapters, collections, courses, assignments
 from src.routers.courses.activities import activities, blocks
 from src.routers.install import install
@@ -35,6 +35,9 @@ v1_router.include_router(
 v1_router.include_router(trail.router, prefix="/trail", tags=["trail"])
 v1_router.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
 v1_router.include_router(health.router, prefix="/health", tags=["health"])
+v1_router.include_router(
+    invlectrooms.router, prefix="/invlectrooms", tags=["invlectrooms"]
+)
 
 # Dev Routes
 v1_router.include_router(
