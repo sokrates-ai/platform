@@ -208,6 +208,10 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
     const [gridGranularity, setGridGranularity] = React.useState<number>(5)
     const [clampToMap, setClampToMap] = React.useState<boolean>(true)
     const [assetPanelOpen, setAssetPanelOpen] = useState(false)
+    const [customSprites, setCustomSprites] = useState<{ file: string; label: string; scale: number }[]>([])
+    const [customSpriteUrl, setCustomSpriteUrl] = useState<string>('')
+    const [customSpriteLabel, setCustomSpriteLabel] = useState<string>('')
+    const [customSpriteError, setCustomSpriteError] = useState<string | null>(null)
     const lastInitializedTabRef = React.useRef<string | null>(null);
     const lastInitializedMapSignatureRef = React.useRef<string | null>(null);
 
@@ -326,6 +330,72 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
             })
         }
     }
+
+    const resolveAssetPath = React.useCallback((file: string) => {
+        if (/^(https?:)?\/\//i.test(file) || file.startsWith('data:') || file.startsWith('blob:')) {
+            return file;
+        }
+        return `/contentMap/${file}`;
+    }, []);
+
+    const deriveLabelFromUrl = React.useCallback((url: string) => {
+        try {
+            const parsed = new URL(url);
+            const pathSegments = parsed.pathname.split('/').filter(Boolean);
+            const filename = pathSegments[pathSegments.length - 1] ?? '';
+            if (filename) {
+                return filename.split('?')[0];
+            }
+            return parsed.hostname;
+        } catch (_error) {
+            return url;
+        }
+    }, []);
+
+    const handleCustomSpriteSubmit = React.useCallback((event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const trimmedUrl = customSpriteUrl.trim();
+        const trimmedLabel = customSpriteLabel.trim();
+
+        if (!trimmedUrl) {
+            setCustomSpriteError('Please provide an image URL.');
+            return;
+        }
+
+        const isSupportedUrl =
+            /^(https?:)?\/\//i.test(trimmedUrl) ||
+            trimmedUrl.startsWith('data:') ||
+            trimmedUrl.startsWith('blob:');
+
+        if (!isSupportedUrl) {
+            setCustomSpriteError('Only http(s), protocol-relative, data, or blob URLs are supported.');
+            return;
+        }
+
+        setCustomSprites((prev) => {
+            if (prev.some(sprite => sprite.file === trimmedUrl)) {
+                setCustomSpriteError('This URL has already been added.');
+                return prev;
+            }
+            const next = [
+                {
+                    file: trimmedUrl,
+                    label: trimmedLabel || deriveLabelFromUrl(trimmedUrl),
+                    scale: 1,
+                },
+                ...prev,
+            ];
+            setCustomSpriteError(null);
+            setCustomSpriteUrl('');
+            setCustomSpriteLabel('');
+            return next;
+        });
+    }, [customSpriteUrl, customSpriteLabel, deriveLabelFromUrl]);
+
+    const allSprites = React.useMemo(() => [
+        ...customSprites,
+        ...SPRITES,
+    ], [customSprites]);
 
     function resetLayout() {
         const resetted = updateChapterStonesInContentMapState([], courseStructure.chapters)
@@ -447,15 +517,69 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
                             >
                                 <X className="w-5 h-5 text-gray-700" />
                             </button>
-                            <div className="p-6 border-b">
-                                <h3 className="text-lg font-semibold">Asset Browser</h3>
-                                <p className="text-xs text-gray-500">Drag assets onto the map</p>
+                            <div className="p-6 border-b space-y-4">
+                                <div>
+                                    <h3 className="text-lg font-semibold">Asset Browser</h3>
+                                    <p className="text-xs text-gray-500">
+                                        Drag assets onto the map or add your own image via URL.
+                                    </p>
+                                </div>
+                                <form onSubmit={handleCustomSpriteSubmit} className="space-y-3">
+                                    <div className="space-y-1">
+                                        <label
+                                            htmlFor="custom-asset-url"
+                                            className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                                        >
+                                            Image URL
+                                        </label>
+                                        <input
+                                            id="custom-asset-url"
+                                            type="url"
+                                            value={customSpriteUrl}
+                                            onChange={(event) => {
+                                                setCustomSpriteUrl(event.target.value);
+                                                if (customSpriteError) setCustomSpriteError(null);
+                                            }}
+                                            placeholder="https://example.com/asset.png"
+                                            className="w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label
+                                            htmlFor="custom-asset-label"
+                                            className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                                        >
+                                            Label (optional)
+                                        </label>
+                                        <input
+                                            id="custom-asset-label"
+                                            type="text"
+                                            value={customSpriteLabel}
+                                            onChange={(event) => {
+                                                setCustomSpriteLabel(event.target.value);
+                                                if (customSpriteError) setCustomSpriteError(null);
+                                            }}
+                                            placeholder="My custom asset"
+                                            className="w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        className="w-full inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                                        disabled={!customSpriteUrl.trim()}
+                                    >
+                                        Add image to browser
+                                    </button>
+                                    {customSpriteError && (
+                                        <p className="text-xs text-red-500">{customSpriteError}</p>
+                                    )}
+                                </form>
                             </div>
                             <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: 'calc(100vh - 80px)' }}>
                                 <div className="grid grid-cols-2 gap-4">
-                                    {SPRITES.map((sprite, idx) => (
+                                    {allSprites.map((sprite, idx) => (
                                         <div
-                                            key={idx}
+                                            key={`${sprite.file}-${idx}`}
                                             draggable
                                             onDragStart={e => {
                                                 e.dataTransfer.setData("application/json", JSON.stringify(sprite))
@@ -464,7 +588,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
                                         >
                                             <div className="relative w-full aspect-square flex items-center justify-center mb-1 bg-muted/40 rounded overflow-hidden">
                                                 <img
-                                                    src={`/contentMap/${sprite.file}`}
+                                                    src={resolveAssetPath(sprite.file)}
                                                     alt={sprite.label}
                                                     className="object-contain max-h-full max-w-full group-hover:scale-105 transition-transform"
                                                     style={{ filter: "saturate(120%)" }}

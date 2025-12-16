@@ -1,0 +1,492 @@
+
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="/friedrich/docs/InvLectRooms/mathe1/static/main.css?v=17" />
+    <link
+      rel="shortcut icon"
+      href="/friedrich/docs/InvLectRooms/mathe1/static/favicon.ico"
+      type="image/x-icon"
+    />
+
+    <title>riddle overview for topic category from course []</title>
+  </head>
+  <body>
+    <div style="position: fixed; width: 100%; top: 0; z-index: 15000">
+        <img id="logo" src="/friedrich/docs/InvLectRooms/mathe1/static/logo.png" alt=""/>
+        <header id="header">
+          
+          <span class="pagelinks" style="float: right;">
+            <a href="/friedrich/docs/InvLectRooms/mathe1/riddles/">Aufgaben</a>
+            
+            <a href="/friedrich/docs/InvLectRooms/mathe1/lecture/">Semester</a>
+            
+            <a href="/friedrich/docs/InvLectRooms/mathe1/riddlegroups/">Raum</a>
+            
+            
+            
+          </span>
+          <div style="float: left;">
+            
+              Nicht angemeldet. <a href="/friedrich/docs/InvLectRooms/mathe1/accounts/login/?next=/friedrich/docs/InvLectRooms/mathe1/riddlegroups/course/4/Ableiten-ONotation/tutorium">anmelden</a>.
+            
+
+            <form method="POST" action="/friedrich/docs/InvLectRooms/mathe1/i18n/setlang/" style="display: inline">
+              <input type="hidden" name="csrfmiddlewaretoken" value="zManDb3ueN6ws72Mu0x2VNjf484txfSJedEjt2snv5Cd0M8FUgmz1u0z3NMLFgFZ">
+              <input name="next" type="hidden" value="">
+
+              
+              
+                <input name="language" value="en" type="hidden">
+              
+              <button class="input-md" id="language-icon-button" type="submit">
+                
+                  <img id="language-icon" src="/friedrich/docs/InvLectRooms/mathe1/static/britain-flag.png">
+                
+              </button>
+            </form>
+          </div>
+          
+        </header>
+    </div>
+
+    
+
+    <main id="main" style="margin: 1em; margin-top: 5em">
+    
+
+
+<script
+	id="MathJax-script"
+	async
+	src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+></script>
+<script src="/friedrich/docs/InvLectRooms/mathe1/static/mathjax-config.js"></script>
+
+
+<h1>SS_25</h1>
+<div id="room_centered">
+<h1>Ableiten-ONotation        tutorium</h1>
+
+
+
+<section id="riddle_603" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_603_title">
+            1. Folgen Ordnen I
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p>Ordne die folgenden Terme, aufgefasst als Folgen in $n$, bezüglich $\leq_O$. Dabei entsteht eine vollständige Reihung (es gibt keine unvergleichbaren Terme), und zwischen zwei Termen sollte entweder ein $&lt;_O$ oder ein $\equiv_O$ stehen.</p>
+
+<p>$(n^2)_{n \in \mathbb{N}}$, $(\log_2(n))_{n \in \mathbb{N}_+}$, $(2^n)_{n \in \mathbb{N}}$, $(n^3 - 100n^2)_{n \in \mathbb{N}}$, $(1/n)_{n \in \mathbb{N}_+}$, $(e^n)_{n \in \mathbb{N}}$</p>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_732" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_732_title">
+            2. Big O Emoji
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p></p>
+                    </div>
+                    
+                        <div>
+                            <img src="/friedrich/docs/InvLectRooms/mathe1/media/uploads/BiOEmoji_oDrqHh6.jpg" class="problem_image" />
+                        </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_604" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_604_title">
+            3. Folgen Ordnen II
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p>Ordne die folgenden Terme, aufgefasst als Folgen in $n$, bezüglich $\leq_O$. Dabei entsteht eine vollständige Reihung (es gibt keine unvergleichbaren Terme), und zwischen zwei Termen sollte entweder ein $&lt;_O$ oder ein $\equiv_O$ stehen.</p>
+
+<p>$(\ln(n))_{n \in \mathbb{N}_+}$, $(\log_2(n))_{n \in \mathbb{N}_+}$, $(\log_{3}(n^3))_{n \in \mathbb{N}_+}$, $(27)_{n \in \mathbb{N}}$, $(5n)_{n \in \mathbb{N}}$, $(\log_{n}(3n))_{n \in \mathbb{N}_+}$</p>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_393" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_393_title">
+            4. Approximation ln(x+2)
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p>Was ist das beste Polynom zweiten Grades, um die Funktion $x \mapsto \ln(x+2)$ zu approximieren?</p>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_737" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_737_title">
+            5. Protect the Innocent!
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p></p>
+                    </div>
+                    
+                        <div>
+                            <img src="/friedrich/docs/InvLectRooms/mathe1/media/uploads/ProtectTheInnocent.jpg" class="problem_image" />
+                        </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_608" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_608_title">
+            6. Hintereinanderausführung und &lt;=O
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p>Zeige, dass es $f,g \in \realnum^{\natnum}$ und $h: \realnum \rightarrow \realnum$ monoton (steigend) gibt, so dass $f \leq_O g$, aber NICHT $h \circ f \leq_O h \circ g$.</p>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_736" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_736_title">
+            7. O von linearen Funktionen
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p></p>
+                    </div>
+                    
+                        <div>
+                            <img src="/friedrich/docs/InvLectRooms/mathe1/media/uploads/OLinear.jpg" class="problem_image" />
+                        </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_609" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_609_title">
+            8. O-Notation und Grenzwert
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p>Seien $f,g\colon \natnum \rightarrow \realnum_+$ so, dass die Folge $(f(n) / g(n))_{n \in \natnum}$ gegen einen Grenzwert $r$ geht. Zeige:<br>(1) Falls $r= 0$, so gilt $f &lt;_O g$.<br>(2) Falls $r &gt; 0$, so gilt $f \equiv_O g$.</p>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_734" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_734_title">
+            9. Big O!
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p></p>
+                    </div>
+                    
+                        <div>
+                            <img src="/friedrich/docs/InvLectRooms/mathe1/media/uploads/big-o_2K4regG.jpg" class="problem_image" />
+                        </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_407" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_407_title">
+            10. Approximiere 1/x
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p>Was ist das beste Polynom dritten Grades, welches die Funktion $f\colon \realnum_{&gt;0} \rightarrow \realnum, x \mapsto 1/x$ (auf den positiven Zahlen) and der Stelle $x=1$ approximiert?</p>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_323" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_323_title">
+            11. Schnabeltierchen in Bronze
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p></p>
+                    </div>
+                    
+                        <div>
+                            <img src="/friedrich/docs/InvLectRooms/mathe1/media/uploads/PlatypusBronze.jpg" class="problem_image" />
+                        </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_607" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_607_title">
+            12. Potenzen und O-Notation
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p>Seien $c,d \in \realnum$. Zeige $(n^c)_{n \in \mathbb{N}} \leq_O (n^d)_{n \in \mathbb{N}}$ genau dann, wenn $c \leq d$.</p>
+
+<p>Ordne danach die Terme $(\sqrt{n})_{n \in \mathbb{N}}$, $(n)_{n \in \mathbb{N}}$ und $(\sqrt[3]{n})_{n \in \mathbb{N}}$.</p>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_601" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_601_title">
+            13. Exp Nahe der 0
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p>Zeige, als Folge in $n$, $(\exp(1/n)-1)_{n \in \mathbb{N}_+} \equiv_O (1/n)_{n \in \mathbb{N}_+}$.</p>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_733" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_733_title">
+            14. TSP in Big O
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p></p>
+                    </div>
+                    
+                        <div>
+                            <img src="/friedrich/docs/InvLectRooms/mathe1/media/uploads/travelling_salesman_problem_SX4dycV.png" class="problem_image" />
+                        </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_605" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_605_title">
+            15. Folgen Ordnen III
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p>Ordne die folgenden Terme, aufgefasst als Folgen in $n$, bezüglich $\leq_O$. Dabei entsteht eine vollständige Reihung (es gibt keine unvergleichbaren Terme), und zwischen zwei Termen sollte entweder ein $&lt;_O$ oder ein $\equiv_O$ stehen.</p>
+
+<p>$(\ln(n))_{n \in \mathbb{N}_+}$, $(\frac{n}{\ln(n)})_{n \in \mathbb{N}_+}$, $(n)_{n \in \mathbb{N}}$, $(n \ln (n))_{n \in \mathbb{N}_{&gt;1}}$, $(\ln(\ln(n)))_{n \in \mathbb{N}_+}$, $((\ln(n))^2)_{n \in \mathbb{N}_+}$, $(\ln(n)^{\ln(n)})_{n \in \mathbb{N}_+}$</p>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_324" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_324_title">
+            16. Schnabeltierchen in Silber
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p></p>
+                    </div>
+                    
+                        <div>
+                            <img src="/friedrich/docs/InvLectRooms/mathe1/media/uploads/PlatypusSilver.jpg" class="problem_image" />
+                        </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_735" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_735_title">
+            17. O von n-Fakultät
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p></p>
+                    </div>
+                    
+                        <div>
+                            <img src="/friedrich/docs/InvLectRooms/mathe1/media/uploads/ONFactorial.jpg" class="problem_image" />
+                        </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_602" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_602_title">
+            18. Folgen Ordnen -- Hardcore
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p>Ordne die folgenden Terme, aufgefasst als Folgen in $n$, bezüglich $\leq_O$. Dabei entsteht eine vollständige Reihung (es gibt keine unvergleichbaren Terme), und zwischen zwei Termen sollte entweder ein $&lt;_O$ oder ein $\equiv_O$ stehen.</p>
+
+<p>$(\ln(1+1/n))_{n \in \mathbb{N}_+}$, $(2^{-n})_{n \in \mathbb{N}}$, $(\frac{1}{n})_{n \in \mathbb{N}_+}$, $(\left(1- \frac{1}{n}\right)^{n})_{n \in \mathbb{N}_+}$, $(e^{1/n}-1)_{n \in \mathbb{N}_+}$, $(e^{-n})_{n \in \mathbb{N}}$</p>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_325" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_325_title">
+            19. Schnabeltierchen in Gold
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p></p>
+                    </div>
+                    
+                        <div>
+                            <img src="/friedrich/docs/InvLectRooms/mathe1/media/uploads/PlatypusGold.jpg" class="problem_image" />
+                        </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+</div>
+
+
+<script src="/friedrich/docs/InvLectRooms/mathe1/static/jquery-3.5.1.js"></script>
+<script src="/friedrich/docs/InvLectRooms/mathe1/static/room-toggle.js"></script>
+
+
+    </main>
+  </body>
+</html>

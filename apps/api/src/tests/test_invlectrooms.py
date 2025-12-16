@@ -125,6 +125,66 @@ def test_scrape_invlectrooms_success(client: TestClient, monkeypatch):
     assert cached_plan_path.exists()
 
 
+def test_scrape_invlectrooms_static_page(client: TestClient, monkeypatch):
+    html_path = Path(__file__).resolve().parents[4] / "tutorium"
+    html_content = html_path.read_text(encoding="utf-8")
+    target_url = "https://hpi.de/friedrich/docs/InvLectRooms/mathe1/riddlegroups/course/4/Ableiten-ONotation/tutorium"
+
+    class DummyResponse:
+        def __init__(
+            self,
+            *,
+            text: Optional[str] = None,
+            content: Optional[bytes] = None,
+        ):
+            self.text = text or ""
+            self._content = content
+            self.status_code = 200
+
+        def raise_for_status(self) -> None:
+            return None
+
+        @property
+        def content(self) -> bytes:
+            if self._content is not None:
+                return self._content
+            return self.text.encode("utf-8")
+
+    def fake_get(url: str, timeout: float, headers: dict):
+        assert "User-Agent" in headers
+        if url == target_url:
+            return DummyResponse(text=html_content)
+        if url.startswith("https://hpi.de/friedrich/docs/InvLectRooms/mathe1"):
+            return DummyResponse(content=b"image-bytes")
+        raise AssertionError(f"Unexpected URL requested: {url}")
+
+    monkeypatch.setattr("src.services.invlectrooms.scraper.requests.get", fake_get)
+
+    response = client.post("/api/v1/invlectrooms", json={"url": target_url})
+    assert response.status_code == 200
+    payload = response.json()
+
+    assert payload["refresh_url"] is None
+    refresh = payload["refresh"]
+    assert refresh is not None
+    problems = refresh["problems"]
+    assert len(problems) >= 1
+
+    first_problem = problems[0]
+    assert first_problem["id"] == 603
+    assert first_problem["title"].startswith("1. Folgen Ordnen I")
+    assert "Ordne die folgenden Terme" in first_problem["body"]
+
+    emoji_problem = next(problem for problem in problems if problem["id"] == 732)
+    assert emoji_problem["img"]["original"].endswith("BiOEmoji_oDrqHh6.jpg")
+    assert emoji_problem["img"]["local"].startswith("/content/invlectrooms/")
+
+    image_mappings = {entry["original"]: entry["local"] for entry in refresh["_images"]}
+    assert (
+        "https://hpi.de/friedrich/docs/InvLectRooms/mathe1/media/uploads/BiOEmoji_oDrqHh6.jpg"
+        in image_mappings
+    )
+
 def test_scrape_invlectrooms_failure(client: TestClient, monkeypatch):
     class DummyResponse:
         status_code = 503

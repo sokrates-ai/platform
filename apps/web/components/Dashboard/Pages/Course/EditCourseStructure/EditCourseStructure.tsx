@@ -1,5 +1,5 @@
 'use client'
-import { getAPIUrl } from '@services/config/config'
+import { getAPIUrl, getBackendUrl } from '@services/config/config'
 import { revalidateTags } from '@services/utils/ts/requests'
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { DragDropContext } from 'react-beautiful-dnd'
@@ -32,6 +32,7 @@ import { Button } from "@components/ui/button";
 import { Input } from '@components/ui/input';
 import { Card, CardContent } from '@components/ui/card';
 import { CourseTab, CourseTabSelector } from '@components/Objects/Modals/Course/Create/CourseTabSelector';
+import { fetchInvlectRoomsImport, InvlectRoomsImportResponse } from '@services/invlectrooms';
 
 // -----------------------------------------------------------------------------
 // TYPE DEFINITIONS
@@ -43,7 +44,7 @@ type DisplayGraphProps = {
     chapterID: number,
 }
 
-type ImportStepStatus = 'pending' | 'active' | 'completed';
+type ImportStepStatus = 'pending' | 'active' | 'completed' | 'failed';
 
 type ImportStepState = {
   id: string;
@@ -59,25 +60,44 @@ const MOCK_IMPORT_STEPS: Array<Omit<ImportStepState, 'status'>> = [
   { id: 'finalize', label: 'Finalizing import' },
 ];
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+type ImportStepId = (typeof MOCK_IMPORT_STEPS)[number]['id'];
+
+const stripHtml = (value: string): string =>
+  value
+    .replace(/<[^>]*?>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 type ImportCourseStructureDialogProps = {
   isOpen: boolean;
   onCancel: () => void;
+  onResult?: (result: InvlectRoomsImportResponse) => void;
 };
 
 const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = ({
   isOpen,
   onCancel,
+  onResult,
 }) => {
   const [sourceUrl, setSourceUrl] = useState('');
   const [hasStarted, setHasStarted] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [hasCompleted, setHasCompleted] = useState(false);
   const [touched, setTouched] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [importResult, setImportResult] = useState<InvlectRoomsImportResponse | null>(null);
   const [steps, setSteps] = useState<ImportStepState[]>(() =>
     MOCK_IMPORT_STEPS.map((step) => ({ ...step, status: 'pending' })),
   );
+  const session = useSokratesSession() as any;
+  const access_token = session?.data?.tokens?.access_token;
+
+  const updateStep = useCallback((id: ImportStepId, status: ImportStepStatus) => {
+    setSteps((prev) =>
+      prev.map((step) => (step.id === id ? { ...step, status } : step))
+    );
+  }, []);
 
   useEffect(() => {
     if (!isOpen) {
@@ -86,6 +106,8 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
       setTouched(false);
       setIsRunning(false);
       setHasCompleted(false);
+      setErrorMessage(null);
+      setImportResult(null);
       setSteps(MOCK_IMPORT_STEPS.map((step) => ({ ...step, status: 'pending' })));
     }
   }, [isOpen]);
@@ -108,6 +130,8 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
         return 'In progress';
       case 'completed':
         return 'Completed';
+      case 'failed':
+        return 'Failed';
       default:
         return 'Pending';
     }
@@ -118,31 +142,56 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
     if (!isValidUrl || isRunning) {
       return;
     }
+    setErrorMessage(null);
+    setImportResult(null);
     setHasStarted(true);
     setHasCompleted(false);
     setIsRunning(true);
     setSteps(MOCK_IMPORT_STEPS.map((step) => ({ ...step, status: 'pending' })));
 
-    // Placeholder flow for future API integration.
-    for (let index = 0; index < MOCK_IMPORT_STEPS.length; index += 1) {
-      setSteps((prev) =>
-        prev.map((step, stepIndex) => {
-          if (stepIndex < index) return { ...step, status: 'completed' as ImportStepStatus };
-          if (stepIndex === index) return { ...step, status: 'active' as ImportStepStatus };
-          return { ...step, status: 'pending' as ImportStepStatus };
-        }),
-      );
-      await sleep(500);
-      setSteps((prev) =>
-        prev.map((step, stepIndex) =>
-          stepIndex === index ? { ...step, status: 'completed' as ImportStepStatus } : step,
-        ),
-      );
-    }
+    const stepSequence: ImportStepId[] = MOCK_IMPORT_STEPS.map((step) => step.id as ImportStepId);
+    let currentStep: ImportStepId = stepSequence[0];
 
-    setIsRunning(false);
-    setHasCompleted(true);
-  }, [isValidUrl, isRunning]);
+    try {
+      currentStep = 'validate';
+      updateStep(currentStep, 'active');
+      updateStep(currentStep, 'completed');
+
+      currentStep = 'fetch';
+      updateStep(currentStep, 'active');
+      const response = await fetchInvlectRoomsImport(sourceUrl, access_token);
+      updateStep(currentStep, 'completed');
+
+      currentStep = 'parse';
+      updateStep(currentStep, 'active');
+      updateStep(currentStep, 'completed');
+
+      currentStep = 'hydrate';
+      updateStep(currentStep, 'active');
+      updateStep(currentStep, 'completed');
+
+      currentStep = 'finalize';
+      updateStep(currentStep, 'active');
+      updateStep(currentStep, 'completed');
+
+      setImportResult(response);
+      if (onResult) {
+        onResult(response);
+      }
+
+      setHasCompleted(true);
+    } catch (error: any) {
+      updateStep(currentStep, 'failed');
+      const message =
+        error?.message && typeof error.message === 'string'
+          ? `Import failed: ${error.message}`
+          : 'Import failed. Please try again.';
+      setErrorMessage(message);
+      setHasCompleted(false);
+    } finally {
+      setIsRunning(false);
+    }
+  }, [isValidUrl, isRunning, sourceUrl, access_token, updateStep, onResult]);
 
   const handleSubmit = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
@@ -161,6 +210,59 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
 
   const validationMessage =
     touched && !isValidUrl ? 'Enter a valid URL (starting with http:// or https://).' : undefined;
+
+  const problems = useMemo(() => {
+    const list = importResult?.refresh && Array.isArray(importResult.refresh.problems)
+      ? importResult.refresh.problems
+      : [];
+    if (!list.length) {
+      return [];
+    }
+    const backendUrl = (getBackendUrl() || '').replace(/\/$/, '');
+    const MAX_PREVIEW_LENGTH = 220;
+
+    return list.map((problem: any, index: number) => {
+      const rawImg = problem?.img;
+      let image: string | undefined;
+      if (typeof rawImg === 'string') {
+        image = rawImg;
+      } else if (rawImg && typeof rawImg === 'object') {
+        const localImg = typeof rawImg.local === 'string' ? rawImg.local : undefined;
+        const originalImg = typeof rawImg.original === 'string' ? rawImg.original : undefined;
+        image = localImg ?? originalImg;
+      }
+      if (image && !/^https?:\/\//i.test(image)) {
+        image = `${backendUrl}${image}`;
+      }
+      const title =
+        typeof problem?.title === 'string' && problem.title.trim().length > 0
+          ? problem.title.trim()
+          : `Problem ${index + 1}`;
+      const status = typeof problem?.status === 'string' ? problem.status : undefined;
+      const body =
+        typeof problem?.body === 'string' && problem.body.trim().length > 0
+          ? stripHtml(problem.body)
+          : '';
+      const preview =
+        body && body.length > MAX_PREVIEW_LENGTH
+          ? `${body.slice(0, MAX_PREVIEW_LENGTH).trimEnd()}…`
+          : body;
+
+      return {
+        id: problem?.id ?? index,
+        title,
+        status,
+        body,
+        preview,
+        image,
+      };
+    });
+  }, [importResult]);
+
+  const imageCount =
+    importResult?.refresh && Array.isArray((importResult.refresh as any)?._images)
+      ? ((importResult.refresh as any)._images as Array<unknown>).length
+      : 0;
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col space-y-6 py-2">
@@ -195,6 +297,8 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
                 indicator = <Loader2 className="h-3 w-3 animate-spin text-blue-500" aria-hidden="true" />;
               } else if (step.status === 'completed') {
                 indicator = <CheckCircle2 className="h-3 w-3 text-emerald-500" aria-hidden="true" />;
+              } else if (step.status === 'failed') {
+                indicator = <X className="h-3 w-3 text-red-500" aria-hidden="true" />;
               } else {
                 indicator = <span className="block h-2.5 w-2.5 rounded-full bg-gray-300" aria-hidden="true" />;
               }
@@ -211,6 +315,93 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
               );
             })}
           </ul>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {errorMessage}
+        </div>
+      )}
+
+      {importResult && (
+        <div className="space-y-3 rounded-md border border-gray-200 bg-white/80 px-3 py-3">
+          <div className="space-y-1">
+            <h3 className="text-sm font-semibold text-foreground">Import preview</h3>
+            <p className="text-xs text-muted-foreground">
+              {problems.length > 0
+                ? `Found ${problems.length} problem${problems.length === 1 ? '' : 's'} in the source.`
+                : 'No problems detected in the source document.'}
+            </p>
+            {importResult.refresh_url && (
+              <a
+                href={importResult.refresh_url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-primary hover:underline"
+              >
+                View original refresh endpoint
+              </a>
+            )}
+          </div>
+          {problems.length > 0 && (
+            <div className="max-h-64 overflow-y-auto pr-1 space-y-2">
+              {problems.map((problem, index) => (
+                <article
+                  key={`${problem.id}-${index}`}
+                  className="space-y-2 rounded-md border border-gray-200 bg-white/70 p-3 shadow-sm"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className="text-sm font-medium text-foreground truncate"
+                        title={problem.title}
+                      >
+                        {problem.title}
+                      </p>
+                      {problem.status && (
+                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                          {problem.status}
+                        </span>
+                      )}
+                    </div>
+                    {problem.id !== undefined && (
+                      <span className="text-[10px] text-muted-foreground" title={String(problem.id)}>
+                        ID: {problem.id}
+                      </span>
+                    )}
+                  </div>
+                  {problem.preview && (
+                    <p
+                      className="text-xs leading-relaxed text-muted-foreground overflow-hidden text-ellipsis"
+                      title={problem.body}
+                      style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                      }}
+                    >
+                      {problem.preview}
+                    </p>
+                  )}
+                  {problem.image && (
+                    <div className="rounded-md border border-gray-100 bg-gray-50 p-2">
+                      <img
+                        src={problem.image}
+                        alt={`Preview for ${problem.title}`}
+                        className="max-h-40 w-full rounded object-contain"
+                      />
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
+          {imageCount > 0 && (
+            <p className="text-[11px] text-muted-foreground">
+              Cached {imageCount} image{imageCount === 1 ? '' : 's'} for offline reuse.
+            </p>
+          )}
         </div>
       )}
 
@@ -233,7 +424,7 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
         )}
         {hasCompleted ? (
           <Button type="button" onClick={onCancel}>
-            Close
+            Apply
           </Button>
         ) : (
           <Button

@@ -56,6 +56,7 @@ FRIEDRICH_PATH_PREFIX = "/friedrich/docs/InvLectRooms/"
 FRIEDRICH_GENERIC_PATH_PATTERN = re.compile(
     r'(/friedrich/docs/InvLectRooms/[^\s"\'<>]+)'
 )
+ROOM_SECTION_ID_PATTERN = re.compile(r"riddle_(\d+)")
 
 IMAGE_EXTENSIONS = (
     ".png",
@@ -505,6 +506,102 @@ def extract_semantic_blocks(html: str, *, base_url: str) -> Tuple[List[Dict[str,
     return items, image_urls
 
 
+def _normalize_tag_attributes(tag: Tag, *, base_url: str, image_urls: Set[str]) -> None:
+    for attr, value in list(tag.attrs.items()):
+        if attr == "src" and isinstance(value, str):
+            resolved = _resolve_url(value, base_url)
+            tag[attr] = resolved
+            image_urls.add(resolved)
+        elif attr == "srcset" and isinstance(value, str):
+            resolved_srcset = _resolve_srcset(value, base_url)
+            tag[attr] = resolved_srcset
+            for candidate in resolved_srcset.split(","):
+                candidate = candidate.strip()
+                if not candidate:
+                    continue
+                url = candidate.split()[0]
+                if url:
+                    image_urls.add(url)
+        elif attr in {"href"} and isinstance(value, str):
+            tag[attr] = _resolve_url(value, base_url)
+        elif isinstance(value, str):
+            tag[attr] = _replace_relative_prefix(value)
+        elif isinstance(value, list):
+            tag[attr] = [
+                _replace_relative_prefix(element) if isinstance(element, str) else element
+                for element in value
+            ]
+
+
+def _serialize_static_problem_content(
+    content: Tag,
+    *,
+    base_url: str,
+    image_urls: Set[str],
+) -> Tuple[Optional[str], Optional[str]]:
+    fragment = BeautifulSoup(content.decode_contents(), "html.parser")
+    primary_img: Optional[str] = None
+
+    for tag in fragment.find_all(True):
+        _normalize_tag_attributes(tag, base_url=base_url, image_urls=image_urls)
+        if tag.name == "img":
+            src = tag.get("src")
+            if isinstance(src, str) and primary_img is None:
+                classes = tag.get("class") or []
+                if "problem_image" in classes:
+                    primary_img = src
+                else:
+                    primary_img = src
+
+    body_html = "".join(str(child) for child in fragment.contents).strip()
+    if not body_html:
+        body_html = None
+
+    return body_html, primary_img
+
+
+def _extract_static_problems(
+    html: str,
+    *,
+    base_url: str,
+) -> Tuple[List[Dict[str, Any]], Set[str]]:
+    soup = BeautifulSoup(html, "lxml")
+    problems: List[Dict[str, Any]] = []
+    image_urls: Set[str] = set()
+
+    for section in soup.select("section.room_section"):
+        problem: Dict[str, Any] = {}
+        section_id = section.get("id")
+        match = ROOM_SECTION_ID_PATTERN.match(section_id) if isinstance(section_id, str) else None
+        if match:
+            problem["id"] = int(match.group(1))
+        elif isinstance(section_id, str):
+            problem["id"] = section_id
+
+        button = section.find("button")
+        if isinstance(button, Tag):
+            title = _normalize_whitespace(button.get_text(" "))
+            if title:
+                problem["title"] = title
+
+        problem["status"] = None
+
+        content_div = section.find("div", class_="content")
+        if isinstance(content_div, Tag):
+            body_html, primary_img = _serialize_static_problem_content(
+                content_div, base_url=base_url, image_urls=image_urls
+            )
+            if body_html:
+                problem["body"] = body_html
+            if primary_img:
+                problem["img"] = primary_img
+
+        if any(key in problem for key in ("title", "body", "img")):
+            problems.append(problem)
+
+    return problems, image_urls
+
+
 def scrape_invlectrooms(
     url: str,
     *,
@@ -517,6 +614,7 @@ def scrape_invlectrooms(
     # max_depth and max_children are accepted for backwards compatibility but no longer used.
     _ = (max_depth, max_children)
     _, html_image_urls = extract_semantic_blocks(html, base_url=url)
+    static_problems, static_image_urls = _extract_static_problems(html, base_url=url)
     refresh_data: Optional[Dict[str, Any]] = None
     refresh_path = _extract_refresh_path(html)
     refresh_url: Optional[str] = None
@@ -529,7 +627,16 @@ def scrape_invlectrooms(
     else:
         refresh_data = None
 
+    if static_problems:
+        if refresh_data is None:
+            refresh_data = {"problems": static_problems}
+        else:
+            existing_problems = refresh_data.get("problems")
+            if not existing_problems:
+                refresh_data["problems"] = static_problems
+
     image_urls: Set[str] = set(html_image_urls)
+    image_urls.update(static_image_urls)
     if refresh_data is not None:
         image_urls.update(_collect_image_urls_from_refresh(refresh_data))
 
