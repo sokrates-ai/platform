@@ -1,7 +1,7 @@
 'use client'
 import { getAPIUrl } from '@services/config/config'
 import { swrFetcher } from '@services/utils/ts/requests'
-import React, { createContext, useContext, useEffect, useMemo, useReducer } from 'react'
+import React, { createContext, useContext, useEffect, useMemo, useReducer, useRef } from 'react'
 import useSWR from 'swr'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { DEFAULT_COURSE_TABS } from '@components/Objects/Modals/Course/Create/CourseTabSelector'
@@ -41,19 +41,36 @@ export function CourseProvider({ children, courseuuid }: any) {
   }), [courseuuid, defaultTabId]);
 
   const [state, dispatch] = useReducer(courseReducer, initialState) as any;
+  const activeTabIdRef = useRef<string | null>(initialState.activeTabId ?? null);
+
+  useEffect(() => {
+    activeTabIdRef.current = state.activeTabId ?? null;
+  }, [state.activeTabId]);
 
   useEffect(() => {
     if (courseStructureData) {
       const transformed = transformCourseStructure(courseStructureData);
       dispatch({ type: 'setCourseTabsStore', payload: transformed.courseTabsStore });
       dispatch({ type: 'setCourseStructure', payload: transformed.courseStructure });
-      const firstTabId =
-        transformed.courseStructure?.tabMetadata?.[0]?.id ??
-        Object.keys(transformed.courseTabsStore ?? {})[0] ??
+      const metadata = Array.isArray(transformed.courseStructure?.tabMetadata)
+        ? transformed.courseStructure.tabMetadata
+        : [];
+      const metadataIds = metadata
+        .map((tab: any) => tab?.id ?? tab?.tab_uuid ?? null)
+        .filter((value): value is string => Boolean(value));
+      const storeKeys = Object.keys(transformed.courseTabsStore ?? {});
+      const previousActive = activeTabIdRef.current;
+      const fallbackTabId =
+        metadataIds[0] ??
+        storeKeys[0] ??
         DEFAULT_COURSE_TABS[0]?.id ??
         'tab-1';
-      if (firstTabId) {
-        dispatch({ type: 'setActiveTab', payload: firstTabId });
+      const shouldKeepPrevious =
+        !!previousActive &&
+        (metadataIds.includes(previousActive) || storeKeys.includes(previousActive));
+      const nextActiveTabId = shouldKeepPrevious ? previousActive : fallbackTabId;
+      if (nextActiveTabId) {
+        dispatch({ type: 'setActiveTab', payload: nextActiveTabId });
       }
       dispatch({ type: 'setIsLoaded' });
     }
