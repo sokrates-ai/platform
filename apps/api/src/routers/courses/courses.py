@@ -15,6 +15,7 @@ from src.db.courses.courses import (
     CourseUpdate,
     FullCourseReadWithTrail,
 )
+from src.db.courses.chapters import ChapterRead
 from src.security.auth import get_current_user
 from src.services.courses.course_canvas import get_canvas, put_update
 from src.services.courses.students import list_course_students, CourseStudent
@@ -28,6 +29,7 @@ from src.services.courses.courses import (
     delete_course,
     update_course_thumbnail,
 )
+from src.services.courses.chapters import get_course_chapters_for_tab
 from src.services.courses.updates import (
     create_update,
     delete_update,
@@ -130,6 +132,26 @@ async def api_get_course_meta(
     """
     return await get_course_meta(
         request, course_uuid, current_user=current_user, db_session=db_session
+    )
+
+
+@router.get('/{course_uuid}/tabs/{tab_uuid}/content')
+async def api_get_course_tab_content(
+    request: Request,
+    course_uuid: str,
+    tab_uuid: str,
+    db_session: Session = Depends(get_db_session),
+    current_user: PublicUser = Depends(get_current_user),
+) -> List[ChapterRead]:
+    """
+    Get the chapters mapped to a specific course tab.
+    """
+    return await get_course_chapters_for_tab(
+        request,
+        course_uuid,
+        tab_uuid,
+        current_user=current_user,
+        db_session=db_session,
     )
 
 

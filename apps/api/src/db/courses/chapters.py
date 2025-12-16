@@ -29,7 +29,7 @@ class Chapter(ChapterBase, table=True):
 class ChapterCreate(ChapterBase):
     # referenced order here will be ignored and just used for validation
     # used order will be the next available.
-    pass
+    tab_uuid: Optional[str] = None
 
 
 class ChapterUpdate(ChapterBase):
@@ -38,6 +38,7 @@ class ChapterUpdate(ChapterBase):
     thumbnail_image: Optional[str] = ""
     course_id: Optional[int]
     org_id: Optional[int] # type: ignore
+    tab_uuid: Optional[str] = None
 
 
 class ChapterRead(ChapterBase):
@@ -47,6 +48,7 @@ class ChapterRead(ChapterBase):
     creation_date: str
     update_date: str
     predecessors: List[int]
+    tab_uuid: Optional[str]
     pass
 
 

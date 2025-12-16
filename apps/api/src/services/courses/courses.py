@@ -1,4 +1,4 @@
-from typing import Literal, List
+from typing import Any, Dict, Literal, List, Optional
 from uuid import uuid4
 from src.db.courses.chapters import Chapter
 from sqlmodel import Session, select, or_, and_
@@ -19,7 +19,10 @@ from src.db.courses.courses import (
     CourseRead,
     CourseUpdate,
     FullCourseReadWithTrail,
+    default_map_state,
 )
+from src.db.courses.course_tabs import CourseTab, CourseTabRead, CourseTabUpsert
+from src.db.courses.course_chapters import CourseChapter_Graph
 from src.security.rbac.rbac import (
     authorization_verify_based_on_roles_and_authorship,
     authorization_verify_if_element_is_public,
@@ -28,6 +31,205 @@ from src.security.rbac.rbac import (
 from src.services.courses.thumbnails import upload_thumbnail
 from fastapi import HTTPException, Request, UploadFile
 from datetime import datetime
+
+
+def sanitize_map_state(raw_map: Any) -> Dict[str, Any]:
+    base = default_map_state()
+    if not isinstance(raw_map, dict):
+        return default_map_state()
+
+    objects = raw_map.get('objects')
+    sanitized_objects = list(objects) if isinstance(objects, list) else []
+
+    raw_boundaries = raw_map.get('boundaries')
+    fallback_boundaries = base['boundaries']
+    sanitized_boundaries = {
+        axis: (
+            raw_boundaries.get(axis)
+            if isinstance(raw_boundaries, dict)
+            and isinstance(raw_boundaries.get(axis), (int, float))
+            else fallback_boundaries[axis]
+        )
+        for axis in ('left', 'right', 'top', 'bottom')
+    }
+
+    return {
+        'objects': sanitized_objects,
+        'boundaries': sanitized_boundaries,
+    }
+
+
+DEFAULT_TABS: List[Dict[str, str]] = [
+    {"tab_uuid": "tab-1", "name": "Content"},
+    {"tab_uuid": "tab-2", "name": "Map"},
+]
+
+
+def sanitize_tab_map_store(raw_store: Any) -> Dict[str, Dict[str, Any]]:
+    sanitized: Dict[str, Dict[str, Any]] = {}
+    if not isinstance(raw_store, dict):
+        return sanitized
+
+    for key, entry in raw_store.items():
+        tab_id = str(key)
+        candidate = entry
+        if isinstance(candidate, dict) and 'map' in candidate:
+            candidate = candidate.get('map')
+        sanitized[tab_id] = sanitize_map_state(candidate)
+
+    return sanitized
+
+
+def fetch_course_tabs(course_id: int, db_session: Session) -> List[CourseTab]:
+    statement = (
+        select(CourseTab)
+        .where(CourseTab.course_id == course_id)
+        .order_by(CourseTab.position.asc(), CourseTab.id.asc())
+    )
+    return list(db_session.exec(statement).all())
+
+
+def ensure_default_tabs(course: Course, db_session: Session) -> List[CourseTab]:
+    tabs = fetch_course_tabs(course.id, db_session)
+    if tabs:
+        return tabs
+
+    now = datetime.utcnow().isoformat()
+    created_tabs: List[CourseTab] = []
+    for index, spec in enumerate(DEFAULT_TABS):
+        tab = CourseTab(
+            tab_uuid=spec["tab_uuid"],
+            course_id=course.id,
+            course_uuid=course.course_uuid,
+            name=spec["name"],
+            position=index,
+            creation_date=now,
+            update_date=now,
+        )
+        db_session.add(tab)
+        created_tabs.append(tab)
+
+    db_session.commit()
+    for tab in created_tabs:
+        db_session.refresh(tab)
+
+    return created_tabs
+
+
+def upsert_course_tabs(
+    course: Course,
+    incoming_tabs: List[CourseTabUpsert],
+    db_session: Session,
+) -> List[CourseTab]:
+    if not incoming_tabs:
+        raise HTTPException(
+            status_code=400,
+            detail="A course must have at least one tab.",
+        )
+
+    existing_tabs = fetch_course_tabs(course.id, db_session)
+    existing_by_id = {tab.tab_uuid: tab for tab in existing_tabs}
+    incoming_by_id = {tab.tab_uuid: tab for tab in incoming_tabs}
+
+    now = datetime.utcnow().isoformat()
+
+    # Upsert provided tabs
+    for tab_uuid, payload in incoming_by_id.items():
+        if tab_uuid in existing_by_id:
+            tab = existing_by_id[tab_uuid]
+            if tab.name != payload.name or tab.position != payload.position:
+                tab.name = payload.name
+                tab.position = payload.position
+                tab.update_date = now
+                db_session.add(tab)
+        else:
+            tab = CourseTab(
+                tab_uuid=payload.tab_uuid,
+                course_id=course.id,
+                course_uuid=course.course_uuid,
+                name=payload.name,
+                position=payload.position,
+                creation_date=now,
+                update_date=now,
+            )
+            db_session.add(tab)
+
+    # Reassign chapters from tabs that will be removed
+    ordered_payload = sorted(incoming_tabs, key=lambda t: t.position)
+    fallback_tab_uuid = ordered_payload[0].tab_uuid if ordered_payload else None
+
+    tabs_to_delete = [
+        tab for tab_uuid, tab in existing_by_id.items() if tab_uuid not in incoming_by_id
+    ]
+    if tabs_to_delete and not fallback_tab_uuid:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete all tabs from a course.",
+        )
+
+    for tab in tabs_to_delete:
+        if not fallback_tab_uuid:
+            continue
+        edge_stmt = (
+            select(CourseChapter_Graph)
+            .where(CourseChapter_Graph.course_id == course.id)
+            .where(CourseChapter_Graph.tab_uuid == tab.tab_uuid)
+        )
+        edges = db_session.exec(edge_stmt).all()
+        for edge in edges:
+            edge.tab_uuid = fallback_tab_uuid  # type: ignore[arg-type]
+            db_session.add(edge)
+        db_session.delete(tab)
+
+    db_session.commit()
+    return fetch_course_tabs(course.id, db_session)
+
+
+def build_course_read(
+    course: Course,
+    authors: List[UserRead],
+    tabs: List[CourseTab],
+) -> CourseRead:
+    sanitized_store = sanitize_tab_map_store(course.tab_store)
+
+    if not tabs:
+        tab_reads = [
+            CourseTabRead(
+                tab_uuid=spec["tab_uuid"],
+                course_uuid=course.course_uuid,
+                name=spec["name"],
+                position=index,
+            )
+            for index, spec in enumerate(DEFAULT_TABS)
+        ]
+    else:
+        tab_reads = [
+            CourseTabRead(
+                tab_uuid=tab.tab_uuid,
+                course_uuid=tab.course_uuid,
+                name=tab.name,
+                position=tab.position,
+            )
+            for tab in tabs
+        ]
+
+    ordered_tab_ids = [tab.tab_uuid for tab in tabs] if tabs else [spec["tab_uuid"] for spec in DEFAULT_TABS]
+
+    for tab_id in ordered_tab_ids:
+        if tab_id not in sanitized_store:
+            sanitized_store[tab_id] = default_map_state()
+
+    primary_tab_id = ordered_tab_ids[0] if ordered_tab_ids else None
+    map_state = sanitized_store.get(primary_tab_id) if primary_tab_id else None
+    if map_state is None:
+        map_state = sanitize_map_state(course.map_state)
+
+    payload = course.model_dump()
+    payload['tab_store'] = sanitized_store
+    payload['map_state'] = map_state
+    payload['tabs'] = tab_reads
+
+    return CourseRead(**payload, authors=authors)
 
 
 async def get_course(
@@ -57,11 +259,12 @@ async def get_course(
     authors = db_session.exec(authors_statement).all()
 
     # convert from User to UserRead
-    authors = [UserRead.model_validate(author) for author in authors]
+    author_reads = [UserRead.model_validate(author) for author in authors]
 
-    course = CourseRead(**course.model_dump(), authors=authors)
+    tabs = ensure_default_tabs(course, db_session)
+    course_read = build_course_read(course, author_reads, tabs)
 
-    return course
+    return course_read
 
 
 async def get_course_by_id(
@@ -91,11 +294,12 @@ async def get_course_by_id(
     authors = db_session.exec(authors_statement).all()
 
     # convert from User to UserRead
-    authors = [UserRead.model_validate(author) for author in authors]
+    author_reads = [UserRead.model_validate(author) for author in authors]
 
-    course = CourseRead(**course.model_dump(), authors=authors)
+    tabs = ensure_default_tabs(course, db_session)
+    course_read = build_course_read(course, author_reads, tabs)
 
-    return course
+    return course_read
 
 
 async def get_course_meta(
@@ -128,9 +332,10 @@ async def get_course_meta(
     authors = db_session.exec(authors_statement).all()
 
     # convert from User to UserRead
-    authors = [UserRead.model_validate(author) for author in authors]
+    author_reads = [UserRead.model_validate(author) for author in authors]
 
-    course = CourseRead(**course.model_dump(), authors=authors)
+    tabs = ensure_default_tabs(course, db_session)
+    course_read = build_course_read(course, author_reads, tabs)
 
     # Get course chapters
     chapters = await get_course_chapters(request, course.id, db_session, current_user)
@@ -146,7 +351,7 @@ async def get_course_meta(
         )
 
     return FullCourseReadWithTrail(
-        **course.model_dump(),
+        **course_read.model_dump(),
         chapters=chapters,
         trail=trail if trail else None,
     )
@@ -217,8 +422,9 @@ async def get_courses_orgslug(
         )
         authors = db_session.exec(authors_query).all()
 
-        course_read = CourseRead.model_validate(course)
-        course_read.authors = [UserRead.model_validate(author) for author in authors]
+        author_reads = [UserRead.model_validate(author) for author in authors]
+        tabs = ensure_default_tabs(course, db_session)
+        course_read = build_course_read(course, author_reads, tabs)
         course_reads.append(course_read)
 
     return course_reads
@@ -250,14 +456,9 @@ async def create_course(
     course.course_uuid = str(f"course_{uuid4()}")
     course.creation_date = str(datetime.now())
     course.update_date = str(datetime.now())
-    course.map_state = {
-        "objects": [],
-        "boundaries": {
-            "left": -1000,
-            "right": 1000,
-            "top": -1000,
-            "bottom": 1000
-        }
+    course.map_state = default_map_state()
+    course.tab_store = {
+        spec["tab_uuid"]: default_map_state() for spec in DEFAULT_TABS
     }
 
     # Upload thumbnail
@@ -275,6 +476,26 @@ async def create_course(
     db_session.add(course)
     db_session.commit()
     db_session.refresh(course)
+
+    # Create default course tabs
+    now = datetime.utcnow().isoformat()
+    created_tabs: List[CourseTab] = []
+    for index, spec in enumerate(DEFAULT_TABS):
+        tab = CourseTab(
+            tab_uuid=spec["tab_uuid"],
+            course_id=course.id,
+            course_uuid=course.course_uuid,
+            name=spec["name"],
+            position=index,
+            creation_date=now,
+            update_date=now,
+        )
+        db_session.add(tab)
+        created_tabs.append(tab)
+
+    db_session.commit()
+    for tab in created_tabs:
+        db_session.refresh(tab)
 
     # Make the user the creator of the course
     resource_author = ResourceAuthor(
@@ -302,11 +523,12 @@ async def create_course(
     increase_feature_usage("courses", course.org_id, db_session)
 
     # convert from User to UserRead
-    authors = [UserRead.model_validate(author) for author in authors]
+    author_reads = [UserRead.model_validate(author) for author in authors]
 
-    course = CourseRead(**course.model_dump(), authors=authors)
+    tabs = fetch_course_tabs(course.id, db_session)
+    course_read = build_course_read(course, author_reads, tabs)
 
-    return CourseRead.model_validate(course)
+    return course_read
 
 
 async def update_course_thumbnail(
@@ -367,11 +589,12 @@ async def update_course_thumbnail(
     authors = db_session.exec(authors_statement).all()
 
     # convert from User to UserRead
-    authors = [UserRead.model_validate(author) for author in authors]
+    author_reads = [UserRead.model_validate(author) for author in authors]
 
-    course = CourseRead(**course.model_dump(), authors=authors)
+    tabs = fetch_course_tabs(course.id, db_session)
+    course_read = build_course_read(course, author_reads, tabs)
 
-    return course
+    return course_read
 
 
 async def update_course(
@@ -381,8 +604,6 @@ async def update_course(
     current_user: PublicUser | AnonymousUser,
     db_session: Session,
 ):
-    print(f"upd: {course_object}")
-
     statement = select(Course).where(Course.course_uuid == course_uuid)
     course = db_session.exec(statement).first()
 
@@ -395,11 +616,39 @@ async def update_course(
     # RBAC check
     await rbac_check(request, course.course_uuid, current_user, "update", db_session)
 
-    # Update only the fields that were passed in
-    for var, value in vars(course_object).items():
-        if value is not None:
-            print(f"update: {var} : {value}")
-            setattr(course, var, value)
+    incoming_data = course_object.model_dump(exclude_none=True, exclude={"tab_store", "map_state", "tabs"})
+    for field, value in incoming_data.items():
+        setattr(course, field, value)
+
+    new_tab_store = (
+        sanitize_tab_map_store(course_object.tab_store)
+        if course_object.tab_store is not None
+        else None
+    )
+
+    if course_object.map_state is not None:
+        course.map_state = sanitize_map_state(course_object.map_state)
+
+    if new_tab_store is not None:
+        course.tab_store = new_tab_store
+
+    if course_object.tabs is not None:
+        tabs = upsert_course_tabs(course, course_object.tabs, db_session)
+    else:
+        tabs = ensure_default_tabs(course, db_session)
+
+    sanitized_store = sanitize_tab_map_store(course.tab_store)
+    aligned_store: Dict[str, Dict[str, Any]] = {}
+    for tab in tabs:
+        aligned_store[tab.tab_uuid] = sanitized_store.get(tab.tab_uuid, default_map_state())
+
+    course.tab_store = aligned_store
+
+    if course_object.map_state is None and new_tab_store is not None:
+        primary_tab_id = tabs[0].tab_uuid if tabs else None
+        if primary_tab_id and primary_tab_id in aligned_store:
+            course.map_state = aligned_store[primary_tab_id]
+    course.map_state = sanitize_map_state(course.map_state)
 
     # Complete the course object
     course.update_date = str(datetime.now())
@@ -417,11 +666,11 @@ async def update_course(
     authors = db_session.exec(authors_statement).all()
 
     # convert from User to UserRead
-    authors = [UserRead.model_validate(author) for author in authors]
+    author_reads = [UserRead.model_validate(author) for author in authors]
 
-    course = CourseRead(**course.model_dump(), authors=authors)
+    course_read = build_course_read(course, author_reads, tabs)
 
-    return course
+    return course_read
 
 
 async def delete_course(

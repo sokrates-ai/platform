@@ -6,6 +6,7 @@ import {
   useCourse,
   useCourseDispatch,
 } from '@components/Contexts/CourseContext'
+import { DEFAULT_COURSE_TABS } from '@components/Objects/Modals/Course/Create/CourseTabSelector'
 import { Check, SaveAllIcon, Timer } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import React, { useEffect } from 'react'
@@ -19,6 +20,71 @@ function SaveState(props: { orgslug: string }) {
   const saved = course ? course.isSaved : true
   const dispatchCourse = useCourseDispatch() as any
   const course_structure = course.courseStructure
+  const fallbackMapState = {
+    objects: [],
+    boundaries: {
+      left: -1000,
+      right: 1000,
+      top: -1000,
+      bottom: 1000,
+    },
+  };
+
+  const buildCourseUpdatePayload = () => {
+    const metadataSource = Array.isArray(course.courseTabMetadata)
+      ? [...course.courseTabMetadata].sort(
+          (a: any, b: any) => (a?.position ?? 0) - (b?.position ?? 0),
+        )
+      : DEFAULT_COURSE_TABS.map((tab, index) => ({ ...tab, position: index }));
+
+    const metadata = metadataSource.map((tab: any, index: number) => ({
+        tab_uuid: tab?.id ?? tab?.tab_uuid ?? `tab-${index + 1}`,
+        name: tab?.name ?? `Tab ${index + 1}`,
+        position: typeof tab?.position === 'number' ? tab.position : index,
+      }));
+
+    const tabStoreSource =
+      course_structure?.tabMapStore ??
+      Object.fromEntries(
+        Object.entries(course_structure?.tabStore ?? {}).map(([tabId, value]: [string, any]) => [
+          tabId,
+          value?.map ? { ...value.map } : { ...fallbackMapState },
+        ]),
+      );
+
+    const sanitizedTabStore = metadata.reduce<Record<string, any>>((acc, tab) => {
+      const mapState = tabStoreSource?.[tab.tab_uuid]
+        ? { ...tabStoreSource[tab.tab_uuid] }
+        : { ...fallbackMapState };
+      acc[tab.tab_uuid] = mapState;
+      return acc;
+    }, {});
+
+    const primaryMap =
+      metadata.length > 0
+        ? sanitizedTabStore[metadata[0].tab_uuid] ?? { ...fallbackMapState }
+        : { ...fallbackMapState };
+
+    const payload: Record<string, any> = {
+      name: course_structure?.name,
+      description: course_structure?.description,
+      about: course_structure?.about,
+      learnings: course_structure?.learnings,
+      tags: course_structure?.tags,
+      public: course_structure?.public,
+      tabStore: sanitizedTabStore,
+      map_state: primaryMap,
+      tabs: metadata,
+    };
+
+    Object.keys(payload).forEach((key) => {
+      if (payload[key] === undefined) {
+        delete payload[key];
+      }
+    });
+
+    return payload;
+  };
 
   const saveCourseState = async () => {
     // Course  order
@@ -52,9 +118,10 @@ function SaveState(props: { orgslug: string }) {
   // Course metadata
   const changeMetadataBackend = async () => {
     mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
+    const payload = buildCourseUpdatePayload()
     await updateCourse(
       course.courseStructure.course_uuid,
-      course.courseStructure,
+      payload,
       session.data?.tokens?.access_token
     )
     await revalidateTags(['courses'], props.orgslug)
@@ -67,7 +134,7 @@ function SaveState(props: { orgslug: string }) {
     const chapter_order_by_ids = chapters.map((chapter: any) => {
       return {
         chapter_id: chapter.id,
-        activities_order_by_ids: chapter.activities.map((activity: any) => {
+        activities_order_by_ids: (chapter.activities ?? []).map((activity: any) => {
           return {
             activity_id: activity.id,
           }

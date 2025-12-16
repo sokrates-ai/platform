@@ -47,7 +47,7 @@ function ActivityIndicators(props: Props) {
 								Ch {chapterIndex + 1}
 							</div> */}
 							<div className="flex items-center">
-								{chapter.activities.map((activity: any, activityIndex: number) => {
+								{(chapter.activities ?? []).map((activity: any, activityIndex: number) => {
 									const isDone = isActivityDone(activity)
 									const isCurrent = isActivityCurrent(activity)
 

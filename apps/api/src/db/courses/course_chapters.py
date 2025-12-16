@@ -1,5 +1,5 @@
 from typing import Optional
-from sqlalchemy import Column, ForeignKey, Integer
+from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlmodel import Field, SQLModel
 
 
@@ -29,4 +29,7 @@ class CourseChapter_Graph(SQLModel, table=True):
     )
     predecessor_id: int = Field(
         sa_column=Column(Integer, ForeignKey("chapter.id", ondelete="CASCADE"), primary_key=True, nullable=True)
+    )
+    tab_uuid: str = Field(
+        sa_column=Column("tab_uuid", String, ForeignKey("course_tab.tab_uuid", ondelete="CASCADE"), nullable=False)
     )

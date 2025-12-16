@@ -174,17 +174,21 @@ function CourseOverviewLayout({ params }: { params: CourseOverviewParams }) {
 
   const handleTabsChange = React.useCallback(
     (nextTabs: CourseTab[]) => {
-      const nextStore = ensureStoreForTabs(nextTabs, tabStore)
-      setTabs(nextTabs)
+      const tabsWithPositions = nextTabs.map((tab, index) => ({
+        ...tab,
+        position: index,
+      }))
+      const nextStore = ensureStoreForTabs(tabsWithPositions, tabStore)
+      setTabs(tabsWithPositions)
       syncStore(nextStore, true)
-      dispatchCourse({ type: 'setCourseTabMetadata', payload: nextTabs })
+      dispatchCourse({ type: 'setCourseTabMetadata', payload: tabsWithPositions })
 
       setSelectedTabId((current) => {
-        if (nextTabs.some((tab) => tab.id === current)) {
+        if (tabsWithPositions.some((tab) => tab.id === current)) {
           dispatchCourse({ type: 'setActiveTab', payload: current })
           return current
         }
-        const fallback = nextTabs[0]?.id ?? ''
+        const fallback = tabsWithPositions[0]?.id ?? ''
         if (fallback) {
           dispatchCourse({ type: 'setActiveTab', payload: fallback })
         }

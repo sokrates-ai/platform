@@ -26,11 +26,20 @@ export type CourseTab = {
   id: string;
   name: string;
   description?: string;
+  position?: number;
 };
 
 export const DEFAULT_COURSE_TABS: CourseTab[] = [
-  { id: 'tab-1', name: 'Account', description: 'Make changes to your account here.' },
-  { id: 'tab-2', name: 'Password', description: 'Change your password here.' },
+  {
+    id: 'tab-1',
+    name: 'Content',
+    description: 'Organize chapters and activities for this course.',
+  },
+  {
+    id: 'tab-2',
+    name: 'Map',
+    description: 'Design the spatial course map for learners.',
+  },
 ];
 
 const deriveCounter = (tabs: CourseTab[]): number => {

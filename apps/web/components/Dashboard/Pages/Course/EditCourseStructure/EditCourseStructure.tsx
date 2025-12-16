@@ -160,13 +160,23 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
   const closeNewChapterModal = async () => setNewChapterModal(false);
 
   const submitChapter = async (chapter: any) => {
-    await createChapter(chapter, access_token);
+    const chapterPayload = {
+      ...chapter,
+      tab_uuid: selectedTabId,
+    };
+    await createChapter(chapterPayload, access_token);
     mutate(`${getAPIUrl()}courses/${course_uuid}/meta`);
     await revalidateTags(['courses'], props.orgslug);
     router.refresh();
     setNewChapterModal(false);
     // Optimistic UI update so the node appears immediately
-    const nextChapters = [...tabChapters, chapter];
+    const nextChapters = [
+      ...tabChapters,
+      {
+        ...chapterPayload,
+        activities: Array.isArray(chapter.activities) ? [...chapter.activities] : [],
+      },
+    ];
     onTabContentChange(selectedTabId, nextChapters);
   };
 

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Dict, Literal
+from typing import List, Dict, Literal, Optional
 from uuid import uuid4
 from sqlmodel import Session, select
 from src.db.users import AnonymousUser
@@ -9,6 +9,7 @@ from src.security.rbac.rbac import (
     authorization_verify_if_user_is_anon,
 )
 from src.db.courses.course_chapters import CourseChapter, CourseChapter_Graph
+from src.db.courses.course_tabs import CourseTab
 from src.db.courses.activities import Activity, ActivityRead
 from src.db.courses.chapter_activities import ChapterActivity
 from src.db.courses.chapters import (
@@ -26,6 +27,15 @@ from fastapi import HTTPException, status, Request
 ####################################################
 # CRUD
 ####################################################
+
+
+def get_sorted_course_tabs(course_id: int, db_session: Session) -> List[CourseTab]:
+    statement = (
+        select(CourseTab)
+        .where(CourseTab.course_id == course_id)
+        .order_by(CourseTab.position.asc(), CourseTab.id.asc())
+    )
+    return list(db_session.exec(statement).all())
 
 
 async def create_chapter(
@@ -56,7 +66,36 @@ async def create_chapter(
     db_session.commit()
     db_session.refresh(chapter)
 
-    chapter = ChapterRead(**chapter.model_dump(), activities=[], predecessors=[])
+    available_tabs = get_sorted_course_tabs(course.id, db_session)
+
+    resolved_tab: CourseTab | None = None
+    if chapter_object.tab_uuid:
+        resolved_tab = next(
+            (tab for tab in available_tabs if tab.tab_uuid == chapter_object.tab_uuid),
+            None,
+        )
+        if not resolved_tab:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Tab {chapter_object.tab_uuid} does not exist for this course.",
+            )
+    else:
+        resolved_tab = available_tabs[0] if available_tabs else None
+
+    if not resolved_tab:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="No tabs configured for this course.",
+        )
+
+    resolved_tab_uuid = resolved_tab.tab_uuid
+
+    chapter = ChapterRead(
+        **chapter.model_dump(),
+        activities=[],
+        predecessors=[],
+        tab_uuid=resolved_tab_uuid,
+    )
 
     # Check if CourseChapter link exists
     statement = (
@@ -82,6 +121,24 @@ async def create_chapter(
         db_session.add(course_chapter)
         db_session.commit()
 
+    # Ensure base graph node exists for this chapter/tab.
+    base_edge_statement = (
+        select(CourseChapter_Graph)
+        .where(CourseChapter_Graph.course_id == chapter.course_id)
+        .where(CourseChapter_Graph.chapter_id == chapter.id)
+        .where(CourseChapter_Graph.predecessor_id.is_(None))
+    )
+    base_edge = db_session.exec(base_edge_statement).first()
+    if not base_edge:
+        base_edge = CourseChapter_Graph(
+            course_id=chapter.course_id,
+            chapter_id=chapter.id,
+            predecessor_id=None,
+            tab_uuid=resolved_tab_uuid,
+        )
+        db_session.add(base_edge)
+        db_session.commit()
+
     # NOTE: all of this code is only used to determine the last course chapter.
     # Find the last chapter in the course.
     # This is required so that we can add it as an automatic predecessor.
@@ -105,6 +162,7 @@ async def create_chapter(
                 course_id=chapter.course_id,
                 chapter_id=chapter.id,
                 predecessor_id=predecessor_id,
+                tab_uuid=resolved_tab_uuid,
         )
 
         db_session.add(course_chapter_graph_edge)
@@ -162,10 +220,22 @@ async def get_chapter(
     incoming_edges = db_session.exec(statement).all()
     print(f"INCOMING of {chapter.id} = {incoming_edges}")
 
+    tabs = get_sorted_course_tabs(chapter.course_id, db_session)
+    fallback_tab_uuid = tabs[0].tab_uuid if tabs else "tab-1"
+    tab_uuid = (
+        incoming_edges[0].tab_uuid
+        if incoming_edges and incoming_edges[0].tab_uuid
+        else fallback_tab_uuid
+    )
+    predecessors = [
+        ch.predecessor_id for ch in incoming_edges if ch.predecessor_id is not None
+    ]
+
     chapter = ChapterRead(
         **chapter.model_dump(),
         activities=[ActivityRead(**activity.model_dump()) for activity in activities],
-        predecessors=[ch.predecessor_id for ch in incoming_edges],
+        predecessors=predecessors,
+        tab_uuid=tab_uuid,
     )
 
     return chapter
@@ -190,14 +260,40 @@ async def update_chapter(
     await rbac_check(request, chapter.chapter_uuid, current_user, "update", db_session)
 
     # Update only the fields that were passed in
+    new_tab_uuid: Optional[str] = None
     for var, value in vars(chapter_object).items():
-        if value is not None:
-            setattr(chapter, var, value)
+        if value is None:
+            continue
+        if var == 'tab_uuid':
+            new_tab_uuid = value
+            continue
+        setattr(chapter, var, value)
 
     chapter.update_date = str(datetime.now())
 
     db_session.commit()
     db_session.refresh(chapter)
+
+    if new_tab_uuid:
+        base_edge_stmt = (
+            select(CourseChapter_Graph)
+            .where(CourseChapter_Graph.course_id == chapter.course_id)
+            .where(CourseChapter_Graph.chapter_id == chapter.id)
+        )
+        edges = db_session.exec(base_edge_stmt).all()
+        if not edges:
+            base_edge = CourseChapter_Graph(
+                course_id=chapter.course_id,
+                chapter_id=chapter.id,
+                predecessor_id=None,
+                tab_uuid=new_tab_uuid,
+            )
+            db_session.add(base_edge)
+        else:
+            for edge in edges:
+                edge.tab_uuid = new_tab_uuid
+                db_session.add(edge)
+        db_session.commit()
 
     if chapter:
         chapter = await get_chapter(
@@ -265,6 +361,9 @@ async def get_course_chapters(
     # RBAC check
     await rbac_check(request, course.course_uuid, current_user, "read", db_session)  # type: ignore
 
+    tabs = get_sorted_course_tabs(course_id, db_session)
+    fallback_tab_uuid = tabs[0].tab_uuid if tabs else "tab-1"
+
     # Get activities and predecessor(s) for each chapter
     for chapter in chapters:
         #
@@ -301,7 +400,14 @@ async def get_course_chapters(
 
         incoming_edges = db_session.exec(statement).all()
         print(f"INCOMING of {chapter.id} = {incoming_edges}")
-        chapter.predecessors = [ch.predecessor_id for ch in incoming_edges]
+        chapter.tab_uuid = (
+            incoming_edges[0].tab_uuid
+            if incoming_edges and incoming_edges[0].tab_uuid
+            else fallback_tab_uuid
+        )
+        chapter.predecessors = [
+            ch.predecessor_id for ch in incoming_edges if ch.predecessor_id is not None
+        ]
 
     return chapters
 
@@ -389,6 +495,39 @@ async def DEPRECEATED_get_course_chapters(
 
     return final
 
+
+async def get_course_chapters_for_tab(
+    request: Request,
+    course_uuid: str,
+    tab_uuid: str,
+    current_user: PublicUser | AnonymousUser,
+    db_session: Session,
+) -> List[ChapterRead]:
+    statement = select(Course).where(Course.course_uuid == course_uuid)
+    course = db_session.exec(statement).first()
+
+    if not course:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found",
+        )
+
+    tabs = get_sorted_course_tabs(course.id, db_session)
+    if not any(tab.tab_uuid == tab_uuid for tab in tabs):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Tab {tab_uuid} not found for this course.",
+        )
+
+    chapters = await get_course_chapters(
+        request=request,
+        course_id=course.id,
+        db_session=db_session,
+        current_user=current_user,
+    )
+
+    return [chapter for chapter in chapters if chapter.tab_uuid == tab_uuid]
+
 #
 #
 # Graph utilities.
@@ -441,11 +580,41 @@ def is_new_graph_cyclic_after_new_edge(
             CourseChapter_Graph.course_id == course_id
     )
     edges: [CourseChapter_Graph] = db_session.exec(statement_edges).all()
-    edges.append(CourseChapter_Graph(
-        course_id=course_id,
-        chapter_id=new_edge.to_chapter_id,
-        predecessor_id=new_edge.from_chapter_id,
-    ))
+
+    target_tab_uuid: Optional[str] = None
+    for edge in edges:
+        if edge.chapter_id == new_edge.to_chapter_id:
+            target_tab_uuid = edge.tab_uuid
+            break
+
+    if target_tab_uuid is None:
+        tab_statement = (
+            select(CourseChapter_Graph)
+            .where(CourseChapter_Graph.course_id == course_id)
+            .where(CourseChapter_Graph.chapter_id == new_edge.to_chapter_id)
+            .limit(1)
+        )
+        existing_edge = db_session.exec(tab_statement).first()
+        if existing_edge:
+            target_tab_uuid = existing_edge.tab_uuid
+
+    if target_tab_uuid is None:
+        fallback_tab = db_session.exec(
+            select(CourseTab)
+            .where(CourseTab.course_id == course_id)
+            .order_by(CourseTab.position.asc(), CourseTab.id.asc())
+            .limit(1)
+        ).first()
+        target_tab_uuid = fallback_tab.tab_uuid if fallback_tab else "tab-1"
+
+    edges.append(
+        CourseChapter_Graph(
+            course_id=course_id,
+            chapter_id=new_edge.to_chapter_id,
+            predecessor_id=new_edge.from_chapter_id,
+            tab_uuid=target_tab_uuid,
+        )
+    )
 
     statement_nodes = select(Chapter).where(Chapter.course_id == course_id)
     nodes: [Chapter] = db_session.exec(statement_nodes).all()
@@ -549,10 +718,30 @@ async def modify_chapter_edge(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Cyclic course structure"
             )
 
+        tab_source = db_session.exec(
+            select(CourseChapter_Graph)
+            .where(CourseChapter_Graph.course_id == course.id)
+            .where(CourseChapter_Graph.chapter_id == edge_param.to_chapter_id)
+            .where(CourseChapter_Graph.predecessor_id.is_(None))
+            .limit(1)
+        ).first()
+
+        if not tab_source:
+            tab_fallback = db_session.exec(
+                select(CourseTab)
+                .where(CourseTab.course_id == course.id)
+                .order_by(CourseTab.position.asc(), CourseTab.id.asc())
+                .limit(1)
+            ).first()
+            tab_uuid = tab_fallback.tab_uuid if tab_fallback else "tab-1"
+        else:
+            tab_uuid = tab_source.tab_uuid
+
         new_edge = CourseChapter_Graph(
             course_id=course.id,
             chapter_id=edge_param.to_chapter_id,
             predecessor_id=edge_param.from_chapter_id,
+            tab_uuid=tab_uuid,
         )
 
         # Insert ChapterEdge link in DB

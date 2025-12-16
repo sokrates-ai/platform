@@ -1,30 +1,46 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from sqlalchemy import Column, ForeignKey, Integer, JSON
 from sqlmodel import Field, SQLModel
 from src.db.users import UserRead
 from src.db.trails import TrailRead
 from src.db.courses.chapters import ChapterRead
+from src.db.courses.course_tabs import CourseTabRead, CourseTabUpsert
+
+
+def default_map_state() -> Dict[str, Any]:
+    return {
+        'objects': [],
+        'boundaries': {
+            'left': -1000,
+            'right': 1000,
+            'top': -1000,
+            'bottom': 1000,
+        },
+    }
+
+
+def default_tab_store() -> Dict[str, Any]:
+    return {}
 
 
 class CourseBase(SQLModel):
+    class Config:
+        allow_population_by_field_name = True
+
     name: str
     description: Optional[str]
     about: Optional[str]
     learnings: Optional[str]
     tags: Optional[str]
     thumbnail_image: Optional[str]
-    # map_state: Optional[str]
-    map_state: dict = Field(
-        default={
-            'objects': [],
-            'boundaries': {
-                'left': -1000,
-                'right': 1000,
-                'top': -1000,
-                'bottom': 1000,
-            },
-        },
+    map_state: Dict[str, Any] = Field(
+        default_factory=default_map_state,
         sa_column=Column(JSON),
+    )
+    tab_store: Dict[str, Any] = Field(
+        default_factory=default_tab_store,
+        sa_column=Column(JSON),
+        alias='tabStore',
     )
     public: bool
 
@@ -46,13 +62,19 @@ class CourseCreate(CourseBase):
     pass
 
 
-class CourseUpdate(CourseBase):
-    name: str
-    description: Optional[str]
-    about: Optional[str]
-    learnings: Optional[str]
-    tags: Optional[str]
-    map_state: dict
+class CourseUpdate(SQLModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: Optional[str] = None
+    description: Optional[str] = None
+    about: Optional[str] = None
+    learnings: Optional[str] = None
+    tags: Optional[str] = None
+    thumbnail_image: Optional[str] = None
+    map_state: Optional[Dict[str, Any]] = None
+    tab_store: Optional[Dict[str, Any]] = Field(default=None, alias='tabStore')
+    tabs: Optional[List[CourseTabUpsert]] = Field(default=None, alias='tabs')
     public: Optional[bool]
 
 
@@ -63,6 +85,7 @@ class CourseRead(CourseBase):
     course_uuid: str
     creation_date: str
     update_date: str
+    tab_metadata: Optional[List[CourseTabRead]] = Field(default=None, alias='tabMetadata')
     pass
 
 
@@ -74,6 +97,7 @@ class FullCourseRead(CourseBase):
     # Chapters, Activities
     chapters: List[ChapterRead]
     authors: List[UserRead]
+    tab_metadata: Optional[List[CourseTabRead]] = Field(default=None, alias='tabMetadata')
     pass
 
 
@@ -86,6 +110,7 @@ class FullCourseReadWithTrail(CourseBase):
     authors: List[UserRead]
     # Chapters, Activities
     chapters: List[ChapterRead]
+    tab_metadata: Optional[List[CourseTabRead]] = Field(default=None, alias='tabMetadata')
     # Trail
     trail: TrailRead | None
     pass
