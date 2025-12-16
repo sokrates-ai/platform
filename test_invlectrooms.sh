@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-API_BASE=${API_BASE:-http://localhost:1883}
+API_BASE=${API_BASE:-http://localhost:1338}
 ENDPOINT="${API_BASE%/}/api/v1/invlectrooms"
 TARGET_URL=${1:-https://rooms.test/example}
 

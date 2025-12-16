@@ -12,7 +12,7 @@ import {
   useCourse,
   useCourseDispatch,
 } from '@components/Contexts/CourseContext'
-import { Hexagon, X } from 'lucide-react'
+import { CheckCircle2, Download, Hexagon, Loader2, X } from 'lucide-react'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import NewChapterModal from '@components/Objects/Modals/Chapters/NewChapter'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
@@ -29,6 +29,7 @@ import './graph.css';
 import styled from 'styled-components'
 import dynamic from 'next/dynamic'
 import { Button } from "@components/ui/button";
+import { Input } from '@components/ui/input';
 import { Card, CardContent } from '@components/ui/card';
 import { CourseTab, CourseTabSelector } from '@components/Objects/Modals/Course/Create/CourseTabSelector';
 
@@ -41,6 +42,218 @@ type DisplayGraphProps = {
     setChapterID: Function
     chapterID: number,
 }
+
+type ImportStepStatus = 'pending' | 'active' | 'completed';
+
+type ImportStepState = {
+  id: string;
+  label: string;
+  status: ImportStepStatus;
+};
+
+const MOCK_IMPORT_STEPS: Array<Omit<ImportStepState, 'status'>> = [
+  { id: 'validate', label: 'Validating source URL' },
+  { id: 'fetch', label: 'Fetching remote course data' },
+  { id: 'parse', label: 'Parsing chapters and activities' },
+  { id: 'hydrate', label: 'Preparing course preview' },
+  { id: 'finalize', label: 'Finalizing import' },
+];
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+type ImportCourseStructureDialogProps = {
+  isOpen: boolean;
+  onCancel: () => void;
+};
+
+const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = ({
+  isOpen,
+  onCancel,
+}) => {
+  const [sourceUrl, setSourceUrl] = useState('');
+  const [hasStarted, setHasStarted] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+  const [hasCompleted, setHasCompleted] = useState(false);
+  const [touched, setTouched] = useState(false);
+  const [steps, setSteps] = useState<ImportStepState[]>(() =>
+    MOCK_IMPORT_STEPS.map((step) => ({ ...step, status: 'pending' })),
+  );
+
+  useEffect(() => {
+    if (!isOpen) {
+      setSourceUrl('');
+      setHasStarted(false);
+      setTouched(false);
+      setIsRunning(false);
+      setHasCompleted(false);
+      setSteps(MOCK_IMPORT_STEPS.map((step) => ({ ...step, status: 'pending' })));
+    }
+  }, [isOpen]);
+
+  const isValidUrl = useMemo(() => {
+    if (!sourceUrl) {
+      return false;
+    }
+    try {
+      const parsed = new URL(sourceUrl);
+      return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+    } catch {
+      return false;
+    }
+  }, [sourceUrl]);
+
+  const statusLabel = useCallback((status: ImportStepStatus) => {
+    switch (status) {
+      case 'active':
+        return 'In progress';
+      case 'completed':
+        return 'Completed';
+      default:
+        return 'Pending';
+    }
+  }, []);
+
+  const startImport = useCallback(async () => {
+    setTouched(true);
+    if (!isValidUrl || isRunning) {
+      return;
+    }
+    setHasStarted(true);
+    setHasCompleted(false);
+    setIsRunning(true);
+    setSteps(MOCK_IMPORT_STEPS.map((step) => ({ ...step, status: 'pending' })));
+
+    // Placeholder flow for future API integration.
+    for (let index = 0; index < MOCK_IMPORT_STEPS.length; index += 1) {
+      setSteps((prev) =>
+        prev.map((step, stepIndex) => {
+          if (stepIndex < index) return { ...step, status: 'completed' as ImportStepStatus };
+          if (stepIndex === index) return { ...step, status: 'active' as ImportStepStatus };
+          return { ...step, status: 'pending' as ImportStepStatus };
+        }),
+      );
+      await sleep(500);
+      setSteps((prev) =>
+        prev.map((step, stepIndex) =>
+          stepIndex === index ? { ...step, status: 'completed' as ImportStepStatus } : step,
+        ),
+      );
+    }
+
+    setIsRunning(false);
+    setHasCompleted(true);
+  }, [isValidUrl, isRunning]);
+
+  const handleSubmit = useCallback(
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      await startImport();
+    },
+    [startImport],
+  );
+
+  const handleCancel = useCallback(() => {
+    if (isRunning) {
+      return;
+    }
+    onCancel();
+  }, [isRunning, onCancel]);
+
+  const validationMessage =
+    touched && !isValidUrl ? 'Enter a valid URL (starting with http:// or https://).' : undefined;
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col space-y-6 py-2">
+      <div className="space-y-2">
+        <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
+          Source URL
+          <Input
+            type="url"
+            placeholder="https://example.com/course-export.json"
+            value={sourceUrl}
+            onChange={(event) => setSourceUrl(event.target.value)}
+            required
+            aria-invalid={validationMessage ? 'true' : 'false'}
+            aria-describedby={validationMessage ? 'import-url-error' : undefined}
+            disabled={isRunning}
+          />
+        </label>
+        {validationMessage && (
+          <p id="import-url-error" className="text-xs text-red-600">
+            {validationMessage}
+          </p>
+        )}
+      </div>
+
+      {(hasStarted || isRunning || hasCompleted) && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-muted-foreground">Import progress</h3>
+          <ul className="space-y-2">
+            {steps.map((step) => {
+              let indicator: React.ReactNode;
+              if (step.status === 'active') {
+                indicator = <Loader2 className="h-3 w-3 animate-spin text-blue-500" aria-hidden="true" />;
+              } else if (step.status === 'completed') {
+                indicator = <CheckCircle2 className="h-3 w-3 text-emerald-500" aria-hidden="true" />;
+              } else {
+                indicator = <span className="block h-2.5 w-2.5 rounded-full bg-gray-300" aria-hidden="true" />;
+              }
+              return (
+                <li key={step.id} className="flex items-start gap-3 rounded-md border border-gray-200 bg-white/70 px-3 py-2">
+                  <span className="mt-1 flex h-5 w-5 items-center justify-center">
+                    {indicator}
+                  </span>
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium text-foreground">{step.label}</p>
+                    <p className="text-xs text-muted-foreground">{statusLabel(step.status)}</p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {hasCompleted && (
+        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          Import finished successfully. You can review the changes before saving.
+        </div>
+      )}
+
+      <div className="flex items-center justify-end gap-2">
+        {!hasCompleted && (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleCancel}
+            disabled={isRunning}
+          >
+            Cancel
+          </Button>
+        )}
+        {hasCompleted ? (
+          <Button type="button" onClick={onCancel}>
+            Close
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            disabled={!isValidUrl || isRunning}
+          >
+            {isRunning ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Importing…
+              </>
+            ) : (
+              'Start'
+            )}
+          </Button>
+        )}
+      </div>
+    </form>
+  );
+};
 
 
 export type OrderPayload =
@@ -136,6 +349,7 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
   const [chapterID, setChapterID] = useState(-1);
   const [winReady, setWinReady] = useState(false);
   const [newChapterModal, setNewChapterModal] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [order, setOrder] = useState<OrderPayload>();
   const [triggerAutoLayout, setTriggerAutoLayout] = useState(false);
 
@@ -551,6 +765,15 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
                 >
                   Auto Layout
                 </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => setIsImportModalOpen(true)}
+                  className="hover:bg-emerald-100 font-medium rounded px-4 py-2 text-xs shadow transition-all flex items-center gap-2"
+                  title="Import course content"
+                >
+                  <Download strokeWidth={2} size={14} />
+                  Import
+                </Button>
                 {/* Add chapter */}
                 <Button
                   variant={"secondary"}
@@ -598,6 +821,23 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
           </AnimatePresence>
         </motion.div>
       </div>
+
+      {/* IMPORT MODAL */}
+      <Modal
+        isDialogOpen={isImportModalOpen}
+        onOpenChange={setIsImportModalOpen}
+        minHeight="sm"
+        minWidth="sm"
+        dialogTitle="Import course content"
+        dialogDescription="Provide a source URL to import chapters and map assets."
+        dialogContent={
+          <ImportCourseStructureDialog
+            isOpen={isImportModalOpen}
+            onCancel={() => setIsImportModalOpen(false)}
+          />
+        }
+        dialogTrigger={null}
+      />
 
       {/* NEW CHAPTER MODAL */}
       <Modal

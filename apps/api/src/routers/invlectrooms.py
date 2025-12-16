@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import AnyUrl, BaseModel
@@ -19,7 +19,8 @@ class InvlectRoomsScrapeRequest(BaseModel):
 
 class InvlectRoomsScrapeResponse(BaseModel):
     url: AnyUrl
-    structure: Dict[str, Any]
+    refresh_url: Optional[AnyUrl] = None
+    refresh: Optional[Dict[str, Any]] = None
 
 
 @router.post("", response_model=InvlectRoomsScrapeResponse)

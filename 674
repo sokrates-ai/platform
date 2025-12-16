@@ -1,0 +1,245 @@
+
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="/friedrich/docs/InvLectRooms/mathe2/static/main.css?v=17" />
+    <link
+      rel="shortcut icon"
+      href="/friedrich/docs/InvLectRooms/mathe2/static/favicon.ico"
+      type="image/x-icon"
+    />
+
+    <title>Raum 1</title>
+  </head>
+  <body>
+    <div>
+      <div>
+        <img id="logo" src="/friedrich/docs/InvLectRooms/mathe2/static/logo.png" alt=""/>
+        <header id="header">
+          <span class="pagelinks" style="float: right;">
+            <a href="/friedrich/docs/InvLectRooms/mathe2/riddles/">Aufgaben</a>
+            
+            <a href="/friedrich/docs/InvLectRooms/mathe2/lecture/">Semester</a>
+            
+            <a href="/friedrich/docs/InvLectRooms/mathe2/riddlegroups/">Raum</a>
+            
+            
+            
+          </span>
+          <div style="float: left;">
+            
+              Nicht angemeldet. <a href="/friedrich/docs/InvLectRooms/mathe2/accounts/login/?next=/friedrich/docs/InvLectRooms/mathe2/riddlegroups/room/674">anmelden</a>.
+            
+
+            <form method="POST" action="/friedrich/docs/InvLectRooms/mathe2/i18n/setlang/" style="display: inline">
+              <input type="hidden" name="csrfmiddlewaretoken" value="mMXV2kKmRC4naOzUKNQ3OMmMDFqPvjQRUGGCUq4dULn25FibtOuqij8EC05T4wBQ">
+              <input name="next" type="hidden" value="">
+
+              
+              
+                <input name="language" value="en" type="hidden">
+              
+              <button class="input-md" id="language-icon-button" type="submit">
+                
+                  <img id="language-icon" src="/friedrich/docs/InvLectRooms/mathe2/static/britain-flag.png">
+                
+              </button>
+            </form>
+          </div>
+        </header>
+      </div>
+    </div>
+
+    
+
+    <main id="main" style="margin: 1em;">
+    
+
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="/friedrich/docs/InvLectRooms/mathe2/static/mathjax-config.js"></script>
+
+
+<h1>Raum 1</h1>
+
+<div id="room_centered">
+<div style="display: flex; align-items: center; justify-content: space-evenly; margin-top: 28px; margin-bottom: 28px; font-size: medium">
+<table style="width: revert; height: revert">
+  <tr>
+    <td style="margin-right: 20px; display: block"><b>Meeting:</b></td>
+    <td>Woche 2</td>
+  </tr>
+  <tr>
+    <td style="margin-right: 20px; display: block"><b>Raum:</b></td>
+    <td>1</td>
+  </tr>
+  
+  
+  
+</table>
+
+</div>
+
+<div x-data="data()" x-init="init()" style="padding-bottom: 30px">
+  <template x-for="problem in problems" :key="problem.id">
+    <div>
+      <template x-if="problem.title">
+        <section class="room_section">
+          <button @click="active[problem.id] = !active[problem.id]"
+                  class="collapsible nohover"
+                  :id="`problem${problem.id}_title`"
+                  :class="[getBackgroundColor(problem.status), `${active[problem.id] ? 'active' : ''}`]"
+                  style="color: white; height: 45px">
+            <span x-text="problem.title"></span>
+          </button>
+          <div class="content"
+               :style="`max-height: ${active[problem.id] ? $el.scrollHeight + 200 : 0}px`"
+               :class="getLighterColor()">
+            <div class="problem_inner">
+                <div class="problem_container">
+                  <div x-show="problem.body" class="problem_body" :id="problem.id"></div>
+                  <template x-if="problem.img">
+                    <img :src="problem.img" class="problem_image">
+                  </template>
+                </div>
+            </div>
+          </div>
+        </section>
+      </template>
+      <template x-if="problem.id === currentID">
+      <div style="text-align: center; margin: 20px">
+          <input class="input-lg background-primary-light text-white" type="button" :value="tutorStatusMessage" @click="finished()" />
+      </div>
+    </template>
+    </div>
+  </template>
+  <template x-if="!currentID">
+    <div style="text-align: center; margin: 20px">
+      <input class="input-lg background-primary-light text-white" type="button" :value="tutorStatusMessage" @click="finished()" />
+    </div>
+  </template>
+</div>
+</div>
+
+<script src="/friedrich/docs/InvLectRooms/mathe2/static/alpine.min.js" defer></script>
+<script src="/friedrich/docs/InvLectRooms/mathe2/static/jquery-3.5.1.js"></script>
+<script src="/friedrich/docs/InvLectRooms/mathe2/static/activity.js"></script>
+
+<script>
+    function setActive() {
+        clearAndCreateInactivityAlertTimeout('Du warst seit 90 Minuten inaktiv. Bitte lade die Seite neu, um fortzufahren.', 90 * 60 * 1000);
+    }
+
+    setActive();
+
+    function data() {
+        return {
+            problems: [],
+            active: {},
+            tutorStatus: false,
+            tutorStatusMessage: null,
+            currentID: null,
+            typesetOperations: [],
+            typesetInterval: null,
+            init() {
+                this.refresh();
+                setInterval(() => this.refresh(), 6000);
+            },
+            scheduleTypeset(operation) {
+                if (this.typesetInterval === null) {
+                    this.typesetInterval = setInterval(() => {
+                        this.typesetOperations.forEach(op => op());
+                        // check that MathJax has already loaded
+                        if (MathJax !== undefined && MathJax.typeset !== undefined) {
+                            clearInterval(this.typesetInterval);
+                            MathJax.typeset();
+                            this.typesetOperations = [];
+                            this.typesetInterval = null;
+                        }
+                    }, 200);
+                }
+                this.typesetOperations.push(operation);
+            },
+            typeset(id, body) {
+                this.scheduleTypeset(() => document.getElementById(id).innerHTML = body);
+            },
+            getBackgroundColor(status) {
+                if (status === 'UNSOLVED')
+                    return 'background-primary-light';
+                if (status === 'SOLVED')
+                    return 'background-primary-dark';
+                if (status === 'SKIPPED')
+                    return 'background-black';
+            },
+            getLighterColor() {
+                return 'background-grey-lighter';
+            },
+            refresh() {
+                fetch("/friedrich/docs/InvLectRooms/mathe2/riddlegroups/room/674/refresh")
+                    .then(res => res.json())
+                    .then(data => {
+                        // update ID of current problem
+                        const currentProblems = data.problems.filter(problem => problem.status === 'UNSOLVED');
+                        let newCurrent;
+                        if (currentProblems.length !== 0) {
+                            newCurrent = currentProblems[0].id;
+                            if (newCurrent !== this.currentID) {
+                                this.active[newCurrent] = true;
+                            }
+                        } else {
+                            newCurrent = null;
+                        }
+                        this.currentID = newCurrent;
+
+                        // expand problems that changed its status
+                        for (let i = 0; i < this.problems.length && i < data.problems.length; i++) {
+                            if (this.problems[i].status !== data.problems[i].status && this.problems[i].id === data.problems[i].id) {
+                                this.active[this.problems[i].id] = true;
+                            }
+                        }
+
+                        // typeset math (if done automatically, there are always glitches)
+                        let i = 0;
+                        for (; i < this.problems.length; i++) {
+                            if (data.problems[i].title && this.problems[i].body !== data.problems[i].body) {
+                                this.typeset(data.problems[i].id, data.problems[i].body)
+                            }
+                        }
+                        for (; i < data.problems.length; i++) {
+                            if (data.problems[i].title) {
+                                this.typeset(data.problems[i].id, data.problems[i].body)
+                            }
+                        }
+
+                        this.problems = data.problems;
+                        this.tutorStatus = data.tutorStatus;
+                        this.tutorStatusMessage = data.tutorStatusMessage;
+                    });
+            },
+            change(payload) {
+                setActive();
+                fetch("/friedrich/docs/InvLectRooms/mathe2/riddlegroups/room/674/change", {
+                    method: "POST",
+                    mode: 'same-origin',
+                    body: JSON.stringify(payload),
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': 'mMXV2kKmRC4naOzUKNQ3OMmMDFqPvjQRUGGCUq4dULn25FibtOuqij8EC05T4wBQ'},
+                })
+                    .then(() => this.refresh());
+            },
+            finished() {
+                if (this.tutorStatus === false) {
+                    this.change({tutor: true});
+                } else if (this.tutorStatus === true) {
+                    this.change({tutor: false});
+                }
+            },
+        };
+    }
+</script>
+
+    </main>
+  </body>
+</html>

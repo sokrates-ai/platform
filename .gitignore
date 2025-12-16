@@ -62,3 +62,4 @@ workspace-secrets.env
 platform-secrets.env
 platform_redis
 workspace_redis_data
+content/invlectrooms/
