@@ -195,7 +195,7 @@ def _select_placeholder_positions(total_slots: int, required: int) -> List[int]:
 
 def _build_content_map(
     chapters: List[ChapterRead],
-    _existing_map: Any,
+    problems: List[InvlectRoomsProblemPayload],
 ) -> Dict[str, Any]:
     template = deepcopy(_load_template_map())
     objects = template.get("objects", [])
@@ -211,6 +211,7 @@ def _build_content_map(
     ]
 
     used_placeholder_indices = set(mapped_indices)
+    chapter_positions: Dict[int, Dict[str, Any]] = {}
 
     for chapter, object_index in zip(chapters, mapped_indices):
         chapter_id = chapter.id
@@ -226,6 +227,7 @@ def _build_content_map(
             "associatedChapterID": chapter_id,
             "label": chapter.name,
         }
+        chapter_positions[int(chapter_id)] = slot
 
     extra_chapters = chapters[len(mapped_indices) :]
     if extra_chapters:
@@ -254,6 +256,7 @@ def _build_content_map(
                     },
                 }
             )
+            chapter_positions[int(chapter_id)] = objects[-1]
 
     template["objects"] = [
         obj
@@ -267,6 +270,73 @@ def _build_content_map(
 
     if "boundaries" not in template or not isinstance(template["boundaries"], dict):
         template["boundaries"] = deepcopy(default_map_state().get("boundaries", {}))
+
+    boundaries = template["boundaries"]
+    left_boundary = boundaries.get("left", -1000)
+    right_boundary = boundaries.get("right", 1000)
+    top_boundary = boundaries.get("top", -1000)
+    bottom_boundary = boundaries.get("bottom", 1000)
+    boundary_margin = 40
+
+    used_ids = {
+        obj.get("id")
+        for obj in template["objects"]
+        if isinstance(obj, dict) and isinstance(obj.get("id"), int)
+    }
+    next_id = max(used_ids) + 1 if used_ids else 1
+
+    image_assets: List[Dict[str, Any]] = []
+    for index, (chapter, problem) in enumerate(zip(chapters, problems)):
+        chapter_id = chapter.id
+        if chapter_id is None:
+            continue
+        chapter_obj = chapter_positions.get(int(chapter_id))
+        if not chapter_obj:
+            continue
+        image_payload = getattr(problem, "image", None) or {}
+        original_url = (
+            image_payload.get("original")
+            if isinstance(image_payload, dict)
+            else None
+        )
+        local_url = (
+            image_payload.get("local")
+            if isinstance(image_payload, dict)
+            else None
+        )
+        image_url = original_url or local_url
+        if not image_url:
+            continue
+
+        offset_x = 140 if index % 2 == 0 else -140
+        offset_y = -140
+        target_x = (chapter_obj.get("x") or 0) + offset_x
+        target_y = (chapter_obj.get("y") or 0) + offset_y
+        target_x = max(left_boundary + boundary_margin, min(right_boundary - boundary_margin, target_x))
+        target_y = max(top_boundary + boundary_margin, min(bottom_boundary - boundary_margin, target_y))
+
+        image_assets.append(
+            {
+                "id": next_id,
+                "x": target_x,
+                "y": target_y,
+                "scale": 0.18,
+                "file": image_url,
+                "label": (problem.title or "").strip() or f"Image {chapter_id}",
+                "sourceUrl": original_url or image_url,
+                "type": {
+                    "kind": "default",
+                    "label": (problem.title or "").strip(),
+                    "customChapterId": 0,
+                    "associatedChapterID": None,
+                },
+            }
+        )
+        used_ids.add(next_id)
+        next_id += 1
+
+    if image_assets:
+        template["objects"].extend(image_assets)
 
     return template
 
@@ -331,17 +401,7 @@ async def convert_invlectrooms_payload_to_course(
         tab_store = dict(course.tab_store or {})
         tab_uuid = payload.tab_uuid or next(iter(tab_store), "tab-1")
 
-        existing_map = None
-        if tab_uuid in tab_store:
-            tab_entry = tab_store[tab_uuid]
-            if isinstance(tab_entry, dict) and "map" in tab_entry:
-                existing_map = tab_entry.get("map")
-            else:
-                existing_map = tab_entry
-        if existing_map is None:
-            existing_map = course.map_state
-
-        map_state = _build_content_map(chapters, existing_map)
+        map_state = _build_content_map(chapters, list(payload.problems))
         course.map_state = deepcopy(map_state)
         tab_store[tab_uuid] = deepcopy(map_state)
         course.tab_store = tab_store

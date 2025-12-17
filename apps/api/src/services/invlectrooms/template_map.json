@@ -262,9 +262,9 @@
     }
   ],
   "boundaries": {
-    "left": -1000,
+    "left": -1200,
     "right": 1000,
-    "top": -1000,
+    "top": -1200,
     "bottom": 1000
   }
 }

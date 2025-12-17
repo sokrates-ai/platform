@@ -329,6 +329,16 @@ def test_apply_invlectrooms_creates_activities(
         ]
         assert not remaining_placeholders
 
+        image_assets = [
+            obj
+            for obj in objects
+            if isinstance(obj, dict)
+            and obj.get("file") == "https://example.com/image.jpg"
+        ]
+        assert len(image_assets) == 1
+        assert image_assets[0].get("sourceUrl") == "https://example.com/image.jpg"
+        assert image_assets[0].get("type", {}).get("kind") == "default"
+
         boundaries = map_state.get("boundaries")
         assert boundaries == {"left": -1000, "right": 1000, "top": -1000, "bottom": 1000}
 
