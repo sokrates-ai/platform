@@ -12,6 +12,7 @@ import { CourseTab, CourseTabSelector } from '@components/Objects/Modals/Course/
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, PanelRightOpen } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { getAPIUrl } from '@services/config/config';
 const ContentMap = dynamic(() => import('components/Objects/ContentMap/Canvas'), { ssr: false });
 
 export interface EditCourseMapProps {
@@ -357,6 +358,15 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
         }
     }, []);
 
+    const mapProxyBaseUrl = React.useMemo(() => {
+        const apiBase = getAPIUrl();
+        if (!apiBase || apiBase === 'error') {
+            return '/api/v1/mapProxy';
+        }
+        const normalizedBase = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
+        return `${normalizedBase}/mapProxy`;
+    }, []);
+
     const handleCustomSpriteSubmit = React.useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const trimmedUrl = customSpriteUrl.trim();
@@ -389,11 +399,21 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
         const spriteLabel = trimmedLabel || deriveLabelFromUrl(sourceUrlKey);
 
         if (isRemoteUrl) {
-            const proxiedUrl = `/api/v1/mapProxy?url=${encodeURIComponent(normalizedRemoteUrl)}`;
+            if (!mapProxyBaseUrl) {
+                setCustomSpriteError('Proxy endpoint is not configured. Please contact support.');
+                return;
+            }
+
+            const proxiedUrl = `${mapProxyBaseUrl}?url=${encodeURIComponent(normalizedRemoteUrl)}`;
             try {
-                const response = await fetch(proxiedUrl, {
+                if (typeof window === 'undefined') {
+                    setCustomSpriteError('Custom asset proxy can only be used in a browser context.');
+                    return;
+                }
+
+                const response = await window.fetch(proxiedUrl, {
                     method: 'GET',
-                    credentials: 'same-origin',
+                    credentials: 'include',
                     cache: 'no-store',
                 });
 
@@ -437,7 +457,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
             setCustomSpriteLabel('');
             return next;
         });
-    }, [customSpriteUrl, customSpriteLabel, deriveLabelFromUrl]);
+    }, [customSpriteUrl, customSpriteLabel, deriveLabelFromUrl, mapProxyBaseUrl]);
 
     const allSprites = React.useMemo(() => [
         ...customSprites,
