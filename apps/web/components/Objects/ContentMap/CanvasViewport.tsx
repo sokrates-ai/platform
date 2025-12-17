@@ -210,15 +210,28 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
     /* ↑ both handlers now come straight from the hook */
 
     const spriteURL = useCallback((file: string) => {
+        if (!file) return file;
+
+        const trimmed = file.trim();
+        if (!trimmed) return trimmed;
+
         if (
-            /^(https?:)?\/\//i.test(file) ||
-            file.startsWith('data:') ||
-            file.startsWith('blob:') ||
-            file.startsWith('/')
+            /^(https?:)?\/\//i.test(trimmed) ||
+            trimmed.startsWith('data:') ||
+            trimmed.startsWith('blob:')
         ) {
-            return file;
+            return trimmed;
         }
-        return `/contentMap/${file}`;
+
+        const withoutDotPrefix = trimmed.replace(/^\.\/+/, '');
+        if (withoutDotPrefix.startsWith('/')) {
+            return withoutDotPrefix;
+        }
+        if (withoutDotPrefix.startsWith('contentMap/')) {
+            return `/${withoutDotPrefix}`;
+        }
+
+        return `/contentMap/${withoutDotPrefix}`;
     }, []);
 
     if (!app || !app.renderer) return null

@@ -395,19 +395,29 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
 
     const resolveAssetPath = React.useCallback((file: string) => {
         if (!file) return file;
-        if (file.startsWith('data:') || file.startsWith('blob:')) {
-            return file;
+
+        const trimmed = file.trim();
+        if (!trimmed) return trimmed;
+
+        if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
+            return trimmed;
         }
-        if (file.includes('/mapProxy?url=') || file.includes('/mapProxy/')) {
-            return file;
+        if (trimmed.includes('/mapProxy?url=') || trimmed.includes('/mapProxy/')) {
+            return trimmed;
         }
-        if (/^(https?:)?\/\//i.test(file) || file.startsWith('//')) {
-            return toProxiedAssetUrl(file);
+        if (/^(https?:)?\/\//i.test(trimmed) || trimmed.startsWith('//')) {
+            return toProxiedAssetUrl(trimmed);
         }
-        if (file.startsWith('/')) {
-            return file;
+
+        const withoutDotPrefix = trimmed.replace(/^\.\/+/, '');
+        if (withoutDotPrefix.startsWith('/')) {
+            return withoutDotPrefix;
         }
-        return `/contentMap/${file}`;
+        if (withoutDotPrefix.startsWith('contentMap/')) {
+            return `/${withoutDotPrefix}`;
+        }
+
+        return `/contentMap/${withoutDotPrefix}`;
     }, [toProxiedAssetUrl]);
 
     React.useEffect(() => {
