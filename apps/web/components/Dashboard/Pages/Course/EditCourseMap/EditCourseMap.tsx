@@ -208,7 +208,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
     const [gridGranularity, setGridGranularity] = React.useState<number>(5)
     const [clampToMap, setClampToMap] = React.useState<boolean>(true)
     const [assetPanelOpen, setAssetPanelOpen] = useState(false)
-    const [customSprites, setCustomSprites] = useState<{ file: string; label: string; scale: number }[]>([])
+    const [customSprites, setCustomSprites] = useState<{ file: string; label: string; scale: number; sourceUrl: string }[]>([])
     const [customSpriteUrl, setCustomSpriteUrl] = useState<string>('')
     const [customSpriteLabel, setCustomSpriteLabel] = useState<string>('')
     const [customSpriteError, setCustomSpriteError] = useState<string | null>(null)
@@ -332,7 +332,12 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
     }
 
     const resolveAssetPath = React.useCallback((file: string) => {
-        if (/^(https?:)?\/\//i.test(file) || file.startsWith('data:') || file.startsWith('blob:')) {
+        if (
+            /^(https?:)?\/\//i.test(file) ||
+            file.startsWith('data:') ||
+            file.startsWith('blob:') ||
+            file.startsWith('/')
+        ) {
             return file;
         }
         return `/contentMap/${file}`;
@@ -352,7 +357,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
         }
     }, []);
 
-    const handleCustomSpriteSubmit = React.useCallback((event: React.FormEvent<HTMLFormElement>) => {
+    const handleCustomSpriteSubmit = React.useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const trimmedUrl = customSpriteUrl.trim();
         const trimmedLabel = customSpriteLabel.trim();
@@ -362,26 +367,68 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
             return;
         }
 
-        const isSupportedUrl =
-            /^(https?:)?\/\//i.test(trimmedUrl) ||
-            trimmedUrl.startsWith('data:') ||
-            trimmedUrl.startsWith('blob:');
+        const isRemoteUrl = /^(https?:)?\/\//i.test(trimmedUrl);
+        const isDataOrBlob = trimmedUrl.startsWith('data:') || trimmedUrl.startsWith('blob:');
 
-        if (!isSupportedUrl) {
+        if (!isRemoteUrl && !isDataOrBlob) {
             setCustomSpriteError('Only http(s), protocol-relative, data, or blob URLs are supported.');
             return;
         }
 
+        const protocol =
+            typeof window !== 'undefined' && window.location?.protocol
+                ? window.location.protocol
+                : 'https:';
+
+        const normalizedRemoteUrl =
+            isRemoteUrl && trimmedUrl.startsWith('//') ? `${protocol}${trimmedUrl}` : trimmedUrl;
+
+        const sourceUrlKey = isRemoteUrl ? normalizedRemoteUrl : trimmedUrl;
+
+        let spriteFile = isRemoteUrl ? normalizedRemoteUrl : trimmedUrl;
+        const spriteLabel = trimmedLabel || deriveLabelFromUrl(sourceUrlKey);
+
+        if (isRemoteUrl) {
+            const proxiedUrl = `/api/v1/mapProxy?url=${encodeURIComponent(normalizedRemoteUrl)}`;
+            try {
+                const response = await fetch(proxiedUrl, {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                });
+
+                if (!response.ok) {
+                    setCustomSpriteError(`Could not fetch the image (status ${response.status}).`);
+                    return;
+                }
+
+                const contentType = response.headers.get('content-type');
+                if (contentType && !contentType.toLowerCase().startsWith('image/')) {
+                    setCustomSpriteError('The provided URL does not point to an image resource.');
+                    return;
+                }
+
+                await response.blob();
+            } catch (error) {
+                console.error('Failed to proxy asset', error);
+                setCustomSpriteError('Failed to proxy the provided URL. Please verify the address and try again.');
+                return;
+            }
+
+            spriteFile = proxiedUrl;
+        }
+
         setCustomSprites((prev) => {
-            if (prev.some(sprite => sprite.file === trimmedUrl)) {
+            if (prev.some(sprite => sprite.sourceUrl === sourceUrlKey || sprite.file === spriteFile)) {
                 setCustomSpriteError('This URL has already been added.');
                 return prev;
             }
             const next = [
                 {
-                    file: trimmedUrl,
-                    label: trimmedLabel || deriveLabelFromUrl(trimmedUrl),
+                    file: spriteFile,
+                    label: spriteLabel,
                     scale: 1,
+                    sourceUrl: sourceUrlKey,
                 },
                 ...prev,
             ];
