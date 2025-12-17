@@ -259,6 +259,487 @@
         "label": "",
         "customChapterId": 0
       }
+    },
+    {
+      "id": 1766009931156,
+      "file": "Bahnhof v1.webp",
+      "label": "Bahnhof v1",
+      "scale": 0.2,
+      "x": -900,
+      "y": -1230,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766009936757,
+      "file": "Bank 2.webp",
+      "label": "Bank 2",
+      "scale": 0.2,
+      "x": -510,
+      "y": -60,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766009942084,
+      "file": "Gebäude K.webp",
+      "label": "Gebäude K",
+      "scale": 0.2,
+      "x": 450,
+      "y": -390,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010100396,
+      "file": "Dachs.png",
+      "label": "Dachs.png",
+      "scale": 0.2,
+      "x": -240,
+      "y": -450,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766009963991,
+      "file": "Busch 1.webp",
+      "label": "Busch 1",
+      "scale": 0.2,
+      "x": -180,
+      "y": 60,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766009970461,
+      "file": "Baum 1b.webp",
+      "label": "Baum 1b",
+      "scale": 0.2,
+      "x": -1260,
+      "y": -780,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766009984349,
+      "file": "Baum 2b.webp",
+      "label": "Baum 2b",
+      "scale": 0.2,
+      "x": -1110,
+      "y": -510,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010124835,
+      "file": "Busch 2.webp",
+      "label": "Busch 2",
+      "scale": 0.2,
+      "x": -180,
+      "y": -510,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766009975496,
+      "file": "Baum 1.webp",
+      "label": "Baum 1",
+      "scale": 0.2,
+      "x": -330,
+      "y": -330,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766009979135,
+      "file": "Baum 1b.webp",
+      "label": "Baum 1b",
+      "scale": 0.2,
+      "x": -1260,
+      "y": -180,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766009991908,
+      "file": "Baum 2b.webp",
+      "label": "Baum 2b",
+      "scale": 0.2,
+      "x": 60,
+      "y": -1170,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766009994443,
+      "file": "Baum 1.webp",
+      "label": "Baum 1",
+      "scale": 0.2,
+      "x": -120,
+      "y": -870,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766009998030,
+      "file": "Baum 3_2.webp",
+      "label": "Baum 3_2",
+      "scale": 0.2,
+      "x": -360,
+      "y": -960,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010011686,
+      "file": "Baum 3_3.webp",
+      "label": "Baum 3_3",
+      "scale": 0.2,
+      "x": -900,
+      "y": 330,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010013996,
+      "file": "Baum 3_1.webp",
+      "label": "Baum 3_1",
+      "scale": 0.2,
+      "x": -660,
+      "y": 330,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010017965,
+      "file": "Baum 4 c.webp",
+      "label": "Baum 4 c",
+      "scale": 0.2,
+      "x": -510,
+      "y": 480,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010022935,
+      "file": "Busch 2.webp",
+      "label": "Busch 2",
+      "scale": 0.2,
+      "x": -150,
+      "y": 510,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010037449,
+      "file": "icon_category_function_definition_locked.webp",
+      "label": "icon_category_function_definition_locked",
+      "scale": 0.2,
+      "x": -1200,
+      "y": -930,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010043828,
+      "file": "Komischer Block.webp",
+      "label": "Komischer Block",
+      "scale": 0.2,
+      "x": 360,
+      "y": -120,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010046632,
+      "file": "Löwenzahn.webp",
+      "label": "Löwenzahn",
+      "scale": 0.2,
+      "x": 450,
+      "y": 0,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010050030,
+      "file": "Mr Net keine transparenz.webp",
+      "label": "Mr Net keine transparenz",
+      "scale": 0.2,
+      "x": 420,
+      "y": -1050,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010054052,
+      "file": "Mülleimer.webp",
+      "label": "Mülleimer",
+      "scale": 0.2,
+      "x": 300,
+      "y": -300,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010058048,
+      "file": "Nebel klein 3.webp",
+      "label": "Nebel klein 3",
+      "scale": 0.2,
+      "x": -570,
+      "y": -1230,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010062838,
+      "file": "Nebel klein 2.webp",
+      "label": "Nebel klein 2",
+      "scale": 0.2,
+      "x": -750,
+      "y": -1080,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010071549,
+      "file": "Schienen.webp",
+      "label": "Schienen",
+      "scale": 0.2,
+      "x": -1230,
+      "y": -1200,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010120969,
+      "file": "Busch 2.webp",
+      "label": "Busch 2",
+      "scale": 0.2,
+      "x": -330,
+      "y": -450,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010135839,
+      "file": "Busch 1.webp",
+      "label": "Busch 1",
+      "scale": 0.2,
+      "x": -180,
+      "y": -390,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010145728,
+      "file": "Grasblume_rot_2.webp",
+      "label": "Grasblume_rot_2",
+      "scale": 0.2,
+      "x": 30,
+      "y": -240,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010155028,
+      "file": "Textur Gepinselt Grün.webp",
+      "label": "Textur Gepinselt Grün",
+      "scale": 0.2,
+      "x": 270,
+      "y": 210,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010157038,
+      "file": "Textur Gepinselt Grün.webp",
+      "label": "Textur Gepinselt Grün",
+      "scale": 0.2,
+      "x": -180,
+      "y": 60,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010159318,
+      "file": "Stein_Moos.webp",
+      "label": "Stein_Moos",
+      "scale": 0.2,
+      "x": 270,
+      "y": 150,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010163904,
+      "file": "Textur Spritzer Grün.webp",
+      "label": "Textur Spritzer Grün",
+      "scale": 0.2,
+      "x": -720,
+      "y": -390,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010172257,
+      "file": "Trockener Fleck_Kreis.webp",
+      "label": "Trockener Fleck_Kreis",
+      "scale": 0.2,
+      "x": -540,
+      "y": -330,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010185965392,
+      "file": "Baum 1.webp",
+      "label": "Baum 1",
+      "scale": 0.2,
+      "x": 600,
+      "y": -1290,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010190319367,
+      "file": "Baum 2b.webp",
+      "label": "Baum 2b",
+      "scale": 0.2,
+      "x": 840,
+      "y": -1170,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010196263878,
+      "file": "Baum 3_3.webp",
+      "label": "Baum 3_3",
+      "scale": 0.2,
+      "x": 750,
+      "y": 540,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010200822566,
+      "file": "Baum 1b.webp",
+      "label": "Baum 1b",
+      "scale": 0.2,
+      "x": -1200,
+      "y": 240,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
     }
   ],
   "boundaries": {
