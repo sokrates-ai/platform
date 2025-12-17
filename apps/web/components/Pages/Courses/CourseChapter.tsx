@@ -10,12 +10,20 @@ interface Props {
   orgslug: string
   courseId: string
   access_token: string
+  selectedTabId: string | null
 }
 
 function CourseChapter(props: Props) {
   const course = props.course
-  const chapter = course.chapters.find((c: any) => c.id === props.chapterID)
-  const chapterLocked = isChapterLocked(chapter.id, course)
+  const chapter = course?.chapters?.find((c: any) => c.id === props.chapterID)
+
+  if (!chapter) {
+    return null
+  }
+
+  const chapterLocked = isChapterLocked(chapter.id, course, {
+    activeTabId: props.selectedTabId ?? undefined,
+  })
 
   return (
     <div className="flex flex-col h-full">
@@ -57,6 +65,7 @@ function CourseChapter(props: Props) {
             orgslug={props.orgslug}
             courseId={props.courseId}
             access_token={props.access_token}
+            selectedTabId={props.selectedTabId ?? null}
           />
         )}
       </div>

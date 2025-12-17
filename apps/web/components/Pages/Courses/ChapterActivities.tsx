@@ -1,6 +1,11 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import ChapterActivity, { ACTIVITY_STATE } from './ChapterActivity'
-import { isActivityDone, isActivityLocked } from './utils'
+import {
+	buildActivityTabIndex,
+	getCourseFallbackTabId,
+	isActivityDone,
+	isActivityLocked,
+} from './utils'
 
 interface Props {
 	course: any
@@ -9,6 +14,7 @@ interface Props {
 	courseId: string
 	current_activity?: any
 	access_token: string
+	selectedTabId: string | null
 }
 
 export default function ChapterActivities({
@@ -16,16 +22,48 @@ export default function ChapterActivities({
 	chapterID,
 	orgslug,
 	access_token,
+	selectedTabId,
 }: Props) {
 	const [selectedId, setSelectedId] = useState<number | null>(null)
 
-	const chapter = course.chapters.find((c: any) => c.id === chapterID)
-	const { activities } = chapter
+	const chapter = course?.chapters?.find((c: any) => c.id === chapterID)
+	const activities = Array.isArray(chapter?.activities) ? chapter.activities : []
+
+	const fallbackTabId = useMemo(
+		() => getCourseFallbackTabId(course),
+		[course],
+	)
+
+	const activityTabIndex = useMemo(
+		() => buildActivityTabIndex(course, fallbackTabId),
+		[course, fallbackTabId],
+	)
+
+	const effectiveTabId = selectedTabId ?? fallbackTabId
+
+	if (!chapter) {
+		return null
+	}
 
 	const stateOf = (idx: number): ACTIVITY_STATE => {
 		const a = activities[idx]
-		if (isActivityLocked(course, chapter, a.activity_uuid)) return 'locked'
-		return isActivityDone(course, a.activity_uuid) ? 'done' : 'available'
+		const activityUuid =
+			a?.activity_uuid ?? a?.activityUuid ?? a?.activityUUID ?? a?.id
+		if (
+			isActivityLocked(course, chapter, activityUuid, {
+				activeTabId: effectiveTabId,
+				activityTabIndex,
+				fallbackTabId,
+			})
+		)
+			return 'locked'
+		return isActivityDone(course, activityUuid, {
+			activeTabId: effectiveTabId,
+			activityTabIndex,
+			fallbackTabId,
+		})
+			? 'done'
+			: 'available'
 	}
 
 	return (
@@ -47,7 +85,7 @@ export default function ChapterActivities({
 
 					return (
 						<div
-							key={activity.id}
+							key={activity.activity_uuid ?? activity.id ?? idx}
 							className="relative flex gap-4 cursor-pointer"
 							onClick={() => setSelectedId(activity.id)}
 						>

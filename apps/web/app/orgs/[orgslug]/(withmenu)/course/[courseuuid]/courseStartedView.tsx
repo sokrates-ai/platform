@@ -9,8 +9,11 @@ import Canvas, { LayoutState } from '@components/Objects/ContentMap/Canvas'
 import { DoorOpen } from 'lucide-react'
 import { getUriWithOrg } from '@services/config/config'
 import {
+  buildActivityTabIndex,
+  getCourseFallbackTabId,
   isActivityDone,
   isChapterLocked,
+  resolveChapterTabId,
 } from '@components/Pages/Courses/utils'
 import PageLoading from '@components/Objects/Loaders/PageLoading'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
@@ -143,17 +146,27 @@ const CourseStartedView = ({
     )
   }, [normalizedTabs, rawTabStore, course])
 
-  const tabs = normalizedTabs.length
-    ? normalizedTabs
-    : [
-        {
-          id: 'default-map',
-          name: 'Map',
-        },
-      ]
+  const tabs = useMemo(() => {
+    if (normalizedTabs.length) {
+      return normalizedTabs
+    }
+    return [
+      {
+        id: 'default-map',
+        name: 'Map',
+      },
+    ]
+  }, [normalizedTabs])
+
+  const fallbackTabId = useMemo(() => {
+    if (tabs.length > 0 && tabs[0]?.id) {
+      return tabs[0].id
+    }
+    return getCourseFallbackTabId(course)
+  }, [tabs, course])
 
   const [selectedTab, setSelectedTab] = useState(
-    () => tabs[0]?.id ?? 'default-map',
+    () => fallbackTabId ?? 'default-map',
   )
 
   useEffect(() => {
@@ -169,22 +182,62 @@ const CourseStartedView = ({
 
   const chapterStates = useMemo(() => {
     const result: Record<number, 'locked' | 'unlocked' | 'finished'> = {}
-    if (course?.chapters) {
-      course.chapters.forEach((chapter: any) => {
-        if (isChapterLocked(chapter.id, course)) {
-          result[chapter.id] = 'locked'
-        } else {
-          const allDone =
-            chapter.activities.length > 0 &&
-            chapter.activities.every((act: any) =>
-              isActivityDone(course, act.id),
-            )
-          result[chapter.id] = allDone ? 'finished' : 'unlocked'
-        }
-      })
+    const chapters = Array.isArray(course?.chapters) ? course.chapters : []
+    if (!chapters.length) {
+      return result
     }
+
+    const activeTabId = selectedTab ?? fallbackTabId
+    const activityTabIndex = buildActivityTabIndex(
+      course,
+      fallbackTabId,
+    )
+
+    chapters.forEach((chapter: any) => {
+      const chapterTabId = resolveChapterTabId(
+        chapter,
+        course,
+        fallbackTabId,
+      )
+      if (chapterTabId !== activeTabId) {
+        return
+      }
+
+      const isLocked = isChapterLocked(chapter.id, course, {
+        activeTabId,
+        activityTabIndex,
+        fallbackTabId,
+      })
+
+      if (isLocked) {
+        result[chapter.id] = 'locked'
+        return
+      }
+
+      const activities = Array.isArray(chapter?.activities)
+        ? chapter.activities
+        : []
+      const allDone =
+        activities.length > 0 &&
+        activities.every((act: any) =>
+          isActivityDone(
+            course,
+            act?.activity_uuid ??
+              act?.activityUuid ??
+              act?.activityUUID ??
+              act?.id,
+            {
+              activeTabId,
+              activityTabIndex,
+              fallbackTabId,
+            },
+          ),
+        )
+      result[chapter.id] = allDone ? 'finished' : 'unlocked'
+    })
+
     return result
-  }, [course])
+  }, [course, selectedTab, fallbackTabId])
 
   const layout: LayoutState = useMemo(() => {
     const fallback = tabMaps[selectedTab] ?? {
@@ -256,6 +309,7 @@ const CourseStartedView = ({
           orgslug={orgslug}
           chapterID={selectedChapter}
           access_token={access_token ?? ''}
+          selectedTabId={selectedTab}
         />}
       />
 

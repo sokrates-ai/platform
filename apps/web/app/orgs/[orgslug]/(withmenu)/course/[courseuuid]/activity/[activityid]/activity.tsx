@@ -22,8 +22,9 @@ import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationMo
 import { useMediaQuery } from 'usehooks-ts'
 import PaidCourseActivityDisclaimer from '@components/Objects/Courses/CourseActions/PaidCourseActivityDisclaimer'
 import WorkspaceActivity from '@components/Objects/Activities/Workspace/WorkspaceActivity'
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
 
 
@@ -84,10 +85,22 @@ function ActivityClient(props: ActivityClientProps) {
   }
     , [activity, pathname])
 
+  const containerTopSpacing = React.useMemo(() => {
+    if (activity?.activity_type === 'TYPE_DYNAMIC') {
+      return 'mt-24 lg:mt-28'
+    }
+    return 'mt-16 lg:mt-20'
+  }, [activity?.activity_type])
+
   return (
     <>
       <CourseProvider courseuuid={course?.course_uuid}>
-        <div className="container max-w-6xl mx-auto py-6 px-4 space-y-6 mt-10">
+        <div
+          className={cn(
+            'container max-w-6xl mx-auto py-6 px-4 space-y-6',
+            containerTopSpacing,
+          )}
+        >
           {/* <ActivityIndicators
             course_uuid={courseuuid}
             current_activity={activityid}

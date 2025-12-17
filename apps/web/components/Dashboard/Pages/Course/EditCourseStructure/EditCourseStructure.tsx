@@ -410,6 +410,7 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
 
   const validationMessage =
     touched && !isValidUrl ? 'Enter a valid URL (starting with http:// or https://).' : undefined;
+  const hasProgress = hasStarted || isRunning || hasCompleted;
 
   useEffect(() => {
     if (!importResult) {
@@ -454,53 +455,76 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
         )}
       </div>
 
-      {(hasStarted || isRunning || hasCompleted) && (
+      <div className="grid gap-4 lg:grid-cols-[320px,minmax(0,1fr)]">
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-muted-foreground">Import progress</h3>
-          <ul className="space-y-2">
-            {steps.map((step) => {
-              let indicator: React.ReactNode;
-              if (step.status === 'active') {
-                indicator = <Loader2 className="h-3 w-3 animate-spin text-blue-500" aria-hidden="true" />;
-              } else if (step.status === 'completed') {
-                indicator = <CheckCircle2 className="h-3 w-3 text-emerald-500" aria-hidden="true" />;
-              } else if (step.status === 'failed') {
-                indicator = <X className="h-3 w-3 text-red-500" aria-hidden="true" />;
-              } else {
-                indicator = <span className="block h-2.5 w-2.5 rounded-full bg-gray-300" aria-hidden="true" />;
-              }
-              return (
-                <li key={step.id} className="flex items-start gap-3 rounded-md border border-gray-200 bg-white/70 px-3 py-2">
-                  <span className="mt-1 flex h-5 w-5 items-center justify-center">
-                    {indicator}
-                  </span>
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-medium text-foreground">{step.label}</p>
-                    <p className="text-xs text-muted-foreground">{statusLabel(step.status)}</p>
+          <div className="space-y-3 rounded-md border border-gray-400 bg-gray-100 px-3 py-3 min-h-[280px] h-full">
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold text-foreground">Import progress</h3>
+              <p className="text-xs text-muted-foreground">
+                {hasProgress
+                  ? 'Track each step as the import runs.'
+                  : 'Start an import to see progress updates here.'}
+              </p>
+            </div>
+            {hasProgress ? (
+              <ul className="space-y-2">
+                {steps.map((step) => {
+                  let indicator: React.ReactNode;
+                  if (step.status === 'active') {
+                    indicator = <Loader2 className="h-3 w-3 animate-spin text-blue-500" aria-hidden="true" />;
+                  } else if (step.status === 'completed') {
+                    indicator = <CheckCircle2 className="h-3 w-3 text-emerald-500" aria-hidden="true" />;
+                  } else if (step.status === 'failed') {
+                    indicator = <X className="h-3 w-3 text-red-500" aria-hidden="true" />;
+                  } else {
+                    indicator = <span className="block h-2.5 w-2.5 rounded-full bg-gray-300" aria-hidden="true" />;
+                  }
+                  return (
+                    <li key={step.id} className="flex items-start gap-3 rounded-md border border-gray-200 bg-white/70 px-3 py-2">
+                      <span className="mt-1 flex h-5 w-5 items-center justify-center">
+                        {indicator}
+                      </span>
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-medium text-foreground">{step.label}</p>
+                        <p className="text-xs text-muted-foreground">{statusLabel(step.status)}</p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <div className="space-y-2">
+                {MOCK_IMPORT_STEPS.map((step) => (
+                  <div
+                    key={step.id}
+                    className="flex items-center justify-between rounded-md border border-dashed border-gray-200 bg-white/60 px-3 py-3"
+                    aria-hidden="true"
+                  >
+                    <span className="h-2.5 w-24 rounded bg-gray-200 animate-pulse" />
+                    <span className="h-2 w-16 rounded bg-gray-100 animate-pulse" />
                   </div>
-                </li>
-              );
-            })}
-          </ul>
+                ))}
+              </div>
+            )}
+          </div>
+          {errorMessage && (
+            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {errorMessage}
+            </div>
+          )}
         </div>
-      )}
 
-      {errorMessage && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {errorMessage}
-        </div>
-      )}
-
-      {importResult && (
-        <div className="space-y-3 rounded-md border border-gray-200 bg-white/80 px-3 py-3">
+        <div className="space-y-3 rounded-md border border-gray-400 bg-gray-100 px-3 py-3 min-h-[280px]">
           <div className="space-y-1">
             <h3 className="text-sm font-semibold text-foreground">Import preview</h3>
             <p className="text-xs text-muted-foreground">
-              {problems.length > 0
-                ? `Found ${problems.length} problem${problems.length === 1 ? '' : 's'} in the source.`
-                : 'No problems detected in the source document.'}
+              {importResult
+                ? problems.length > 0
+                  ? `Found ${problems.length} problem${problems.length === 1 ? '' : 's'} in the source.`
+                  : 'No problems detected in the source document.'
+                : 'Run an import to preview the chapters that will be created.'}
             </p>
-            {importResult.refresh_url && (
+            {importResult?.refresh_url && (
               <a
                 href={importResult.refresh_url}
                 target="_blank"
@@ -511,91 +535,110 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
               </a>
             )}
           </div>
-          {problems.length > 0 && (
-            <div className="max-h-64 overflow-y-auto pr-1 space-y-2">
-              {problems.map((problem, index) => {
-                const chapterInputId = `import-chapter-${index}`;
-                const chapterValue = chapterNames[index] ?? '';
-                return (
-                  <article
-                    key={`${problem.id}-${index}`}
-                    className="space-y-3 rounded-md border border-gray-200 bg-white/70 p-3 shadow-sm"
-                  >
-                    <div className="space-y-1">
-                      <label
-                        className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
-                        htmlFor={chapterInputId}
+          {importResult ? (
+            <>
+              {problems.length > 0 ? (
+                <div className="max-h-64 overflow-y-auto pr-1 space-y-2">
+                  {problems.map((problem, index) => {
+                    const chapterInputId = `import-chapter-${index}`;
+                    const chapterValue = chapterNames[index] ?? '';
+                    return (
+                      <article
+                        key={`${problem.id}-${index}`}
+                        className="space-y-3 rounded-md border border-gray-200 bg-white/70 p-3 shadow-sm"
                       >
-                        Chapter name
-                      </label>
-                      <Input
-                        id={chapterInputId}
-                        value={chapterValue}
-                        onChange={(event) =>
-                          setChapterNames((current) => {
-                            const next = [...current];
-                            next[index] = event.target.value;
-                            return next;
-                          })
-                        }
-                        placeholder={`Chapter title for ${problem.title}`}
-                        disabled={isApplying}
-                      />
-                    </div>
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className="text-sm font-medium text-foreground truncate"
-                          title={problem.title}
-                        >
-                          {problem.title}
-                        </p>
-                        {problem.status && (
-                          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                            {problem.status}
-                          </span>
+                        <div className="space-y-1">
+                          <label
+                            className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+                            htmlFor={chapterInputId}
+                          >
+                            Chapter name
+                          </label>
+                          <Input
+                            id={chapterInputId}
+                            value={chapterValue}
+                            onChange={(event) =>
+                              setChapterNames((current) => {
+                                const next = [...current];
+                                next[index] = event.target.value;
+                                return next;
+                              })
+                            }
+                            placeholder={`Chapter title for ${problem.title}`}
+                            disabled={isApplying}
+                          />
+                        </div>
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <p
+                              className="text-sm font-medium text-foreground truncate"
+                              title={problem.title}
+                            >
+                              {problem.title}
+                            </p>
+                            {problem.status && (
+                              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                {problem.status}
+                              </span>
+                            )}
+                          </div>
+                          {problem.id !== undefined && (
+                            <span className="text-[10px] text-muted-foreground" title={String(problem.id)}>
+                              ID: {problem.id}
+                            </span>
+                          )}
+                        </div>
+                        {problem.preview && (
+                          <p
+                            className="text-xs leading-relaxed text-muted-foreground overflow-hidden text-ellipsis"
+                            title={problem.plainText}
+                            style={{
+                              display: '-webkit-box',
+                              WebkitLineClamp: 3,
+                              WebkitBoxOrient: 'vertical',
+                            }}
+                          >
+                            {problem.preview}
+                          </p>
                         )}
-                      </div>
-                      {problem.id !== undefined && (
-                        <span className="text-[10px] text-muted-foreground" title={String(problem.id)}>
-                          ID: {problem.id}
-                        </span>
-                      )}
-                    </div>
-                    {problem.preview && (
-                      <p
-                        className="text-xs leading-relaxed text-muted-foreground overflow-hidden text-ellipsis"
-                        title={problem.plainText}
-                        style={{
-                          display: '-webkit-box',
-                          WebkitLineClamp: 3,
-                          WebkitBoxOrient: 'vertical',
-                        }}
-                      >
-                        {problem.preview}
-                      </p>
-                    )}
-                    {problem.imagePreview && (
-                      <div className="rounded-md border border-gray-100 bg-gray-50 p-2">
-                        <img
-                          src={problem.imagePreview}
-                          alt={`Preview for ${problem.title}`}
-                          className="max-h-40 w-full rounded object-contain"
-                        />
-                      </div>
-                    )}
-                  </article>
-                );
-              })}
+                        {problem.imagePreview && (
+                          <div className="rounded-md border border-gray-100 bg-gray-50 p-2">
+                            <img
+                              src={problem.imagePreview}
+                              alt={`Preview for ${problem.title}`}
+                              className="max-h-40 w-full rounded object-contain"
+                            />
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex h-64 items-center justify-center rounded-md border border-dashed border-gray-200 bg-white/60 text-xs text-muted-foreground">
+                  No problems detected in the source document.
+                </div>
+              )}
+              {imageCount > 0 && (
+                <p className="text-[11px] text-muted-foreground">
+                  Cached {imageCount} image{imageCount === 1 ? '' : 's'} for offline reuse.
+                </p>
+              )}
+            </>
+          ) : (
+            <div className="flex h-64 items-center justify-center rounded-md border border-dashed border-gray-200 bg-white/60 text-xs text-muted-foreground">
+              {isRunning ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Fetching preview…
+                </span>
+              ) : (
+                'Import preview will appear here after the source has been processed.'
+              )}
             </div>
           )}
-          {imageCount > 0 && (
-            <p className="text-[11px] text-muted-foreground">
-              Cached {imageCount} image{imageCount === 1 ? '' : 's'} for offline reuse.
-            </p>
-          )}
         </div>
-      )}
+      </div>
 
       {hasCompleted && (
         <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
@@ -1241,8 +1284,8 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
       <Modal
         isDialogOpen={isImportModalOpen}
         onOpenChange={setIsImportModalOpen}
-        minHeight="sm"
-        minWidth="sm"
+        minHeight="md"
+        minWidth="lg"
         dialogTitle="Import course content"
         dialogDescription="Provide a source URL to import chapters and map assets."
         dialogContent={
