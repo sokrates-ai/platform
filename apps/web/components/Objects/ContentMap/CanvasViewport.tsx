@@ -210,7 +210,12 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
     /* ↑ both handlers now come straight from the hook */
 
     const spriteURL = useCallback((file: string) => {
-        if (/^(https?:)?\/\//i.test(file) || file.startsWith('data:') || file.startsWith('blob:')) {
+        if (
+            /^(https?:)?\/\//i.test(file) ||
+            file.startsWith('data:') ||
+            file.startsWith('blob:') ||
+            file.startsWith('/')
+        ) {
             return file;
         }
         return `/contentMap/${file}`;
