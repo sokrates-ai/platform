@@ -623,27 +623,29 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
 
     const assetBrowserSprites = React.useMemo(() => {
         return allSprites.map((sprite) => {
+            const effectiveSourceUrl = sprite.sourceUrl || extractRemoteFromProxy(sprite.file) || undefined;
             const proxiedFile = toProxiedAssetUrl(sprite.file, {
-                sourceUrl: sprite.sourceUrl,
+                sourceUrl: effectiveSourceUrl,
                 label: sprite.label,
             });
-            const previewSrc = toProxiedAssetUrl(sprite.sourceUrl ?? sprite.file, {
-                sourceUrl: sprite.sourceUrl ?? sprite.file,
-                label: sprite.label,
-            });
-            if (proxiedFile === sprite.file && (!previewSrc || previewSrc === sprite.previewSrc)) {
-                return {
-                    ...sprite,
-                    previewSrc,
-                };
+            const previewSrc = effectiveSourceUrl
+                ? toProxiedAssetUrl(effectiveSourceUrl, {
+                    sourceUrl: effectiveSourceUrl,
+                    label: sprite.label,
+                })
+                : undefined;
+
+            if (proxiedFile === sprite.file && previewSrc === sprite.previewSrc) {
+                return sprite;
             }
+
             return {
                 ...sprite,
                 file: proxiedFile,
                 previewSrc,
             };
         });
-    }, [allSprites, toProxiedAssetUrl]);
+    }, [allSprites, toProxiedAssetUrl, extractRemoteFromProxy]);
 
     function resetLayout() {
         const resetted = updateChapterStonesInContentMapState([], courseStructure.chapters)
