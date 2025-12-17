@@ -261,7 +261,6 @@ def test_apply_invlectrooms_creates_activities(
             "url": "https://hpi.de/friedrich/docs/InvLectRooms/example/tutorium",
             "course_uuid": course.course_uuid,
             "tab_uuid": "tab-1",
-            "chapter_name": "Imported Tutorium",
             "problems": [
                 {
                     "id": 603,
@@ -273,6 +272,7 @@ def test_apply_invlectrooms_creates_activities(
                         "original": "https://example.com/image.jpg",
                         "local": "/content/invlectrooms/sample.jpg",
                     },
+                    "chapter_name": "Tutorium — Follow sequences",
                 },
                 {
                     "id": 732,
@@ -280,6 +280,7 @@ def test_apply_invlectrooms_creates_activities(
                     "status": "SOLVED",
                     "plain_text": "Consider the emoji puzzle.",
                     "image": None,
+                    "chapter_name": "Tutorium — Emoji challenge",
                 },
             ],
         }
@@ -292,7 +293,10 @@ def test_apply_invlectrooms_creates_activities(
         chapter_names = [chapter["name"] for chapter in data["chapters"]]
         for chapter in data["chapters"]:
             assert len(chapter.get("activities", [])) == 1
-        assert any(name.startswith("Imported Tutorium") for name in chapter_names)
+        assert chapter_names == [
+            "Tutorium — Follow sequences",
+            "Tutorium — Emoji challenge",
+        ]
         assert len(data["activities"]) == 2
         first_activity = data["activities"][0]
         assert first_activity["name"] == "Follow sequences"

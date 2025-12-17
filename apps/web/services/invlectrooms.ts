@@ -49,6 +49,7 @@ export interface InvlectRoomsProblemPayload {
     original?: string;
     local?: string;
   } | null;
+  chapter_name?: string;
 }
 
 export interface InvlectRoomsApplyPayload {

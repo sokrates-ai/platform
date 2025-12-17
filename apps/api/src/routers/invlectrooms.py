@@ -47,6 +47,7 @@ class InvlectRoomsProblemPayload(BaseModel):
     html: Optional[str] = None
     plain_text: Optional[str] = None
     image: Optional[Dict[str, Optional[str]]] = None
+    chapter_name: Optional[str] = None
 
 
 class InvlectRoomsApplyRequest(BaseModel):
@@ -212,9 +213,13 @@ async def apply_import(
     source_url = str(payload.url)
     for index, problem in enumerate(payload.problems):
         problem_title = _normalize_text(problem.title or "") or f"Problem {index + 1}"
-        chapter_title = (
-            f"{base_name} — {problem_title}" if base_name else problem_title
-        )
+        requested_chapter_title = _normalize_text(problem.chapter_name or "")
+        if requested_chapter_title:
+            chapter_title = requested_chapter_title
+        elif base_name:
+            chapter_title = f"{base_name} — {problem_title}"
+        else:
+            chapter_title = problem_title
 
         chapter_request = ChapterCreate(
             name=chapter_title,

@@ -163,7 +163,8 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
   const [touched, setTouched] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [importResult, setImportResult] = useState<InvlectRoomsImportResponse | null>(null);
-  const [chapterName, setChapterName] = useState('');
+  const [chapterNames, setChapterNames] = useState<string[]>([]);
+  const [importSource, setImportSource] = useState('');
   const [isApplying, setIsApplying] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
   const [steps, setSteps] = useState<ImportStepState[]>(() =>
@@ -187,7 +188,8 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
       setHasCompleted(false);
       setErrorMessage(null);
       setImportResult(null);
-      setChapterName('');
+      setChapterNames([]);
+      setImportSource('');
       setIsApplying(false);
       setApplyError(null);
       setSteps(MOCK_IMPORT_STEPS.map((step) => ({ ...step, status: 'pending' })));
@@ -226,6 +228,7 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
     }
     setErrorMessage(null);
     setImportResult(null);
+    setChapterNames([]);
     setHasStarted(true);
     setHasCompleted(false);
     setIsRunning(true);
@@ -257,6 +260,7 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
       updateStep(currentStep, 'completed');
 
       setImportResult(response);
+      setImportSource(response.url || sourceUrl);
       if (onResult) {
         onResult(response);
       }
@@ -355,12 +359,17 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
       setApplyError('Course context is missing.');
       return;
     }
-    if (!chapterName.trim()) {
-      setApplyError('Provide a chapter name before applying.');
-      return;
-    }
     if (!problems.length) {
       setApplyError('No problems detected in the imported document.');
+      return;
+    }
+    const trimmedChapterNames = chapterNames.map((name) => name.trim());
+    if (trimmedChapterNames.length !== problems.length) {
+      setApplyError('Provide a chapter name for each problem before applying.');
+      return;
+    }
+    if (trimmedChapterNames.some((name) => !name)) {
+      setApplyError('Provide a chapter name for each problem before applying.');
       return;
     }
     setApplyError(null);
@@ -371,14 +380,14 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
           url: importResult.url || sourceUrl,
           course_uuid: courseUuid,
           tab_uuid: tabUuid,
-          chapter_name: chapterName.trim(),
-          problems: problems.map((problem) => ({
+          problems: problems.map((problem, index) => ({
             id: problem.id,
             title: problem.title,
             status: problem.status,
             html: problem.html,
             plain_text: problem.plainText,
             image: problem.image ?? null,
+            chapter_name: trimmedChapterNames[index],
           })),
         },
         access_token
@@ -397,19 +406,25 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
     } finally {
       setIsApplying(false);
     }
-  }, [isApplying, importResult, courseUuid, tabUuid, chapterName, problems, sourceUrl, access_token, onApplied]);
+  }, [isApplying, importResult, courseUuid, tabUuid, chapterNames, problems, sourceUrl, access_token, onApplied]);
 
   const validationMessage =
     touched && !isValidUrl ? 'Enter a valid URL (starting with http:// or https://).' : undefined;
 
   useEffect(() => {
     if (!importResult) {
+      setChapterNames([]);
       return;
     }
-    const candidateSource = importResult.url || sourceUrl;
-    const suggested = guessChapterTitleFromUrl(candidateSource);
-    setChapterName((current) => (current ? current : suggested));
-  }, [importResult, sourceUrl]);
+    const baseSource = importSource || importResult.url || '';
+    const baseName = guessChapterTitleFromUrl(baseSource);
+    setChapterNames(
+      problems.map((problem, index) => {
+        const problemTitle = problem.title || `Problem ${index + 1}`;
+        return baseName ? `${baseName} — ${problemTitle}` : problemTitle;
+      })
+    );
+  }, [importResult, importSource, problems]);
 
   const imageCount =
     importResult?.refresh && Array.isArray((importResult.refresh as any)?._images)
@@ -496,45 +511,58 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
               </a>
             )}
           </div>
-          <div className="space-y-1">
-            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Chapter name
-            </label>
-            <Input
-              value={chapterName}
-              onChange={(event) => setChapterName(event.target.value)}
-              placeholder="Imported chapter title"
-              disabled={isApplying}
-            />
-          </div>
           {problems.length > 0 && (
             <div className="max-h-64 overflow-y-auto pr-1 space-y-2">
-              {problems.map((problem, index) => (
-                <article
-                  key={`${problem.id}-${index}`}
-                  className="space-y-2 rounded-md border border-gray-200 bg-white/70 p-3 shadow-sm"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className="text-sm font-medium text-foreground truncate"
-                        title={problem.title}
+              {problems.map((problem, index) => {
+                const chapterInputId = `import-chapter-${index}`;
+                const chapterValue = chapterNames[index] ?? '';
+                return (
+                  <article
+                    key={`${problem.id}-${index}`}
+                    className="space-y-3 rounded-md border border-gray-200 bg-white/70 p-3 shadow-sm"
+                  >
+                    <div className="space-y-1">
+                      <label
+                        className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+                        htmlFor={chapterInputId}
                       >
-                        {problem.title}
-                      </p>
-                      {problem.status && (
-                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                          {problem.status}
+                        Chapter name
+                      </label>
+                      <Input
+                        id={chapterInputId}
+                        value={chapterValue}
+                        onChange={(event) =>
+                          setChapterNames((current) => {
+                            const next = [...current];
+                            next[index] = event.target.value;
+                            return next;
+                          })
+                        }
+                        placeholder={`Chapter title for ${problem.title}`}
+                        disabled={isApplying}
+                      />
+                    </div>
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className="text-sm font-medium text-foreground truncate"
+                          title={problem.title}
+                        >
+                          {problem.title}
+                        </p>
+                        {problem.status && (
+                          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                            {problem.status}
+                          </span>
+                        )}
+                      </div>
+                      {problem.id !== undefined && (
+                        <span className="text-[10px] text-muted-foreground" title={String(problem.id)}>
+                          ID: {problem.id}
                         </span>
                       )}
                     </div>
-                    {problem.id !== undefined && (
-                      <span className="text-[10px] text-muted-foreground" title={String(problem.id)}>
-                        ID: {problem.id}
-                      </span>
-                    )}
-                  </div>
-                  {problem.preview && (
+                    {problem.preview && (
                       <p
                         className="text-xs leading-relaxed text-muted-foreground overflow-hidden text-ellipsis"
                         title={problem.plainText}
@@ -547,17 +575,18 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
                         {problem.preview}
                       </p>
                     )}
-                  {problem.imagePreview && (
-                    <div className="rounded-md border border-gray-100 bg-gray-50 p-2">
-                      <img
-                        src={problem.imagePreview}
-                        alt={`Preview for ${problem.title}`}
-                        className="max-h-40 w-full rounded object-contain"
-                      />
-                    </div>
-                  )}
-                </article>
-              ))}
+                    {problem.imagePreview && (
+                      <div className="rounded-md border border-gray-100 bg-gray-50 p-2">
+                        <img
+                          src={problem.imagePreview}
+                          alt={`Preview for ${problem.title}`}
+                          className="max-h-40 w-full rounded object-contain"
+                        />
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
             </div>
           )}
           {imageCount > 0 && (
