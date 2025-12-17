@@ -1,0 +1,270 @@
+{
+  "objects": [
+    {
+      "id": 1766007969640970,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": -960,
+      "y": -930,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766007954850276,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": -690,
+      "y": -900,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766007956615079,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": -480,
+      "y": -750,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766007970758358,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": -630,
+      "y": -510,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766007956998823,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": -870,
+      "y": -330,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766007956835101,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": -840,
+      "y": -60,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766007953162,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": -630,
+      "y": 180,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766008006764,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": -270,
+      "y": 330,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766008008584088,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": 60,
+      "y": 270,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766008024036112,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": 90,
+      "y": -90,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766008025344213,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": 120,
+      "y": -390,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766008048089690,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": 330,
+      "y": -630,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766008052928325,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": 660,
+      "y": -690,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766008055335722,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": 810,
+      "y": -480,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766008056823873,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": 810,
+      "y": -210,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766008058679973,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": 780,
+      "y": 90,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766008060485031,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": 660,
+      "y": 420,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766008062941129,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": 360,
+      "y": 660,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766008065440697,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": 30,
+      "y": 780,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766008068953266,
+      "file": "Placeholder.webp",
+      "label": "Placeholder",
+      "scale": 0.2,
+      "x": -150,
+      "y": 870,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    }
+  ],
+  "boundaries": {
+    "left": -1000,
+    "right": 1000,
+    "top": -1000,
+    "bottom": 1000
+  }
+}

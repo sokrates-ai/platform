@@ -1,4 +1,4 @@
-.PHONY: setup check
+.PHONY: setup check sprites
 
 
 docker-nuke:
@@ -22,5 +22,8 @@ lint:
 
 db:
 	./dev.sh db
+
+sprites:
+	cd ./apps/web/components/Dashboard/Pages/Course/EditCourseMap && bash build_sprite_index.sh
 
 all-run: api-run web-run

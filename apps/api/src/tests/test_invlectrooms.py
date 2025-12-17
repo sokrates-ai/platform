@@ -308,6 +308,33 @@ def test_apply_invlectrooms_creates_activities(
             select(Activity).where(Activity.course_id == course.id)
         ).all()
         assert len(activity_records) == 2
+
+        session.refresh(course)
+        map_state = course.map_state
+        assert isinstance(map_state, dict)
+        objects = map_state.get("objects") or []
+        chapter_nodes = [
+            obj
+            for obj in objects
+            if isinstance(obj, dict)
+            and obj.get("file") == "Stein_Moos.webp"
+            and (obj.get("type") or {}).get("kind") == "chapter"
+        ]
+        assert len(chapter_nodes) == len(payload["problems"])
+        assert all(node.get("label") == "cool" for node in chapter_nodes)
+        assert all((node.get("type") or {}).get("associatedChapterID") for node in chapter_nodes)
+
+        remaining_placeholders = [
+            obj for obj in objects if isinstance(obj, dict) and obj.get("file") == "Placeholder.webp"
+        ]
+        assert not remaining_placeholders
+
+        boundaries = map_state.get("boundaries")
+        assert boundaries == {"left": -1000, "right": 1000, "top": -1000, "bottom": 1000}
+
+        tab_map = course.tab_store.get("tab-1")
+        assert isinstance(tab_map, dict)
+        assert tab_map == map_state
     finally:
         client.app.dependency_overrides.pop(get_current_user, None)
 

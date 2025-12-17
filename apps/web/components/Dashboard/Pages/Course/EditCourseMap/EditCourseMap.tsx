@@ -10,8 +10,9 @@ import { SPRITE_SCALE_FACTOR } from '@components/Objects/ContentMap/constants';
 import { LayoutState } from '@components/Objects/ContentMap/Canvas';
 import { CourseTab, CourseTabSelector } from '@components/Objects/Modals/Course/Create/CourseTabSelector';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, PanelRightOpen } from 'lucide-react';
+import { X, PanelRightOpen, Download, Upload } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { getAPIUrl } from '@services/config/config';
 const ContentMap = dynamic(() => import('components/Objects/ContentMap/Canvas'), { ssr: false });
 
@@ -85,6 +86,15 @@ const DEFAULT_BOUNDARIES = {
     top: -1000,
     bottom: 1000
 };
+
+const JSON_FILE_TYPES = [
+    {
+        description: 'JSON Files',
+        accept: {
+            'application/json': ['.json'],
+        },
+    },
+] as const;
 
 // Reducer actions
 const ACTIONS = {
@@ -215,6 +225,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
     const [customSpriteError, setCustomSpriteError] = useState<string | null>(null)
     const lastInitializedTabRef = React.useRef<string | null>(null);
     const lastInitializedMapSignatureRef = React.useRef<string | null>(null);
+    const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
     // Initial state for reducer
     const [state, dispatch] = useReducer(layoutReducer, {
@@ -517,6 +528,162 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
         }
     }, []);
 
+    const sanitizeImportedMap = React.useCallback((candidate: any) => {
+        if (!candidate || typeof candidate !== 'object') {
+            throw new Error('Invalid map export: expected an object.');
+        }
+
+        const objects = Array.isArray(candidate.objects) ? candidate.objects : [];
+        const rawBoundaries = candidate.boundaries || {};
+
+        const normalizedBoundaries = {
+            left:
+                typeof rawBoundaries.left === 'number'
+                    ? rawBoundaries.left
+                    : DEFAULT_BOUNDARIES.left,
+            right:
+                typeof rawBoundaries.right === 'number'
+                    ? rawBoundaries.right
+                    : DEFAULT_BOUNDARIES.right,
+            top:
+                typeof rawBoundaries.top === 'number'
+                    ? rawBoundaries.top
+                    : DEFAULT_BOUNDARIES.top,
+            bottom:
+                typeof rawBoundaries.bottom === 'number'
+                    ? rawBoundaries.bottom
+                    : DEFAULT_BOUNDARIES.bottom,
+        };
+
+        return {
+            objects,
+            boundaries: normalizedBoundaries,
+        };
+    }, []);
+
+    const handleExportMap = React.useCallback(async () => {
+        if (!state.layout) {
+            return;
+        }
+
+        const payload = {
+            objects: state.layout,
+            boundaries: state.boundaries || DEFAULT_BOUNDARIES,
+        };
+
+        const json = JSON.stringify(payload, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const suggestedName = `content-map-${selectedTabId || 'tab'}.json`;
+
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const anyWindow = window as typeof window & {
+            showSaveFilePicker?: (options?: any) => Promise<any>;
+        };
+
+        try {
+            if (anyWindow.showSaveFilePicker) {
+                const handle = await anyWindow.showSaveFilePicker({
+                    suggestedName,
+                    types: JSON_FILE_TYPES,
+                });
+                const writable = await handle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+            } else {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = suggestedName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }
+        } catch (error: any) {
+            if (error?.name === 'AbortError') {
+                return;
+            }
+            console.error('Failed to export map', error);
+            if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+                window.alert('Export failed. Please try again.');
+            }
+        }
+    }, [state.layout, state.boundaries, selectedTabId]);
+
+    const processImportedMapFile = React.useCallback(
+        async (file: File) => {
+            try {
+                const text = await file.text();
+                const parsed = JSON.parse(text);
+                const { objects, boundaries } = sanitizeImportedMap(parsed);
+                dispatch({
+                    type: 'set_layout',
+                    payload: {
+                        layout: objects,
+                        boundaries,
+                        updateOriginator: 'user',
+                    },
+                });
+            } catch (error) {
+                console.error('Failed to import map', error);
+                if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+                    window.alert('Import failed. Please ensure the file is a valid JSON export.');
+                }
+            }
+        },
+        [sanitizeImportedMap, dispatch],
+    );
+
+    const handleImportMap = React.useCallback(async () => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const anyWindow = window as typeof window & {
+            showOpenFilePicker?: (options?: any) => Promise<any[]>;
+        };
+
+        if (anyWindow.showOpenFilePicker) {
+            try {
+                const handles = await anyWindow.showOpenFilePicker({
+                    multiple: false,
+                    excludeAcceptAllOption: true,
+                    types: JSON_FILE_TYPES,
+                });
+                if (handles && handles.length > 0) {
+                    const file = await handles[0].getFile();
+                    await processImportedMapFile(file);
+                }
+            } catch (error: any) {
+                if (error?.name === 'AbortError') {
+                    return;
+                }
+                console.error('Failed to open map file', error);
+                if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+                    window.alert('Selecting a map JSON failed. Please try again.');
+                }
+            }
+        } else if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+            fileInputRef.current.click();
+        }
+    }, [processImportedMapFile, fileInputRef]);
+
+    const handleImportInputChange = React.useCallback(
+        async (event: React.ChangeEvent<HTMLInputElement>) => {
+            const file = event.target.files?.[0];
+            if (!file) {
+                return;
+            }
+            await processImportedMapFile(file);
+            event.target.value = '';
+        },
+        [processImportedMapFile],
+    );
+
     const handleCustomSpriteSubmit = React.useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const trimmedUrl = customSpriteUrl.trim();
@@ -746,10 +913,40 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
                                     canUndo={state.historyIndex > 0}
                                     canRedo={state.historyIndex < state.history.length - 1}
                                 />
+                                <div className="h-8 w-px bg-gray-200" />
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleExportMap}
+                                        className="gap-2"
+                                    >
+                                        <Download className="h-4 w-4" />
+                                        Export
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleImportMap}
+                                        className="gap-2"
+                                    >
+                                        <Upload className="h-4 w-4" />
+                                        Import
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="application/json,.json"
+                    className="hidden"
+                    onChange={handleImportInputChange}
+                />
                 {/* Asset browser panel as overlay */}
                 <AnimatePresence>
                     {assetPanelOpen && (

@@ -1,6 +1,11 @@
 from __future__ import annotations
 
 import re
+import json
+import math
+from copy import deepcopy
+from functools import lru_cache
+from importlib import resources
 from typing import Any, Dict, List, Optional
 from urllib.parse import unquote, urlsplit
 
@@ -15,7 +20,7 @@ from src.db.courses.activities import (
     ActivityTypeEnum,
 )
 from src.db.courses.chapters import ChapterCreate, ChapterRead
-from src.db.courses.courses import Course
+from src.db.courses.courses import Course, default_map_state
 from src.db.users import AnonymousUser, PublicUser
 from src.services.courses.activities.activities import create_activity
 from src.services.courses.chapters import create_chapter
@@ -25,6 +30,11 @@ from .schemas import (
     InvlectRoomsApplyResponse,
     InvlectRoomsProblemPayload,
 )
+
+COOL_STONE_ASSET = "Stein_Moos.webp"
+COOL_STONE_LABEL = "cool"
+PLACEHOLDER_FILE = "Placeholder.webp"
+TEMPLATE_MAP_FILENAME = "template_map.json"
 
 
 def _normalize_text(value: Optional[str]) -> str:
@@ -143,6 +153,124 @@ def build_activity_content(
     }
 
 
+@lru_cache(maxsize=1)
+def _load_template_map() -> Dict[str, Any]:
+    resource_root = resources.files("src.services.invlectrooms")
+    try:
+        data = resource_root.joinpath(TEMPLATE_MAP_FILENAME).read_text(encoding="utf-8")
+    except FileNotFoundError:
+        base = default_map_state()
+        return {
+            "objects": [],
+            "boundaries": deepcopy(base.get("boundaries", {})),
+        }
+    return json.loads(data)
+
+
+def _select_placeholder_positions(total_slots: int, required: int) -> List[int]:
+    if required <= 0 or total_slots <= 0:
+        return []
+    if required >= total_slots:
+        return list(range(total_slots))
+    if required == 1:
+        return [0]
+
+    indices: List[int] = []
+    for position in range(required):
+        approx = math.floor(position * total_slots / required)
+        indices.append(approx)
+
+    indices[-1] = total_slots - 1
+
+    # Ensure strictly non-decreasing sequence
+    for idx in range(1, len(indices)):
+        if indices[idx] <= indices[idx - 1]:
+            indices[idx] = min(
+                total_slots - (len(indices) - idx),
+                max(indices[idx - 1] + 1, indices[idx]),
+            )
+
+    return indices
+
+
+def _build_content_map(
+    chapters: List[ChapterRead],
+    _existing_map: Any,
+) -> Dict[str, Any]:
+    template = deepcopy(_load_template_map())
+    objects = template.get("objects", [])
+    placeholder_indices = [
+        index
+        for index, obj in enumerate(objects)
+        if isinstance(obj, dict) and obj.get("file") == PLACEHOLDER_FILE
+    ]
+
+    chapter_slots = _select_placeholder_positions(len(placeholder_indices), len(chapters))
+    mapped_indices = [
+        placeholder_indices[position] for position in chapter_slots
+    ]
+
+    used_placeholder_indices = set(mapped_indices)
+
+    for chapter, object_index in zip(chapters, mapped_indices):
+        chapter_id = chapter.id
+        if chapter_id is None:
+            continue
+        slot = objects[object_index]
+        slot["id"] = -int(chapter_id)
+        slot["file"] = COOL_STONE_ASSET
+        slot["label"] = COOL_STONE_LABEL
+        slot["scale"] = slot.get("scale", 0.22)
+        slot["type"] = {
+            "kind": "chapter",
+            "associatedChapterID": chapter_id,
+            "label": chapter.name,
+        }
+
+    extra_chapters = chapters[len(mapped_indices) :]
+    if extra_chapters:
+        last_position = (
+            objects[mapped_indices[-1]] if mapped_indices else {"x": 0, "y": 0}
+        )
+        base_x = last_position.get("x", 0)
+        base_y = last_position.get("y", 0)
+        offset = 180
+        for offset_index, chapter in enumerate(extra_chapters, start=1):
+            chapter_id = chapter.id
+            if chapter_id is None:
+                continue
+            objects.append(
+                {
+                    "id": -int(chapter_id),
+                    "x": base_x + offset * offset_index,
+                    "y": base_y,
+                    "scale": 0.22,
+                    "file": COOL_STONE_ASSET,
+                    "label": COOL_STONE_LABEL,
+                    "type": {
+                        "kind": "chapter",
+                        "associatedChapterID": chapter_id,
+                        "label": chapter.name,
+                    },
+                }
+            )
+
+    template["objects"] = [
+        obj
+        for index, obj in enumerate(objects)
+        if not (
+            isinstance(obj, dict)
+            and obj.get("file") == PLACEHOLDER_FILE
+            and index not in used_placeholder_indices
+        )
+    ]
+
+    if "boundaries" not in template or not isinstance(template["boundaries"], dict):
+        template["boundaries"] = deepcopy(default_map_state().get("boundaries", {}))
+
+    return template
+
+
 async def convert_invlectrooms_payload_to_course(
     *,
     payload: InvlectRoomsApplyRequest,
@@ -198,6 +326,28 @@ async def convert_invlectrooms_payload_to_course(
         activities.append(activity)
         chapter.activities = [activity]
         chapters.append(chapter)
+
+    if chapters:
+        tab_store = dict(course.tab_store or {})
+        tab_uuid = payload.tab_uuid or next(iter(tab_store), "tab-1")
+
+        existing_map = None
+        if tab_uuid in tab_store:
+            tab_entry = tab_store[tab_uuid]
+            if isinstance(tab_entry, dict) and "map" in tab_entry:
+                existing_map = tab_entry.get("map")
+            else:
+                existing_map = tab_entry
+        if existing_map is None:
+            existing_map = course.map_state
+
+        map_state = _build_content_map(chapters, existing_map)
+        course.map_state = deepcopy(map_state)
+        tab_store[tab_uuid] = deepcopy(map_state)
+        course.tab_store = tab_store
+        db_session.add(course)
+        db_session.commit()
+        db_session.refresh(course)
 
     return InvlectRoomsApplyResponse(
         chapter=chapters[0] if chapters else None,
