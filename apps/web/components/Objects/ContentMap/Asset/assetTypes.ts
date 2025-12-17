@@ -17,6 +17,7 @@ export interface AssetData {
     scale: number;
     file: string;
     label?: string;
+    sourceUrl?: string;
     type: AssetTypeData;
 }
 

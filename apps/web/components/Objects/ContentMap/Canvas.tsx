@@ -108,6 +108,7 @@ const Canvas: React.FC<CanvasProps> = ({
                     id: Date.now(),
                     file: spriteData.file,
                     label: spriteData.label,
+                    sourceUrl: spriteData.sourceUrl,
                     scale: spriteData.scale * SPRITE_SCALE_FACTOR,
                     x: snappedX,
                     y: snappedY,

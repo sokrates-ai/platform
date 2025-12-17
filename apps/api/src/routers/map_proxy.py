@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import ssl
 from typing import Optional
 
 import httpx
@@ -48,10 +49,31 @@ def _cache_key_for_url(url: str) -> str:
     return f"{CACHE_NAMESPACE}:{digest}"
 
 
-@router.get("")
-async def proxy_course_map_asset(
-    url: str = Query(..., description="Publicly accessible image URL to proxy for the course map."),
-):
+async def _fetch_upstream(url: str, *, verify: bool) -> httpx.Response:
+    async with httpx.AsyncClient(
+        follow_redirects=True,
+        timeout=HTTP_TIMEOUT,
+        verify=verify,
+    ) as client:
+        return await client.get(url)
+
+
+def _is_ssl_error(error: httpx.HTTPError) -> bool:
+    message = str(error).lower()
+    if "certificate verify failed" in message or "ssl" in message:
+        return True
+
+    current: Optional[BaseException] = error
+    while current:
+        if isinstance(current, ssl.SSLError):
+            return True
+        current = current.__cause__  # type: ignore[attr-defined]
+    return False
+
+
+async def _handle_proxy_request(
+    url: str,
+) -> Response:
     sanitized_url = url.strip()
     if not sanitized_url:
         raise HTTPException(status_code=400, detail="Query parameter 'url' is required.")
@@ -79,12 +101,30 @@ async def proxy_course_map_asset(
             response.headers["X-Proxy-Cache"] = "HIT"
             return response
 
+    insecure_fetch_used = False
+
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=HTTP_TIMEOUT) as client:
-            upstream_response = await client.get(sanitized_url)
+        upstream_response = await _fetch_upstream(sanitized_url, verify=True)
     except httpx.HTTPError as exc:
-        LOGGER.warning("Failed to fetch upstream asset for %s: %s", sanitized_url, exc)
-        raise HTTPException(status_code=502, detail="Failed to fetch asset from remote server.") from exc
+        if _is_ssl_error(exc):
+            LOGGER.warning(
+                "Failed to fetch upstream asset over HTTPS with verification for %s: %s. Retrying without verification.",
+                sanitized_url,
+                exc,
+            )
+            try:
+                upstream_response = await _fetch_upstream(sanitized_url, verify=False)
+                insecure_fetch_used = True
+            except httpx.HTTPError as insecure_exc:
+                LOGGER.warning(
+                    "Failed to fetch upstream asset even without SSL verification for %s: %s",
+                    sanitized_url,
+                    insecure_exc,
+                )
+                raise HTTPException(status_code=502, detail="Failed to fetch asset from remote server.") from insecure_exc
+        else:
+            LOGGER.warning("Failed to fetch upstream asset for %s: %s", sanitized_url, exc)
+            raise HTTPException(status_code=502, detail="Failed to fetch asset from remote server.") from exc
 
     if upstream_response.status_code >= 400:
         raise HTTPException(
@@ -110,4 +150,21 @@ async def proxy_course_map_asset(
 
     response = Response(content=body, media_type=content_type)
     response.headers["X-Proxy-Cache"] = "MISS"
+    if insecure_fetch_used:
+        response.headers["X-Proxy-Insecure-Fetch"] = "1"
     return response
+
+
+@router.get("")
+async def proxy_course_map_asset(
+    url: str = Query(..., description="Publicly accessible image URL to proxy for the course map."),
+):
+    return await _handle_proxy_request(url)
+
+
+@router.get("/{_filename:path}")
+async def proxy_course_map_asset_with_filename(
+    _filename: str,
+    url: str = Query(..., description="Publicly accessible image URL to proxy for the course map."),
+):
+    return await _handle_proxy_request(url)

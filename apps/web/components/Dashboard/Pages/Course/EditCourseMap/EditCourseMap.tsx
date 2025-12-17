@@ -209,7 +209,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
     const [gridGranularity, setGridGranularity] = React.useState<number>(5)
     const [clampToMap, setClampToMap] = React.useState<boolean>(true)
     const [assetPanelOpen, setAssetPanelOpen] = useState(false)
-    const [customSprites, setCustomSprites] = useState<{ file: string; label: string; scale: number; sourceUrl: string }[]>([])
+    const [customSprites, setCustomSprites] = useState<{ file: string; label: string; scale: number; sourceUrl: string; previewSrc?: string }[]>([])
     const [customSpriteUrl, setCustomSpriteUrl] = useState<string>('')
     const [customSpriteLabel, setCustomSpriteLabel] = useState<string>('')
     const [customSpriteError, setCustomSpriteError] = useState<string | null>(null)
@@ -282,6 +282,167 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
         };
     }, [mapState, onMapStateChange, selectedTabId, dispatchCourse]);
 
+    const mapProxyBaseUrl = React.useMemo(() => {
+        const apiBase = getAPIUrl();
+        if (!apiBase || apiBase === 'error') {
+            return '/api/v1/mapProxy';
+        }
+        const normalizedBase = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
+        return `${normalizedBase}/mapProxy`;
+    }, []);
+
+    const normalizeRemoteUrl = React.useCallback((input: string) => {
+        if (!input) return input;
+        if (input.startsWith('//')) {
+            const protocol =
+                typeof window !== 'undefined' && window.location?.protocol
+                    ? window.location.protocol
+                    : 'https:';
+            return `${protocol}${input}`;
+        }
+        return input;
+    }, []);
+
+    const extractRemoteFromProxy = React.useCallback((maybeProxyUrl: string): string | null => {
+        const marker = 'mapProxy';
+        if (!maybeProxyUrl.includes(marker)) {
+            return null;
+        }
+        const queryIndex = maybeProxyUrl.indexOf('url=');
+        if (queryIndex === -1) {
+            return null;
+        }
+        const after = maybeProxyUrl.substring(queryIndex + 4);
+        const endIndex = after.indexOf('&');
+        const encoded = endIndex === -1 ? after : after.substring(0, endIndex);
+        try {
+            return decodeURIComponent(encoded);
+        } catch (_error) {
+            return null;
+        }
+    }, []);
+
+    const filenameFromUrl = React.useCallback((url: string | undefined) => {
+        if (!url) return undefined;
+        try {
+            const parsed = new URL(url);
+            const segments = parsed.pathname.split('/').filter(Boolean);
+            if (segments.length === 0) {
+                return undefined;
+            }
+            const last = segments[segments.length - 1];
+            return last ? last.split('?')[0] : undefined;
+        } catch (_error) {
+            return undefined;
+        }
+    }, []);
+
+    const ensureFilenameWithExtension = React.useCallback((filename: string | undefined, label?: string) => {
+        const ALLOWED_EXTENSION = /\.(png|jpe?g|gif|webp|svg)$/i;
+        if (filename) {
+            const trimmed = filename.trim();
+            if (trimmed.length > 0) {
+                if (ALLOWED_EXTENSION.test(trimmed)) {
+                    return trimmed;
+                }
+                return `${trimmed}.png`;
+            }
+        }
+        if (label && label.trim().length > 0) {
+            const base = label
+                .trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '') || 'asset';
+            return `${base}.png`;
+        }
+        return 'asset.png';
+    }, []);
+
+    const toProxiedAssetUrl = React.useCallback((file: string, options?: { sourceUrl?: string; label?: string }) => {
+        if (!file) return file;
+
+        const alreadyProxy =
+            file.includes('/mapProxy?url=') ||
+            (file.includes('/mapProxy/') && file.includes('?url='));
+
+        const candidateSource = options?.sourceUrl || (alreadyProxy ? extractRemoteFromProxy(file) : undefined);
+
+        const normalizedSource = candidateSource
+            ? normalizeRemoteUrl(candidateSource)
+            : normalizeRemoteUrl(file);
+
+        const isRemote = /^(https?:)?\/\//i.test(normalizedSource);
+
+        if (!isRemote) {
+            return file;
+        }
+
+        if (!mapProxyBaseUrl) {
+            return normalizedSource;
+        }
+
+        const filenameCandidate = filenameFromUrl(normalizedSource);
+        const safeFilename = ensureFilenameWithExtension(filenameCandidate, options?.label);
+        const proxiedUrl = `${mapProxyBaseUrl}/${encodeURIComponent(safeFilename)}?url=${encodeURIComponent(normalizedSource)}`;
+
+        if (alreadyProxy && proxiedUrl === file) {
+            return file;
+        }
+
+        return proxiedUrl;
+    }, [mapProxyBaseUrl, extractRemoteFromProxy, normalizeRemoteUrl, filenameFromUrl, ensureFilenameWithExtension]);
+
+    const resolveAssetPath = React.useCallback((file: string) => {
+        if (!file) return file;
+        if (file.startsWith('data:') || file.startsWith('blob:')) {
+            return file;
+        }
+        if (file.includes('/mapProxy?url=') || file.includes('/mapProxy/')) {
+            return file;
+        }
+        if (/^(https?:)?\/\//i.test(file) || file.startsWith('//')) {
+            return toProxiedAssetUrl(file);
+        }
+        if (file.startsWith('/')) {
+            return file;
+        }
+        return `/contentMap/${file}`;
+    }, [toProxiedAssetUrl]);
+
+    React.useEffect(() => {
+        if (!state.layout || state.layout.length === 0) {
+            return;
+        }
+        let requiresUpdate = false;
+        const proxiedLayout = state.layout.map((asset) => {
+            const effectiveSourceUrl = asset.sourceUrl || extractRemoteFromProxy(asset.file) || undefined;
+            const proxiedFile = toProxiedAssetUrl(asset.file, {
+                sourceUrl: effectiveSourceUrl,
+                label: asset.label,
+            });
+            if (proxiedFile !== asset.file || (!asset.sourceUrl && effectiveSourceUrl)) {
+                requiresUpdate = true;
+                return {
+                    ...asset,
+                    file: proxiedFile,
+                    sourceUrl: effectiveSourceUrl ?? asset.sourceUrl,
+                };
+            }
+            return asset;
+        });
+        if (requiresUpdate) {
+            dispatch({
+                type: 'set_layout',
+                payload: {
+                    layout: proxiedLayout,
+                    updateOriginator: 'initial',
+                    boundaries: state.boundaries,
+                },
+            });
+        }
+    }, [state.layout, state.boundaries, toProxiedAssetUrl, extractRemoteFromProxy]);
+
     // Call update callback when layout changes (for saving)
     React.useEffect(() => {
         if (state.layout && state.updateOriginator === 'user' && onMapUpdateCallbackRef.current) {
@@ -332,18 +493,6 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
         }
     }
 
-    const resolveAssetPath = React.useCallback((file: string) => {
-        if (
-            /^(https?:)?\/\//i.test(file) ||
-            file.startsWith('data:') ||
-            file.startsWith('blob:') ||
-            file.startsWith('/')
-        ) {
-            return file;
-        }
-        return `/contentMap/${file}`;
-    }, []);
-
     const deriveLabelFromUrl = React.useCallback((url: string) => {
         try {
             const parsed = new URL(url);
@@ -356,15 +505,6 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
         } catch (_error) {
             return url;
         }
-    }, []);
-
-    const mapProxyBaseUrl = React.useMemo(() => {
-        const apiBase = getAPIUrl();
-        if (!apiBase || apiBase === 'error') {
-            return '/api/v1/mapProxy';
-        }
-        const normalizedBase = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
-        return `${normalizedBase}/mapProxy`;
     }, []);
 
     const handleCustomSpriteSubmit = React.useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
@@ -395,16 +535,18 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
 
         const sourceUrlKey = isRemoteUrl ? normalizedRemoteUrl : trimmedUrl;
 
-        let spriteFile = isRemoteUrl ? normalizedRemoteUrl : trimmedUrl;
+        let spriteFile = trimmedUrl;
         const spriteLabel = trimmedLabel || deriveLabelFromUrl(sourceUrlKey);
 
         if (isRemoteUrl) {
-            if (!mapProxyBaseUrl) {
+            const proxiedUrl = toProxiedAssetUrl(normalizedRemoteUrl, {
+                sourceUrl: normalizedRemoteUrl,
+                label: spriteLabel,
+            });
+            if (!proxiedUrl.includes('mapProxy')) {
                 setCustomSpriteError('Proxy endpoint is not configured. Please contact support.');
                 return;
             }
-
-            const proxiedUrl = `${mapProxyBaseUrl}?url=${encodeURIComponent(normalizedRemoteUrl)}`;
             try {
                 if (typeof window === 'undefined') {
                     setCustomSpriteError('Custom asset proxy can only be used in a browser context.');
@@ -443,12 +585,17 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
                 setCustomSpriteError('This URL has already been added.');
                 return prev;
             }
+            const previewSrc = toProxiedAssetUrl(sourceUrlKey, {
+                sourceUrl: sourceUrlKey,
+                label: spriteLabel,
+            });
             const next = [
                 {
                     file: spriteFile,
                     label: spriteLabel,
                     scale: 1,
                     sourceUrl: sourceUrlKey,
+                    previewSrc,
                 },
                 ...prev,
             ];
@@ -457,12 +604,36 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
             setCustomSpriteLabel('');
             return next;
         });
-    }, [customSpriteUrl, customSpriteLabel, deriveLabelFromUrl, mapProxyBaseUrl]);
+    }, [customSpriteUrl, customSpriteLabel, deriveLabelFromUrl, toProxiedAssetUrl]);
 
     const allSprites = React.useMemo(() => [
         ...customSprites,
         ...SPRITES,
     ], [customSprites]);
+
+    const assetBrowserSprites = React.useMemo(() => {
+        return allSprites.map((sprite) => {
+            const proxiedFile = toProxiedAssetUrl(sprite.file, {
+                sourceUrl: sprite.sourceUrl,
+                label: sprite.label,
+            });
+            const previewSrc = toProxiedAssetUrl(sprite.sourceUrl ?? sprite.file, {
+                sourceUrl: sprite.sourceUrl ?? sprite.file,
+                label: sprite.label,
+            });
+            if (proxiedFile === sprite.file && (!previewSrc || previewSrc === sprite.previewSrc)) {
+                return {
+                    ...sprite,
+                    previewSrc,
+                };
+            }
+            return {
+                ...sprite,
+                file: proxiedFile,
+                previewSrc,
+            };
+        });
+    }, [allSprites, toProxiedAssetUrl]);
 
     function resetLayout() {
         const resetted = updateChapterStonesInContentMapState([], courseStructure.chapters)
@@ -644,7 +815,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
                             </div>
                             <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: 'calc(100vh - 80px)' }}>
                                 <div className="grid grid-cols-2 gap-4">
-                                    {allSprites.map((sprite, idx) => (
+                                    {assetBrowserSprites.map((sprite, idx) => (
                                         <div
                                             key={`${sprite.file}-${idx}`}
                                             draggable
@@ -655,7 +826,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
                                         >
                                             <div className="relative w-full aspect-square flex items-center justify-center mb-1 bg-muted/40 rounded overflow-hidden">
                                                 <img
-                                                    src={resolveAssetPath(sprite.file)}
+                                                    src={sprite.previewSrc ?? resolveAssetPath(sprite.file)}
                                                     alt={sprite.label}
                                                     className="object-contain max-h-full max-w-full group-hover:scale-105 transition-transform"
                                                     style={{ filter: "saturate(120%)" }}
