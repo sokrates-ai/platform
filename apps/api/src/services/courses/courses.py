@@ -60,8 +60,8 @@ def sanitize_map_state(raw_map: Any) -> Dict[str, Any]:
 
 
 DEFAULT_TABS: List[Dict[str, str]] = [
-    {"tab_uuid": "tab-1", "name": "Content"},
-    {"tab_uuid": "tab-2", "name": "Map"},
+    {"tab_uuid": "tab-1", "name": "Tab 1"},
+    {"tab_uuid": "tab-2", "name": "Tab 2"},
 ]
 
 
@@ -482,7 +482,7 @@ async def create_course(
     created_tabs: List[CourseTab] = []
     for index, spec in enumerate(DEFAULT_TABS):
         tab = CourseTab(
-            tab_uuid=spec["tab_uuid"],
+            tab_uuid=spec["tab_uuid"] + course.course_uuid,
             course_id=course.id,
             course_uuid=course.course_uuid,
             name=spec["name"],
