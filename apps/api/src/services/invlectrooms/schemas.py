@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import AnyUrl, BaseModel
+from pydantic import AnyUrl, BaseModel, Field
 
 from src.db.courses.activities import ActivityRead
 from src.db.courses.chapters import ChapterRead
@@ -26,6 +26,10 @@ class InvlectRoomsProblemPayload(BaseModel):
     plain_text: Optional[str] = None
     image: Optional[Dict[str, Optional[str]]] = None
     chapter_name: Optional[str] = None
+    checkpoint_level: Optional[str] = Field(default=None, alias="checkpointLevel")
+
+    class Config:
+        allow_population_by_field_name = True
 
 
 class InvlectRoomsApplyRequest(BaseModel):

@@ -13,6 +13,7 @@ export interface InvlectRoomsProblem {
   status?: string;
   body?: string;
   img?: string | InvlectRoomsProblemImage;
+  checkpointLevel?: string;
   [key: string]: unknown;
 }
 
@@ -50,6 +51,7 @@ export interface InvlectRoomsProblemPayload {
     local?: string;
   } | null;
   chapter_name?: string;
+  checkpoint_level?: string | null;
 }
 
 export interface InvlectRoomsApplyPayload {

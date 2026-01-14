@@ -25,7 +25,11 @@ from src.db.users import AnonymousUser, PublicUser
 from src.services.courses.activities.activities import create_activity
 from src.services.courses.chapters import create_chapter
 
-from .constants import CHECKPOINT_IMAGE_PATTERNS, CHECKPOINT_LEVEL_KEYWORDS
+from .constants import (
+    CHECKPOINT_IMAGE_PATTERNS,
+    CHECKPOINT_LEVEL_KEYWORDS,
+    CHECKPOINT_MARKER_ASSETS,
+)
 from .schemas import (
     InvlectRoomsApplyRequest,
     InvlectRoomsApplyResponse,
@@ -49,22 +53,18 @@ ChapterContext = Tuple[
     Optional[str],
 ]
 
+def _normalize_checkpoint_level(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+    normalized = value.strip().casefold()
+    for level in CHECKPOINT_DISPLAY_NAMES:
+        if normalized == level:
+            return level
+    return None
 
-def _resolve_checkpoint_asset(
-    problem: Optional[InvlectRoomsProblemPayload],
-    _level: str,
-) -> str:
-    image_payload = None
-    if problem and isinstance(problem.image, dict):
-        image_payload = problem.image
 
-    if isinstance(image_payload, dict):
-        for key in ("local", "original"):
-            value = image_payload.get(key)
-            if isinstance(value, str) and value.strip():
-                return value
-
-    return COOL_STONE_ASSET
+def _resolve_checkpoint_asset(level: str) -> str:
+    return CHECKPOINT_MARKER_ASSETS.get(level, COOL_STONE_ASSET)
 
 
 def _hydrate_chapter_slot(
@@ -92,9 +92,9 @@ def _hydrate_chapter_slot(
     metadata.pop("checkpointLevel", None)
 
     if checkpoint_level:
-        slot["file"] = _resolve_checkpoint_asset(problem, checkpoint_level)
+        slot["file"] = _resolve_checkpoint_asset(checkpoint_level)
         slot["label"] = chapter.name
-        slot["scale"] = 0.26
+        slot["scale"] = slot.get("scale", 0.26)
         metadata["checkpointLevel"] = checkpoint_level
     else:
         slot["file"] = COOL_STONE_ASSET
@@ -426,7 +426,9 @@ async def convert_invlectrooms_payload_to_course(
     chapter_contexts: List[ChapterContext] = []
 
     for index, problem in enumerate(payload.problems):
-        checkpoint_level = _detect_checkpoint(problem)
+        checkpoint_level = _normalize_checkpoint_level(problem.checkpoint_level)
+        if not checkpoint_level:
+            checkpoint_level = _detect_checkpoint(problem)
         if checkpoint_level:
             chapter, activity = await _create_checkpoint_chapter(
                 level=checkpoint_level,

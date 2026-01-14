@@ -420,12 +420,20 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
       const segments = extractTextSegments(html);
       const plainText = segments.join(' ');
       const preview = buildPreview(segments, MAX_PREVIEW_LENGTH);
-      const checkpointLevel = detectCheckpointLevel({
-        title,
-        html,
-        plainText,
-        image: rawImg,
-      });
+      const rawCheckpoint =
+        typeof problem?.checkpointLevel === 'string' ? problem.checkpointLevel.trim().toLowerCase() : null;
+      let checkpointLevel: CheckpointLevel | null = null;
+      if (rawCheckpoint) {
+        checkpointLevel = CHECKPOINT_LEVELS.find((level) => level === rawCheckpoint) ?? null;
+      }
+      if (!checkpointLevel) {
+        checkpointLevel = detectCheckpointLevel({
+          title,
+          html,
+          plainText,
+          image: rawImg,
+        });
+      }
 
       return {
         id: problem?.id ?? index,
@@ -482,6 +490,7 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
             plain_text: problem.plainText,
             image: problem.image ?? null,
             chapter_name: trimmedChapterNames[index],
+            checkpoint_level: problem.checkpointLevel ?? null,
           })),
         },
         access_token

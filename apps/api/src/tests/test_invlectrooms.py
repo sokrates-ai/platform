@@ -394,6 +394,7 @@ def test_apply_invlectrooms_creates_checkpoint_activity(
                         "local": "/content/invlectrooms/platypus-bronze.jpg",
                     },
                     "chapter_name": "Tutorium — Bronze checkpoint",
+                    "checkpoint_level": "bronze",
                 },
             ],
         }
@@ -424,7 +425,7 @@ def test_apply_invlectrooms_creates_checkpoint_activity(
         assert len(checkpoint_markers) == 1
         marker = checkpoint_markers[0]
         assert marker["type"]["kind"] == "chapter"
-        assert marker["file"] == "/content/invlectrooms/platypus-bronze.jpg"
+        assert marker["file"] == "Bronze.webp"
     finally:
         client.app.dependency_overrides.pop(get_current_user, None)
 

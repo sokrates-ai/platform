@@ -12,3 +12,8 @@ CHECKPOINT_IMAGE_PATTERNS = {
     "gold": ("platypusgold",),
 }
 
+CHECKPOINT_MARKER_ASSETS = {
+    "bronze": "Bronze.webp",
+    "silver": "Silber.webp",
+    "gold": "Gold.webp",
+}
