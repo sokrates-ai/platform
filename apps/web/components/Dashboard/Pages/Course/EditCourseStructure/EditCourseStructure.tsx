@@ -31,6 +31,7 @@ import dynamic from 'next/dynamic'
 import { Button } from "@components/ui/button";
 import { Input } from '@components/ui/input';
 import { Card, CardContent } from '@components/ui/card';
+import { Badge } from '@components/ui/badge';
 import { CourseTab, CourseTabSelector } from '@components/Objects/Modals/Course/Create/CourseTabSelector';
 import {
   applyInvlectRoomsImport,
@@ -137,6 +138,92 @@ const guessChapterTitleFromUrl = (value: string): string => {
   } catch {
     return 'Imported content';
   }
+};
+
+const CHECKPOINT_LEVELS = ['bronze', 'silver', 'gold'] as const;
+type CheckpointLevel = (typeof CHECKPOINT_LEVELS)[number];
+
+const CHECKPOINT_LABELS: Record<CheckpointLevel, string> = {
+  bronze: 'Bronze',
+  silver: 'Silber',
+  gold: 'Gold',
+};
+
+const CHECKPOINT_BADGE_CLASSES: Record<CheckpointLevel, string> = {
+  bronze: 'border-amber-400 text-amber-700 bg-amber-50',
+  silver: 'border-slate-400 text-slate-600 bg-slate-50',
+  gold: 'border-yellow-400 text-yellow-800 bg-yellow-50',
+};
+
+const CHECKPOINT_KEYWORDS: Record<CheckpointLevel, string[]> = {
+  bronze: ['bronze'],
+  silver: ['silber', 'silver'],
+  gold: ['gold'],
+};
+
+const CHECKPOINT_IMAGE_TOKENS: Record<CheckpointLevel, string[]> = {
+  bronze: ['platypusbronze'],
+  silver: ['platypussilber', 'platypussilver'],
+  gold: ['platypusgold'],
+};
+
+type CheckpointDetectionInput = {
+  title?: string;
+  html?: string;
+  plainText?: string;
+  image?: unknown;
+};
+
+const detectCheckpointLevel = ({
+  title,
+  html,
+  plainText,
+  image,
+}: CheckpointDetectionInput): CheckpointLevel | null => {
+  const textFragments = [title, plainText, html]
+    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    .map((value) => value.toLowerCase());
+
+  if (textFragments.length) {
+    const combined = textFragments.join(' ');
+    if (combined.includes('schnabeltierchen')) {
+      for (const level of CHECKPOINT_LEVELS) {
+        if (CHECKPOINT_KEYWORDS[level].some((keyword) => combined.includes(keyword))) {
+          return level;
+        }
+      }
+    }
+  }
+
+  const evaluateImageValue = (value: unknown): CheckpointLevel | null => {
+    if (typeof value !== 'string') {
+      return null;
+    }
+    const normalized = value.toLowerCase();
+    for (const level of CHECKPOINT_LEVELS) {
+      if (CHECKPOINT_IMAGE_TOKENS[level].some((token) => normalized.includes(token))) {
+        return level;
+      }
+    }
+    return null;
+  };
+
+  if (typeof image === 'string') {
+    const detected = evaluateImageValue(image);
+    if (detected) {
+      return detected;
+    }
+  } else if (image && typeof image === 'object') {
+    const candidate = image as Record<string, unknown>;
+    for (const key of ['local', 'original']) {
+      const detected = evaluateImageValue(candidate[key]);
+      if (detected) {
+        return detected;
+      }
+    }
+  }
+
+  return null;
 };
 
 type ImportCourseStructureDialogProps = {
@@ -333,6 +420,12 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
       const segments = extractTextSegments(html);
       const plainText = segments.join(' ');
       const preview = buildPreview(segments, MAX_PREVIEW_LENGTH);
+      const checkpointLevel = detectCheckpointLevel({
+        title,
+        html,
+        plainText,
+        image: rawImg,
+      });
 
       return {
         id: problem?.id ?? index,
@@ -343,6 +436,7 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
         preview,
         image: imageMeta,
         imagePreview,
+        checkpointLevel,
       };
     });
   }, [importResult]);
@@ -540,13 +634,14 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
               {problems.length > 0 ? (
                 <div className="max-h-64 overflow-y-auto pr-1 space-y-2">
                   {problems.map((problem, index) => {
-                    const chapterInputId = `import-chapter-${index}`;
-                    const chapterValue = chapterNames[index] ?? '';
-                    return (
-                      <article
-                        key={`${problem.id}-${index}`}
-                        className="space-y-3 rounded-md border border-gray-200 bg-white/70 p-3 shadow-sm"
-                      >
+                      const chapterInputId = `import-chapter-${index}`;
+                      const chapterValue = chapterNames[index] ?? '';
+                      const checkpointLevel = (problem?.checkpointLevel ?? null) as CheckpointLevel | null;
+                      return (
+                        <article
+                          key={`${problem.id}-${index}`}
+                          className="space-y-3 rounded-md border border-gray-200 bg-white/70 p-3 shadow-sm"
+                        >
                         <div className="space-y-1">
                           <label
                             className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
@@ -569,13 +664,23 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
                           />
                         </div>
                         <div className="flex flex-wrap items-start justify-between gap-2">
-                          <div className="min-w-0 flex-1">
-                            <p
-                              className="text-sm font-medium text-foreground truncate"
-                              title={problem.title}
-                            >
-                              {problem.title}
-                            </p>
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <p
+                                className="flex-1 truncate text-sm font-medium text-foreground"
+                                title={problem.title}
+                              >
+                                {problem.title}
+                              </p>
+                              {checkpointLevel && (
+                                <Badge
+                                  variant="outline"
+                                  className={`shrink-0 whitespace-nowrap text-[10px] uppercase tracking-wide ${CHECKPOINT_BADGE_CLASSES[checkpointLevel]}`}
+                                >
+                                  {CHECKPOINT_LABELS[checkpointLevel]} checkpoint
+                                </Badge>
+                              )}
+                            </div>
                             {problem.status && (
                               <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
                                 {problem.status}

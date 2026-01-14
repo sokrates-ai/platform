@@ -2,7 +2,7 @@ import requests
 from fastapi.testclient import TestClient
 from hashlib import sha256
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 from datetime import datetime
 from uuid import uuid4
 from sqlmodel import Session, select
@@ -23,6 +23,62 @@ def _test_content_dir() -> Path:
         if candidate.exists():
             return candidate
     raise RuntimeError("Content directory not found for tests")
+
+
+def _prepare_course_with_author(session: Session) -> Tuple[Course, str, PublicUser]:
+    org = session.exec(select(Organization).where(Organization.slug == "wayne")).first()
+    if org is None:
+        raise AssertionError("Test organization 'wayne' must exist")
+
+    user = session.exec(select(User).where(User.username == "batman")).first()
+    if user is None:
+        raise AssertionError("Test user 'batman' must exist")
+
+    public_user = PublicUser.model_validate(user)
+
+    now = datetime.utcnow().isoformat()
+    course = Course(
+        name="Imported Course",
+        description="",
+        about="",
+        learnings="",
+        tags="",
+        thumbnail_image="",
+        map_state=default_map_state(),
+        tab_store=default_tab_store(),
+        public=False,
+        org_id=org.id,
+        course_uuid=f"course_{uuid4()}",
+        creation_date=now,
+        update_date=now,
+    )
+    session.add(course)
+    session.commit()
+    session.refresh(course)
+
+    tab = CourseTab(
+        tab_uuid="tab-1",
+        course_id=course.id,
+        course_uuid=course.course_uuid,
+        name="Content",
+        position=0,
+        creation_date=now,
+        update_date=now,
+    )
+    session.add(tab)
+    session.commit()
+
+    author = ResourceAuthor(
+        resource_uuid=course.course_uuid,
+        user_id=user.id,
+        authorship=ResourceAuthorshipEnum.CREATOR,
+        creation_date=now,
+        update_date=now,
+    )
+    session.add(author)
+    session.commit()
+
+    return course, tab.tab_uuid, public_user
 
 
 def test_scrape_invlectrooms_success(client: TestClient, monkeypatch):
@@ -201,55 +257,7 @@ def test_apply_invlectrooms_creates_activities(
     client: TestClient,
     session: Session,
 ):
-    org = session.exec(select(Organization).where(Organization.slug == "wayne")).first()
-    assert org is not None
-
-    user = session.exec(select(User).where(User.username == "batman")).first()
-    assert user is not None
-
-    public_user = PublicUser.model_validate(user)
-
-    now = datetime.utcnow().isoformat()
-    course = Course(
-        name="Imported Course",
-        description="",
-        about="",
-        learnings="",
-        tags="",
-        thumbnail_image="",
-        map_state=default_map_state(),
-        tab_store=default_tab_store(),
-        public=False,
-        org_id=org.id,
-        course_uuid=f"course_{uuid4()}",
-        creation_date=now,
-        update_date=now,
-    )
-    session.add(course)
-    session.commit()
-    session.refresh(course)
-
-    tab = CourseTab(
-        tab_uuid="tab-1",
-        course_id=course.id,
-        course_uuid=course.course_uuid,
-        name="Content",
-        position=0,
-        creation_date=now,
-        update_date=now,
-    )
-    session.add(tab)
-    session.commit()
-
-    author = ResourceAuthor(
-        resource_uuid=course.course_uuid,
-        user_id=user.id,
-        authorship=ResourceAuthorshipEnum.CREATOR,
-        creation_date=now,
-        update_date=now,
-    )
-    session.add(author)
-    session.commit()
+    course, tab_uuid, public_user = _prepare_course_with_author(session)
 
     async def override_current_user():
         return public_user
@@ -260,7 +268,7 @@ def test_apply_invlectrooms_creates_activities(
         payload = {
             "url": "https://hpi.de/friedrich/docs/InvLectRooms/example/tutorium",
             "course_uuid": course.course_uuid,
-            "tab_uuid": "tab-1",
+            "tab_uuid": tab_uuid,
             "problems": [
                 {
                     "id": 603,
@@ -347,6 +355,70 @@ def test_apply_invlectrooms_creates_activities(
         assert tab_map == map_state
     finally:
         client.app.dependency_overrides.pop(get_current_user, None)
+
+
+def test_apply_invlectrooms_creates_checkpoint_activity(
+    client: TestClient,
+    session: Session,
+):
+    course, tab_uuid, public_user = _prepare_course_with_author(session)
+
+    async def override_current_user():
+        return public_user
+
+    client.app.dependency_overrides[get_current_user] = override_current_user
+
+    try:
+        payload = {
+            "url": "https://hpi.de/friedrich/docs/InvLectRooms/example/tutorium",
+            "course_uuid": course.course_uuid,
+            "tab_uuid": tab_uuid,
+            "problems": [
+                {
+                    "id": 999,
+                    "title": "Schnabeltierchen Bronze",
+                    "status": "UNSOLVED",
+                    "html": "<p>Schnabeltierchen Bronze checkpoint</p>",
+                    "plain_text": "Schnabeltierchen Bronze checkpoint",
+                    "image": {
+                        "original": "https://example.com/PlatypusBronze.jpg",
+                        "local": "/content/invlectrooms/platypus-bronze.jpg",
+                    },
+                    "chapter_name": "Tutorium — Bronze checkpoint",
+                },
+            ],
+        }
+
+        response = client.post("/api/v1/invlectrooms/apply", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+
+        assert len(data["chapters"]) == 1
+        assert len(data["activities"]) == 1
+
+        activity = data["activities"][0]
+        assert activity["activity_type"] == "TYPE_CUSTOM"
+        assert activity["activity_sub_type"] == "SUBTYPE_CUSTOM"
+        source_meta = activity["content"]["meta"]["source"]
+        assert source_meta["checkpoint"] == "bronze"
+        assert source_meta["kind"] == "checkpoint_dummy"
+
+        session.refresh(course)
+        map_state = course.map_state
+        assert isinstance(map_state, dict)
+        checkpoint_markers = [
+            obj
+            for obj in map_state.get("objects", [])
+            if isinstance(obj, dict)
+            and (obj.get("metadata") or {}).get("checkpointLevel") == "bronze"
+        ]
+        assert len(checkpoint_markers) == 1
+        marker = checkpoint_markers[0]
+        assert marker["type"]["kind"] == "chapter"
+        assert marker["file"] == "/content/invlectrooms/platypus-bronze.jpg"
+    finally:
+        client.app.dependency_overrides.pop(get_current_user, None)
+
 
 def test_scrape_invlectrooms_failure(client: TestClient, monkeypatch):
     class DummyResponse:

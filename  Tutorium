@@ -1,0 +1,314 @@
+
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="/friedrich/docs/InvLectRooms/mathe1/static/main.css?v=17" />
+    <link
+      rel="shortcut icon"
+      href="/friedrich/docs/InvLectRooms/mathe1/static/favicon.ico"
+      type="image/x-icon"
+    />
+
+    <title>riddle overview for topic category from course []</title>
+  </head>
+  <body>
+    <div style="position: fixed; width: 100%; top: 0; z-index: 15000">
+        <img id="logo" src="/friedrich/docs/InvLectRooms/mathe1/static/logo.png" alt=""/>
+        <header id="header">
+          
+          <span class="pagelinks" style="float: right;">
+            <a href="/friedrich/docs/InvLectRooms/mathe1/riddles/">Aufgaben</a>
+            
+            <a href="/friedrich/docs/InvLectRooms/mathe1/lecture/">Semester</a>
+            
+            <a href="/friedrich/docs/InvLectRooms/mathe1/riddlegroups/">Raum</a>
+            
+            
+            
+          </span>
+          <div style="float: left;">
+            
+              Nicht angemeldet. <a href="/friedrich/docs/InvLectRooms/mathe1/accounts/login/?next=/friedrich/docs/InvLectRooms/mathe1/riddlegroups/course/2/Folgenkonvergenz%20und%20Stetigkeit/%20Tutorium">anmelden</a>.
+            
+
+            <form method="POST" action="/friedrich/docs/InvLectRooms/mathe1/i18n/setlang/" style="display: inline">
+              <input type="hidden" name="csrfmiddlewaretoken" value="42qBIcFkxB9jc9M9prQzmKQt3P4L9D70cx5JnoyFNVUWIyuIXNgmLdObuHXgbDRh">
+              <input name="next" type="hidden" value="">
+
+              
+              
+                <input name="language" value="en" type="hidden">
+              
+              <button class="input-md" id="language-icon-button" type="submit">
+                
+                  <img id="language-icon" src="/friedrich/docs/InvLectRooms/mathe1/static/britain-flag.png">
+                
+              </button>
+            </form>
+          </div>
+          
+        </header>
+    </div>
+
+    
+
+    <main id="main" style="margin: 1em; margin-top: 5em">
+    
+
+
+<script
+	id="MathJax-script"
+	async
+	src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+></script>
+<script src="/friedrich/docs/InvLectRooms/mathe1/static/mathjax-config.js"></script>
+
+
+<h1>SS_24</h1>
+<div id="room_centered">
+<h1>Folgenkonvergenz und Stetigkeit         Tutorium</h1>
+
+
+
+<section id="riddle_599" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_599_title">
+            1. Monotonie von Grenzwerten
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p>Sei $f$ eine konvergente Folgen mit Grenzwerten $r$ und $g$ eine konvergente Folge mit Grenzwert $s$. Weiterhin gelte $\forall^\infty n\in \natnum: f(n) \leq g(n)$. Zeige $r \leq s$.</p>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_593" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_593_title">
+            2. Betrag stetig
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p>Zeige, dass $f\colon \realnum \rightarrow \realnum, x \mapsto |x|$ stetig ist.</p>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_592" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_592_title">
+            3. Wurzeln
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p>Zeige, dass die folgenden Funktionen stetig sind.<br>(1) $f\colon \realnum_+ \rightarrow \realnum, x \mapsto \sqrt{x}$.<br>(2) Für $r \in \realnum_+$, $g_r\colon \realnum_+ \rightarrow \realnum, x \mapsto x^r$.</p>
+
+<p>Hinweis: Im Mathematik 1 Skript haben wir in Definition 5.11 die Funktionen $g_r$  eingeführt.</p>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_600" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_600_title">
+            4. Konvergenz vom Betrag gegen 0
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p>Sei $f\colon \natnum \rightarrow \realnum$ eine Folge so, dass $(|f(n)|)_{n \in \natnum}$ gegen $0$<br> konvergiert. Dann konvergiert auch $f$ gegen $0$.</p>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_594" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_594_title">
+            5. 0 hoch 0
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p>Was ist $0^0$? Wir wollen uns das als Grenzwert einer Folge vorstellen. Zeige: $\lim_{n \rightarrow \infty} (1/n)^{1/n} = 1$.</p>
+
+<p>Hinweis: Beim Bearbeiten dieser Aufgabe solltet ihr Ungleichungen für die Exponentialfunktion bereithalten.</p>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_323" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_323_title">
+            6. Schnabeltierchen in Bronze
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p></p>
+                    </div>
+                    
+                        <div>
+                            <img src="/friedrich/docs/InvLectRooms/mathe1/media/uploads/PlatypusBronze.jpg" class="problem_image" />
+                        </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_596" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_596_title">
+            7. 0 hoch 0 die zweite
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p>Wir haben noch einmal die Frage: Was ist $0^0$? Wir wollen uns das als Grenzwert einer Folge vorstellen. Zeige: $\lim_{n \rightarrow \infty} (1/\exp(n))^{1/n} = 1/e$.</p>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_598" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_598_title">
+            8. Folgenkonvergenz Berechnen III
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p>Seien $j,k \in \natnum_+$. Bestimme den Grenzwert der folgenden Folge. <br>$(\frac{\left(1+1/(n+1)\right)^k -1}{\left(1+1/(n+1)\right)^j -1})_{n \in \mathbb{N}}$.</p>
+
+<p>Hinweis: Verwende den binomischen Lehrsatz.</p>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_324" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_324_title">
+            9. Schnabeltierchen in Silber
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p></p>
+                    </div>
+                    
+                        <div>
+                            <img src="/friedrich/docs/InvLectRooms/mathe1/media/uploads/PlatypusSilver.jpg" class="problem_image" />
+                        </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_595" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_595_title">
+            10. 0 hoch 0 die dritte
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p>Seien zwei positive, null-konvergente Folgen $f$ und $g$ gegeben; zeige $\forall^\infty n: f(n)^{g(n)} \in [0,1]$.</p>
+
+<p>Finde zwei positive, null-konvergente Folgen $f$ und $g$ so, dass $f(n)^{g(n)}$ konvergent ist mit Grenzwert $0$.</p>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+<section id="riddle_325" class="room_section">
+    
+        <button class="collapsible nohover background-primary-dark text-white" id="riddle_325_title">
+            11. Schnabeltierchen in Gold
+        </button>
+        <div class="content background-primary-lighter">
+            <div>
+                <div>
+                    <div>
+                        <p></p>
+                    </div>
+                    
+                        <div>
+                            <img src="/friedrich/docs/InvLectRooms/mathe1/media/uploads/PlatypusGold.jpg" class="problem_image" />
+                        </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    
+    </section>
+
+</div>
+
+
+<script src="/friedrich/docs/InvLectRooms/mathe1/static/jquery-3.5.1.js"></script>
+<script src="/friedrich/docs/InvLectRooms/mathe1/static/room-toggle.js"></script>
+
+
+    </main>
+  </body>
+</html>

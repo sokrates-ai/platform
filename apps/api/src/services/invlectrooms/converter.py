@@ -6,7 +6,7 @@ import math
 from copy import deepcopy
 from functools import lru_cache
 from importlib import resources
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import unquote, urlsplit
 
 from bs4 import BeautifulSoup
@@ -35,6 +35,87 @@ COOL_STONE_ASSET = "Stein_Moos.webp"
 COOL_STONE_LABEL = "cool"
 PLACEHOLDER_FILE = "Placeholder.webp"
 TEMPLATE_MAP_FILENAME = "template_map.json"
+
+CHECKPOINT_LEVEL_KEYWORDS = {
+    "bronze": {"bronze"},
+    "silver": {"silber", "silver"},
+    "gold": {"gold"},
+}
+
+CHECKPOINT_IMAGE_PATTERNS = {
+    "bronze": ("platypusbronze",),
+    "silver": ("platypussilber", "platypussilver"),
+    "gold": ("platypusgold",),
+}
+
+CHECKPOINT_DISPLAY_NAMES = {
+    "bronze": "Bronze",
+    "silver": "Silber",
+    "gold": "Gold",
+}
+
+ChapterContext = Tuple[
+    ChapterRead,
+    Optional[InvlectRoomsProblemPayload],
+    Optional[str],
+]
+
+
+def _resolve_checkpoint_asset(
+    problem: Optional[InvlectRoomsProblemPayload],
+    _level: str,
+) -> str:
+    image_payload = None
+    if problem and isinstance(problem.image, dict):
+        image_payload = problem.image
+
+    if isinstance(image_payload, dict):
+        for key in ("local", "original"):
+            value = image_payload.get(key)
+            if isinstance(value, str) and value.strip():
+                return value
+
+    return COOL_STONE_ASSET
+
+
+def _hydrate_chapter_slot(
+    slot: Dict[str, Any],
+    chapter: ChapterRead,
+    checkpoint_level: Optional[str],
+    problem: Optional[InvlectRoomsProblemPayload],
+) -> None:
+    chapter_id = chapter.id
+    if chapter_id is None:
+        return
+
+    slot["id"] = -int(chapter_id)
+    slot["type"] = {
+        "kind": "chapter",
+        "associatedChapterID": chapter_id,
+        "label": chapter.name,
+    }
+
+    metadata = slot.get("metadata")
+    if not isinstance(metadata, dict):
+        metadata = {}
+    else:
+        metadata = dict(metadata)
+    metadata.pop("checkpointLevel", None)
+
+    if checkpoint_level:
+        slot["file"] = _resolve_checkpoint_asset(problem, checkpoint_level)
+        slot["label"] = chapter.name
+        slot["scale"] = 0.26
+        metadata["checkpointLevel"] = checkpoint_level
+    else:
+        slot["file"] = COOL_STONE_ASSET
+        slot["label"] = COOL_STONE_LABEL
+        slot["scale"] = slot.get("scale", 0.22)
+
+    if metadata:
+        slot["metadata"] = metadata
+    else:
+        slot.pop("metadata", None)
 
 
 def _normalize_text(value: Optional[str]) -> str:
@@ -194,8 +275,7 @@ def _select_placeholder_positions(total_slots: int, required: int) -> List[int]:
 
 
 def _build_content_map(
-    chapters: List[ChapterRead],
-    problems: List[InvlectRoomsProblemPayload],
+    chapter_contexts: List[ChapterContext],
 ) -> Dict[str, Any]:
     template = deepcopy(_load_template_map())
     objects = template.get("objects", [])
@@ -205,58 +285,57 @@ def _build_content_map(
         if isinstance(obj, dict) and obj.get("file") == PLACEHOLDER_FILE
     ]
 
-    chapter_slots = _select_placeholder_positions(len(placeholder_indices), len(chapters))
-    mapped_indices = [
-        placeholder_indices[position] for position in chapter_slots
-    ]
+    chapter_slots = _select_placeholder_positions(
+        len(placeholder_indices),
+        len(chapter_contexts),
+    )
+    mapped_indices = [placeholder_indices[position] for position in chapter_slots]
 
     used_placeholder_indices = set(mapped_indices)
     chapter_positions: Dict[int, Dict[str, Any]] = {}
 
-    for chapter, object_index in zip(chapters, mapped_indices):
+    for (chapter, problem, checkpoint_level), object_index in zip(
+        chapter_contexts,
+        mapped_indices,
+    ):
         chapter_id = chapter.id
         if chapter_id is None:
             continue
         slot = objects[object_index]
-        slot["id"] = -int(chapter_id)
-        slot["file"] = COOL_STONE_ASSET
-        slot["label"] = COOL_STONE_LABEL
-        slot["scale"] = slot.get("scale", 0.22)
-        slot["type"] = {
-            "kind": "chapter",
-            "associatedChapterID": chapter_id,
-            "label": chapter.name,
-        }
+        _hydrate_chapter_slot(slot, chapter, checkpoint_level, problem)
         chapter_positions[int(chapter_id)] = slot
 
-    extra_chapters = chapters[len(mapped_indices) :]
-    if extra_chapters:
+    extra_contexts = chapter_contexts[len(mapped_indices) :]
+    if extra_contexts:
         last_position = (
             objects[mapped_indices[-1]] if mapped_indices else {"x": 0, "y": 0}
         )
         base_x = last_position.get("x", 0)
         base_y = last_position.get("y", 0)
         offset = 180
-        for offset_index, chapter in enumerate(extra_chapters, start=1):
+        for offset_index, (chapter, problem, checkpoint_level) in enumerate(
+            extra_contexts,
+            start=1,
+        ):
             chapter_id = chapter.id
             if chapter_id is None:
                 continue
-            objects.append(
-                {
-                    "id": -int(chapter_id),
-                    "x": base_x + offset * offset_index,
-                    "y": base_y,
-                    "scale": 0.22,
-                    "file": COOL_STONE_ASSET,
-                    "label": COOL_STONE_LABEL,
-                    "type": {
-                        "kind": "chapter",
-                        "associatedChapterID": chapter_id,
-                        "label": chapter.name,
-                    },
-                }
-            )
-            chapter_positions[int(chapter_id)] = objects[-1]
+            slot = {
+                "id": -int(chapter_id),
+                "x": base_x + offset * offset_index,
+                "y": base_y,
+                "scale": 0.22,
+                "file": COOL_STONE_ASSET,
+                "label": COOL_STONE_LABEL,
+                "type": {
+                    "kind": "chapter",
+                    "associatedChapterID": chapter_id,
+                    "label": chapter.name,
+                },
+            }
+            _hydrate_chapter_slot(slot, chapter, checkpoint_level, problem)
+            objects.append(slot)
+            chapter_positions[int(chapter_id)] = slot
 
     template["objects"] = [
         obj
@@ -286,7 +365,9 @@ def _build_content_map(
     next_id = max(used_ids) + 1 if used_ids else 1
 
     image_assets: List[Dict[str, Any]] = []
-    for index, (chapter, problem) in enumerate(zip(chapters, problems)):
+    for index, (chapter, problem, checkpoint_level) in enumerate(chapter_contexts):
+        if checkpoint_level or problem is None:
+            continue
         chapter_id = chapter.id
         if chapter_id is None:
             continue
@@ -353,8 +434,28 @@ async def convert_invlectrooms_payload_to_course(
     chapters: List[ChapterRead] = []
     activities: List[ActivityRead] = []
     source_url = str(payload.url)
+    chapter_contexts: List[ChapterContext] = []
 
     for index, problem in enumerate(payload.problems):
+        checkpoint_level = _detect_checkpoint(problem)
+        if checkpoint_level:
+            chapter, activity = await _create_checkpoint_chapter(
+                level=checkpoint_level,
+                base_name=base_name,
+                problem=problem,
+                source_url=source_url,
+                payload=payload,
+                course=course,
+                request=request,
+                current_user=current_user,
+                db_session=db_session,
+            )
+            activities.append(activity)
+            chapter.activities = [activity]
+            chapters.append(chapter)
+            chapter_contexts.append((chapter, problem, checkpoint_level))
+            continue
+
         problem_title = _normalize_text(problem.title or "") or f"Problem {index + 1}"
         requested_chapter_title = _normalize_text(problem.chapter_name or "")
         if requested_chapter_title:
@@ -396,12 +497,13 @@ async def convert_invlectrooms_payload_to_course(
         activities.append(activity)
         chapter.activities = [activity]
         chapters.append(chapter)
+        chapter_contexts.append((chapter, problem, None))
 
     if chapters:
         tab_store = dict(course.tab_store or {})
         tab_uuid = payload.tab_uuid or next(iter(tab_store), "tab-1")
 
-        map_state = _build_content_map(chapters, list(payload.problems))
+        map_state = _build_content_map(chapter_contexts)
         course.map_state = deepcopy(map_state)
         tab_store[tab_uuid] = deepcopy(map_state)
         course.tab_store = tab_store
@@ -414,3 +516,158 @@ async def convert_invlectrooms_payload_to_course(
         chapters=chapters,
         activities=activities,
     )
+
+
+def _detect_checkpoint(problem: InvlectRoomsProblemPayload) -> Optional[str]:
+    text_fragments: List[str] = []
+    if isinstance(problem.title, str):
+        text_fragments.append(problem.title)
+    if isinstance(problem.plain_text, str):
+        text_fragments.append(problem.plain_text)
+    if isinstance(problem.html, str):
+        text_fragments.append(problem.html)
+
+    combined_text = " ".join(text_fragments).casefold()
+    if "schnabeltierchen" in combined_text:
+        for level, keywords in CHECKPOINT_LEVEL_KEYWORDS.items():
+            if any(keyword in combined_text for keyword in keywords):
+                return level
+
+    image_payload = problem.image if isinstance(problem.image, dict) else {}
+    if isinstance(image_payload, dict):
+        for key in ("original", "local"):
+            value = image_payload.get(key)
+            if not isinstance(value, str):
+                continue
+            lowered = value.casefold()
+            for level, patterns in CHECKPOINT_IMAGE_PATTERNS.items():
+                if any(pattern in lowered for pattern in patterns):
+                    return level
+
+    return None
+
+
+async def _create_checkpoint_chapter(
+    *,
+    level: str,
+    base_name: Optional[str],
+    problem: InvlectRoomsProblemPayload,
+    source_url: str,
+    payload: InvlectRoomsApplyRequest,
+    course: Course,
+    request: Request,
+    current_user: PublicUser | AnonymousUser,
+    db_session: Session,
+) -> Tuple[ChapterRead, ActivityRead]:
+    display_name = CHECKPOINT_DISPLAY_NAMES.get(level, level.capitalize())
+    requested_title = _normalize_text(problem.chapter_name or "")
+    if requested_title:
+        chapter_title = requested_title
+    elif base_name:
+        chapter_title = f"{base_name} — Checkpoint {display_name}"
+    else:
+        chapter_title = f"Checkpoint {display_name}"
+
+    chapter_request = ChapterCreate(
+        name=chapter_title,
+        description=f"Checkpoint {display_name} imported from {payload.url}",
+        thumbnail_image="",
+        org_id=course.org_id,
+        course_id=course.id,
+        xp_reward=0,
+        coin_reward=0,
+        tab_uuid=payload.tab_uuid,
+    )
+
+    chapter = await create_chapter(request, chapter_request, current_user, db_session)
+
+    checkpoint_content = _build_checkpoint_content(
+        level=level,
+        display_name=display_name,
+        source_url=source_url,
+        problem=problem,
+    )
+
+    activity_request = ActivityCreate(
+        chapter_id=chapter.id,
+        name=f"Checkpoint {display_name}",
+        activity_type=ActivityTypeEnum.TYPE_CUSTOM,
+        activity_sub_type=ActivitySubTypeEnum.SUBTYPE_CUSTOM,
+        content=checkpoint_content,
+        published=True,
+    )
+
+    activity = await create_activity(request, activity_request, current_user, db_session)
+    return chapter, activity
+
+
+def _build_checkpoint_content(
+    *,
+    level: str,
+    display_name: str,
+    source_url: str,
+    problem: InvlectRoomsProblemPayload,
+) -> Dict[str, Any]:
+    nodes: List[Dict[str, Any]] = [
+        {
+            "type": "heading",
+            "attrs": {"level": 2},
+            "content": [{"type": "text", "text": f"{display_name} Checkpoint"}],
+        },
+        {
+            "type": "paragraph",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "This checkpoint placeholder was imported from InvLectRooms.",
+                }
+            ],
+        },
+    ]
+
+    original_title = _normalize_text(problem.title or "")
+    if original_title:
+        nodes.insert(
+            1,
+            {
+                "type": "paragraph",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": f"Original label: {original_title}",
+                    }
+                ],
+            },
+        )
+
+    nodes.append(
+        {
+            "type": "paragraph",
+            "content": [
+                {
+                    "type": "text",
+                    "text": f"Source: {source_url}",
+                }
+            ],
+        }
+    )
+
+    metadata: Dict[str, Any] = {
+        "provider": "invlectrooms",
+        "url": source_url,
+        "checkpoint": level,
+        "kind": "checkpoint_dummy",
+    }
+
+    if problem.id is not None:
+        metadata["problem_id"] = problem.id
+    if problem.title:
+        metadata["original_title"] = problem.title
+    if problem.status:
+        metadata["original_status"] = problem.status
+
+    return {
+        "type": "doc",
+        "content": nodes,
+        "meta": {"source": metadata},
+    }
