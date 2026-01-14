@@ -242,6 +242,15 @@ def test_scrape_invlectrooms_static_page(client: TestClient, monkeypatch):
     assert first_problem["title"].startswith("1. Folgen Ordnen I")
     assert "Ordne die folgenden Terme" in first_problem["body"]
 
+    checkpoints = {
+        problem["id"]: problem.get("checkpointLevel")
+        for problem in problems
+        if problem.get("checkpointLevel")
+    }
+    assert checkpoints.get(323) == "bronze"
+    assert checkpoints.get(324) == "silver"
+    assert checkpoints.get(325) == "gold"
+
     emoji_problem = next(problem for problem in problems if problem["id"] == 732)
     assert emoji_problem["img"]["original"].endswith("BiOEmoji_oDrqHh6.jpg")
     assert emoji_problem["img"]["local"].startswith("/content/invlectrooms/")

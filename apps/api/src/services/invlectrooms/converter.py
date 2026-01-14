@@ -25,6 +25,7 @@ from src.db.users import AnonymousUser, PublicUser
 from src.services.courses.activities.activities import create_activity
 from src.services.courses.chapters import create_chapter
 
+from .constants import CHECKPOINT_IMAGE_PATTERNS, CHECKPOINT_LEVEL_KEYWORDS
 from .schemas import (
     InvlectRoomsApplyRequest,
     InvlectRoomsApplyResponse,
@@ -35,18 +36,6 @@ COOL_STONE_ASSET = "Stein_Moos.webp"
 COOL_STONE_LABEL = "cool"
 PLACEHOLDER_FILE = "Placeholder.webp"
 TEMPLATE_MAP_FILENAME = "template_map.json"
-
-CHECKPOINT_LEVEL_KEYWORDS = {
-    "bronze": {"bronze"},
-    "silver": {"silber", "silver"},
-    "gold": {"gold"},
-}
-
-CHECKPOINT_IMAGE_PATTERNS = {
-    "bronze": ("platypusbronze",),
-    "silver": ("platypussilber", "platypussilver"),
-    "gold": ("platypusgold",),
-}
 
 CHECKPOINT_DISPLAY_NAMES = {
     "bronze": "Bronze",
