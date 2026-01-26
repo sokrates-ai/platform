@@ -330,21 +330,23 @@ const CourseStartedView = ({
 
       <div className="relative flex-1 overflow-hidden flex flex-col">
         <div className="pointer-events-none absolute inset-x-0 bottom-8 z-10 flex justify-center">
-          <div className="pointer-events-auto inline-flex h-10 items-center rounded-full border border-neutral-200 bg-white/90 shadow-md backdrop-blur">
+          <div className="pointer-events-auto inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
             {tabs.map((tab) => (
-              <button
+              <Button
                 key={tab.id}
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => setSelectedTab(tab.id)}
                 className={cn(
-                  'px-4 py-1.5 text-sm font-medium transition-colors first:rounded-l-full last:rounded-r-full',
+                  'relative h-7 rounded-md px-3 text-sm font-medium transition-all',
                   selectedTab === tab.id
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground',
+                    ? 'bg-[#FF6934] text-white shadow-sm hover:bg-[#FF6934]/90'
+                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
                 )}
               >
                 {tab.name}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
