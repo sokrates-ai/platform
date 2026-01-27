@@ -6,6 +6,7 @@ import { Metadata } from 'next'
 import { getServerSession } from 'next-auth'
 import { nextAuthOptions } from 'app/auth/options'
 import { LEARNHOUSE_BASE_URL } from '@services/config/config'
+import ActivityPageLayout from './ActivityPageLayout'
 
 type MetadataProps = {
   params: { orgslug: string; courseuuid: string; activityid: string }
@@ -92,16 +93,18 @@ const ActivityPage = async (params: any) => {
  }
 
   return (
-    <>
-      <ActivityClient
-        activityid={activityid}
-        courseuuid={courseuuid}
-        orgslug={orgslug}
-        activity={activity}
-        course={course_meta}
-        backlink={backlink}
-      />
-    </>
+    <ActivityPageLayout>
+      <div className="w-full max-w-5xl px-4 sm:px-6 md:px-8">
+        <ActivityClient
+          activityid={activityid}
+          courseuuid={courseuuid}
+          orgslug={orgslug}
+          activity={activity}
+          course={course_meta}
+          backlink={backlink}
+        />
+      </div>
+    </ActivityPageLayout>
   )
 }
 
