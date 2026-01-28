@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, Lock } from 'lucide-react'
@@ -22,6 +23,9 @@ interface Props {
   showBottom?: boolean
   topColour?: string
   bottomColour?: string
+  onStartActivity?: (event: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => void
+  onMarkComplete?: (event: React.MouseEvent<HTMLButtonElement>) => void
+  isCompleted?: boolean
 }
 
 export default function ChapterActivity({
@@ -34,6 +38,9 @@ export default function ChapterActivity({
   showBottom = false,
   topColour = '#DFDFDF',
   bottomColour = '#DFDFDF',
+  onStartActivity,
+  onMarkComplete,
+  isCompleted = false,
 }: Props) {
   const isFreeSelect =
     activity.activity_type === 'TYPE_WORKSPACE' &&
@@ -271,7 +278,12 @@ export default function ChapterActivity({
       </div>
 
       {state !== 'locked' && (
-        <Link href={activityUrl} prefetch={false} className="pr-3 sm:pr-[33px]">
+        <Link
+          href={activityUrl}
+          prefetch={false}
+          className="pr-3 sm:pr-[33px]"
+          onClick={(event) => onStartActivity?.(event)}
+        >
           <Button variant={buttonVariant} className={buttonClass}>
             <span className="flex-1 text-center">{buttonText}</span>
             <ArrowRight
@@ -280,6 +292,24 @@ export default function ChapterActivity({
             />
           </Button>
         </Link>
+      )}
+      {state !== 'locked' && onMarkComplete && (
+        <div className="pr-3 sm:pr-[33px]">
+          <Button
+            type="button"
+            variant={isCompleted ? 'secondary' : 'default'}
+            className={clsx(
+              'h-8 w-20 text-xs sm:h-10 sm:w-28 sm:text-sm',
+              isCompleted
+                ? 'bg-teal-100 text-teal-900 hover:bg-teal-100'
+                : 'bg-gray-900 text-white hover:bg-gray-800',
+            )}
+            onClick={(event) => onMarkComplete(event)}
+            disabled={isCompleted}
+          >
+            {isCompleted ? 'Completed' : 'Done'}
+          </Button>
+        </div>
       )}
     </div>
   )
