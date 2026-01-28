@@ -6,6 +6,10 @@ import {
 	isActivityDone,
 	isActivityLocked,
 } from './utils'
+import ViewActivity from './ViewActivity'
+
+// TEST FLAG: true = alle Activities öffnen ViewActivity Modal, false = normales Verhalten
+const USE_VIEW_ACTIVITY_MODAL = true
 
 interface Props {
 	course: any
@@ -25,6 +29,8 @@ export default function ChapterActivities({
 	selectedTabId,
 }: Props) {
 	const [selectedId, setSelectedId] = useState<number | null>(null)
+	const [viewOpen, setViewOpen] = useState(false)
+	const [viewActivityId, setViewActivityId] = useState<string | null>(null)
 
 	const chapter = course?.chapters?.find((c: any) => c.id === chapterID)
 	const activities = Array.isArray(chapter?.activities) ? chapter.activities : []
@@ -66,22 +72,22 @@ export default function ChapterActivities({
 			: 'available'
 	}
 
+	const courseUuidNoPrefix = String(course.course_uuid).replace('course_', '')
+
 	return (
 		<div className="space-y-4 mt-4 sm:mt-12 mx-0 sm:mx-16">
 			<div className="relative">
 				{activities.map((activity: any, idx: number) => {
 					const state = stateOf(idx)
 					const prevState = idx > 0 ? stateOf(idx - 1) : null
-					const nextState =
-						idx < activities.length - 1 ? stateOf(idx + 1) : null
 
 					const green = '#9ABB46'
 					const grey = '#DFDFDF'
 
-					const topColour =
-						prevState === 'done' ? green : grey
-					const bottomColour =
-						state === 'done' ? green : grey
+					const topColour = prevState === 'done' ? green : grey
+					const bottomColour = state === 'done' ? green : grey
+
+					const actIdNoPrefix = String(activity.activity_uuid ?? activity.id).replace('activity_', '')
 
 					return (
 						<div
@@ -102,11 +108,35 @@ export default function ChapterActivities({
 									idx === activities.length - 1 ? 'transparent' : bottomColour
 								}
 								selected={selectedId === activity.id}
-							/>
+							 />
+
+							{/* Overlay Button um Link zu blockieren wenn Modal aktiv ist */}
+							{USE_VIEW_ACTIVITY_MODAL && (
+								<button
+									type="button"
+									className="absolute inset-0 z-10 bg-transparent cursor-pointer"
+									onClick={(e) => {
+										e.preventDefault()
+										e.stopPropagation()
+										setViewActivityId(actIdNoPrefix)
+										setViewOpen(true)
+									}}
+								/>
+							)}
 						</div>
 					)
 				})}
 			</div>
+
+			{USE_VIEW_ACTIVITY_MODAL && viewActivityId && (
+				<ViewActivity
+					open={viewOpen}
+					onOpenChange={setViewOpen}
+					orgslug={orgslug}
+					courseuuid={courseUuidNoPrefix}
+					activityid={viewActivityId}
+				/>
+			)}
 		</div>
 	)
 }
