@@ -1,12 +1,12 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState, useRef } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation' // ✅ import hook
 import { Button } from '@/components/ui/button'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import Canvas, { LayoutState } from '@components/Objects/ContentMap/Canvas'
-import { DoorOpen } from 'lucide-react'
+import { DoorOpen, Menu, X } from 'lucide-react'
 import { getUriWithOrg } from '@services/config/config'
 import {
   buildActivityTabIndex,
@@ -168,6 +168,25 @@ const CourseStartedView = ({
   const [selectedTab, setSelectedTab] = useState(
     () => fallbackTabId ?? 'default-map',
   )
+  
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [menuOpen])
 
   useEffect(() => {
     if (!tabs.length) {
@@ -313,6 +332,49 @@ const CourseStartedView = ({
         />}
       />
 
+      {/* Hamburger Menu Button */}
+      <div ref={menuRef} className="absolute top-1/2 left-8 -translate-y-1/2 z-20">
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="flex items-center justify-center h-12 w-12 rounded-lg bg-white shadow-lg hover:bg-gray-50 transition-all border border-gray-200"
+          aria-label="Menu"
+        >
+          {menuOpen ? (
+            <X className="h-6 w-6 text-gray-700" strokeWidth={2.5} />
+          ) : (
+            <Menu className="h-6 w-6 text-gray-700" strokeWidth={2.5} />
+          )}
+        </button>
+
+        {/* Dropdown Menu */}
+        {menuOpen && (
+          <div className="mt-2 bg-white rounded-xl shadow-2xl p-2 border border-gray-200">
+            <div className="space-y-1">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    console.log('Tab clicked:', tab.name, tab.id)
+                    setSelectedTab(tab.id)
+                    setMenuOpen(false)
+                  }}
+                  className={cn(
+                    'block text-left px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap',
+                    'hover:scale-105 transform',
+                    selectedTab === tab.id
+                      ? 'bg-[#FF6934] text-white shadow-md'
+                      : 'text-gray-700 hover:bg-[#FF6934]/10 hover:text-[#FF6934]',
+                  )}
+                >
+                  {tab.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       <Link href={getUriWithOrg(orgslug, '/')}>
         <Button
           variant="secondary"
@@ -329,27 +391,6 @@ const CourseStartedView = ({
       </Link>
 
       <div className="relative flex-1 overflow-hidden flex flex-col">
-        <div className="pointer-events-none absolute inset-x-0 bottom-8 z-10 flex justify-center">
-          <div className="pointer-events-auto inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
-            {tabs.map((tab) => (
-              <Button
-                key={tab.id}
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedTab(tab.id)}
-                className={cn(
-                  'relative h-7 rounded-md px-3 text-sm font-medium transition-all',
-                  selectedTab === tab.id
-                    ? 'bg-[#FF6934] text-white shadow-sm hover:bg-[#FF6934]/90'
-                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
-                )}
-              >
-                {tab.name}
-              </Button>
-            ))}
-          </div>
-        </div>
         <div className="relative flex-1">
           <Canvas
             key={selectedTab}
