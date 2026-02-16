@@ -71,13 +71,23 @@ dev_web() {
         NEXT_PUBLIC_LEARNHOUSE_DEFAULT_ORG=default \
         NEXT_PUBLIC_LEARNHOUSE_MEDIA_URL=http://localhost:1338/ \
         NEXTAUTH_SECRET=changeme \
+        OIDC_CLIENT_ID=${OIDC_CLIENT_ID:-sokrates} \
+        OIDC_CLIENT_SECRET=${OIDC_CLIENT_SECRET:-d5GWth6ECdJ8KYXTyy9oCJDe1c3YVGep} \
+        OIDC_SOKRATES_CALLBACK=${OIDC_SOKRATES_CALLBACK:-https://sokrates.hpi.de/api/auth/hpi/callback} \
+        OIDC_ENDPOINT=${OIDC_ENDPOINT:-https://keycloak.hpi.de/realms/hpi/.well-known/openid-configuration} \
+        OPEN_ID_CONFIG_JSON_PATH=${OPEN_ID_CONFIG_JSON_PATH:-} \
         bash -c 'cd ./apps/web/ && pnpm run dev'
 }
 
 dev_backend() {
     env | rg PLATFORM
     env | rg REDIS
-    bash -c 'cd ./apps/api/ && poetry run python3 app.py'
+    OIDC_CLIENT_ID=${OIDC_CLIENT_ID:-sokrates} \
+        OIDC_CLIENT_SECRET=${OIDC_CLIENT_SECRET:-d5GWth6ECdJ8KYXTyy9oCJDe1c3YVGep} \
+        OIDC_SOKRATES_CALLBACK=${OIDC_SOKRATES_CALLBACK:-https://sokrates.hpi.de/api/auth/hpi/callback} \
+        OIDC_ENDPOINT=${OIDC_ENDPOINT:-https://keycloak.hpi.de/realms/hpi/.well-known/openid-configuration} \
+        OPEN_ID_CONFIG_JSON_PATH=${OPEN_ID_CONFIG_JSON_PATH:-} \
+        bash -c 'cd ./apps/api/ && poetry run python3 app.py'
 }
 
 lint_web() {

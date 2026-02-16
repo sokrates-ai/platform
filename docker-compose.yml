@@ -144,7 +144,7 @@ services:
         - "8001:3000"
       env_file:
         - platform-secrets.env
-      environment:
+        environment:
         # External reachability config
         - NEXT_PUBLIC_LEARNHOUSE_TOP_DOMAIN=sokrates.ae.org
         - SK_PUBLIC_URL=https://app.sokrates.ae.org
@@ -156,6 +156,12 @@ services:
         - NEXT_PUBLIC_LEARNHOUSE_DEFAULT_ORG=default
 
         - TODO_BACKEND=1
+        # SSO (Keycloak/OIDC) - values provided via platform-secrets.env
+        # - OIDC_CLIENT_ID=
+        # - OIDC_CLIENT_SECRET=
+        # - OIDC_SOKRATES_CALLBACK=
+        # - OIDC_ENDPOINT=
+        # - OPEN_ID_CONFIG_JSON_PATH=
       depends_on:
         - sk-platform-backend
 
@@ -188,6 +194,12 @@ services:
         - LEARNHOUSE_SQL_CONNECTION_STRING=postgresql://learnhouse:learnhouse@sk-platform-postgres:5432/learnhouse
         - LEARNHOUSE_REDIS_CONNECTION_STRING=redis://sk-platform-redis:6379/learnhouse
         - LEARNHOUSE_CHROMADB_HOST=sk-platform-chroma
+        # SSO (Keycloak/OIDC) - values provided via platform-secrets.env
+        # - OIDC_CLIENT_ID=
+        # - OIDC_CLIENT_SECRET=
+        # - OIDC_SOKRATES_CALLBACK=
+        # - OIDC_ENDPOINT=
+        # - OPEN_ID_CONFIG_JSON_PATH=
 
       depends_on:
         sk-platform-postgres:
@@ -226,4 +238,3 @@ services:
     sk-platform-chroma:
       container_name: sk-platform-chroma
       image: docker.io/chromadb/chroma:0.5.16
-

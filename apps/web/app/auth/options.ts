@@ -8,8 +8,13 @@ import { LEARNHOUSE_TOP_DOMAIN, getUriWithOrg } from '@services/config/config'
 import { getResponseMetadata } from '@services/utils/ts/requests'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
+import KeycloakProvider from 'next-auth/providers/keycloak'
 
 const domain = `.${LEARNHOUSE_TOP_DOMAIN()}`
+const oidcEndpoint = process.env.OIDC_ENDPOINT
+const oidcIssuer = oidcEndpoint
+	? oidcEndpoint.replace(/\/\.well-known\/openid-configuration\/?$/, '')
+	: undefined
 
 function getDomain(): string {
 	console.log(`DOMAIN: ${domain}`)
@@ -49,6 +54,11 @@ export const nextAuthOptions = {
 			clientId: process.env.LEARNHOUSE_GOOGLE_CLIENT_ID || '',
 			clientSecret: process.env.LEARNHOUSE_GOOGLE_CLIENT_SECRET || '',
 		}),
+		KeycloakProvider({
+			clientId: process.env.OIDC_CLIENT_ID || '',
+			clientSecret: process.env.OIDC_CLIENT_SECRET || '',
+			issuer: oidcIssuer || '',
+		}),
 	],
 	pages: {
 		signIn: getUriWithOrg('auth', '/'),
@@ -85,6 +95,18 @@ export const nextAuthOptions = {
 				let unsanitized_req = await loginWithOAuthToken(
 					user.email,
 					'google',
+					account.access_token
+				)
+				let userFromOAuth = await getResponseMetadata(unsanitized_req)
+				token.user = userFromOAuth.data
+			}
+
+			// Sign up with Keycloak
+			if (account?.provider == 'keycloak' && user) {
+				const email = user.email || token.email
+				let unsanitized_req = await loginWithOAuthToken(
+					email,
+					'keycloak',
 					account.access_token
 				)
 				let userFromOAuth = await getResponseMetadata(unsanitized_req)

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signIn } from "next-auth/react"
 import { useFormik } from 'formik'
-import { AlertTriangle, UserRoundPlus, Loader2, Mail, Lock } from 'lucide-react'
+import { AlertTriangle, UserRoundPlus, Loader2, Mail, Lock, KeyRound } from 'lucide-react'
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -163,6 +163,18 @@ const LoginClient = (props: LoginClientProps) => {
             )}
           </Button>
         </form>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full h-10 border-2 border-[#626262] bg-white hover:bg-gray-50 rounded-md flex items-center justify-center"
+          onClick={() =>
+            signIn('keycloak', { callbackUrl: '/redirect_from_auth' })
+          }
+        >
+          <KeyRound className="mr-2 h-4 w-4" />
+          Login with Keycloak
+        </Button>
 
         <div className="flex items-center my-6">
           <div className="flex-1 border-t border-[#666666]"></div>

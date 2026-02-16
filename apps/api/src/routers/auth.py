@@ -8,10 +8,12 @@ from src.db.users import AnonymousUser, UserRead
 from src.core.events.database import get_db_session
 from config.config import get_learnhouse_config
 from src.security.auth import AuthJWT, authenticate_user, get_current_user
-from src.services.auth.utils import signWithGoogle
+import logging
+from src.services.auth.utils import signWithGoogle, signWithKeycloak
 
 
 router = APIRouter()
+LOGGER = logging.getLogger(__name__)
 
 
 @router.get("/refresh")
@@ -79,7 +81,7 @@ async def login(
 
 class ThirdPartyLogin(BaseModel):
     email: EmailStr
-    provider: Literal["google"]
+    provider: Literal["google", "keycloak"]
     access_token: str
 
 
@@ -93,10 +95,16 @@ async def third_party_login(
     db_session: Session = Depends(get_db_session),
     Authorize: AuthJWT = Depends(),
 ):
-    # Google
+    user = None
     if body.provider == "google":
-
+        LOGGER.info("OAuth login request received for Google")
         user = await signWithGoogle(
+            request, body.access_token, body.email, org_id, current_user, db_session
+        )
+
+    if body.provider == "keycloak":
+        LOGGER.info("OAuth login request received for Keycloak")
+        user = await signWithKeycloak(
             request, body.access_token, body.email, org_id, current_user, db_session
         )
 

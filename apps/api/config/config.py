@@ -24,6 +24,14 @@ class SecurityConfig(BaseModel):
     auth_jwt_secret_key: str
 
 
+class OIDCConfig(BaseModel):
+    client_id: str | None
+    client_secret: str | None
+    callback: str | None
+    endpoint: str | None
+    openid_config_path: str | None
+
+
 class ChromaDBConfig(BaseModel):
     isSeparateDatabaseEnabled: bool | None 
     db_host: str | None 
@@ -98,6 +106,7 @@ class LearnHouseConfig(BaseModel):
     database_config: DatabaseConfig
     redis_config: RedisConfig
     security_config: SecurityConfig
+    oidc_config: Optional[OIDCConfig] = None
     ai_config: AIConfig
     mailing_config: MailingConfig
     payments_config: InternalPaymentsConfig
@@ -136,6 +145,13 @@ def get_learnhouse_config() -> LearnHouseConfig:
     auth_jwt_secret_key = env_auth_jwt_secret_key or yaml_config.get(
         "security", {}
     ).get("auth_jwt_secret_key")
+
+    # OIDC Config
+    env_oidc_client_id = os.environ.get("OIDC_CLIENT_ID")
+    env_oidc_client_secret = os.environ.get("OIDC_CLIENT_SECRET")
+    env_oidc_callback = os.environ.get("OIDC_SOKRATES_CALLBACK")
+    env_oidc_endpoint = os.environ.get("OIDC_ENDPOINT")
+    env_openid_config_path = os.environ.get("OPEN_ID_CONFIG_JSON_PATH")
 
     # Check if environment variables are defined
     env_site_name = os.environ.get("LEARNHOUSE_SITE_NAME")
@@ -373,6 +389,13 @@ def get_learnhouse_config() -> LearnHouseConfig:
         workspace_config=workspace_config,
         database_config=database_config,
         security_config=SecurityConfig(auth_jwt_secret_key=auth_jwt_secret_key),
+        oidc_config=OIDCConfig(
+            client_id=env_oidc_client_id,
+            client_secret=env_oidc_client_secret,
+            callback=env_oidc_callback,
+            endpoint=env_oidc_endpoint,
+            openid_config_path=env_openid_config_path,
+        ),
         ai_config=ai_config,
         redis_config=RedisConfig(redis_connection_string=redis_connection_string),
         mailing_config=MailingConfig(
