@@ -8,6 +8,7 @@ import WarningCallout from '@components/Objects/Editor/Extensions/Callout/Warnin
 import ImageBlock from '@components/Objects/Editor/Extensions/Image/ImageBlock'
 import VideoBlock from '@components/Objects/Editor/Extensions/Video/VideoBlock'
 import MathEquationBlock from '@components/Objects/Editor/Extensions/MathEquation/MathEquationBlock'
+import MathEquationInline from '@components/Objects/Editor/Extensions/MathEquation/MathEquationInline'
 import PDFBlock from '@components/Objects/Editor/Extensions/PDF/PDFBlock'
 import QuizBlock from '@components/Objects/Editor/Extensions/Quiz/QuizBlock'
 
@@ -69,6 +70,10 @@ function Canva(props: Editor) {
         activity: props.activity,
       }),
       MathEquationBlock.configure({
+        editable: false,
+        activity: props.activity,
+      }),
+      MathEquationInline.configure({
         editable: false,
         activity: props.activity,
       }),

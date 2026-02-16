@@ -22,6 +22,7 @@ import Youtube from '@tiptap/extension-youtube'
 import VideoBlock from './Extensions/Video/VideoBlock'
 import { Eye, Monitor } from 'lucide-react'
 import MathEquationBlock from './Extensions/MathEquation/MathEquationBlock'
+import MathEquationInline from './Extensions/MathEquation/MathEquationInline'
 import PDFBlock from './Extensions/PDF/PDFBlock'
 import QuizBlock from './Extensions/Quiz/QuizBlock'
 import Table from '@tiptap/extension-table'
@@ -109,6 +110,10 @@ function Editor(props: Editor) {
         activity: props.activity,
       }),
       MathEquationBlock.configure({
+        editable: true,
+        activity: props.activity,
+      }),
+      MathEquationInline.configure({
         editable: true,
         activity: props.activity,
       }),

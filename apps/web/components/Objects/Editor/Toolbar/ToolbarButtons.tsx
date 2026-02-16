@@ -23,6 +23,7 @@ import {
   ImagePlus,
   MousePointerClick,
   Sigma,
+  SquareSigma,
   Tags,
   Video,
 } from 'lucide-react'
@@ -45,6 +46,35 @@ export const ToolbarButtons = ({ editor, props }: any) => {
         height: 480,
       })
     }
+  }
+
+  const addInlineMathEquation = () => {
+    const current = editor.isActive('inlineMathEquation')
+      ? editor.getAttributes('inlineMathEquation')?.math_equation || ''
+      : ''
+    const equation = prompt('Enter inline LaTeX', current)
+
+    if (equation === null) {
+      return
+    }
+
+    if (editor.isActive('inlineMathEquation')) {
+      editor
+        .chain()
+        .focus()
+        .updateAttributes('inlineMathEquation', { math_equation: equation })
+        .run()
+      return
+    }
+
+    editor
+      .chain()
+      .focus()
+      .insertContent({
+        type: 'inlineMathEquation',
+        attrs: { math_equation: equation },
+      })
+      .run()
   }
 
   return (
@@ -202,6 +232,11 @@ export const ToolbarButtons = ({ editor, props }: any) => {
           }
         >
           <Sigma size={15} />
+        </ToolBtn>
+      </ToolTip>
+      <ToolTip content={'Inline Math (LaTeX)'}>
+        <ToolBtn onClick={() => addInlineMathEquation()}>
+          <SquareSigma size={15} />
         </ToolBtn>
       </ToolTip>
       <ToolTip content={'PDF Document'}>
