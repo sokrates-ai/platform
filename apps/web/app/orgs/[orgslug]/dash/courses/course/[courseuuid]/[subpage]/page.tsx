@@ -180,6 +180,7 @@ function CourseOverviewLayout({ params }: { params: CourseOverviewParams }) {
       }))
       const nextStore = ensureStoreForTabs(tabsWithPositions, tabStore)
       setTabs(tabsWithPositions)
+      dispatchCourse({ type: 'setIsNotSaved' })
       syncStore(nextStore, true)
       dispatchCourse({ type: 'setCourseTabMetadata', payload: tabsWithPositions })
 

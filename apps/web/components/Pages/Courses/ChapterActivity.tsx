@@ -26,6 +26,7 @@ interface Props {
   onStartActivity?: (event: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => void
   onMarkComplete?: (event: React.MouseEvent<HTMLButtonElement>) => void
   isCompleted?: boolean
+  overrideButtonText?: string
 }
 
 export default function ChapterActivity({
@@ -41,6 +42,7 @@ export default function ChapterActivity({
   onStartActivity,
   onMarkComplete,
   isCompleted = false,
+  overrideButtonText,
 }: Props) {
   const isFreeSelect =
     activity.activity_type === 'TYPE_WORKSPACE' &&
@@ -285,7 +287,9 @@ export default function ChapterActivity({
           onClick={(event) => onStartActivity?.(event)}
         >
           <Button variant={buttonVariant} className={buttonClass}>
-            <span className="flex-1 text-center">{buttonText}</span>
+            <span className="flex-1 text-center">
+              {overrideButtonText ?? buttonText}
+            </span>
             <ArrowRight
               strokeWidth={3}
               className="sm:h-4 sm:w-4 h-3 w-3"

@@ -1,5 +1,4 @@
 'use client'
-import React from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import learnhouseIcon from 'public/dark_logo.svg'
@@ -8,11 +7,6 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 import styled from 'styled-components'
 import { DividerVerticalIcon, SlashIcon } from '@radix-ui/react-icons'
-import {
-  AIEditorStateTypes,
-  useAIEditor,
-  useAIEditorDispatch,
-} from '@components/Contexts/AI/AIEditorContext'
 
 // Extensions
 import InfoCallout from './Extensions/Callout/Info/InfoCallout'
@@ -45,8 +39,6 @@ import html from 'highlight.js/lib/languages/xml'
 import python from 'highlight.js/lib/languages/python'
 import java from 'highlight.js/lib/languages/java'
 import { CourseProvider } from '@components/Contexts/CourseContext'
-import AIEditorToolkit from './AI/AIEditorToolkit'
-import useGetAIFeatures from '@components/Hooks/useGetAIFeatures'
 import { getUriWithOrg } from '@services/config/config'
 import EmbedObjects from './Extensions/EmbedObjects/EmbedObjects'
 import Badges from './Extensions/Badges/Badges'
@@ -61,22 +53,10 @@ interface Editor {
   org: any
   session: any
   setContent: (content: string) => void
+  spellcheck?: boolean
 }
 
 function Editor(props: Editor) {
-  const dispatchAIEditor = useAIEditorDispatch() as any
-  const aiEditorState = useAIEditor() as AIEditorStateTypes
-  const is_ai_feature_enabled = useGetAIFeatures({ feature: 'editor' })
-  const [isButtonAvailable, setIsButtonAvailable] = React.useState(false)
-
-
-  React.useEffect(() => {
-    if (is_ai_feature_enabled) {
-      setIsButtonAvailable(true)
-    }
-
-  }, [is_ai_feature_enabled])
-
   // remove course_ from course_uuid
   const course_uuid = props.course.course_uuid.substring(7)
 
@@ -218,28 +198,6 @@ function Editor(props: Editor) {
               </EditorButtonsWrapper>
             </EditorDocSection>
             <EditorUsersSection className="space-x-2">
-              <div>
-                <div className="transition-all ease-linear text-teal-100 rounded-md hover:cursor-pointer">
-                  {isButtonAvailable && (
-                    <div
-                      onClick={() =>
-                        dispatchAIEditor({
-                          type: aiEditorState.isModalOpen
-                            ? 'setIsModalClose'
-                            : 'setIsModalOpen',
-                        })
-                      }
-                      style={{
-                        background:
-                          'conic-gradient(from 32deg at 53.75% 50%, rgb(35, 40, 93) 4deg, rgba(20, 0, 52, 0.95) 59deg, rgba(164, 45, 238, 0.88) 281deg)',
-                      }}
-                      className="rounded-md px-3 py-2 drop-shadow-md flex  items-center space-x-1.5 text-sm text-white hover:cursor-pointer transition delay-150 duration-300 ease-in-out hover:scale-105"
-                    >
-                      {' '}
-                    </div>
-                  )}
-                </div>
-              </div>
               <DividerVerticalIcon
                 style={{
                   marginTop: 'auto',
@@ -294,8 +252,7 @@ function Editor(props: Editor) {
           exit={{ opacity: 0 }}
         >
           <EditorContentWrapper>
-            <AIEditorToolkit activity={props.activity} editor={editor} />
-            <EditorContent editor={editor} />
+            <EditorContent editor={editor} spellCheck={props.spellcheck ?? true} />
           </EditorContentWrapper>
         </motion.div>
       </CourseProvider>

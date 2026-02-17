@@ -5,7 +5,7 @@ import VideoActivity from '@components/Objects/Activities/Video/Video'
 import { BookOpenCheck, Check, CheckCircle, UserRoundPen } from 'lucide-react'
 import { markActivityAsComplete } from '@services/courses/activity'
 import DocumentPdfActivity from '@components/Objects/Activities/DocumentPdf/DocumentPdf'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import AuthenticatedClientElement from '@components/Security/AuthenticatedClientElement'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { CourseProvider } from '@components/Contexts/CourseContext'
@@ -45,7 +45,6 @@ function ActivityClient(props: ActivityClientProps) {
   const course = props.course
   const org = useOrg() as any
   const session = useSokratesSession() as any;
-  const pathname = usePathname()
   const access_token = session?.data?.tokens?.access_token;
   const [bgColor, setBgColor] = React.useState('bg-white')
   const [assignment, setAssignment] = React.useState(null) as any;
@@ -83,7 +82,7 @@ function ActivityClient(props: ActivityClientProps) {
       setBgColor('bg-zinc-950');
     }
   }
-    , [activity, pathname])
+    , [activity, activityid])
 
   const containerTopSpacing = React.useMemo(() => {
     if (activity?.activity_type === 'TYPE_DYNAMIC') {

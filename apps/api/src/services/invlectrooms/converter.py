@@ -137,6 +137,74 @@ def _extract_paragraphs(
     return paragraphs
 
 
+def _inline_math_content(text: str) -> List[Dict[str, Any]]:
+    if not text:
+        return [{"type": "text", "text": ""}]
+
+    nodes: List[Dict[str, Any]] = []
+    buffer: List[str] = []
+    length = len(text)
+    index = 0
+
+    def flush() -> None:
+        if buffer:
+            nodes.append({"type": "text", "text": "".join(buffer)})
+            buffer.clear()
+
+    while index < length:
+        char = text[index]
+
+        if char == "\\" and index + 1 < length and text[index + 1] == "$":
+            buffer.append("$")
+            index += 2
+            continue
+
+        if char != "$":
+            buffer.append(char)
+            index += 1
+            continue
+
+        if index + 1 < length and text[index + 1] == "$":
+            buffer.append("$$")
+            index += 2
+            continue
+
+        cursor = index + 1
+        closing = None
+        while cursor < length:
+            if text[cursor] == "\\" and cursor + 1 < length and text[cursor + 1] == "$":
+                cursor += 2
+                continue
+
+            if text[cursor] == "$":
+                if (cursor > 0 and text[cursor - 1] == "$") or (
+                    cursor + 1 < length and text[cursor + 1] == "$"
+                ):
+                    cursor += 1
+                    continue
+                closing = cursor
+                break
+            cursor += 1
+
+        if closing is None:
+            buffer.append("$")
+            index += 1
+            continue
+
+        math = text[index + 1 : closing]
+        if not math or "\n" in math or "$" in math:
+            buffer.append("$")
+            index += 1
+            continue
+
+        flush()
+        nodes.append({"type": "inlineMathEquation", "attrs": {"math_equation": math}})
+        index = closing + 1
+
+    flush()
+    return nodes or [{"type": "text", "text": ""}]
+
+
 def guess_chapter_name(value: str) -> str:
     try:
         parsed = urlsplit(value)
@@ -156,22 +224,12 @@ def build_activity_content(
     source_url: str,
 ) -> Dict[str, Any]:
     nodes: List[Dict[str, Any]] = []
-    title_text = _normalize_text(problem.title or "")
-    if title_text:
-        nodes.append(
-            {
-                "type": "heading",
-                "attrs": {"level": 2},
-                "content": [{"type": "text", "text": title_text}],
-            }
-        )
-
     status_text = _normalize_text(problem.status or "")
     if status_text:
         nodes.append(
             {
                 "type": "paragraph",
-                "content": [{"type": "text", "text": f"Status: {status_text}"}],
+                "content": _inline_math_content(f"Status: {status_text}"),
             }
         )
 
@@ -179,7 +237,7 @@ def build_activity_content(
         nodes.append(
             {
                 "type": "paragraph",
-                "content": [{"type": "text", "text": paragraph}],
+                "content": _inline_math_content(paragraph),
             }
         )
 
@@ -189,20 +247,23 @@ def build_activity_content(
             nodes.append(
                 {
                     "type": "paragraph",
-                    "content": [{"type": "text", "text": f"Image: {image_path}"}],
+                    "content": _inline_math_content(f"Image: {image_path}"),
                 }
             )
 
     nodes.append(
         {
             "type": "paragraph",
-            "content": [{"type": "text", "text": f"Source: {source_url}"}],
+            "content": _inline_math_content(f"Source: {source_url}"),
         }
     )
 
     if not nodes:
         nodes.append(
-            {"type": "paragraph", "content": [{"type": "text", "text": "Imported task"}]}
+            {
+                "type": "paragraph",
+                "content": _inline_math_content("Imported task"),
+            }
         )
 
     metadata: Dict[str, Any] = {

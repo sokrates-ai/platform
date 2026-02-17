@@ -31,6 +31,7 @@ import Buttons from '@components/Objects/Editor/Extensions/Buttons/Buttons'
 interface Editor {
   content: string
   activity: any
+  spellcheck?: boolean
 }
 
 function Canva(props: Editor) {
@@ -112,7 +113,7 @@ function Canva(props: Editor) {
   return (
     <EditorOptionsProvider options={{ isEditable: false }}>
       <CanvaWrapper>
-        <EditorContent editor={editor} />
+        <EditorContent editor={editor} spellCheck={props.spellcheck ?? false} />
       </CanvaWrapper>
     </EditorOptionsProvider>
   )

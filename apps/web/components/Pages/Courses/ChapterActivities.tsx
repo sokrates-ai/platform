@@ -116,6 +116,7 @@ export default function ChapterActivities({
 	const handleActivityStart = async (
 		activity: any,
 		event?: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>,
+		skipPreview?: boolean,
 	) => {
 		setSelectedId(activity.id)
 
@@ -124,6 +125,10 @@ export default function ChapterActivities({
 			setDynamicActivity(null)
 			setDynamicError(null)
 			setIsLoadingDynamic(false)
+			return
+		}
+
+		if (skipPreview) {
 			return
 		}
 
@@ -194,7 +199,7 @@ export default function ChapterActivities({
 	return (
 		<div className="space-y-4 mt-4 sm:mt-12 mx-0 sm:mx-16">
 			<div className="relative">
-				{activities.map((activity: any, idx: number) => {
+		{activities.map((activity: any, idx: number) => {
 					const state = stateOf(idx)
 					const prevState = idx > 0 ? stateOf(idx - 1) : null
 					const nextState =
@@ -207,6 +212,12 @@ export default function ChapterActivities({
 						prevState === 'done' ? green : grey
 					const bottomColour =
 						state === 'done' ? green : grey
+
+						const isPreviewing =
+							selectedId === activity.id &&
+							dynamicActivity?.activity_uuid === activity.activity_uuid &&
+							!isLoadingDynamic &&
+							!dynamicError
 
 						return (
 							<div
@@ -227,9 +238,14 @@ export default function ChapterActivities({
 									idx === activities.length - 1 ? 'transparent' : bottomColour
 								}
 								selected={selectedId === activity.id}
-								onStartActivity={(evt) => handleActivityStart(activity, evt)}
+								onStartActivity={(evt) =>
+									handleActivityStart(activity, evt, isPreviewing)
+								}
 								onMarkComplete={
 									isDynamicActivity(activity) ? handleMarkComplete : undefined
+								}
+								overrideButtonText={
+									isPreviewing ? 'Expand' : undefined
 								}
 								isCompleted={
 									isDynamicActivity(activity) &&
