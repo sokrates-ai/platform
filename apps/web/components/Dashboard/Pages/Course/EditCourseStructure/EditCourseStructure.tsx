@@ -1268,7 +1268,7 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
 
   return (
     <div className="relative flex h-full w-full overflow-hidden gap-6 px-6 py-6" data-selected-tab={selectedTabId}>
-      <Card className="h-full w-64 shrink-0">
+      <Card className="h-full w-96 shrink-0">
         <CardContent className="h-full overflow-hidden px-4 py-6">
           <CourseTabSelector
             className="h-full overflow-y-auto"
@@ -1277,6 +1277,7 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
             onTabsChange={onTabsChange}
             onActiveTabChange={onTabChange}
             orientation="vertical"
+            showVisibilityControls
             renderTabContent={() => null}
           />
         </CardContent>

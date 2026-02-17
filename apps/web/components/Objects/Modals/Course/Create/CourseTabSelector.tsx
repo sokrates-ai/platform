@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { GripVertical, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -27,6 +28,8 @@ export type CourseTab = {
   name: string;
   description?: string;
   position?: number;
+  visibility?: boolean;
+  visibleAfter?: string | null;
 };
 
 export const DEFAULT_COURSE_TABS: CourseTab[] = [
@@ -34,11 +37,15 @@ export const DEFAULT_COURSE_TABS: CourseTab[] = [
     id: 'tab-1',
     name: 'Content',
     description: 'Organize chapters and activities for this course.',
+    visibility: true,
+    visibleAfter: null,
   },
   {
     id: 'tab-2',
     name: 'Map',
     description: 'Design the spatial course map for learners.',
+    visibility: true,
+    visibleAfter: null,
   },
 ];
 
@@ -84,6 +91,7 @@ export interface CourseTabSelectorProps {
   renderTabContent?: (tab: CourseTab) => React.ReactNode;
   addButtonLabel?: string;
   orientation?: 'horizontal' | 'vertical';
+  showVisibilityControls?: boolean;
 }
 
 export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
@@ -96,6 +104,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
   renderTabContent,
   addButtonLabel = 'Add tab',
   orientation = 'horizontal',
+  showVisibilityControls = false,
 }) => {
   const resolvedInitialTabs = useMemo(
     () => (initialTabs?.length ? initialTabs : DEFAULT_COURSE_TABS),
@@ -127,6 +136,33 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
   const [tabPendingRemoval, setTabPendingRemoval] = useState<CourseTab | null>(null);
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState<string>('');
+
+  const formatVisibleAfterValue = useCallback((value?: string | null) => {
+    if (!value) {
+      return '';
+    }
+    if (typeof value === 'string') {
+      const match = value.match(/^\d{4}-\d{2}-\d{2}/);
+      if (match) {
+        return match[0];
+      }
+    }
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return '';
+    }
+    const year = parsed.getFullYear();
+    const month = `${parsed.getMonth() + 1}`.padStart(2, '0');
+    const day = `${parsed.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }, []);
+
+  const resolveVisibilityValue = useCallback((tab: CourseTab) => {
+    if (typeof tab.visibility === 'boolean') {
+      return tab.visibility;
+    }
+    return true;
+  }, []);
 
   useEffect(() => {
     if (isTabsControlled) {
@@ -195,7 +231,15 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
     tabCounterRef.current += 1;
     const newTabId = `tab-${tabCounterRef.current}`;
 
-    const nextTabs = [...tabs, { id: newTabId, name: trimmedName }];
+    const nextTabs = [
+      ...tabs,
+      {
+        id: newTabId,
+        name: trimmedName,
+        visibility: true,
+        visibleAfter: null,
+      },
+    ];
     if (!isTabsControlled) {
       setInternalTabs(nextTabs);
     }
@@ -248,6 +292,17 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
       }
       setEditingTabId(null);
       setEditingValue('');
+    },
+    [isTabsControlled, onTabsChange, tabs],
+  );
+
+  const updateTabMetadata = useCallback(
+    (tabId: string, updater: (tab: CourseTab) => CourseTab) => {
+      const nextTabs = tabs.map((tab) => (tab.id === tabId ? updater(tab) : tab));
+      if (!isTabsControlled) {
+        setInternalTabs(nextTabs);
+      }
+      onTabsChange?.(nextTabs);
     },
     [isTabsControlled, onTabsChange, tabs],
   );
@@ -344,6 +399,8 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                 >
                   {tabs.map((tab, index) => {
                     const disableRemove = tabs.length === 1;
+                    const visibilityValue = resolveVisibilityValue(tab);
+                    const formattedVisibleAfter = formatVisibleAfterValue(tab.visibleAfter ?? null);
                     return (
                       <Draggable key={tab.id} draggableId={tab.id} index={index}>
                         {(dragProvided, snapshot) => (
@@ -352,7 +409,9 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                             {...dragProvided.draggableProps}
                             style={dragProvided.draggableProps.style}
                             className={cn(
-                              'relative flex items-center gap-2 rounded-md',
+                              'relative flex gap-2 rounded-md',
+                              showVisibilityControls && isVertical ? 'items-start' : 'items-center',
+                              showVisibilityControls && isVertical ? 'min-h-[96px]' : '',
                               snapshot.isDragging && 'opacity-80 shadow-lg',
                               isVertical ? 'w-full' : '',
                             )}
@@ -366,66 +425,117 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                                 'cursor-grab active:cursor-grabbing',
                                 'hover:bg-muted-foreground/10 hover:text-foreground',
                                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                                showVisibilityControls && isVertical ? 'self-center' : '',
                                 snapshot.isDragging && 'text-primary',
                               )}
                             >
                               <GripVertical aria-hidden="true" className="h-4 w-4" />
                             </button>
-                            <TabsTrigger
-                              value={tab.id}
-                              asChild
+                            <div
                               className={cn(
-                                'flex-1 rounded-md border border-gray-300 bg-white/70 justify-start',
-                                snapshot.isDragging && 'border-primary shadow',
+                                'flex w-full flex-col gap-2',
+                                showVisibilityControls && isVertical
+                                  ? 'rounded-md border border-gray-300 bg-white/70 p-2'
+                                  : '',
                               )}
                             >
-                              <div
+                              <TabsTrigger
+                                value={tab.id}
+                                asChild
                                 className={cn(
-                                  'flex w-full items-center gap-2 rounded-md px-4 py-3 text-sm transition',
-                                  isVertical ? 'justify-start text-left' : 'justify-start text-left',
+                                  showVisibilityControls && isVertical
+                                    ? 'flex-1 rounded-md border border-transparent bg-transparent justify-start'
+                                    : 'flex-1 rounded-md border border-gray-300 bg-white/70 justify-start',
+                                  snapshot.isDragging && 'border-primary shadow',
                                 )}
                               >
-                                {editingTabId === tab.id ? (
-                                  <input
-                                    value={editingValue}
-                                    onChange={(event) => setEditingValue(event.target.value)}
-                                    onBlur={() => applyTabNameUpdate(tab.id, editingValue)}
-                                    onKeyDown={(event) => {
-                                      if (event.key === 'Enter' || event.key === 'NumpadEnter') {
+                                <div
+                                  className={cn(
+                                    'flex w-full items-center gap-2 rounded-md px-4 py-3 text-sm transition',
+                                    isVertical ? 'justify-start text-left' : 'justify-start text-left',
+                                  )}
+                                >
+                                  {editingTabId === tab.id ? (
+                                    <input
+                                      value={editingValue}
+                                      onChange={(event) => setEditingValue(event.target.value)}
+                                      onBlur={() => applyTabNameUpdate(tab.id, editingValue)}
+                                      onKeyDown={(event) => {
+                                        if (event.key === 'Enter' || event.key === 'NumpadEnter') {
+                                          event.preventDefault();
+                                          event.stopPropagation();
+                                          applyTabNameUpdate(tab.id, editingValue);
+                                        }
+                                        if (event.key === 'Escape') {
+                                          event.preventDefault();
+                                          event.stopPropagation();
+                                          cancelEditingTab();
+                                        }
+                                      }}
+                                      autoFocus
+                                      className={cn(
+                                        'w-full rounded-md border border-transparent bg-transparent text-sm outline-none focus:border-primary focus:ring-0',
+                                        isVertical ? '' : 'text-center',
+                                      )}
+                                    />
+                                  ) : (
+                                    <span
+                                      onClick={(event) => {
+                                        if (tab.id !== activeTab) return;
                                         event.preventDefault();
                                         event.stopPropagation();
-                                        applyTabNameUpdate(tab.id, editingValue);
-                                      }
-                                      if (event.key === 'Escape') {
-                                        event.preventDefault();
-                                        event.stopPropagation();
-                                        cancelEditingTab();
-                                      }
-                                    }}
-                                    autoFocus
-                                    className={cn(
-                                      'w-full rounded-md border border-transparent bg-transparent text-sm outline-none focus:border-primary focus:ring-0',
-                                      isVertical ? '' : 'text-center',
-                                    )}
-                                  />
-                                ) : (
-                                  <span
-                                    onClick={(event) => {
-                                      if (tab.id !== activeTab) return;
-                                      event.preventDefault();
-                                      event.stopPropagation();
-                                      startEditingTab(tab);
-                                    }}
-                                    className={cn(
-                                      'line-clamp-1 w-[50%] text-ellipsis overflow-visible',
-                                      isVertical ? 'text-left' : 'text-center',
-                                    )}
-                                  >
-                                    {tab.name}
-                                  </span>
-                                )}
-                              </div>
-                            </TabsTrigger>
+                                        startEditingTab(tab);
+                                      }}
+                                      className={cn(
+                                        'line-clamp-1 w-full text-ellipsis overflow-visible',
+                                        isVertical ? 'text-left' : 'text-center',
+                                      )}
+                                    >
+                                      {tab.name}
+                                    </span>
+                                  )}
+                                </div>
+                              </TabsTrigger>
+                              {showVisibilityControls && isVertical ? (
+                                <div className="flex w-full items-center gap-3 rounded-md bg-white/50 px-4 py-2">
+                                  <label className="flex flex-1 flex-col gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                    Visible After
+                                    <Input
+                                      type="date"
+                                      value={formattedVisibleAfter}
+                                      onChange={(event) => {
+                                        const nextValue = event.target.value;
+                                        updateTabMetadata(tab.id, (current) => ({
+                                          ...current,
+                                          visibleAfter: nextValue ? nextValue : null,
+                                        }));
+                                      }}
+                                      className="h-8 text-xs"
+                                    />
+                                  </label>
+                                  <div className="flex flex-col items-start gap-1">
+                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                      Visible
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      <Switch
+                                        checked={visibilityValue}
+                                        onCheckedChange={(checked) => {
+                                          updateTabMetadata(tab.id, (current) => ({
+                                            ...current,
+                                            visibility: checked,
+                                          }));
+                                        }}
+                                        aria-label={`Toggle visibility for ${tab.name}`}
+                                      />
+                                      <span className="text-xs text-muted-foreground">
+                                        {visibilityValue ? 'On' : 'Off'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
                             <button
                               type="button"
                               aria-label={`Remove ${tab.name}`}

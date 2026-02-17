@@ -210,6 +210,19 @@ function transformCourseStructure(courseStructureData: any): {
         name: tab?.name ?? `Tab ${index + 1}`,
         position: typeof tab?.position === 'number' ? tab.position : index,
         description: tab?.description ?? '',
+        visibility:
+          typeof tab?.visibility === 'boolean'
+            ? tab.visibility
+            : typeof tab?.is_visible === 'boolean'
+            ? tab.is_visible
+            : typeof tab?.isVisible === 'boolean'
+            ? tab.isVisible
+            : true,
+        visibleAfter:
+          tab?.visibleAfter ??
+          tab?.visible_after ??
+          tab?.visible_after_at ??
+          null,
       }))
     : DEFAULT_COURSE_TABS.map((tab, index) => ({ ...tab, position: index }));
 
