@@ -30,6 +30,7 @@ export type CourseTab = {
   position?: number;
   visibility?: boolean;
   visibleAfter?: string | null;
+  isVisible?: boolean;
 };
 
 export const DEFAULT_COURSE_TABS: CourseTab[] = [
@@ -136,6 +137,8 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
   const [tabPendingRemoval, setTabPendingRemoval] = useState<CourseTab | null>(null);
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState<string>('');
+  const longPressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggeredRef = useRef(false);
 
   const formatVisibleAfterValue = useCallback((value?: string | null) => {
     if (!value) {
@@ -163,6 +166,41 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
     }
     return true;
   }, []);
+
+  const resolveEffectiveVisibility = useCallback(
+    (tab: CourseTab) => {
+      const hasManualOverride = typeof tab.visibility === 'boolean';
+      const hasVisibleAfter = tab.visibleAfter !== undefined && tab.visibleAfter !== null;
+      const manualVisible = resolveVisibilityValue(tab);
+      if (!manualVisible) {
+        return false;
+      }
+      const rawVisibleAfter = tab.visibleAfter ?? null;
+      if (!rawVisibleAfter) {
+        return manualVisible;
+      }
+      const parsed = new Date(rawVisibleAfter);
+      if (Number.isNaN(parsed.getTime())) {
+        return manualVisible;
+      }
+      const today = new Date();
+      const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const visibleAfterDate = new Date(
+        parsed.getFullYear(),
+        parsed.getMonth(),
+        parsed.getDate(),
+      );
+      const derivedVisible = visibleAfterDate <= todayDate;
+      if (hasManualOverride || hasVisibleAfter) {
+        return derivedVisible;
+      }
+      if (typeof tab.isVisible === 'boolean') {
+        return tab.isVisible;
+      }
+      return derivedVisible;
+    },
+    [resolveVisibilityValue],
+  );
 
   useEffect(() => {
     if (isTabsControlled) {
@@ -312,6 +350,29 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
     setEditingValue('');
   }, []);
 
+  const clearLongPressTimeout = useCallback(() => {
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+  }, []);
+
+  const handleLongPressStart = useCallback(
+    (tab: CourseTab) => {
+      longPressTriggeredRef.current = false;
+      clearLongPressTimeout();
+      longPressTimeoutRef.current = setTimeout(() => {
+        longPressTriggeredRef.current = true;
+        startEditingTab(tab);
+      }, 450);
+    },
+    [clearLongPressTimeout, startEditingTab],
+  );
+
+  useEffect(() => {
+    return () => clearLongPressTimeout();
+  }, [clearLongPressTimeout]);
+
   const confirmRemoveTab = () => {
     if (!tabPendingRemoval) return;
     if (tabs.length <= 1) {
@@ -400,7 +461,9 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                   {tabs.map((tab, index) => {
                     const disableRemove = tabs.length === 1;
                     const visibilityValue = resolveVisibilityValue(tab);
+                    const effectiveVisibility = resolveEffectiveVisibility(tab);
                     const formattedVisibleAfter = formatVisibleAfterValue(tab.visibleAfter ?? null);
+                    const hasVisibleAfter = Boolean(formattedVisibleAfter);
                     return (
                       <Draggable key={tab.id} draggableId={tab.id} index={index}>
                         {(dragProvided, snapshot) => (
@@ -436,6 +499,9 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                                 'flex w-full flex-col gap-2',
                                 showVisibilityControls && isVertical
                                   ? 'rounded-md border border-gray-300 bg-white/70 p-2'
+                                  : '',
+                                showVisibilityControls && isVertical && tab.id === activeTab
+                                  ? 'border-[#FF6934] ring-1 ring-[#FF6934]/30'
                                   : '',
                               )}
                             >
@@ -480,8 +546,23 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                                     />
                                   ) : (
                                     <span
+                                      onPointerDown={(event) => {
+                                        if (event.pointerType === 'mouse' && event.button !== 0) {
+                                          return;
+                                        }
+                                        handleLongPressStart(tab);
+                                      }}
+                                      onPointerUp={clearLongPressTimeout}
+                                      onPointerLeave={clearLongPressTimeout}
+                                      onPointerCancel={clearLongPressTimeout}
                                       onClick={(event) => {
-                                        if (tab.id !== activeTab) return;
+                                        if (longPressTriggeredRef.current) {
+                                          event.preventDefault();
+                                          event.stopPropagation();
+                                          longPressTriggeredRef.current = false;
+                                        }
+                                      }}
+                                      onDoubleClick={(event) => {
                                         event.preventDefault();
                                         event.stopPropagation();
                                         startEditingTab(tab);
@@ -510,7 +591,14 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                                           visibleAfter: nextValue ? nextValue : null,
                                         }));
                                       }}
-                                      className="h-8 text-xs"
+                                      className={cn(
+                                        'h-8 text-xs',
+                                        !hasVisibleAfter
+                                          ? 'border-slate-300 bg-slate-100 text-slate-500 focus-visible:ring-slate-300'
+                                          : effectiveVisibility
+                                          ? 'border-emerald-400 bg-emerald-50 text-emerald-700 focus-visible:ring-emerald-500'
+                                          : 'border-rose-400 bg-rose-50 text-rose-700 focus-visible:ring-rose-500',
+                                      )}
                                     />
                                   </label>
                                   <div className="flex flex-col items-start gap-1">

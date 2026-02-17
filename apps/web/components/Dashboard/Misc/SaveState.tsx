@@ -38,10 +38,21 @@ function SaveState(props: { orgslug: string }) {
       : DEFAULT_COURSE_TABS.map((tab, index) => ({ ...tab, position: index }));
 
     const metadata = metadataSource.map((tab: any, index: number) => ({
-        tab_uuid: tab?.id ?? tab?.tab_uuid ?? `tab-${index + 1}`,
-        name: tab?.name ?? `Tab ${index + 1}`,
-        position: typeof tab?.position === 'number' ? tab.position : index,
-      }));
+      tab_uuid: tab?.id ?? tab?.tab_uuid ?? `tab-${index + 1}`,
+      name: tab?.name ?? `Tab ${index + 1}`,
+      position: typeof tab?.position === 'number' ? tab.position : index,
+      visible:
+        typeof tab?.visibility === 'boolean'
+          ? tab.visibility
+          : typeof tab?.visible === 'boolean'
+          ? tab.visible
+          : true,
+      visible_after:
+        tab?.visibleAfter ??
+        tab?.visible_after ??
+        tab?.visible_after_at ??
+        null,
+    }));
 
     const tabStoreSource =
       course_structure?.tabMapStore ??

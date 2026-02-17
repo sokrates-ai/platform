@@ -205,25 +205,56 @@ function transformCourseStructure(courseStructureData: any): {
 } {
   const rawTabMetadata = courseStructureData?.tabMetadata ?? courseStructureData?.tab_metadata;
   const normalizedTabs = Array.isArray(rawTabMetadata)
-    ? rawTabMetadata.map((tab: any, index: number) => ({
-        id: tab?.tab_uuid ?? tab?.id ?? `tab-${index + 1}`,
-        name: tab?.name ?? `Tab ${index + 1}`,
-        position: typeof tab?.position === 'number' ? tab.position : index,
-        description: tab?.description ?? '',
-        visibility:
-          typeof tab?.visibility === 'boolean'
-            ? tab.visibility
-            : typeof tab?.is_visible === 'boolean'
-            ? tab.is_visible
-            : typeof tab?.isVisible === 'boolean'
-            ? tab.isVisible
-            : true,
-        visibleAfter:
+    ? rawTabMetadata.map((tab: any, index: number) => {
+        const visibleAfter =
           tab?.visibleAfter ??
           tab?.visible_after ??
           tab?.visible_after_at ??
-          null,
-      }))
+          null;
+        const manualVisibility =
+          typeof tab?.visibility === 'boolean'
+            ? tab.visibility
+            : typeof tab?.visible === 'boolean'
+            ? tab.visible
+            : true;
+        const parsedVisibleAfter =
+          typeof visibleAfter === 'string' || visibleAfter instanceof Date
+            ? new Date(visibleAfter)
+            : null;
+        const hasValidDate =
+          parsedVisibleAfter instanceof Date &&
+          !Number.isNaN(parsedVisibleAfter.getTime());
+        const today = new Date();
+        const todayDate = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate(),
+        );
+        const visibleAfterDate =
+          hasValidDate
+            ? new Date(
+                parsedVisibleAfter.getFullYear(),
+                parsedVisibleAfter.getMonth(),
+                parsedVisibleAfter.getDate(),
+              )
+            : null;
+        const effectiveVisibility =
+          typeof tab?.isVisible === 'boolean'
+            ? tab.isVisible
+            : typeof tab?.is_visible === 'boolean'
+            ? tab.is_visible
+            : manualVisibility &&
+              (!visibleAfterDate || visibleAfterDate <= todayDate);
+        return {
+          id: tab?.tab_uuid ?? tab?.id ?? `tab-${index + 1}`,
+          name: tab?.name ?? `Tab ${index + 1}`,
+          position: typeof tab?.position === 'number' ? tab.position : index,
+          description: tab?.description ?? '',
+          visibility: manualVisibility,
+          visibleAfter,
+          isVisible: effectiveVisibility,
+        };
+      })
     : DEFAULT_COURSE_TABS.map((tab, index) => ({ ...tab, position: index }));
 
   const sortedTabs = [...normalizedTabs].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));

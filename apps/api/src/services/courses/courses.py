@@ -103,6 +103,8 @@ def ensure_default_tabs(course: Course, db_session: Session) -> List[CourseTab]:
             course_uuid=course.course_uuid,
             name=spec["name"],
             position=index,
+            visible=True,
+            visible_after=None,
             creation_date=now,
             update_date=now,
         )
@@ -135,11 +137,23 @@ def upsert_course_tabs(
 
     # Upsert provided tabs
     for tab_uuid, payload in incoming_by_id.items():
+        payload_data = payload.model_dump(exclude_unset=True)
         if tab_uuid in existing_by_id:
             tab = existing_by_id[tab_uuid]
-            if tab.name != payload.name or tab.position != payload.position:
+            has_updates = False
+            if tab.name != payload.name:
                 tab.name = payload.name
+                has_updates = True
+            if tab.position != payload.position:
                 tab.position = payload.position
+                has_updates = True
+            if "visible" in payload_data and tab.visible != payload_data["visible"]:
+                tab.visible = payload_data["visible"]
+                has_updates = True
+            if "visible_after" in payload_data and tab.visible_after != payload_data["visible_after"]:
+                tab.visible_after = payload_data["visible_after"]
+                has_updates = True
+            if has_updates:
                 tab.update_date = now
                 db_session.add(tab)
         else:
@@ -149,6 +163,8 @@ def upsert_course_tabs(
                 course_uuid=course.course_uuid,
                 name=payload.name,
                 position=payload.position,
+                visible=payload.visible if payload.visible is not None else True,
+                visible_after=payload.visible_after,
                 creation_date=now,
                 update_date=now,
             )
@@ -191,6 +207,7 @@ def build_course_read(
     tabs: List[CourseTab],
 ) -> CourseRead:
     sanitized_store = sanitize_tab_map_store(course.tab_store)
+    today = datetime.utcnow().date()
 
     if not tabs:
         tab_reads = [
@@ -199,6 +216,9 @@ def build_course_read(
                 course_uuid=course.course_uuid,
                 name=spec["name"],
                 position=index,
+                visible=True,
+                visible_after=None,
+                is_visible=True,
             )
             for index, spec in enumerate(DEFAULT_TABS)
         ]
@@ -209,6 +229,15 @@ def build_course_read(
                 course_uuid=tab.course_uuid,
                 name=tab.name,
                 position=tab.position,
+                visible=tab.visible,
+                visible_after=tab.visible_after,
+                is_visible=(
+                    tab.visible
+                    and (
+                        tab.visible_after is None
+                        or tab.visible_after <= today
+                    )
+                ),
             )
             for tab in tabs
         ]
@@ -487,6 +516,8 @@ async def create_course(
             course_uuid=course.course_uuid,
             name=spec["name"],
             position=index,
+            visible=True,
+            visible_after=None,
             creation_date=now,
             update_date=now,
         )

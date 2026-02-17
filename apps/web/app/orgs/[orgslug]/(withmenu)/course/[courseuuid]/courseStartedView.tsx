@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation' // ✅ import hook
 import { Button } from '@/components/ui/button'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import Canvas, { LayoutState } from '@components/Objects/ContentMap/Canvas'
-import { DoorOpen, Menu, X } from 'lucide-react'
+import { DoorOpen, EyeOff, Menu, X } from 'lucide-react'
 import { getUriWithOrg } from '@services/config/config'
 import {
   buildActivityTabIndex,
@@ -21,6 +21,7 @@ import { updateCourseCanvasInteractionState } from '@services/courses/courses'
 import CourseChapter from '@components/Pages/Courses/CourseChapter'
 import { cn } from '@/lib/utils'
 import { DEFAULT_COURSE_TABS } from '@components/Objects/Modals/Course/Create/CourseTabSelector'
+import useAdminStatus from '@components/Hooks/useAdminStatus'
 
 const DEFAULT_BOUNDARIES = {
   left: -1000,
@@ -45,6 +46,7 @@ const CourseStartedView = ({
   const searchParams = useSearchParams()
   const chapterParam = searchParams.get('chapter') // ✅ read from URL
   const chapterFromUrl = chapterParam ? parseInt(chapterParam, 10) : null
+  const initialTabParamRef = useRef(searchParams.get('tab'))
 
   const rawTabMetadata =
     course?.tabMetadata ??
@@ -66,11 +68,55 @@ const CourseStartedView = ({
           tab?.tabUuid ??
           tab?.tabUUID ??
           `tab-${index + 1}`
+        const visibleAfter =
+          tab?.visibleAfter ??
+          tab?.visible_after ??
+          tab?.visible_after_at ??
+          null
+        const manualVisible =
+          typeof tab?.visibility === 'boolean'
+            ? tab.visibility
+            : typeof tab?.visible === 'boolean'
+            ? tab.visible
+            : true
+        const parsedVisibleAfter =
+          typeof visibleAfter === 'string' || visibleAfter instanceof Date
+            ? new Date(visibleAfter)
+            : null
+        const hasValidDate =
+          parsedVisibleAfter instanceof Date &&
+          !Number.isNaN(parsedVisibleAfter.getTime())
+        const today = new Date()
+        const todayDate = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate(),
+        )
+        const visibleAfterDate =
+          hasValidDate
+            ? new Date(
+                parsedVisibleAfter.getFullYear(),
+                parsedVisibleAfter.getMonth(),
+                parsedVisibleAfter.getDate(),
+              )
+            : null
+        const derivedVisible =
+          manualVisible &&
+          (!visibleAfterDate || visibleAfterDate <= todayDate)
+        const effectiveVisible =
+          typeof tab?.is_visible === 'boolean'
+            ? tab.is_visible
+            : typeof tab?.isVisible === 'boolean'
+            ? tab.isVisible
+            : derivedVisible
         return {
           id: tabId,
           name: tab?.name ?? `Tab ${index + 1}`,
           position:
             typeof tab?.position === 'number' ? tab.position : index,
+          visible: manualVisible,
+          visibleAfter,
+          isVisible: effectiveVisible,
         }
       })
       .filter((tab) => !!tab.id)
@@ -154,20 +200,39 @@ const CourseStartedView = ({
       {
         id: 'default-map',
         name: 'Map',
+        isVisible: true,
       },
     ]
   }, [normalizedTabs])
 
+  const { isAdmin } = useAdminStatus()
+  const canSeeHiddenTabs = Boolean(isAdmin)
+
+  const visibleTabs = useMemo(() => {
+    if (canSeeHiddenTabs) {
+      return tabs
+    }
+    return tabs.filter((tab) => tab.isVisible !== false)
+  }, [canSeeHiddenTabs, tabs])
+
   const fallbackTabId = useMemo(() => {
-    if (tabs.length > 0 && tabs[0]?.id) {
-      return tabs[0].id
+    if (visibleTabs.length > 0 && visibleTabs[0]?.id) {
+      return visibleTabs[0].id
     }
     return getCourseFallbackTabId(course)
-  }, [tabs, course])
+  }, [visibleTabs, course])
 
-  const [selectedTab, setSelectedTab] = useState(
-    () => fallbackTabId ?? 'default-map',
-  )
+  const initialSelectedTab = useMemo(() => {
+    const initialTabParam = initialTabParamRef.current
+    if (initialTabParam && visibleTabs.some((tab) => tab.id === initialTabParam)) {
+      return initialTabParam
+    }
+    return fallbackTabId ?? 'default-map'
+  }, [fallbackTabId, visibleTabs])
+
+  const [selectedTab, setSelectedTab] = useState(initialSelectedTab)
+  const selectedTabRef = useRef(selectedTab)
+  selectedTabRef.current = selectedTab
   
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -189,13 +254,15 @@ const CourseStartedView = ({
   }, [menuOpen])
 
   useEffect(() => {
-    if (!tabs.length) {
+    if (!visibleTabs.length) {
       return
     }
-    if (!tabs.some((tab) => tab.id === selectedTab)) {
-      setSelectedTab(tabs[0].id)
+    if (!visibleTabs.some((tab) => tab.id === selectedTab)) {
+      setSelectedTab(visibleTabs[0].id)
     }
-  }, [tabs, selectedTab])
+  }, [visibleTabs, selectedTab])
+
+  // URL-driven tab selection is applied only on initial load.
 
   const courseIdWithoutPrefix = courseuuid.replace('course_', '')
 
@@ -350,26 +417,37 @@ const CourseStartedView = ({
         {menuOpen && (
           <div className="mt-2 bg-white rounded-xl shadow-2xl p-2 border border-gray-200">
             <div className="space-y-1">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => {
-                    console.log('Tab clicked:', tab.name, tab.id)
-                    setSelectedTab(tab.id)
-                    setMenuOpen(false)
-                  }}
-                  className={cn(
-                    'block text-left px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap',
-                    'hover:scale-105 transform',
-                    selectedTab === tab.id
-                      ? 'bg-[#FF6934] text-white shadow-md'
-                      : 'text-gray-700 hover:bg-[#FF6934]/10 hover:text-[#FF6934]',
-                  )}
-                >
-                  {tab.name}
-                </button>
-              ))}
+              {visibleTabs.map((tab) => {
+                const tabIsHidden = tab.isVisible === false
+                const isSelected = selectedTab === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => {
+                      console.log('Tab clicked:', tab.name, tab.id)
+                      setSelectedTab(tab.id)
+                      setMenuOpen(false)
+                    }}
+                    className={cn(
+                      'flex w-full items-center gap-2 text-left px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap',
+                      !tabIsHidden && 'hover:scale-105 transform',
+                      tabIsHidden
+                        ? isSelected
+                          ? 'bg-[#FF6934]/50 text-white/90 shadow-md'
+                          : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        : isSelected
+                        ? 'bg-[#FF6934] text-white shadow-md'
+                        : 'text-gray-700 hover:bg-[#FF6934]/10 hover:text-[#FF6934]',
+                    )}
+                  >
+                    <span className="flex-1">{tab.name}</span>
+                    {canSeeHiddenTabs && tabIsHidden ? (
+                      <EyeOff className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                    ) : null}
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
