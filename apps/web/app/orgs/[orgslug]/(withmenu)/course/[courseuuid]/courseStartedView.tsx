@@ -212,7 +212,7 @@ const CourseStartedView = ({
     if (canSeeHiddenTabs) {
       return tabs
     }
-    return tabs.filter((tab) => tab.isVisible !== false)
+    return tabs.filter((tab) => 'isVisible' in tab && tab.isVisible !== false)
   }, [canSeeHiddenTabs, tabs])
 
   const fallbackTabId = useMemo(() => {
@@ -418,7 +418,7 @@ const CourseStartedView = ({
           <div className="mt-2 bg-white rounded-xl shadow-2xl p-2 border border-gray-200">
             <div className="space-y-1">
               {visibleTabs.map((tab) => {
-                const tabIsHidden = tab.isVisible === false
+                const tabIsHidden = 'isVisible' in tab && tab.isVisible === false
                 const isSelected = selectedTab === tab.id
                 return (
                   <button

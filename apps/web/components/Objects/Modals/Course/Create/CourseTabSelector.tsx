@@ -12,8 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import { GripVertical, Plus, X } from 'lucide-react';
+import { GripVertical, Plus, X, CheckCircle2, CalendarClock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DragDropContext,
@@ -417,6 +416,17 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
     : 'flex items-center justify-between gap-2';
   const addButtonClassName = isVertical ? 'w-full justify-center' : 'shrink-0';
 
+  // Hilfsfunktion: nächsten Montag 08:00 als "YYYY-MM-DDTHH:mm"
+  function getNextMondayAt8(): string {
+    const now = new Date();
+    const day = now.getDay();
+    const daysUntilMonday = day === 0 ? 1 : day === 1 ? 7 : 8 - day;
+    const next = new Date(now);
+    next.setDate(now.getDate() + daysUntilMonday);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${next.getFullYear()}-${pad(next.getMonth() + 1)}-${pad(next.getDate())}T08:00`;
+  }
+
   return (
     <div className={cn(isVertical ? 'flex w-full flex-col' : 'w-full', className)}>
       <DragDropContext
@@ -578,47 +588,87 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                                 </div>
                               </TabsTrigger>
                               {showVisibilityControls && isVertical ? (
-                                <div className="flex w-full items-center gap-3 rounded-md bg-white/50 px-4 py-2">
-                                  <label className="flex flex-1 flex-col gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                    Visible After
-                                    <Input
-                                      type="date"
-                                      value={formattedVisibleAfter}
-                                      onChange={(event) => {
-                                        const nextValue = event.target.value;
+                                <div className="px-1 pb-1">
+                                  {/* Segmented Control */}
+                                  <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-gray-100 p-1">
+                                    {/* Sofort */}
+                                    <button
+                                      type="button"
+                                      onClick={() =>
                                         updateTabMetadata(tab.id, (current) => ({
                                           ...current,
-                                          visibleAfter: nextValue ? nextValue : null,
-                                        }));
-                                      }}
+                                          visibility: true,
+                                          visibleAfter: null,
+                                        }))
+                                      }
                                       className={cn(
-                                        'h-8 text-xs',
-                                        !hasVisibleAfter
-                                          ? 'border-slate-300 bg-slate-100 text-slate-500 focus-visible:ring-slate-300'
-                                          : effectiveVisibility
-                                          ? 'border-emerald-400 bg-emerald-50 text-emerald-700 focus-visible:ring-emerald-500'
-                                          : 'border-rose-400 bg-rose-50 text-rose-700 focus-visible:ring-rose-500',
+                                        'flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold transition-all duration-150',
+                                        resolveVisibilityValue(tab) && !tab.visibleAfter
+                                          ? 'bg-white text-emerald-700 shadow ring-1 ring-emerald-200'
+                                          : 'text-gray-500 hover:bg-white/60',
                                       )}
-                                    />
-                                  </label>
-                                  <div className="flex flex-col items-start gap-1">
-                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                      Visible
-                                    </span>
-                                    <div className="flex items-center gap-2">
-                                      <Switch
-                                        checked={visibilityValue}
-                                        onCheckedChange={(checked) => {
+                                    >
+                                      <CheckCircle2 className={cn('h-3.5 w-3.5', resolveVisibilityValue(tab) && !tab.visibleAfter ? 'text-emerald-500' : 'text-gray-400')} />
+                                      Sofort
+                                    </button>
+                                    {/* Planen */}
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        updateTabMetadata(tab.id, (current) => ({
+                                          ...current,
+                                          visibility: false,
+                                          visibleAfter: current.visibleAfter ?? getNextMondayAt8(),
+                                        }))
+                                      }
+                                      className={cn(
+                                        'flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold transition-all duration-150',
+                                        tab.visibleAfter || !resolveVisibilityValue(tab)
+                                          ? 'bg-white text-violet-700 shadow ring-1 ring-violet-200'
+                                          : 'text-gray-500 hover:bg-white/60',
+                                      )}
+                                    >
+                                      <CalendarClock className={cn('h-3.5 w-3.5', tab.visibleAfter || !resolveVisibilityValue(tab) ? 'text-violet-500' : 'text-gray-400')} />
+                                      Planen
+                                    </button>
+                                  </div>
+
+                                  {/* Slide-Down Date-Time-Picker */}
+                                  <div className={cn(
+                                    'overflow-hidden transition-all duration-200',
+                                    tab.visibleAfter || !resolveVisibilityValue(tab) ? 'max-h-24 mt-1.5 opacity-100' : 'max-h-0 opacity-0',
+                                  )}>
+                                    <div className="rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-2">
+                                      <input
+                                        type="datetime-local"
+                                        value={
+                                          tab.visibleAfter
+                                            ? (/T\d{2}:\d{2}/.test(tab.visibleAfter)
+                                                ? tab.visibleAfter.slice(0, 16)
+                                                : `${tab.visibleAfter}T08:00`)
+                                            : ''
+                                        }
+                                        min={new Date().toISOString().slice(0, 16)}
+                                        onChange={(e) =>
                                           updateTabMetadata(tab.id, (current) => ({
                                             ...current,
-                                            visibility: checked,
-                                          }));
-                                        }}
-                                        aria-label={`Toggle visibility for ${tab.name}`}
+                                            visibleAfter: e.target.value || null,
+                                          }))
+                                        }
+                                        className="w-full rounded-md border border-violet-200 bg-white px-2 py-1 text-xs text-gray-800 focus:outline-none focus:ring-1 focus:ring-violet-400"
                                       />
-                                      <span className="text-xs text-muted-foreground">
-                                        {visibilityValue ? 'On' : 'Off'}
-                                      </span>
+                                      {tab.visibleAfter && (() => {
+                                        const d = new Date(tab.visibleAfter);
+                                        if (Number.isNaN(d.getTime())) return null;
+                                        return (
+                                          <p className="mt-1 flex items-center gap-1 text-[10px] text-violet-600">
+                                            <CalendarClock className="h-3 w-3 shrink-0" />
+                                            {d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                            {' um '}
+                                            {d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr
+                                          </p>
+                                        );
+                                      })()}
                                     </div>
                                   </div>
                                 </div>
