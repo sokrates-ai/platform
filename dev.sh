@@ -18,6 +18,15 @@ check() {
     fi
 }
 
+load_dev_env() {
+    if [ -f "./dev.env" ]; then
+        set -a
+        # shellcheck disable=SC1091
+        . "./dev.env"
+        set +a
+    fi
+}
+
 api_setup() {
     echo "[SETUP]: API"
     bash -c 'cd ./apps/api/ && mkdir -p ./content && poetry lock && poetry install'
@@ -30,7 +39,7 @@ web_setup() {
 
 docker_setup() {
     echo "[SETUP]: Docker"
-    (docker compose -f docker-compose-dev.yml up db redis chromadb -d) || {
+    (docker compose -f docker-compose-dev.yml up -d) || {
         echo "[ERROR]: Could not spin up development containers"
         exit 1
     }
@@ -64,17 +73,20 @@ reset() {
 # Development / Running.
 #
 
+print_env() {
+    load_dev_env
+    env
+}
+
+
 dev_web() {
+    load_dev_env
     NODE_ENV=development \
-        NEXT_PUBLIC_LEARNHOUSE_API_URL=http://localhost:1338/api/v1/ \
-        NEXT_PUBLIC_LEARNHOUSE_BASE_URL=http://localhost:3000 \
-        NEXT_PUBLIC_LEARNHOUSE_DEFAULT_ORG=default \
-        NEXT_PUBLIC_LEARNHOUSE_MEDIA_URL=http://localhost:1338/ \
-        NEXTAUTH_SECRET=changeme \
         bash -c 'cd ./apps/web/ && pnpm run dev'
 }
 
 dev_backend() {
+    load_dev_env
     env | rg PLATFORM
     env | rg REDIS
     bash -c 'cd ./apps/api/ && poetry run python3 app.py'
@@ -130,6 +142,8 @@ ARG="$1"
 
 if [ "${ARG}" = "setup" ]; then
     setup
+elif [ "${ARG}" = "env" ]; then
+    print_env
 elif [ "${ARG}" = "web-dev" ]; then
     dev_web
 elif [ "${ARG}" = "api-dev" ]; then

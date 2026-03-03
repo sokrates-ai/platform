@@ -1,5 +1,7 @@
 .PHONY: setup check sprites
 
+env:
+	./dev.sh env
 
 docker-nuke:
 	docker compose down

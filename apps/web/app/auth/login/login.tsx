@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn } from "next-auth/react"
 import { useFormik } from 'formik'
 import { AlertTriangle, UserRoundPlus, Loader2, Mail, Lock } from 'lucide-react'
@@ -35,7 +35,42 @@ const validate = (values: any) => {
 const LoginClient = (props: LoginClientProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter();
+  const searchParams = useSearchParams()
   const [error, setError] = useState('')
+
+  const oauthErrorMessage = useMemo(() => {
+    const code = searchParams?.get('error') || ''
+    const description = searchParams?.get('error_description') || ''
+
+    const messages: Record<string, string> = {
+      OAuthSignin: 'Keycloak sign-in failed. Check realm/issuer/client settings.',
+      OAuthCallback: 'Keycloak callback failed. Check redirect URI and client config.',
+      OAuthCreateAccount: 'Could not create account. Please try again.',
+      OAuthAccountNotLinked: 'Account already exists with a different sign-in method.',
+      AccessDenied: 'Access denied. Please contact an administrator.',
+      Configuration: 'Authentication is misconfigured. Check Keycloak env vars.',
+      Verification: 'Verification failed. Please try again.',
+    }
+
+    if (!code && !description) {
+      return ''
+    }
+
+    if (description) {
+      if (description.includes('Realm does not exist')) {
+        return 'Keycloak realm does not exist. Check LEARNHOUSE_KEYCLOAK_ISSUER.'
+      }
+      return `${messages[code] || 'Authentication error.'} (${description})`
+    }
+
+    return messages[code] || 'Authentication error. Please try again.'
+  }, [searchParams])
+
+  useEffect(() => {
+    if (oauthErrorMessage && !error) {
+      setError(oauthErrorMessage)
+    }
+  }, [oauthErrorMessage, error])
 
   const formik = useFormik({
     initialValues: {
@@ -169,6 +204,20 @@ const LoginClient = (props: LoginClientProps) => {
           <span className="px-4 text-[#666666] font-medium">OR</span>
           <div className="flex-1 border-t border-[#666666]"></div>
         </div>
+
+        <Button
+          variant="outline"
+          className="w-full h-12 border-2 border-[#707070] bg-white hover:bg-gray-50 rounded-lg flex items-center justify-center"
+          onClick={async () => {
+            try {
+              await signIn('keycloak', { callbackUrl: '/redirect_from_auth' })
+            } catch (err) {
+              setError('Keycloak sign-in failed. Check realm/issuer/client settings.')
+            }
+          }}
+        >
+          Continue with Keycloak
+        </Button>
 
         <Link href={`/signup?orgslug=${props.org.slug}`}>
           <Button variant="outline" className="w-full h-12 border-2 border-[#707070] bg-white hover:bg-gray-50 rounded-lg flex items-center justify-center">

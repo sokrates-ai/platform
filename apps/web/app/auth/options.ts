@@ -8,6 +8,7 @@ import { LEARNHOUSE_TOP_DOMAIN, getUriWithOrg } from '@services/config/config'
 import { getResponseMetadata } from '@services/utils/ts/requests'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
+import KeycloakProvider from 'next-auth/providers/keycloak'
 
 const domain = `.${LEARNHOUSE_TOP_DOMAIN()}`
 
@@ -18,7 +19,8 @@ function getDomain(): string {
 
 export const nextAuthOptions = {
 	debug: true,
-	providers: [
+	providers: (() => {
+		const providers: any[] = [
 		CredentialsProvider({
 			// The name to display on the sign in form (e.g. 'Sign in with...')
 			name: 'Credentials',
@@ -49,7 +51,27 @@ export const nextAuthOptions = {
 			clientId: process.env.LEARNHOUSE_GOOGLE_CLIENT_ID || '',
 			clientSecret: process.env.LEARNHOUSE_GOOGLE_CLIENT_SECRET || '',
 		}),
-	],
+		]
+
+		const keycloakIssuer =
+			process.env.LEARNHOUSE_KEYCLOAK_ISSUER || process.env.KEYCLOAK_ISSUER
+		const keycloakClientId =
+			process.env.LEARNHOUSE_KEYCLOAK_CLIENT_ID || process.env.KEYCLOAK_CLIENT_ID
+		const keycloakClientSecret =
+			process.env.LEARNHOUSE_KEYCLOAK_CLIENT_SECRET || process.env.KEYCLOAK_CLIENT_SECRET
+
+		if (keycloakIssuer && keycloakClientId && keycloakClientSecret) {
+			providers.push(
+				KeycloakProvider({
+					clientId: keycloakClientId,
+					clientSecret: keycloakClientSecret,
+					issuer: keycloakIssuer,
+				})
+			)
+		}
+
+		return providers
+	})(),
 	pages: {
 		signIn: getUriWithOrg('auth', '/'),
 		verifyRequest: getUriWithOrg('auth', '/'),
@@ -88,7 +110,25 @@ export const nextAuthOptions = {
 					account.access_token
 				)
 				let userFromOAuth = await getResponseMetadata(unsanitized_req)
-				token.user = userFromOAuth.data
+				if (userFromOAuth.success && userFromOAuth.data?.tokens?.access_token) {
+					token.user = userFromOAuth.data
+				} else {
+					token.oauth_error = userFromOAuth.data?.detail || 'google_oauth_failed'
+				}
+			}
+
+			if (account?.provider == 'keycloak' && user) {
+				let unsanitized_req = await loginWithOAuthToken(
+					user?.email,
+					'keycloak',
+					account.access_token
+				)
+				let userFromOAuth = await getResponseMetadata(unsanitized_req)
+				if (userFromOAuth.success && userFromOAuth.data?.tokens?.access_token) {
+					token.user = userFromOAuth.data
+				} else {
+					token.oauth_error = userFromOAuth.data?.detail || 'keycloak_oauth_failed'
+				}
 			}
 
 			// Refresh token
@@ -112,11 +152,13 @@ export const nextAuthOptions = {
 		},
 		async session({ session, token }: any) {
 			// Include user information in the session
-			if (token.user) {
+			if (token?.user?.tokens?.access_token) {
 				let api_SESSION = await getUserSession(token.user.tokens.access_token)
 				session.user = api_SESSION.user
 				session.roles = api_SESSION.roles
 				session.tokens = token.user.tokens
+			} else if (token?.oauth_error) {
+				session.error = token.oauth_error
 			}
 			return session
 		},
