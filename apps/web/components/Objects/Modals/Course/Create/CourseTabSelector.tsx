@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { GripVertical, Plus, X, CheckCircle2, CalendarClock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -152,6 +153,24 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
     const parsed = new Date(value);
     if (Number.isNaN(parsed.getTime())) {
       return '';
+    }
+    const year = parsed.getFullYear();
+    const month = `${parsed.getMonth() + 1}`.padStart(2, '0');
+    const day = `${parsed.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }, []);
+
+  const toDateOnly = useCallback((value?: string | null) => {
+    if (!value) {
+      return null;
+    }
+    const match = value.match(/^\d{4}-\d{2}-\d{2}/);
+    if (match) {
+      return match[0];
+    }
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return null;
     }
     const year = parsed.getFullYear();
     const month = `${parsed.getMonth() + 1}`.padStart(2, '0');
@@ -416,7 +435,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
     : 'flex items-center justify-between gap-2';
   const addButtonClassName = isVertical ? 'w-full justify-center' : 'shrink-0';
 
-  // Hilfsfunktion: nächsten Montag 08:00 als "YYYY-MM-DDTHH:mm"
+  // Hilfsfunktion: nächsten Montag als "YYYY-MM-DD"
   function getNextMondayAt8(): string {
     const now = new Date();
     const day = now.getDay();
@@ -424,7 +443,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
     const next = new Date(now);
     next.setDate(now.getDate() + daysUntilMonday);
     const pad = (n: number) => String(n).padStart(2, '0');
-    return `${next.getFullYear()}-${pad(next.getMonth() + 1)}-${pad(next.getDate())}T08:00`;
+    return `${next.getFullYear()}-${pad(next.getMonth() + 1)}-${pad(next.getDate())}`;
   }
 
   return (
@@ -474,6 +493,11 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                     const effectiveVisibility = resolveEffectiveVisibility(tab);
                     const formattedVisibleAfter = formatVisibleAfterValue(tab.visibleAfter ?? null);
                     const hasVisibleAfter = Boolean(formattedVisibleAfter);
+                    const isInstant = !hasVisibleAfter;
+                    const isPlanned = hasVisibleAfter;
+                    const instantVisibilityLabel = visibilityValue ? 'Visible immediately' : 'Hidden';
+                    const instantTextClass = visibilityValue ? 'text-emerald-700' : 'text-gray-600';
+                    const instantIconClass = visibilityValue ? 'text-emerald-500' : 'text-gray-400';
                     return (
                       <Draggable key={tab.id} draggableId={tab.id} index={index}>
                         {(dragProvided, snapshot) => (
@@ -591,68 +615,90 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                                 <div className="px-1 pb-1">
                                   {/* Segmented Control */}
                                   <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-gray-100 p-1">
-                                    {/* Sofort */}
+                                  {/* Instant */}
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        updateTabMetadata(tab.id, (current) => ({
+                                          ...current,
+                                          visibleAfter: null,
+                                        }))
+                                      }
+                                      className={cn(
+                                        'flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold transition-all duration-150',
+                                        isInstant
+                                          ? 'bg-white text-emerald-700 shadow ring-1 ring-emerald-200'
+                                          : 'text-gray-500 hover:bg-white/60',
+                                      )}
+                                    >
+                                      <CheckCircle2 className={cn('h-3.5 w-3.5', isInstant ? 'text-emerald-500' : 'text-gray-400')} />
+                                      Instant
+                                    </button>
+                                    {/* Planned */}
                                     <button
                                       type="button"
                                       onClick={() =>
                                         updateTabMetadata(tab.id, (current) => ({
                                           ...current,
                                           visibility: true,
-                                          visibleAfter: null,
+                                          visibleAfter: toDateOnly(current.visibleAfter ?? getNextMondayAt8()),
                                         }))
                                       }
                                       className={cn(
                                         'flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold transition-all duration-150',
-                                        resolveVisibilityValue(tab) && !tab.visibleAfter
-                                          ? 'bg-white text-emerald-700 shadow ring-1 ring-emerald-200'
-                                          : 'text-gray-500 hover:bg-white/60',
-                                      )}
-                                    >
-                                      <CheckCircle2 className={cn('h-3.5 w-3.5', resolveVisibilityValue(tab) && !tab.visibleAfter ? 'text-emerald-500' : 'text-gray-400')} />
-                                      Sofort
-                                    </button>
-                                    {/* Planen */}
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        updateTabMetadata(tab.id, (current) => ({
-                                          ...current,
-                                          visibility: false,
-                                          visibleAfter: current.visibleAfter ?? getNextMondayAt8(),
-                                        }))
-                                      }
-                                      className={cn(
-                                        'flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold transition-all duration-150',
-                                        tab.visibleAfter || !resolveVisibilityValue(tab)
+                                        isPlanned
                                           ? 'bg-white text-violet-700 shadow ring-1 ring-violet-200'
                                           : 'text-gray-500 hover:bg-white/60',
                                       )}
                                     >
-                                      <CalendarClock className={cn('h-3.5 w-3.5', tab.visibleAfter || !resolveVisibilityValue(tab) ? 'text-violet-500' : 'text-gray-400')} />
-                                      Planen
+                                      <CalendarClock className={cn('h-3.5 w-3.5', isPlanned ? 'text-violet-500' : 'text-gray-400')} />
+                                      Planned
                                     </button>
                                   </div>
 
-                                  {/* Slide-Down Date-Time-Picker */}
+                                  {/* Slide-Down Controls */}
                                   <div className={cn(
                                     'overflow-hidden transition-all duration-200',
-                                    tab.visibleAfter || !resolveVisibilityValue(tab) ? 'max-h-24 mt-1.5 opacity-100' : 'max-h-0 opacity-0',
+                                    isInstant ? 'max-h-24 h-24 mt-1.5 opacity-100' : 'max-h-0 h-0 opacity-0',
+                                  )}>
+                                    <div
+                                      className={cn(
+                                        'flex items-center justify-between rounded-lg border px-2.5 py-2',
+                                        visibilityValue
+                                          ? 'border-emerald-200 bg-emerald-50'
+                                          : 'border-red-200 bg-red-50',
+                                      )}
+                                    >
+                                      <div className={cn('flex items-center gap-2 text-[11px] font-medium', instantTextClass)}>
+                                        <CheckCircle2 className={cn('h-3.5 w-3.5', instantIconClass)} />
+                                        {instantVisibilityLabel}
+                                      </div>
+                                      <Switch
+                                        checked={visibilityValue}
+                                        onCheckedChange={(checked) =>
+                                          updateTabMetadata(tab.id, (current) => ({
+                                            ...current,
+                                            visibility: checked,
+                                            visibleAfter: checked ? null : current.visibleAfter,
+                                          }))
+                                        }
+                                        aria-label="Visibility"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className={cn(
+                                    'overflow-hidden transition-all duration-200',
+                                    isPlanned ? 'max-h-24 h-24 mt-1.5 opacity-100' : 'max-h-0 h-0 opacity-0',
                                   )}>
                                     <div className="rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-2">
                                       <input
-                                        type="datetime-local"
-                                        value={
-                                          tab.visibleAfter
-                                            ? (/T\d{2}:\d{2}/.test(tab.visibleAfter)
-                                                ? tab.visibleAfter.slice(0, 16)
-                                                : `${tab.visibleAfter}T08:00`)
-                                            : ''
-                                        }
-                                        min={new Date().toISOString().slice(0, 16)}
+                                        type="date"
+                                        value={formattedVisibleAfter}
+                                        min={new Date().toISOString().slice(0, 10)}
                                         onChange={(e) =>
                                           updateTabMetadata(tab.id, (current) => ({
                                             ...current,
-                                            visibleAfter: e.target.value || null,
+                                            visibleAfter: toDateOnly(e.target.value),
                                           }))
                                         }
                                         className="w-full rounded-md border border-violet-200 bg-white px-2 py-1 text-xs text-gray-800 focus:outline-none focus:ring-1 focus:ring-violet-400"
@@ -663,9 +709,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                                         return (
                                           <p className="mt-1 flex items-center gap-1 text-[10px] text-violet-600">
                                             <CalendarClock className="h-3 w-3 shrink-0" />
-                                            {d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })}
-                                            {' um '}
-                                            {d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr
+                                            {d.toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
                                           </p>
                                         );
                                       })()}
