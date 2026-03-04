@@ -16,16 +16,12 @@ function OrgPage({ params }: { params: OrgParams }) {
   const [H1Label, setH1Label] = React.useState('')
   const [H2Label, setH2Label] = React.useState('')
 
-  function handleLabels() {
+  useEffect(() => {
     if (params.subpage == 'general') {
       setH1Label('General')
       setH2Label('Manage your organization settings')
     }
-  }
-
-  useEffect(() => {
-    handleLabels()
-  }, [params.subpage, params])
+  }, [params.subpage])
 
   return (
     <div className="h-full w-full bg-SokratesLightGray">

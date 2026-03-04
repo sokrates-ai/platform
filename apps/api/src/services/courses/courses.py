@@ -1,4 +1,4 @@
-from typing import Any, Dict, Literal, List, Optional
+from typing import Any, Dict, Literal, List
 from uuid import uuid4
 from src.db.courses.chapters import Chapter
 from sqlmodel import Session, select, or_, and_

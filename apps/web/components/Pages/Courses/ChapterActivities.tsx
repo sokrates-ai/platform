@@ -39,8 +39,14 @@ export default function ChapterActivities({
 	const [isLoadingDynamic, setIsLoadingDynamic] = useState(false)
 	const latestDynamicRequest = useRef<string | null>(null)
 
-	const chapter = course?.chapters?.find((c: any) => c.id === chapterID)
-	const activities = Array.isArray(chapter?.activities) ? chapter.activities : []
+	const chapter = useMemo(
+		() => course?.chapters?.find((c: any) => c.id === chapterID),
+		[course, chapterID],
+	)
+	const activities = useMemo(
+		() => (Array.isArray(chapter?.activities) ? chapter.activities : []),
+		[chapter?.activities],
+	)
 
 	const fallbackTabId = useMemo(
 		() => getCourseFallbackTabId(course),
@@ -53,10 +59,6 @@ export default function ChapterActivities({
 	)
 
 	const effectiveTabId = selectedTabId ?? fallbackTabId
-
-	if (!chapter) {
-		return null
-	}
 
 	const selectedActivity = useMemo(
 		() => activities.find((activity: any) => activity.id === selectedId),
@@ -101,7 +103,6 @@ export default function ChapterActivities({
 			router.refresh()
 		} catch (error) {
 			toast.error('Could not mark activity as complete')
-			console.error('Failed to mark activity as complete', error)
 		}
 	}
 
@@ -112,6 +113,10 @@ export default function ChapterActivities({
 		setIsLoadingDynamic(false)
 		latestDynamicRequest.current = null
 	}, [chapterID])
+
+	if (!chapter) {
+		return null
+	}
 
 	const handleActivityStart = async (
 		activity: any,

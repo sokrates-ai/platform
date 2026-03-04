@@ -62,7 +62,10 @@ export default function WorkspaceActivityBody(props: Props) {
   )
 
   /** IDs of the tasks that belong to this workspace activity */
-  const ids: number[] = activity.content.task_ids ?? []
+  const ids: number[] = React.useMemo(
+    () => activity?.content?.task_ids ?? [],
+    [activity?.content?.task_ids]
+  )
 
   const [tasks, setTasks] = React.useState<Task[]>([])
   useEffect(() => {

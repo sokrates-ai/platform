@@ -25,7 +25,7 @@ function UsersSettingsPage({ params }: { params: SettingsParams }) {
   const [H2Label, setH2Label] = React.useState('')
   const isMobile = useMediaQuery('(max-width: 767px)')
 
-  function handleLabels() {
+  useEffect(() => {
     if (params.subpage == 'users') {
       setH1Label('Users')
       setH2Label('Manage your organization users, assign roles and permissions')
@@ -42,11 +42,7 @@ function UsersSettingsPage({ params }: { params: SettingsParams }) {
       setH1Label('UserGroups')
       setH2Label('Create and manage user groups')
     }
-  }
-
-  useEffect(() => {
-    handleLabels()
-  }, [session, org, params.subpage, params])
+  }, [params.subpage])
 
   if (isMobile) {
     // TODO: Work on a better mobile experience

@@ -157,13 +157,13 @@ function Avatar({ session, org, isUserAdmin, onLogout }: any) {
 
   React.useEffect(() => {
     const xp_ = session?.data?.user?.level_progress ?? -1
-    setTimeout(() => {
+    const timer = setTimeout(() => {
         setXp(xp_)
     }, 200)
-  }, [])
+    return () => clearTimeout(timer)
+  }, [session?.data?.user?.level_progress])
 
   const pct = Math.max(0, Math.min(1, xp / 100))
-  console.log(`got percent: ${pct}`)
   const strokeWidth = 6
 
   return (

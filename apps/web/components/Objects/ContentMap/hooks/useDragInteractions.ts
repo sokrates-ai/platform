@@ -188,7 +188,6 @@ export default function useDragInteractions({
     },
     [
       onAssetContextMenu,
-      onChapterClick,
       placedAssets,
       readOnly,
       selectedIds,

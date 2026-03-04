@@ -56,15 +56,18 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 				top: Math.abs(props.boundaries.top).toString(),
 				bottom: props.boundaries.bottom.toString()
 			};
-			
-			if (
-				newBoundaries.left !== boundaries.left || 
-				newBoundaries.right !== boundaries.right || 
-				newBoundaries.top !== boundaries.top || 
-				newBoundaries.bottom !== boundaries.bottom
-			) {
-				setBoundaries(newBoundaries);
-			}
+
+			setBoundaries((prev) => {
+				if (
+					newBoundaries.left !== prev.left ||
+					newBoundaries.right !== prev.right ||
+					newBoundaries.top !== prev.top ||
+					newBoundaries.bottom !== prev.bottom
+				) {
+					return newBoundaries;
+				}
+				return prev;
+			});
 		}
 	}, [props.boundaries]);
 
@@ -532,5 +535,4 @@ export const CourseMapEditorToolbar = (props: CourseMapEditorToolbarProps) => {
 		</div>
 	)
 }
-
 

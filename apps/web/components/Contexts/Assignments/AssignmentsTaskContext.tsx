@@ -27,27 +27,29 @@ export const AssignmentsTaskContext = createContext<State | undefined>(undefined
 export const AssignmentsTaskDispatchContext = createContext<React.Dispatch<Action> | undefined>(undefined);
 
 export function AssignmentsTaskProvider({ children }: { children: React.ReactNode }) {
-    const session = useSokratesSession() as any;    const access_token = session?.data?.tokens?.access_token;
+    const session = useSokratesSession() as any;
+    const access_token = session?.data?.tokens?.access_token;
     const assignment = useAssignments() as any
+    const assignmentUUID = assignment.assignment_object?.assignment_uuid
 
     const [state, dispatch] = useReducer(assignmentstaskReducer, initialState);
 
-    async function fetchAssignmentTask(assignmentTaskUUID: string) {
+    const fetchAssignmentTask = React.useCallback(async (assignmentTaskUUID: string) => {
         const res = await getAssignmentTask(assignmentTaskUUID, access_token);
 
 
         if (res.success) {
             dispatch({ type: 'setAssignmentTask', payload: res.data });
         }
-    }
+    }, [access_token])
 
     useEffect(() => {
 
         if (state.selectedAssignmentTaskUUID) {
             fetchAssignmentTask(state.selectedAssignmentTaskUUID);
-            mutate(`${getAPIUrl()}assignments/${assignment.assignment_object?.assignment_uuid}/tasks`);
+            mutate(`${getAPIUrl()}assignments/${assignmentUUID}/tasks`);
         }
-    }, [state.selectedAssignmentTaskUUID, state.reloadTrigger, assignment]);
+    }, [assignmentUUID, fetchAssignmentTask, state.reloadTrigger, state.selectedAssignmentTaskUUID]);
 
     return (
         <AssignmentsTaskContext.Provider value={state}>

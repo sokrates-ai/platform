@@ -31,7 +31,7 @@ function OrgAccess() {
   const [invitesModal, setInvitesModal] = React.useState(false)
   const router = useRouter()
 
-  async function getOrgJoinMethod() {
+  const getOrgJoinMethod = React.useCallback(async () => {
     if (org) {
       if (org.config.config.features.members.signup_mode == 'open') {
         setJoinMethod('open')
@@ -39,7 +39,7 @@ function OrgAccess() {
         setJoinMethod('inviteOnly')
       }
     }
-  }
+  }, [org])
 
   async function deleteInvite(invite: any) {
     let res = await deleteInviteCode(org.id, invite.invite_code_uuid, access_token)
@@ -65,7 +65,7 @@ function OrgAccess() {
       getOrgJoinMethod()
       setIsLoading(false)
     }
-  }, [org, invites])
+  }, [getOrgJoinMethod, invites, org])
 
   return (
     <>

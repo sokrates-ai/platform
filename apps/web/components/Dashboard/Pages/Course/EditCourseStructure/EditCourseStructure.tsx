@@ -509,7 +509,7 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
     } finally {
       setIsApplying(false);
     }
-  }, [isApplying, importResult, courseUuid, tabUuid, chapterNames, problems, sourceUrl, access_token, onApplied]);
+  }, [isApplying, importResult, courseUuid, tabUuid, chapterNames, problems, sourceUrl, access_token, onApplied, onCancel]);
 
   const validationMessage =
     touched && !isValidUrl ? 'Enter a valid URL (starting with http:// or https://).' : undefined;
@@ -917,7 +917,7 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
   const course_structure = course ? course.courseStructure : {};
   const course_uuid = course ? course.courseStructure.course_uuid : '';
   const dispatchCourse = useCourseDispatch() as any;
-  const tabChapters = tabContent?.chapters ?? [];
+  const tabChapters = useMemo(() => tabContent?.chapters ?? [], [tabContent?.chapters]);
 
   const handleImportApplied = useCallback(async () => {
     try {
@@ -927,7 +927,6 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
       await revalidateTags(['courses'], props.orgslug);
       toast.success('Imported problems as new activities');
     } catch (error) {
-      console.error('Failed to refresh course after applying import', error);
       toast.error('Import applied, but refreshing the course failed.');
     } finally {
       setIsImportModalOpen(false);
@@ -1081,7 +1080,7 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
       return { nodes: layoutedNodes, edges: e };
     };
 
-    const onLayoutInternal = () => {
+    const onLayoutInternal = useCallback(() => {
       if (!nodes.length) return;
       const { nodes: lNodes, edges: lEdges } = getLayouted(nodes, edges);
       setIsAnimating(true);
@@ -1089,7 +1088,7 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
       setEdges(lEdges);
       setLayoutApplied(true);
       setTimeout(() => setIsAnimating(false), 500);
-    };
+    }, [edges, nodes, setEdges, setNodes]);
 
     // ----------------------- Effects ----------------------------------------
 
@@ -1119,7 +1118,7 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
 
       setNodes(newNodes);
       setEdges(newEdges);
-    }, [chapters]);
+    }, [chapters, setEdges, setNodes]);
 
     // Highlight selected node without rebuilding layout
     const highlightedNodes = useMemo(() =>
@@ -1134,7 +1133,7 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
     // trigger auto‑layout only once after nodes are ready OR after chapters changed
     useEffect(() => {
       if (!layoutApplied && nodes.length) onLayoutInternal();
-    }, [layoutApplied, nodes]);
+    }, [layoutApplied, nodes, onLayoutInternal]);
 
     // trigger auto-layout when requested by parent (button click)
     useEffect(() => {
@@ -1255,8 +1254,6 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
 
   useEffect(() => setWinReady(true), [props.course_uuid, tabChapters, course]);
 
-  if (!course) return <PageLoading />;
-
   const currentChapter = tabChapters.find((c: any) => c.id === chapterID);
   const sidePanelOpen = winReady && currentChapter;
 
@@ -1265,6 +1262,8 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
       setChapterID(-1);
     }
   }, [tabChapters, chapterID]);
+
+  if (!course) return <PageLoading />;
 
   return (
     <div className="relative flex h-full w-full overflow-hidden gap-6 px-6 py-6" data-selected-tab={selectedTabId}>

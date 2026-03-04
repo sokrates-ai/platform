@@ -10,7 +10,6 @@ export async function generateGradingCriteria(
   let urlComplete = `${getAPIUrl()}tasks/criteria/`
   // TODO: use relative URL if not in localhost!!!
 
-  console.log('generate grading criteria url, ', urlComplete)
 
   // Normalize fields like in createExercise if needed
   // (course_id handling is not mentioned for criteria, so skipping here)

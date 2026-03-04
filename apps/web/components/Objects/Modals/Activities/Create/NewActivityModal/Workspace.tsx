@@ -49,8 +49,6 @@ function NewWorkspace({
   )
   const exercises = data as Exercise[]
 
-  console.log(exercises)
-
   const handleNameChange = (e: any) => {
     setActivityName(e.target.value)
   }
@@ -73,8 +71,6 @@ function NewWorkspace({
 
   const handleActivityTaskIDChange = (e: any) => {
     const id = parseInt(e.target.value)
-    console.log(id)
-
     if (id === -1) {
       return
     }

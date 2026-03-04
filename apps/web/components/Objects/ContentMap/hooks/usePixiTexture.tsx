@@ -7,8 +7,6 @@ import * as PIXI from 'pixi.js';
 export default function usePixiTexture(url: string): PIXI.Texture | null {
   const [texture, setTexture] = useState<PIXI.Texture | null>(null);
 
-  console.log('usePixiTexture', url);
-
     useEffect(() => {
     if (!url) return; // <-- just return, not null
 
@@ -22,7 +20,7 @@ export default function usePixiTexture(url: string): PIXI.Texture | null {
 
     PIXI.Assets.load(url)
         .then((tex) => active && setTexture(tex as PIXI.Texture))
-        .catch(console.error);
+        .catch(() => {});
 
     return () => {
         active = false;

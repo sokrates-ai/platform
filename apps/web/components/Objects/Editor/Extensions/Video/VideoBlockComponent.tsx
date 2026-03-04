@@ -49,8 +49,6 @@ function VideoBlockComponents(props: any) {
 
   useEffect(() => { }, [course, org])
 
-  console.log(blockObject)
-
   return (
     <NodeViewWrapper className="block-video">    
       <FileUploadBlock isEditable={isEditable} isLoading={isLoading} isEmpty={!blockObject} Icon={Video}>

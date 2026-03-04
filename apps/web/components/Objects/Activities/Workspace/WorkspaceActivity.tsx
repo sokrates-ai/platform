@@ -1,4 +1,3 @@
-import { useOrg } from '@components/Contexts/OrgContext'
 import { getAPIUrl } from '@services/config/config'
 // import { getActivityMediaDirectory } from '@services/media/media'
 import { RequestBodyWithAuthHeader } from '@services/utils/ts/requests'
@@ -41,16 +40,11 @@ function WorkspaceActivity({
   access_token: string
   backlink: string
 }) {
-  const org = useOrg() as any
   const [url, setURL] = React.useState<string | null>(null)
   const [progress, setProgress] = React.useState(0)
 
-  React.useEffect(() => {}, [activity, org])
-
   const searchParams = useSearchParams()
   const taskIDParam = searchParams.get('task_id')
-
-  console.log('taskIDParam', taskIDParam)
 
   useEffect(() => {
     // Simulate progress during loading
@@ -70,8 +64,6 @@ function WorkspaceActivity({
       task_id = parseInt(taskIDParam)
     }
 
-    console.log('task_id', task_id)
-
     // Fetch redirect URL here
     createSession(activity.activity_uuid, task_id, access_token).then((res) => {
       const url = `${res.workspace_url}/w/${encodeURIComponent(
@@ -85,8 +77,6 @@ function WorkspaceActivity({
       setTimeout(() => {
           if (!window.location.href.includes("localhost")) {
              window.location.replace(url);
-          } else {
-              console.log(url)
           }
       }, 50)
     })

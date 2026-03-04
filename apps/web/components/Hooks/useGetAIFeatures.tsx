@@ -9,11 +9,11 @@ function useGetAIFeatures(props: UseGetAIFeatures) {
   const org = useOrg() as any
   const [isEnabled, setisEnabled] = React.useState(false)
 
-  function checkAvailableAIFeaturesOnOrg(feature: string) {
+  const checkAvailableAIFeaturesOnOrg = React.useCallback((feature: string) => {
     const config = org?.config?.config?.features.ai.enabled
 
     return config
-  }
+  }, [org])
 
   React.useEffect(() => {
     if (org) {
@@ -21,7 +21,7 @@ function useGetAIFeatures(props: UseGetAIFeatures) {
       let isEnabledStatus = checkAvailableAIFeaturesOnOrg(props.feature)
       setisEnabled(isEnabledStatus)
     }
-  }, [org])
+  }, [checkAvailableAIFeaturesOnOrg, org, props.feature])
 
   return isEnabled
 }

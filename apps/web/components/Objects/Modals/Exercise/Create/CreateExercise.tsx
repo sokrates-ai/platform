@@ -68,7 +68,7 @@ function CreateExerciseModal({
     if (currentCriterionIndex > criteria.length - 1) {
       setCurrentCriterionIndex(Math.max(0, criteria.length - 1))
     }
-  }, [criteria.length])
+  }, [criteria.length, currentCriterionIndex])
   React.useEffect(() => {
     setShowCriterionFlash(true)
     const t = setTimeout(() => setShowCriterionFlash(false), 900)

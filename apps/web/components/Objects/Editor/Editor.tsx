@@ -135,8 +135,6 @@ function Editor(props: Editor) {
     immediatelyRender: false,
   })
 
-  console.log(props.content)
-
   const isMobile = useMediaQuery('(max-width: 767px)')
   if (isMobile) {
     // TODO: Work on a better editor mobile experience

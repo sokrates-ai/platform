@@ -64,10 +64,13 @@ function ActivityClient(props: ActivityClientProps) {
     return null // return null if no matching activity is found
   }
 
-  async function getAssignmentUI() {
-    const assignment = await getAssignmentFromActivityUUID(activity.activity_uuid, access_token)
+  const getAssignmentUI = React.useCallback(async () => {
+    const assignment = await getAssignmentFromActivityUUID(
+      activity.activity_uuid,
+      access_token
+    )
     setAssignment(assignment.data)
-  }
+  }, [activity.activity_uuid, access_token])
 
   useEffect(() => {
     if (activity.activity_type == 'TYPE_DYNAMIC') {
@@ -81,8 +84,7 @@ function ActivityClient(props: ActivityClientProps) {
     else {
       setBgColor('bg-zinc-950');
     }
-  }
-    , [activity, activityid])
+  }, [activity, getAssignmentUI])
 
   const containerTopSpacing = React.useMemo(() => {
     if (activity?.activity_type === 'TYPE_DYNAMIC') {
@@ -286,6 +288,9 @@ function AssignmentTools(props: {
   const submission = useAssignmentSubmission() as any
   const session = useSokratesSession() as any;
   const [finalGrade, setFinalGrade] = React.useState(null) as any;
+  const assignmentUUID = props.assignment?.assignment_uuid
+  const userId = session.data?.user?.id
+  const accessToken = session.data?.tokens?.access_token
 
   const submitForGradingUI = async () => {
     if (props.assignment) {
@@ -303,11 +308,11 @@ function AssignmentTools(props: {
     }
   }
 
-  const getGradingBasedOnMethod = async () => {
+  const getGradingBasedOnMethod = React.useCallback(async () => {
     const res = await getFinalGrade(
-      session.data?.user?.id,
-      props.assignment?.assignment_uuid,
-      session.data?.tokens?.access_token
+      userId,
+      assignmentUUID,
+      accessToken
     );
 
     if (res.success) {
@@ -333,7 +338,7 @@ function AssignmentTools(props: {
       setFinalGrade(displayGrade);
     } else {
     }
-  };
+  }, [assignmentUUID, accessToken, userId]);
 
   // Helper function to convert numeric grade to alphabet grade
   function convertNumericToAlphabet(grade: any, maxGrade: any) {
@@ -349,8 +354,7 @@ function AssignmentTools(props: {
     if (submission && submission.length > 0 && submission[0].submission_status === 'GRADED') {
       getGradingBasedOnMethod();
     }
-  }
-    , [submission, props.assignment])
+  }, [submission, getGradingBasedOnMethod])
 
   if (!submission || submission.length === 0) {
     return (

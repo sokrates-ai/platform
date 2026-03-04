@@ -9,7 +9,6 @@ import {
   Smile,
   BarChart3,
   NotebookPen,
-  Backpack,
   Coins,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -28,9 +27,7 @@ import {
   Area,
   CartesianGrid,
 } from 'recharts'
-import { getAvatarUrl } from '@components/Objects/avatar'
 import { getMediaUrl } from '@services/media/media'
-import { getUriWithOrg } from '@services/config/config'
 import { ApiExercise, ApiStudent, ExerciseLog } from './shared'
 
 
@@ -251,7 +248,6 @@ export default function Component(props: {
     orgslug: string,
 }) {
   const students = props.apiStudents.map((s) => {
-      console.dir(s)
       const displayName = (s.first_name) ? (
         (s.first_name && s.last_name) ? (`${s.first_name} ${s.last_name}`) : s.first_name
       ) : s.email
@@ -282,7 +278,6 @@ export default function Component(props: {
   for (const student of students) {
       let currentDesk = desks[desks.length == 0 ? 0 : desks.length - 1]
 
-      console.dir(currentDesk)
 
       if (!currentDesk || currentDesk.students.length == 2) {
           desks.push(

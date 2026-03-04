@@ -181,6 +181,7 @@ export default function useCanvasShortcuts({
     snapToGrid,
     setLayout,
     setSelectedIds,
+    parentRef,
     viewport,
   ]);
 

@@ -82,7 +82,7 @@ function EditCourseGeneral(props: EditCourseStructureProps) {
         dispatchCourse({ type: 'setCourseStructure', payload: updatedCourse });
       }
     }
-  }, [formik.values, isLoading]);
+  }, [courseStructure, dispatchCourse, formik.initialValues, formik.values, isLoading]);
 
   return (
     <div>
