@@ -141,7 +141,7 @@ export default function OpenSignUpComponent() {
   useEffect(() => {
     // Revalidate when step changes
     formik.validateForm()
-  }, [currentStep, org])
+  }, [currentStep, org, formik])
 
   useEffect(() => {
     if (oauthErrorMessage && !error) {

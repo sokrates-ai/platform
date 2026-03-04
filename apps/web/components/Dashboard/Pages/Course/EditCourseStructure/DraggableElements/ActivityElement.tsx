@@ -247,7 +247,6 @@ const ACTIVITIES = {
 }
 
 const ActivityTypeIndicator = ({activityType, isMobile} : { activityType: keyof typeof ACTIVITIES, isMobile: boolean}) => {
-  console.log(activityType)
   const {displayName, Icon} = ACTIVITIES[activityType]
 
   return (
@@ -275,17 +274,17 @@ const ActivityElementOptions = ({ activity, isMobile }: { activity: any; isMobil
     }
   }
 
-  const fetchAssignmentUUID = async () => {
+  const fetchAssignmentUUID = React.useCallback(async () => {
     if (activity.activity_type === 'TYPE_ASSIGNMENT') {
       const assignment_uuid = await getAssignmentUUIDFromActivityUUID(activity.activity_uuid);
       if(assignment_uuid)
         setAssignmentUUID(assignment_uuid.replace('assignment_', ''));
     }
-  };
+  }, [access_token, activity.activity_type, activity.activity_uuid]);
 
   useEffect(() => {
     fetchAssignmentUUID();
-  }, [activity, course]);
+  }, [fetchAssignmentUUID]);
 
   return (
     <>

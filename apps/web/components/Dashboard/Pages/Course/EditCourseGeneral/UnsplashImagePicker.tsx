@@ -58,17 +58,17 @@ const UnsplashImagePicker: React.FC<UnsplashImagePickerProps> = ({ onSelect, onC
         setImages(prevImages => pageNum === 1 ? result.response.results : [...prevImages, ...result.response.results]);
       }
     } catch (error) {
-      console.error('Error fetching images:', error);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const debouncedFetchImages = useCallback(
-    debounce((searchQuery: string) => {
-      setPage(1);
-      fetchImages(searchQuery, 1);
-    }, 300),
+  const debouncedFetchImages = React.useMemo(
+    () =>
+      debounce((searchQuery: string) => {
+        setPage(1);
+        fetchImages(searchQuery, 1);
+      }, 300),
     [fetchImages]
   );
 

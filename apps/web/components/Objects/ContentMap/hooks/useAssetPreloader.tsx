@@ -7,8 +7,7 @@ const useAssetPreloader = () => {
         const spriteURL = (file: string): string => `/contentMap/${file}`;
         const urls = SPRITES.map(sprite => spriteURL(sprite.file));
         PIXI.Assets.load(urls)
-            .then(() => console.log("All textures preloaded"))
-            .catch(err => console.error("Error preloading textures:", err));
+            .catch(() => {});
     }, []);
 };
 

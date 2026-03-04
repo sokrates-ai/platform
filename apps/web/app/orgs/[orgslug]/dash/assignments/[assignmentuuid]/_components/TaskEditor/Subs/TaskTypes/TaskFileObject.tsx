@@ -72,16 +72,20 @@ export default function TaskFileObject({ view, user_id, assignmentTaskUUID }: Ta
 
     }
 
-    async function getAssignmentTaskSubmissionFromUserUI() {
+    const getAssignmentTaskSubmissionFromUserUI = React.useCallback(async () => {
         if (assignmentTaskUUID) {
-            const res = await getAssignmentTaskSubmissionsMe(assignmentTaskUUID, assignment.assignment_object.assignment_uuid, access_token);
+            const res = await getAssignmentTaskSubmissionsMe(
+                assignmentTaskUUID,
+                assignment.assignment_object.assignment_uuid,
+                access_token
+            );
             if (res.success) {
                 setUserSubmissions(res.data.task_submission);
                 setInitialUserSubmissions(res.data.task_submission);
             }
 
         }
-    }
+    }, [access_token, assignment.assignment_object.assignment_uuid, assignmentTaskUUID])
 
     const submitFC = async () => {
         // Save the quiz to the server
@@ -104,7 +108,7 @@ export default function TaskFileObject({ view, user_id, assignmentTaskUUID }: Ta
         }
     };
 
-    async function getAssignmentTaskUI() {
+    const getAssignmentTaskUI = React.useCallback(async () => {
         if (assignmentTaskUUID) {
             const res = await getAssignmentTask(assignmentTaskUUID, access_token);
             if (res.success) {
@@ -113,7 +117,7 @@ export default function TaskFileObject({ view, user_id, assignmentTaskUUID }: Ta
             }
 
         }
-    }
+    }, [access_token, assignmentTaskUUID])
 
     // Detect changes between initial and current submissions
     useEffect(() => {
@@ -122,13 +126,13 @@ export default function TaskFileObject({ view, user_id, assignmentTaskUUID }: Ta
         } else {
             setShowSavingDisclaimer(false);
         }
-    }, [userSubmissions]);
+    }, [initialUserSubmissions.fileUUID, userSubmissions.fileUUID]);
 
     /* STUDENT VIEW CODE */
 
     /* GRADING VIEW CODE */
     const [userSubmissionObject, setUserSubmissionObject] = useState<any>(null);
-    async function getAssignmentTaskSubmissionFromIdentifiedUserUI() {
+    const getAssignmentTaskSubmissionFromIdentifiedUserUI = React.useCallback(async () => {
         if (assignmentTaskUUID && user_id) {
             const res = await getAssignmentTaskSubmissionsUser(assignmentTaskUUID, user_id, assignment.assignment_object.assignment_uuid, access_token);
             if (res.success) {
@@ -138,7 +142,7 @@ export default function TaskFileObject({ view, user_id, assignmentTaskUUID }: Ta
             }
 
         }
-    }
+    }, [access_token, assignment.assignment_object.assignment_uuid, assignmentTaskUUID, user_id])
 
     async function gradeCustomFC(grade: number) {
         if (assignmentTaskUUID) {
@@ -181,7 +185,13 @@ export default function TaskFileObject({ view, user_id, assignmentTaskUUID }: Ta
             getAssignmentTaskSubmissionFromIdentifiedUserUI();
         }
     }
-        , [assignmentTaskUUID])
+        , [
+            assignmentTaskUUID,
+            getAssignmentTaskSubmissionFromIdentifiedUserUI,
+            getAssignmentTaskSubmissionFromUserUI,
+            getAssignmentTaskUI,
+            view,
+        ])
 
     return (
         <AssignmentBoxUI submitFC={submitFC} showSavingDisclaimer={showSavingDisclaimer} view={view} gradeCustomFC={gradeCustomFC} currentPoints={userSubmissionObject?.grade} maxPoints={assignmentTaskOutsideProvider?.max_grade_value} type="file">

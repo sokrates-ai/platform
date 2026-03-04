@@ -48,7 +48,7 @@ export const AuthenticatedClientElement = (
     return false
   }
 
-  function check() {
+  const check = React.useCallback(() => {
     if (session.status == 'unauthenticated') {
       setIsAllowed(false)
       return
@@ -66,7 +66,14 @@ export const AuthenticatedClientElement = (
         )
       }
     }
-  }
+  }, [
+    org?.org_uuid,
+    props.action,
+    props.checkMethod,
+    props.ressourceType,
+    session.data?.roles,
+    session.status,
+  ])
 
   React.useEffect(() => {
     if (session.status == 'loading') {
@@ -74,7 +81,7 @@ export const AuthenticatedClientElement = (
     }
 
     check()
-  }, [session.data, org])
+  }, [check, session.status])
 
   return <>{isAllowed && props.children}</>
 }

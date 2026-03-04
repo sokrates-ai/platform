@@ -156,7 +156,7 @@ function TaskQuizObject({ view, assignmentTaskUUID, user_id }: TaskQuizObjectPro
         });
     }
 
-    async function getAssignmentTaskUI() {
+    const getAssignmentTaskUI = React.useCallback(async () => {
         if (assignmentTaskUUID) {
             const res = await getAssignmentTask(assignmentTaskUUID, access_token);
             if (res.success) {
@@ -165,18 +165,22 @@ function TaskQuizObject({ view, assignmentTaskUUID, user_id }: TaskQuizObjectPro
             }
 
         }
-    }
+    }, [access_token, assignmentTaskUUID])
 
-    async function getAssignmentTaskSubmissionFromUserUI() {
+    const getAssignmentTaskSubmissionFromUserUI = React.useCallback(async () => {
         if (assignmentTaskUUID) {
-            const res = await getAssignmentTaskSubmissionsMe(assignmentTaskUUID, assignment.assignment_object.assignment_uuid, access_token);
+            const res = await getAssignmentTaskSubmissionsMe(
+                assignmentTaskUUID,
+                assignment.assignment_object.assignment_uuid,
+                access_token
+            );
             if (res.success) {
                 setUserSubmissions(res.data.task_submission);
                 setInitialUserSubmissions(res.data.task_submission);
             }
 
         }
-    }
+    }, [access_token, assignment.assignment_object.assignment_uuid, assignmentTaskUUID])
 
     // Detect changes between initial and current submissions
     useEffect(() => {
@@ -234,9 +238,14 @@ function TaskQuizObject({ view, assignmentTaskUUID, user_id }: TaskQuizObjectPro
 
     /* GRADING VIEW CODE */
     const [userSubmissionObject, setUserSubmissionObject] = useState<any>(null);
-    async function getAssignmentTaskSubmissionFromIdentifiedUserUI() {
+    const getAssignmentTaskSubmissionFromIdentifiedUserUI = React.useCallback(async () => {
         if (assignmentTaskUUID && user_id) {
-            const res = await getAssignmentTaskSubmissionsUser(assignmentTaskUUID, user_id, assignment.assignment_object.assignment_uuid, access_token);
+            const res = await getAssignmentTaskSubmissionsUser(
+                assignmentTaskUUID,
+                user_id,
+                assignment.assignment_object.assignment_uuid,
+                access_token
+            );
             if (res.success) {
                 setUserSubmissions(res.data.task_submission);
                 setUserSubmissionObject(res.data);
@@ -244,7 +253,7 @@ function TaskQuizObject({ view, assignmentTaskUUID, user_id }: TaskQuizObjectPro
             }
 
         }
-    }
+    }, [access_token, assignment.assignment_object.assignment_uuid, assignmentTaskUUID, user_id])
 
     async function gradeFC() {
         if (assignmentTaskUUID) {
@@ -307,7 +316,15 @@ function TaskQuizObject({ view, assignmentTaskUUID, user_id }: TaskQuizObjectPro
             getAssignmentTaskSubmissionFromIdentifiedUserUI();
 
         }
-    }, [assignmentTaskState, assignment, assignmentTaskStateHook, access_token]);
+    }, [
+        assignmentTaskState,
+        assignmentTaskStateHook,
+        assignmentTaskUUID,
+        getAssignmentTaskSubmissionFromIdentifiedUserUI,
+        getAssignmentTaskSubmissionFromUserUI,
+        getAssignmentTaskUI,
+        view,
+    ]);
 
     if (questions && questions.length >= 0) {
         return (

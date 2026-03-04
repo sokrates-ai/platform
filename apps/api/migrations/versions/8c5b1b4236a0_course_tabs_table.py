@@ -246,13 +246,6 @@ def downgrade() -> None:
         sa.Column('name', sa.String()),
         sa.Column('position', sa.Integer()),
     )
-    coursechapter_graph_table = sa.Table(
-        'coursechapter_graph',
-        metadata,
-        sa.Column('course_id', sa.Integer()),
-        sa.Column('tab_uuid', sa.String()),
-    )
-
     connection = bind.connect()
     courses = connection.execute(sa.select(course_table)).fetchall()
 

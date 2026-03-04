@@ -87,19 +87,19 @@ function CreateCourseModal({ closeModal, orgslug }: any) {
     }
   })
 
-  const getOrgMetadata = async () => {
+  const getOrgMetadata = React.useCallback(async () => {
     const org = await getOrganizationContextInfoWithoutCredentials(orgslug, {
       revalidate: 360,
       tags: ['organizations'],
     })
     setOrgId(org.id)
-  }
+  }, [orgslug])
 
   useEffect(() => {
     if (orgslug) {
       getOrgMetadata()
     }
-  }, [orgslug])
+  }, [getOrgMetadata, orgslug])
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -163,11 +163,13 @@ function CreateCourseModal({ closeModal, orgslug }: any) {
               {formik.values.thumbnail ? (
                 <img
                   src={URL.createObjectURL(formik.values.thumbnail)}
+                  alt="Selected course thumbnail preview"
                   className={`${isUploading ? 'animate-pulse' : ''} shadow w-[200px] h-[100px] rounded-md`}
                 />
               ) : (
                 <img
                   src="/empty_thumbnail.webp"
+                  alt="Default course thumbnail"
                   className="shadow w-[200px] h-[100px] rounded-md bg-gray-200"
                 />
               )}

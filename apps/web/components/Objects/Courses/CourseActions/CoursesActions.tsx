@@ -98,7 +98,6 @@ const Actions = ({ courseuuid, orgslug, course }: CourseActionsProps) => {
         )
         setLinkedProducts(response.data || [])
       } catch (error) {
-        console.error('Failed to fetch linked products')
       } finally {
         setIsLoading(false)
       }
@@ -119,7 +118,6 @@ const Actions = ({ courseuuid, orgslug, course }: CourseActionsProps) => {
         setHasAccess(response.has_access)
         
       } catch (error) {
-        console.error('Failed to check course access')
         setHasAccess(false)
       }
     }
@@ -127,7 +125,7 @@ const Actions = ({ courseuuid, orgslug, course }: CourseActionsProps) => {
     if (linkedProducts.length > 0) {
       checkAccess()
     }
-  }, [course.id, course.org_id, session.data?.tokens?.access_token, linkedProducts])
+  }, [course.id, course.org_id, linkedProducts, session.data?.tokens?.access_token, session.data?.user])
 
   const handleCourseAction = async () => {
     if (!session.data?.user) {

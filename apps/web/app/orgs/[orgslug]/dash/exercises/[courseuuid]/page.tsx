@@ -66,7 +66,6 @@ function ExerciseCourseHome(params: ExerciseProps) {
     (url: string) => swrFetcher(url, access_token)
   )
 
-  console.log(COURSES_URL)
   const courseIDString = params.params.courseuuid
   let course_id = 100000000
   if (courseIDString === 'unassigned') {

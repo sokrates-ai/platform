@@ -606,7 +606,6 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
             if (error?.name === 'AbortError') {
                 return;
             }
-            console.error('Failed to export map', error);
             if (typeof window !== 'undefined' && typeof window.alert === 'function') {
                 window.alert('Export failed. Please try again.');
             }
@@ -628,7 +627,6 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
                     },
                 });
             } catch (error) {
-                console.error('Failed to import map', error);
                 if (typeof window !== 'undefined' && typeof window.alert === 'function') {
                     window.alert('Import failed. Please ensure the file is a valid JSON export.');
                 }
@@ -661,7 +659,6 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
                 if (error?.name === 'AbortError') {
                     return;
                 }
-                console.error('Failed to open map file', error);
                 if (typeof window !== 'undefined' && typeof window.alert === 'function') {
                     window.alert('Selecting a map JSON failed. Please try again.');
                 }
@@ -749,7 +746,6 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
 
                 await response.blob();
             } catch (error) {
-                console.error('Failed to proxy asset', error);
                 setCustomSpriteError('Failed to proxy the provided URL. Please verify the address and try again.');
                 return;
             }

@@ -64,6 +64,7 @@ function ThumbnailUpdate() {
             {localThumbnail ? (
               <img
                 src={URL.createObjectURL(localThumbnail)}
+                alt="Selected course thumbnail preview"
                 className={`${isLoading ? 'animate-pulse' : ''} shadow w-[200px] h-[100px] rounded-md`}
               />
             ) : (
@@ -73,6 +74,7 @@ function ThumbnailUpdate() {
                   course.courseStructure.course_uuid,
                   course.courseStructure.thumbnail_image
                 ) : '/empty_thumbnail.webp'}`}
+                alt="Course thumbnail"
                 className="shadow w-[200px] h-[100px] rounded-md bg-gray-200"
               />
             )}

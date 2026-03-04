@@ -48,12 +48,15 @@ const CourseStartedView = ({
   const chapterFromUrl = chapterParam ? parseInt(chapterParam, 10) : null
   const initialTabParamRef = useRef(searchParams.get('tab'))
 
-  const rawTabMetadata =
-    course?.tabMetadata ??
-    course?.tab_metadata ??
-    course?.courseStructure?.tabMetadata ??
-    course?.courseStructure?.tab_metadata ??
-    []
+  const rawTabMetadata = useMemo(
+    () =>
+      course?.tabMetadata ??
+      course?.tab_metadata ??
+      course?.courseStructure?.tabMetadata ??
+      course?.courseStructure?.tab_metadata ??
+      [],
+    [course],
+  )
 
   const normalizedTabs = useMemo(() => {
     const baseArray = Array.isArray(rawTabMetadata)
@@ -133,12 +136,15 @@ const CourseStartedView = ({
     )
   }, [rawTabMetadata])
 
-  const rawTabStore =
-    course?.tabStore ??
-    course?.tab_store ??
-    course?.courseStructure?.tabStore ??
-    course?.courseStructure?.tab_store ??
-    {}
+  const rawTabStore = useMemo(
+    () =>
+      course?.tabStore ??
+      course?.tab_store ??
+      course?.courseStructure?.tabStore ??
+      course?.courseStructure?.tab_store ??
+      {},
+    [course],
+  )
 
   const tabMaps = useMemo(() => {
     const fallbackMap =
@@ -425,7 +431,6 @@ const CourseStartedView = ({
                     key={tab.id}
                     type="button"
                     onClick={() => {
-                      console.log('Tab clicked:', tab.name, tab.id)
                       setSelectedTab(tab.id)
                       setMenuOpen(false)
                     }}

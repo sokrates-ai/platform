@@ -27,7 +27,6 @@ function ManageCourseMembers(props: EditCourseAccessProps) {
   const TASKS_URL = `${getAPIUrl()}tasks/list/page/${tasks_page}/limit/${tasks_limit}`
   const { data: tasks }: { data: ApiExercise[] } = useSWR(TASKS_URL, (url: string) => swrFetcher(url, access_token))
 
-  console.log('tasks', tasks)
 
   const { data: students }: { data: ApiStudent[] } = useSWR(
     courseStructure

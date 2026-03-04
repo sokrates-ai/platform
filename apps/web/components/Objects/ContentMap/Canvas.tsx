@@ -126,7 +126,6 @@ const Canvas: React.FC<CanvasProps> = ({
                     boundaries: layout.boundaries
                 });
             } catch (error) {
-                console.error("Error parsing dropped data", error);
             }
         }
     };

@@ -194,17 +194,21 @@ function UpdateTaskRef() {
         }
     }
 
-    async function getActivityUI() {
-        const res = await getActivityByID(assignment.assignment_object.activity_id, null, access_token)
+    const getActivityUI = React.useCallback(async () => {
+        const res = await getActivityByID(
+            assignment.assignment_object.activity_id,
+            null,
+            access_token
+        )
         setActivity(res.data)
-    }
+    }, [access_token, assignment.assignment_object.activity_id])
 
 
 
     useEffect(() => {
         getActivityUI()
     }
-        , [assignmentTaskState, org])
+        , [assignmentTaskState, org, getActivityUI])
 
 
 

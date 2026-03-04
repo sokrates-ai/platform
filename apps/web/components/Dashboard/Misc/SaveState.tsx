@@ -140,7 +140,7 @@ function SaveState(props: { orgslug: string }) {
     dispatchCourse({ type: 'setIsSaved' })
   }
 
-  const handleCourseOrder = (course_structure: any) => {
+  const handleCourseOrder = React.useCallback((course_structure: any) => {
     const chapters = course_structure.chapters
     const chapter_order_by_ids = chapters.map((chapter: any) => {
       return {
@@ -157,21 +157,21 @@ function SaveState(props: { orgslug: string }) {
       payload: { chapter_order_by_ids: chapter_order_by_ids },
     })
     dispatchCourse({ type: 'setIsNotSaved' })
-  }
+  }, [dispatchCourse])
 
-  const initOrderPayload = () => {
+  const initOrderPayload = React.useCallback(() => {
     if (course_structure && course_structure.chapters) {
       handleCourseOrder(course_structure)
       dispatchCourse({ type: 'setIsSaved' })
     }
-  }
+  }, [course_structure, dispatchCourse, handleCourseOrder])
 
-  const changeOrderPayload = () => {
+  const changeOrderPayload = React.useCallback(() => {
     if (course_structure && course_structure.chapters) {
       handleCourseOrder(course_structure)
       dispatchCourse({ type: 'setIsNotSaved' })
     }
-  }
+  }, [course_structure, dispatchCourse, handleCourseOrder])
 
   useEffect(() => {
     if (course_structure?.chapters) {
@@ -180,7 +180,7 @@ function SaveState(props: { orgslug: string }) {
     if (course_structure?.chapters && !saved) {
       changeOrderPayload()
     }
-  }, [course_structure]) // This effect depends on the `course_structure` variable
+  }, [changeOrderPayload, course_structure, initOrderPayload, saved]) // This effect depends on the `course_structure` variable
 
   return (
     <div className="flex space-x-4">
