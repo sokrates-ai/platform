@@ -117,7 +117,7 @@ docker-build() {
 
     DOMAIN="ERROR"
     if [ "${TAG}" = "prod" ]; then
-        DOMAIN="app.sokrates.ae.org"
+        DOMAIN="sokrates.ae.org"
     elif [ "${TAG}" = "staging" ]; then
         DOMAIN="staging.sokrates.ae.org"
     else
