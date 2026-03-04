@@ -5,12 +5,13 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn } from "next-auth/react"
 import { useFormik } from 'formik'
-import { AlertTriangle, UserRoundPlus, Loader2, Mail, Lock } from 'lucide-react'
+import { AlertTriangle, Loader2, Mail, Lock } from 'lucide-react'
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import AuthCard from '@components/Pages/AuthCard'
+import HpiKeycloakButton from '@components/Pages/HpiKeycloakButton'
 
 interface LoginClientProps {
   org: any
@@ -205,26 +206,17 @@ const LoginClient = (props: LoginClientProps) => {
           <div className="flex-1 border-t border-[#666666]"></div>
         </div>
 
-        <Button
-          variant="outline"
-          className="w-full h-12 border-2 border-[#707070] bg-white hover:bg-gray-50 rounded-lg flex items-center justify-center"
-          onClick={async () => {
-            try {
-              await signIn('keycloak', { callbackUrl: '/redirect_from_auth' })
-            } catch (err) {
-              setError('Keycloak sign-in failed. Check realm/issuer/client settings.')
-            }
-          }}
-        >
-          Continue with Keycloak
-        </Button>
+        <HpiKeycloakButton className="mb-6" onError={setError} />
 
-        <Link href={`/signup?orgslug=${props.org.slug}`}>
-          <Button variant="outline" className="w-full h-12 border-2 border-[#707070] bg-white hover:bg-gray-50 rounded-lg flex items-center justify-center">
-            <UserRoundPlus className="mr-2 h-4 w-4" />
-            Create an Account
-          </Button>
-        </Link>
+        <p className="text-center font-semibold text-sm text-[#454545]">
+          Don&apos;t have an account?{' '}
+          <Link
+            href={`/signup?orgslug=${props.org.slug}`}
+            className="font-semibold text-[#e25a26] hover:underline"
+          >
+            Sign up
+          </Link>
+        </p>
       </AuthCard>
     </div>
   )

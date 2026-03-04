@@ -7,7 +7,6 @@ import {
 import { LEARNHOUSE_TOP_DOMAIN, getUriWithOrg } from '@services/config/config'
 import { getResponseMetadata } from '@services/utils/ts/requests'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import GoogleProvider from 'next-auth/providers/google'
 import KeycloakProvider from 'next-auth/providers/keycloak'
 
 const domain = `.${LEARNHOUSE_TOP_DOMAIN()}`
@@ -46,10 +45,6 @@ export const nextAuthOptions = {
 					return null
 				}
 			},
-		}),
-		GoogleProvider({
-			clientId: process.env.LEARNHOUSE_GOOGLE_CLIENT_ID || '',
-			clientSecret: process.env.LEARNHOUSE_GOOGLE_CLIENT_SECRET || '',
 		}),
 		]
 
@@ -102,21 +97,7 @@ export const nextAuthOptions = {
 				token.user = user
 			}
 
-			// Sign up with Google
-			if (account?.provider == 'google' && user) {
-				let unsanitized_req = await loginWithOAuthToken(
-					user.email,
-					'google',
-					account.access_token
-				)
-				let userFromOAuth = await getResponseMetadata(unsanitized_req)
-				if (userFromOAuth.success && userFromOAuth.data?.tokens?.access_token) {
-					token.user = userFromOAuth.data
-				} else {
-					token.oauth_error = userFromOAuth.data?.detail || 'google_oauth_failed'
-				}
-			}
-
+			// Sign up with Keycloak
 			if (account?.provider == 'keycloak' && user) {
 				let unsanitized_req = await loginWithOAuthToken(
 					user?.email,

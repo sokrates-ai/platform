@@ -1,0 +1,43 @@
+{
+  "realm": "learnhouse",
+  "enabled": true,
+  "displayName": "Learnhouse Dev",
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "clients": [
+    {
+      "clientId": "learnhouse-web",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "h2PxfJjCepQzf9MUOYqsSHuNV1Zk3rEl",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://localhost:3000/api/auth/callback/keycloak"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "max.mustermann",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Max",
+      "lastName": "Mustermann",
+      "email": "max.mustermann@student.hpi.uni-potsdam.de",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

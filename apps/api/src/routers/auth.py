@@ -8,7 +8,7 @@ from src.db.users import AnonymousUser, UserRead
 from src.core.events.database import get_db_session
 from config.config import get_learnhouse_config
 from src.security.auth import AuthJWT, authenticate_user, get_current_user
-from src.services.auth.utils import signWithGoogle, signWithKeycloak
+from src.services.auth.utils import signWithKeycloak
 
 
 router = APIRouter()
@@ -79,7 +79,7 @@ async def login(
 
 class ThirdPartyLogin(BaseModel):
     email: Optional[EmailStr] = None
-    provider: Literal["google", "keycloak"]
+    provider: Literal["keycloak"]
     access_token: str
 
 
@@ -94,11 +94,6 @@ async def third_party_login(
     Authorize: AuthJWT = Depends(),
 ):
     user = None
-
-    if body.provider == "google":
-        user = await signWithGoogle(
-            request, body.access_token, body.email, org_id, current_user, db_session
-        )
 
     if body.provider == "keycloak":
         user = await signWithKeycloak(

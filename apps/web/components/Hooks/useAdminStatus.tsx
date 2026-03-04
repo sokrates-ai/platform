@@ -21,9 +21,7 @@ function useAdminStatus() {
                     role.org.id === org.id &&
                     (
                         role.role.id === 1 ||
-                        role.role.id === 2 ||
-                        role.role.role_uuid === 'role_global_admin' ||
-                        role.role.role_uuid === 'role_global_maintainer'
+                        role.role.role_uuid === 'role_global_admin'
                     )
                 );
             });
@@ -39,4 +37,3 @@ function useAdminStatus() {
 }
 
 export default useAdminStatus;
-

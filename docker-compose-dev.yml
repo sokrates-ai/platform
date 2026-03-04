@@ -44,7 +44,7 @@ services:
       - "8000:8000"
   keycloak:
     image: quay.io/keycloak/keycloak:25.0
-    command: ["start-dev"]
+    command: ["start-dev", "--import-realm"]
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
@@ -52,6 +52,7 @@ services:
       - "8081:8080"
     volumes:
       - sk-keycloak:/opt/keycloak/data
+      - ./extra/keycloak/realm-learnhouse.json:/opt/keycloak/data/import/realm-learnhouse.json:ro
 
 volumes:
   sk-postgres:

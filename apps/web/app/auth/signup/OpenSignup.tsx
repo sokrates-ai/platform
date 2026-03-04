@@ -1,7 +1,7 @@
 'use client'
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { useFormik } from 'formik'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   AlertTriangle,
   Check,
@@ -15,6 +15,7 @@ import {
 import Link from 'next/link'
 import { signup } from '@services/auth/auth'
 import { useOrg } from '@components/Contexts/OrgContext'
+import HpiKeycloakButton from '@components/Pages/HpiKeycloakButton'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -60,6 +61,35 @@ export default function OpenSignUpComponent() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState('')
   const [message, setMessage] = React.useState('')
+  const searchParams = useSearchParams()
+
+  const oauthErrorMessage = useMemo(() => {
+    const code = searchParams?.get('error') || ''
+    const description = searchParams?.get('error_description') || ''
+
+    const messages: Record<string, string> = {
+      OAuthSignin: 'Keycloak sign-in failed. Check realm/issuer/client settings.',
+      OAuthCallback: 'Keycloak callback failed. Check redirect URI and client config.',
+      OAuthCreateAccount: 'Could not create account. Please try again.',
+      OAuthAccountNotLinked: 'Account already exists with a different sign-in method.',
+      AccessDenied: 'Access denied. Please contact an administrator.',
+      Configuration: 'Authentication is misconfigured. Check Keycloak env vars.',
+      Verification: 'Verification failed. Please try again.',
+    }
+
+    if (!code && !description) {
+      return ''
+    }
+
+    if (description) {
+      if (description.includes('Realm does not exist')) {
+        return 'Keycloak realm does not exist. Check LEARNHOUSE_KEYCLOAK_ISSUER.'
+      }
+      return `${messages[code] || 'Authentication error.'} (${description})`
+    }
+
+    return messages[code] || 'Authentication error. Please try again.'
+  }, [searchParams])
 
   const formik = useFormik({
     initialValues: {
@@ -112,6 +142,12 @@ export default function OpenSignUpComponent() {
     // Revalidate when step changes
     formik.validateForm()
   }, [currentStep, org])
+
+  useEffect(() => {
+    if (oauthErrorMessage && !error) {
+      setError(oauthErrorMessage)
+    }
+  }, [oauthErrorMessage, error])
 
   const isCurrentStepValid = () => {
     switch (currentStep) {
@@ -411,15 +447,7 @@ export default function OpenSignUpComponent() {
       </div>
 
       {/* HPI Keycloak Login */}
-      <Button
-        variant="outline"
-        disabled={true}
-        className="w-full h-12 border-2 border-[#707070] bg-white hover:bg-gray-50 rounded-lg flex items-center justify-center mb-6"
-        type="button"
-      >
-        <img src="hpi-logo.png" alt="HPI" className="w-5 h-5" />
-        <span className="text-[#454545] font-medium">HPI Keycloak</span>
-      </Button>
+      <HpiKeycloakButton className="mb-6" onError={setError} />
 
       <p className="text-center font-semibold text-sm text-[#454545]">
         Already have an account?{' '}
@@ -427,7 +455,7 @@ export default function OpenSignUpComponent() {
           href={`/login?orgslug=${org?.slug}`}
           className="font-semibold text-[#e25a26] hover:underline"
         >
-          Sign up
+          Sign in
         </Link>
       </p>
     </div>
