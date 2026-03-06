@@ -218,7 +218,7 @@ async def get_chapter(
     )
 
     incoming_edges = db_session.exec(statement).all()
-    print(f"INCOMING of {chapter.id} = {incoming_edges}")
+    # print(f"INCOMING of {chapter.id} = {incoming_edges}")
 
     tabs = get_sorted_course_tabs(chapter.course_id, db_session)
     fallback_tab_uuid = tabs[0].tab_uuid if tabs else "tab-1"
@@ -399,7 +399,7 @@ async def get_course_chapters(
         )
 
         incoming_edges = db_session.exec(statement).all()
-        print(f"INCOMING of {chapter.id} = {incoming_edges}")
+        # print(f"INCOMING of {chapter.id} = {incoming_edges}")
         chapter.tab_uuid = (
             incoming_edges[0].tab_uuid
             if incoming_edges and incoming_edges[0].tab_uuid

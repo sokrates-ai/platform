@@ -13,6 +13,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { X, PanelRightOpen, Download, Upload } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { getAPIUrl } from '@services/config/config';
 const ContentMap = dynamic(() => import('components/Objects/ContentMap/Canvas'), { ssr: false });
 
@@ -223,6 +224,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
     const [customSpriteUrl, setCustomSpriteUrl] = useState<string>('')
     const [customSpriteLabel, setCustomSpriteLabel] = useState<string>('')
     const [customSpriteError, setCustomSpriteError] = useState<string | null>(null)
+    const [useScaledPreview, setUseScaledPreview] = useState(false)
     const lastInitializedTabRef = React.useRef<string | null>(null);
     const lastInitializedMapSignatureRef = React.useRef<string | null>(null);
     const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -967,6 +969,14 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
                                         Drag assets onto the map or add your own image via URL.
                                     </p>
                                 </div>
+                                <div className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2">
+                                    <span className="text-xs font-medium text-gray-700">Preview scale</span>
+                                    <Switch
+                                        checked={useScaledPreview}
+                                        onCheckedChange={setUseScaledPreview}
+                                        aria-label="Toggle scaled preview"
+                                    />
+                                </div>
                                 <form onSubmit={handleCustomSpriteSubmit} className="space-y-3">
                                     <div className="space-y-1">
                                         <label
@@ -1030,12 +1040,19 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
                                             className="group flex flex-col items-center p-2 rounded-lg border bg-gray-50 hover:border-primary transition-colors cursor-grab active:cursor-grabbing shadow-sm"
                                         >
                                             <div className="relative w-full aspect-square flex items-center justify-center mb-1 bg-muted/40 rounded overflow-hidden">
-                                                <img
-                                                    src={sprite.previewSrc ?? resolveAssetPath(sprite.file)}
-                                                    alt={sprite.label}
-                                                    className="object-contain max-h-full max-w-full group-hover:scale-105 transition-transform"
-                                                    style={{ filter: "saturate(120%)" }}
-                                                />
+                                                <div
+                                                    className="flex h-full w-full items-center justify-center transition-transform"
+                                                    style={{
+                                                        transform: `scale(${useScaledPreview ? (sprite.scale ?? 1) * SPRITE_SCALE_FACTOR : 1})`,
+                                                    }}
+                                                >
+                                                    <img
+                                                        src={sprite.previewSrc ?? resolveAssetPath(sprite.file)}
+                                                        alt={sprite.label}
+                                                        className="h-full w-full object-contain group-hover:scale-105 transition-transform"
+                                                        style={{ filter: "saturate(120%)" }}
+                                                    />
+                                                </div>
                                             </div>
                                             <span className="text-xs font-medium truncate w-full text-center text-muted-foreground group-hover:text-foreground">
                                                 {sprite.label}

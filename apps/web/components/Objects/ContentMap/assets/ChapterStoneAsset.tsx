@@ -16,9 +16,9 @@ import type {
 
 extend({ Container, Sprite });
 
-const DEFAULT_ICON = '/chapterStones/defaultIcon.svg';
+export const DEFAULT_CHAPTER_STONE_ICON = '/chapterStones/defaultIcon.svg';
 
-const DEFAULT_THEME: ChapterStoneTheme = {
+export const DEFAULT_CHAPTER_STONE_THEME: ChapterStoneTheme = {
   locked: {
     skin: '/chapterStones/locked.svg',
     iconStroke: 0x9d9993,
@@ -54,8 +54,8 @@ const ChapterStoneAsset = React.forwardRef<Container, Props>(
       chapterState = 'unlocked',
       assetId,
 
-      theme = DEFAULT_THEME,
-      icon = DEFAULT_ICON,
+      theme = DEFAULT_CHAPTER_STONE_THEME,
+      icon = DEFAULT_CHAPTER_STONE_ICON,
       scaleFactor = 6,
       verticalSquish = 8,
     },

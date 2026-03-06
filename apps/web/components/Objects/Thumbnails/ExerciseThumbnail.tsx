@@ -87,7 +87,7 @@ function ExerciseThumbnail(props: PropsType) {
             checkMethod="roles"
             orgId={props.orgId}
           >
-            <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+            <DropdownMenu modal={false} open={dropdownOpen} onOpenChange={setDropdownOpen}>
               <DropdownMenuTrigger asChild>
                 <button
                   className="p-1 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-md"

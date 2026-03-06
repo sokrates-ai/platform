@@ -102,7 +102,7 @@ const AdminEditOptions: React.FC<{
     checkMethod="roles"
     orgId={course.org_id}
   >
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <button className="p-1 bg-white rounded-md transition-colors group">
           <EllipsisVertical

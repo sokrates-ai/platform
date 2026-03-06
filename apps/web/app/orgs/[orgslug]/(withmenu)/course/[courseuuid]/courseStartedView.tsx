@@ -8,6 +8,13 @@ import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import Canvas, { LayoutState } from '@components/Objects/ContentMap/Canvas'
 import { DoorOpen, EyeOff, Menu, X } from 'lucide-react'
 import { getUriWithOrg } from '@services/config/config'
+import usePrefetchPixiAssets from '@components/Objects/ContentMap/hooks/usePrefetchPixiAssets'
+import { AnimatePresence, motion } from 'framer-motion'
+import {
+  DEFAULT_CHAPTER_STONE_ICON,
+  DEFAULT_CHAPTER_STONE_THEME,
+} from '@components/Objects/ContentMap/assets/ChapterStoneAsset'
+import { getSpriteUrl } from '@components/Objects/ContentMap/utils/spriteUrl'
 import {
   buildActivityTabIndex,
   getCourseFallbackTabId,
@@ -367,6 +374,37 @@ const CourseStartedView = ({
     }
   }, [tabMaps, selectedTab, course])
 
+  const prefetchUrls = useMemo(() => {
+    const urls = new Set<string>()
+    const addUrl = (url?: string) => {
+      if (url) {
+        urls.add(url)
+      }
+    }
+
+    const assets = Array.isArray(layout.layout) ? layout.layout : []
+    assets.forEach((asset) => {
+      if (asset?.file) {
+        addUrl(getSpriteUrl(asset.file))
+      }
+      if (asset?.type?.kind === 'chapter') {
+        Object.values(DEFAULT_CHAPTER_STONE_THEME).forEach((visual) => {
+          const skin = visual?.skin
+          if (!skin) return
+          addUrl(skin)
+          if (skin.endsWith('.svg')) {
+            addUrl(skin.replace(/\.svg$/, '-pressed.svg'))
+          }
+        })
+        addUrl(DEFAULT_CHAPTER_STONE_ICON)
+      }
+    })
+
+    return Array.from(urls)
+  }, [layout.layout])
+
+  const assetsReady = usePrefetchPixiAssets(prefetchUrls, !!course)
+
   // ✅ Initialize from URL param first, then fall back to prop
   const [chapterDialogOpen, setChapterDialogOpen] = useState(
     chapterFromUrl != null || selectedChapterId != null,
@@ -390,6 +428,20 @@ const CourseStartedView = ({
 
   return (
     <div className="relative flex h-screen flex-col overflow-hidden">
+      <AnimatePresence>
+        {!assetsReady && (
+          <motion.div
+            key="course-map-loader"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="absolute inset-0 z-50 bg-white"
+          >
+            <PageLoading />
+          </motion.div>
+        )}
+      </AnimatePresence>
       <Modal
         isDialogOpen={chapterDialogOpen}
         onOpenChange={setChapterDialogOpen}

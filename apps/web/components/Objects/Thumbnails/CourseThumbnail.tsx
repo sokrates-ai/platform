@@ -92,7 +92,7 @@ const AdminEditOptions = ({ course, orgSlug, deleteCourse }: {
       orgId={course.org_id}
     >
       <div className="absolute top-2 right-2 z-20">
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <button className="p-1 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-md">
               <MoreVertical size={20} className="text-gray-700" />

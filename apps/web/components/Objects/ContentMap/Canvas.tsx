@@ -58,6 +58,8 @@ const Canvas: React.FC<CanvasProps> = ({
     const contextMenuRef = useRef<HTMLDivElement>(null);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [contextMenu, setContextMenu] = useState<ContextMenuData | null>(null);
+    const [layerInput, setLayerInput] = useState<string>("");
+    const [layerInputError, setLayerInputError] = useState(false);
     const [viewport, setViewport] = useState<any>(null);
     const dispatchRef = useRef<typeof undoRedo | null>(undoRedo || null);
 
@@ -193,6 +195,13 @@ const Canvas: React.FC<CanvasProps> = ({
         };
     }, [contextMenu]);
 
+    useEffect(() => {
+        if (!contextMenu || !layout.layout) return;
+        const index = layout.layout.findIndex((asset) => asset.id === contextMenu.assetId);
+        setLayerInput(index !== -1 ? String(index + 1) : "");
+        setLayerInputError(false);
+    }, [contextMenu?.assetId, layout.layout]);
+
     const handleIncreaseLayer = () => {
         if (!layout.layout) return;
         const index = layout.layout.findIndex(asset => asset.id === contextMenu?.assetId);
@@ -221,6 +230,42 @@ const Canvas: React.FC<CanvasProps> = ({
             updateOriginator: "user",
             boundaries: layout.boundaries
         });
+    };
+
+    const commitLayerInput = () => {
+        if (!layout.layout || !contextMenu) return;
+        const trimmed = layerInput.trim();
+        const currentIndex = layout.layout.findIndex((asset) => asset.id === contextMenu.assetId);
+        if (currentIndex === -1) return;
+        if (!trimmed) {
+            setLayerInputError(true);
+            return;
+        }
+        const parsed = Number(trimmed);
+        if (!Number.isFinite(parsed)) {
+            setLayerInputError(true);
+            return;
+        }
+        const targetIndex = Math.floor(parsed) - 1;
+        if (targetIndex < 0 || targetIndex >= layout.layout.length) {
+            setLayerInputError(true);
+            return;
+        }
+        if (targetIndex === currentIndex) {
+            setLayerInputError(false);
+            setLayerInput(String(currentIndex + 1));
+            return;
+        }
+        const newLayout = [...layout.layout];
+        const [asset] = newLayout.splice(currentIndex, 1);
+        newLayout.splice(targetIndex, 0, asset);
+        setLayout({
+            layout: newLayout,
+            updateOriginator: "user",
+            boundaries: layout.boundaries
+        });
+        setLayerInputError(false);
+        setLayerInput(String(targetIndex + 1));
     };
 
     const handleDecreaseAssetStoneId = () => {
@@ -398,14 +443,34 @@ const Canvas: React.FC<CanvasProps> = ({
                                     </Button>
                                     <Input
                                         id="layer"
-                                        value={(() => {
-                                            const index = layout.layout!.findIndex(
-                                                (a) => a.id === contextMenu.assetId
-                                            );
-                                            return index !== -1 ? (index + 1).toString() : "";
-                                        })()}
-                                        className="h-7 w-14 rounded-none text-center text-base font-semibold px-1"
-                                        readOnly
+                                        value={layerInput}
+                                        onFocus={() => setLayerInputError(false)}
+                                        onChange={(event) => {
+                                            const next = event.target.value;
+                                            if (next === "" || /^\d+$/.test(next)) {
+                                                if (layerInputError) setLayerInputError(false);
+                                                setLayerInput(next);
+                                            }
+                                        }}
+                                        onKeyDown={(event) => {
+                                            if (event.key === "Enter") {
+                                                event.preventDefault();
+                                                commitLayerInput();
+                                            }
+                                            if (event.key === "Escape") {
+                                                event.preventDefault();
+                                                const index = layout.layout!.findIndex(
+                                                    (a) => a.id === contextMenu.assetId
+                                                );
+                                                setLayerInput(index !== -1 ? String(index + 1) : "");
+                                                setLayerInputError(false);
+                                            }
+                                        }}
+                                        onBlur={commitLayerInput}
+                                        inputMode="numeric"
+                                        className={`h-7 w-14 rounded-none text-center text-base font-semibold px-1 ${
+                                            layerInputError ? 'ring-2 ring-red-500 ring-offset-1 ring-offset-background' : ''
+                                        }`}
                                     />
                                     <Button
                                         variant="outline"

@@ -97,18 +97,6 @@ function SaveState(props: { orgslug: string }) {
     return payload;
   };
 
-  const saveCourseState = async () => {
-    // Course  order
-    if (saved) return
-    await changeOrderBackend()
-    mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
-    // Course metadata
-    await changeMetadataBackend()
-    mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
-    await revalidateTags(['courses'], props.orgslug)
-    dispatchCourse({ type: 'setIsSaved' })
-  }
-
   //
   // Course Order
   const changeOrderBackend = async () => {
@@ -139,6 +127,18 @@ function SaveState(props: { orgslug: string }) {
     router.refresh()
     dispatchCourse({ type: 'setIsSaved' })
   }
+
+  const saveCourseState = React.useCallback(async () => {
+    // Course  order
+    if (saved) return
+    await changeOrderBackend()
+    mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
+    // Course metadata
+    await changeMetadataBackend()
+    mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
+    await revalidateTags(['courses'], props.orgslug)
+    dispatchCourse({ type: 'setIsSaved' })
+  }, [changeMetadataBackend, changeOrderBackend, course?.courseStructure?.course_uuid, dispatchCourse, props.orgslug, saved])
 
   const handleCourseOrder = React.useCallback((course_structure: any) => {
     const chapters = course_structure.chapters
@@ -181,6 +181,20 @@ function SaveState(props: { orgslug: string }) {
       changeOrderPayload()
     }
   }, [changeOrderPayload, course_structure, initOrderPayload, saved]) // This effect depends on the `course_structure` variable
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!event.key || event.defaultPrevented) return;
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+        event.preventDefault();
+        saveCourseState();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [saveCourseState]);
 
   return (
     <div className="flex space-x-4">

@@ -18,6 +18,7 @@ import * as PIXI from 'pixi.js'
 import { Graphics } from 'pixi.js'
 import { ZoomBlurFilter } from 'pixi-filters'
 import useDragInteractions from './hooks/useDragInteractions'
+import { getSpriteUrl } from './utils/spriteUrl'
 
 extend({ Viewport, Graphics })
 
@@ -209,30 +210,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
 
     /* ↑ both handlers now come straight from the hook */
 
-    const spriteURL = useCallback((file: string) => {
-        if (!file) return file;
-
-        const trimmed = file.trim();
-        if (!trimmed) return trimmed;
-
-        if (
-            /^(https?:)?\/\//i.test(trimmed) ||
-            trimmed.startsWith('data:') ||
-            trimmed.startsWith('blob:')
-        ) {
-            return trimmed;
-        }
-
-        const withoutDotPrefix = trimmed.replace(/^\.\/+/, '');
-        if (withoutDotPrefix.startsWith('/')) {
-            return withoutDotPrefix;
-        }
-        if (withoutDotPrefix.startsWith('contentMap/')) {
-            return `/${withoutDotPrefix}`;
-        }
-
-        return `/contentMap/${withoutDotPrefix}`;
-    }, []);
+    const spriteURL = useCallback(getSpriteUrl, []);
 
     if (!app || !app.renderer) return null
 
