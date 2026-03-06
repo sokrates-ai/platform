@@ -22,6 +22,12 @@ api-dev:
 lint:
 	./dev.sh lint
 
+docker-prod:
+	bash ./dev.sh docker sokrates-ai prod
+	
+docker-staging:
+	bash ./dev.sh docker sokrates-ai staging
+
 db:
 	./dev.sh db
 

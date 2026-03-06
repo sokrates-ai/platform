@@ -78,7 +78,6 @@ print_env() {
     env
 }
 
-
 dev_web() {
     load_dev_env
     NODE_ENV=development \
@@ -111,6 +110,11 @@ lint() {
 # Docker build.
 #
 
+dfail() {
+    echo "ERROR: Docker build was not successful!"
+    exit 1
+}
+
 docker-build() {
     OWNER="$1"
     TAG="$2"
@@ -122,16 +126,18 @@ docker-build() {
         DOMAIN="staging.sokrates.ae.org"
     else
         echo "[ERROR]: Unknown TAG: ${TAG}"
-        exit 1
+        dfail
     fi
 
-    echo "Using DOMAIN: ${DOMAIN} for build..."
+    echo "======================================"
+    echo "Using DOMAIN: <${DOMAIN}> for build..."
+    echo "======================================"
 
-    docker build --build-arg DOMAIN=app.sokrates.ae.org --progress=plain -t "ghcr.io/${OWNER}/sk-platform-frontend:${TAG}" -f Dockerfile.web .
-    docker build --progress=plain -t "ghcr.io/${OWNER}/sk-platform-backend:${TAG}" -f Dockerfile.api .
+    docker build --build-arg DOMAIN="${DOMAIN}" --progress=plain -t "ghcr.io/${OWNER}/sk-platform-frontend:${TAG}" -f Dockerfile.web . || dfail
+    docker build --progress=plain -t "ghcr.io/${OWNER}/sk-platform-backend:${TAG}" -f Dockerfile.api . || dfail
 
-    docker push "ghcr.io/${OWNER}/sk-platform-frontend:${TAG}"
-    docker push "ghcr.io/${OWNER}/sk-platform-backend:${TAG}"
+    docker push "ghcr.io/${OWNER}/sk-platform-frontend:${TAG}" || dfail
+    docker push "ghcr.io/${OWNER}/sk-platform-backend:${TAG}" || dfail
 }
 
 #
@@ -152,8 +158,6 @@ elif [ "${ARG}" = "reset" ]; then
     reset
 elif [ "${ARG}" = "lint" ]; then
     lint
-elif [ "${ARG}" = "docker" ]; then
-    docker-build "$2" "$3"
 elif [ "${ARG}" = "docker" ]; then
     docker-build "$2" "$3"
 elif [ "${ARG}" = "db" ]; then
