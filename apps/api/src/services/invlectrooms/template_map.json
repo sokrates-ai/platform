@@ -1,6 +1,45 @@
 {
   "objects": [
     {
+      "id": 1772803907126318,
+      "file": "Textur Gepinselt Grün.webp",
+      "label": "Textur Gepinselt Grün",
+      "scale": 0.2,
+      "x": -526.296875,
+      "y": -1071.0703125,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803374546,
+      "file": "Haus_K_1.webp",
+      "label": "Haus_K_1",
+      "scale": 0.8,
+      "x": -1803.0641125157529,
+      "y": -1675.803394438928,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010157038,
+      "file": "Textur Gepinselt Grün.webp",
+      "label": "Textur Gepinselt Grün",
+      "scale": 0.2,
+      "x": -183.24324505767567,
+      "y": 61.48417152331902,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
       "id": 1766007969640970,
       "file": "Placeholder.webp",
       "label": "Placeholder",
@@ -79,12 +118,142 @@
       }
     },
     {
+      "id": 1772809501100,
+      "file": "schild.webp",
+      "label": "schild",
+      "scale": 0.2,
+      "x": -690,
+      "y": 780,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803729663,
+      "file": "Textur Gepinselt Grün.webp",
+      "label": "Textur Gepinselt Grün",
+      "scale": 0.2,
+      "x": -990,
+      "y": -1170,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803895989591,
+      "file": "Textur Gepinselt Grün.webp",
+      "label": "Textur Gepinselt Grün",
+      "scale": 0.2,
+      "x": -240,
+      "y": -1110,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803905556147,
+      "file": "Textur Gepinselt Grün.webp",
+      "label": "Textur Gepinselt Grün",
+      "scale": 0.2,
+      "x": -780,
+      "y": -1140,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766009991908,
+      "file": "Baum 2b.webp",
+      "label": "Baum 2b",
+      "scale": 0.2,
+      "x": 60,
+      "y": -1170,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809005757784,
+      "file": "Busch 2.webp",
+      "label": "Busch 2",
+      "scale": 0.2,
+      "x": 1080,
+      "y": 840,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809009821202,
+      "file": "Busch 2.webp",
+      "label": "Busch 2",
+      "scale": 0.2,
+      "x": 900,
+      "y": 960,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772808987453516,
+      "file": "Baum 3_1.webp",
+      "label": "Baum 3_1",
+      "scale": 0.2,
+      "x": 960,
+      "y": 300,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
       "id": 1766007953162,
       "file": "Placeholder.webp",
       "label": "Placeholder",
       "scale": 0.2,
       "x": -630,
       "y": 180,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010124835,
+      "file": "Busch 2.webp",
+      "label": "Busch 2",
+      "scale": 0.2,
+      "x": -180,
+      "y": -480,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766009994443,
+      "file": "Baum 1.webp",
+      "label": "Baum 1",
+      "scale": 0.2,
+      "x": -120,
+      "y": -870,
       "type": {
         "kind": "default",
         "label": "",
@@ -222,6 +391,19 @@
       }
     },
     {
+      "id": 1766010163904,
+      "file": "Textur Spritzer Grün.webp",
+      "label": "Textur Spritzer Grün",
+      "scale": 0.2,
+      "x": -624.6787305530439,
+      "y": -196.48348706149025,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
       "id": 1766008062941129,
       "file": "Placeholder.webp",
       "label": "Placeholder",
@@ -252,21 +434,8 @@
       "file": "Placeholder.webp",
       "label": "Placeholder",
       "scale": 0.2,
-      "x": -150,
-      "y": 870,
-      "type": {
-        "kind": "default",
-        "label": "",
-        "customChapterId": 0
-      }
-    },
-    {
-      "id": 1766009931156,
-      "file": "Bahnhof v1.webp",
-      "label": "Bahnhof v1",
-      "scale": 0.2,
-      "x": -900,
-      "y": -1230,
+      "x": -372.38655461345934,
+      "y": 891.1204803160634,
       "type": {
         "kind": "default",
         "label": "",
@@ -287,25 +456,12 @@
       }
     },
     {
-      "id": 1766009942084,
-      "file": "Gebäude K.webp",
-      "label": "Gebäude K",
-      "scale": 0.2,
-      "x": 450,
-      "y": -390,
-      "type": {
-        "kind": "default",
-        "label": "",
-        "customChapterId": 0
-      }
-    },
-    {
       "id": 1766010100396,
       "file": "Dachs.png",
       "label": "Dachs.png",
       "scale": 0.2,
-      "x": -240,
-      "y": -450,
+      "x": -250.7355030701343,
+      "y": -468.79967604875486,
       "type": {
         "kind": "default",
         "label": "",
@@ -330,8 +486,8 @@
       "file": "Baum 1b.webp",
       "label": "Baum 1b",
       "scale": 0.2,
-      "x": -1260,
-      "y": -780,
+      "x": -965.33203125,
+      "y": -824.2734375,
       "type": {
         "kind": "default",
         "label": "",
@@ -343,8 +499,8 @@
       "file": "Baum 2b.webp",
       "label": "Baum 2b",
       "scale": 0.2,
-      "x": -1110,
-      "y": -510,
+      "x": -1560,
+      "y": -1680,
       "type": {
         "kind": "default",
         "label": "",
@@ -352,12 +508,12 @@
       }
     },
     {
-      "id": 1766010124835,
-      "file": "Busch 2.webp",
-      "label": "Busch 2",
+      "id": 1766010017965,
+      "file": "Baum 4 c.webp",
+      "label": "Baum 4 c",
       "scale": 0.2,
-      "x": -180,
-      "y": -510,
+      "x": -750,
+      "y": 330,
       "type": {
         "kind": "default",
         "label": "",
@@ -391,77 +547,12 @@
       }
     },
     {
-      "id": 1766009991908,
-      "file": "Baum 2b.webp",
-      "label": "Baum 2b",
-      "scale": 0.2,
-      "x": 60,
-      "y": -1170,
-      "type": {
-        "kind": "default",
-        "label": "",
-        "customChapterId": 0
-      }
-    },
-    {
-      "id": 1766009994443,
-      "file": "Baum 1.webp",
-      "label": "Baum 1",
-      "scale": 0.2,
-      "x": -120,
-      "y": -870,
-      "type": {
-        "kind": "default",
-        "label": "",
-        "customChapterId": 0
-      }
-    },
-    {
-      "id": 1766009998030,
-      "file": "Baum 3_2.webp",
-      "label": "Baum 3_2",
-      "scale": 0.2,
-      "x": -360,
-      "y": -960,
-      "type": {
-        "kind": "default",
-        "label": "",
-        "customChapterId": 0
-      }
-    },
-    {
-      "id": 1766010011686,
-      "file": "Baum 3_3.webp",
-      "label": "Baum 3_3",
-      "scale": 0.2,
-      "x": -900,
-      "y": 330,
-      "type": {
-        "kind": "default",
-        "label": "",
-        "customChapterId": 0
-      }
-    },
-    {
       "id": 1766010013996,
       "file": "Baum 3_1.webp",
       "label": "Baum 3_1",
       "scale": 0.2,
-      "x": -660,
-      "y": 330,
-      "type": {
-        "kind": "default",
-        "label": "",
-        "customChapterId": 0
-      }
-    },
-    {
-      "id": 1766010017965,
-      "file": "Baum 4 c.webp",
-      "label": "Baum 4 c",
-      "scale": 0.2,
-      "x": -510,
-      "y": 480,
+      "x": -900,
+      "y": 390,
       "type": {
         "kind": "default",
         "label": "",
@@ -475,19 +566,6 @@
       "scale": 0.2,
       "x": -150,
       "y": 510,
-      "type": {
-        "kind": "default",
-        "label": "",
-        "customChapterId": 0
-      }
-    },
-    {
-      "id": 1766010037449,
-      "file": "icon_category_function_definition_locked.webp",
-      "label": "icon_category_function_definition_locked",
-      "scale": 0.2,
-      "x": -1200,
-      "y": -930,
       "type": {
         "kind": "default",
         "label": "",
@@ -525,8 +603,8 @@
       "file": "Mr Net keine transparenz.webp",
       "label": "Mr Net keine transparenz",
       "scale": 0.2,
-      "x": 420,
-      "y": -1050,
+      "x": -510,
+      "y": -1170,
       "type": {
         "kind": "default",
         "label": "",
@@ -547,51 +625,12 @@
       }
     },
     {
-      "id": 1766010058048,
-      "file": "Nebel klein 3.webp",
-      "label": "Nebel klein 3",
-      "scale": 0.2,
-      "x": -570,
-      "y": -1230,
-      "type": {
-        "kind": "default",
-        "label": "",
-        "customChapterId": 0
-      }
-    },
-    {
       "id": 1766010062838,
       "file": "Nebel klein 2.webp",
       "label": "Nebel klein 2",
       "scale": 0.2,
-      "x": -750,
-      "y": -1080,
-      "type": {
-        "kind": "default",
-        "label": "",
-        "customChapterId": 0
-      }
-    },
-    {
-      "id": 1766010071549,
-      "file": "Schienen.webp",
-      "label": "Schienen",
-      "scale": 0.2,
-      "x": -1230,
-      "y": -1200,
-      "type": {
-        "kind": "default",
-        "label": "",
-        "customChapterId": 0
-      }
-    },
-    {
-      "id": 1766010120969,
-      "file": "Busch 2.webp",
-      "label": "Busch 2",
-      "scale": 0.2,
-      "x": -330,
-      "y": -450,
+      "x": -649.4154032303722,
+      "y": -1333.207827905326,
       "type": {
         "kind": "default",
         "label": "",
@@ -625,12 +664,12 @@
       }
     },
     {
-      "id": 1766010155028,
-      "file": "Textur Gepinselt Grün.webp",
-      "label": "Textur Gepinselt Grün",
+      "id": 1772809131004,
+      "file": "Baum 4 b.webp",
+      "label": "Baum 4 b",
       "scale": 0.2,
-      "x": 270,
-      "y": 210,
+      "x": -360,
+      "y": -840,
       "type": {
         "kind": "default",
         "label": "",
@@ -638,12 +677,12 @@
       }
     },
     {
-      "id": 1766010157038,
-      "file": "Textur Gepinselt Grün.webp",
-      "label": "Textur Gepinselt Grün",
+      "id": 1766010155028,
+      "file": "Textur Gepinselt Grün.webp",
+      "label": "Textur Gepinselt Grün",
       "scale": 0.2,
-      "x": -180,
-      "y": 60,
+      "x": 210,
+      "y": 360,
       "type": {
         "kind": "default",
         "label": "",
@@ -664,25 +703,12 @@
       }
     },
     {
-      "id": 1766010163904,
-      "file": "Textur Spritzer Grün.webp",
-      "label": "Textur Spritzer Grün",
-      "scale": 0.2,
-      "x": -720,
-      "y": -390,
-      "type": {
-        "kind": "default",
-        "label": "",
-        "customChapterId": 0
-      }
-    },
-    {
       "id": 1766010172257,
       "file": "Trockener Fleck_Kreis.webp",
       "label": "Trockener Fleck_Kreis",
       "scale": 0.2,
-      "x": -540,
-      "y": -330,
+      "x": -584.7008944946605,
+      "y": -305.24549915556486,
       "type": {
         "kind": "default",
         "label": "",
@@ -721,7 +747,7 @@
       "label": "Baum 3_3",
       "scale": 0.2,
       "x": 750,
-      "y": 540,
+      "y": 480,
       "type": {
         "kind": "default",
         "label": "",
@@ -733,8 +759,1958 @@
       "file": "Baum 1b.webp",
       "label": "Baum 1b",
       "scale": 0.2,
-      "x": -1200,
-      "y": 240,
+      "x": -1110,
+      "y": 270,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801476314,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -799.0300321676131,
+      "y": -886.0077323229142,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801477906,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -720,
+      "y": -870,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010011686,
+      "file": "Baum 3_3.webp",
+      "label": "Baum 3_3",
+      "scale": 0.2,
+      "x": -1170,
+      "y": 450,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801478999139,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -758.4685317263497,
+      "y": -881.6402732947439,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801480583409,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -540,
+      "y": -840,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801502791955,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -502.5343262001403,
+      "y": -810.0850444212729,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801503351679,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -473.6124686123845,
+      "y": -772.4965212738081,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801516807050,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -422.72747999081366,
+      "y": -642.6741123215083,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801519256071,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -430.66875299855406,
+      "y": -607.5914907172078,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801520520368,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -447.0255941441681,
+      "y": -571.8063035992872,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801522295267,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -472.7694207262713,
+      "y": -543.3460594536932,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801523031048,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -500.51949034546243,
+      "y": -517.0315569128734,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801530551311,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -624.1978549275494,
+      "y": -415.7148613467124,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801531223998,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -657.4795635646346,
+      "y": -402.28474330041956,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801532423159,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -723.8085446677283,
+      "y": -365.883156332938,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801532983414,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -742.1527710878735,
+      "y": -334.0321091224137,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801545672189,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -681.0287866789656,
+      "y": -375.430211336511,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801562951050,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -830.2581914679773,
+      "y": -231.07325973205172,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801565896422,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -818.3699326126882,
+      "y": -197.73258757173846,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801566712255,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -815.142216414255,
+      "y": -162.9639856646529,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801567239374,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -813.3052442921053,
+      "y": -125.07178743650314,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801567927038,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -810,
+      "y": -90,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801762777059,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -744.3454584690576,
+      "y": 40.467766242614516,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801772185603,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -710.0411720755394,
+      "y": 55.49973491208587,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801774073194,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -698.3053744692548,
+      "y": 90.74803196847753,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801774616649,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -658.6580125940308,
+      "y": 116.62182149462743,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801775209112,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -624.0121233995585,
+      "y": 130.66313067122147,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801782169841,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -614.198824957548,
+      "y": 165.30158273159597,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801807129508,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -495.33854780695117,
+      "y": 265.1265151589445,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801809721050,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -454.41199886691015,
+      "y": 282.03855809727867,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801810553412,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -435.2911271015374,
+      "y": 314.4495884953704,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801813673429,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -390.2295316031351,
+      "y": 324.03233578034997,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801814825494,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -357.0413206918263,
+      "y": 353.1524343401774,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801816217034,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -308.29090668092897,
+      "y": 354.88900515200726,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801822793657,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -108.58154475344952,
+      "y": 375.9993102885339,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801823561174,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -67.6475586793108,
+      "y": 356.9602469982368,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801824425871,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -29.692144811329854,
+      "y": 363.82100320343176,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801825097212,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 1.6293454414380903,
+      "y": 343.5399385188067,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801825961947,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 43.53387751533603,
+      "y": 343.05280623540267,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801839225497,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 179.79704862834797,
+      "y": 157.226223201072,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801842281445,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 186.49867962832423,
+      "y": 119.871951640436,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801843785102,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 199.47207401990835,
+      "y": 81.6438353290083,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801844489361,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 186.5066002659063,
+      "y": 44.54394875948148,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1766010120969,
+      "file": "Busch 2.webp",
+      "label": "Busch 2",
+      "scale": 0.2,
+      "x": -339.7412467176682,
+      "y": -458.2663745496739,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801845097720,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 157.78955553744527,
+      "y": 9.340299503965092,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772801912682195,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 170.89605005955593,
+      "y": 203.53490409606405,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802072570914,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 161.38204127100687,
+      "y": 231.66421674544102,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802085179755,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 132.12285078320974,
+      "y": 249.42618891829503,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802092762040,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 129.58657468424474,
+      "y": -145.0373311477951,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802095914609,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 114.1359638024312,
+      "y": -173.03945200257056,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802099562314,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 119.82053560569852,
+      "y": -204.61631168987057,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802101114283,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 133.86174757198023,
+      "y": -236.12722215292175,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802103419522,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 144.25151481608634,
+      "y": -267.04554741183676,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802104699354,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 166.42186683771524,
+      "y": -293.62177054949444,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802117226273,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 127.47981279497333,
+      "y": -112.39173510850327,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802163370200,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 219.00948435057603,
+      "y": -436.80531742396533,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802164763538,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 214.68810882294298,
+      "y": -474.5079049769791,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802165851754,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 252.39279108052654,
+      "y": -501.5400674510967,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802166570162,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 275.260680869751,
+      "y": -535.8240971460896,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802167274423,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 314.6997785111837,
+      "y": -552.2989485880838,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802177994544,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 187.4464758918387,
+      "y": -412.85865478125993,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802185066993,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 478.6353702485685,
+      "y": -624.3412820411073,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802185994372,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 516.9514851202914,
+      "y": -653.9224829149966,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802187162017,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 578.5904525226283,
+      "y": -643.3803453314044,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802187882877,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 628.400658142458,
+      "y": -659.1582253198283,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802200443482,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 814.9178985295873,
+      "y": -643.5189007423068,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802201754172,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 854.0930023896028,
+      "y": -612.6176085660626,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802203611177,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 868.2756171140547,
+      "y": -575.275758261148,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802204443483,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 893.9655907515842,
+      "y": -550.332646005254,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802204971195,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 891.9562857779149,
+      "y": -507.5460702724864,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802221547715,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 875.5493508484935,
+      "y": -375.5954737268318,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802223611115,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 882.546335316428,
+      "y": -329.8719362288442,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802224539218,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 880.2725404925495,
+      "y": -282.2483167196157,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802225803770,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 881.4882327746234,
+      "y": -236.85346639418873,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802234619574,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 865.6295248982653,
+      "y": -106.36012264071098,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802236875224,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 852.9376100361601,
+      "y": -68.78049671953778,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802238171205,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 853.9680103406868,
+      "y": -19.88827486242465,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802240075265,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 835.1809233068316,
+      "y": 66.86706929594311,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802241627357,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 850.146261063051,
+      "y": 33.103740798942454,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802253899355,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 819.8683819897931,
+      "y": 197.38818964571078,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802255563781,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 797.5375902049207,
+      "y": 240.65409872890103,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802256459335,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 795.0242857584299,
+      "y": 278.77890999638464,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802257243891,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 789.1635432855935,
+      "y": 321.6032189490635,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802258123801,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 787.5170835397364,
+      "y": 362.32856431844743,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802258939101,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 755.6564519013587,
+      "y": 396.1464113500791,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802272779902,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 670.9276725051536,
+      "y": 509.9065091497721,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802275339780,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 630.894712525584,
+      "y": 541.3582517784168,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802277259220,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 609.5288988036809,
+      "y": 579.3140555885442,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802278075170,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 573.1323250840012,
+      "y": 612.194183824522,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802279211647,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 530.1717197947446,
+      "y": 636.2041464760302,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802279787485,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 494.76738340534985,
+      "y": 657.7716787760681,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802286955718,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 350.30247949203545,
+      "y": 739.2760715604836,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802287563885,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 294.09511824833817,
+      "y": 764.5116189094404,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802288635483,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 237.3455275899919,
+      "y": 782.5583362040632,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802289419222,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 183.61751171110586,
+      "y": 793.70737653611,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802295691260,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": 20.92330066516797,
+      "y": 855.117053944509,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802296507760,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -25.133957391131162,
+      "y": 870.4694732966088,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802297419393,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -82.35661133986673,
+      "y": 880.2391947024905,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803563027611,
+      "file": "Baum 1b.webp",
+      "label": "Baum 1b",
+      "scale": 0.2,
+      "x": -930.32421875,
+      "y": -1650.1226599336753,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803386401808,
+      "file": "Baum 1b.webp",
+      "label": "Baum 1b",
+      "scale": 0.2,
+      "x": -1860,
+      "y": -1560,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802298012707,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -146.02880793545364,
+      "y": 897.6796739309589,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772802299579153,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -210.5951084989897,
+      "y": 899.8549634627373,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803388641570,
+      "file": "Baum 2b.webp",
+      "label": "Baum 2b",
+      "scale": 0.2,
+      "x": -1020,
+      "y": -240,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803452258063,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -993.8599122518773,
+      "y": -913.4769817607921,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803458866329,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -1028.5669070327067,
+      "y": -914.8309190148659,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803459634254,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -1066.250118169679,
+      "y": -931.5790128535202,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803460674425,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -1113.7030507125328,
+      "y": -945.5357577190655,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803572594501,
+      "file": "Baum 2b.webp",
+      "label": "Baum 2b",
+      "scale": 0.2,
+      "x": -1794.6875,
+      "y": -1235.5484411836753,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803461506366,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -1155.5732853091686,
+      "y": -944.140083232511,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803462354706,
+      "file": "kiesel_klein.png",
+      "label": "kiesel_klein",
+      "scale": 0.020000000000000004,
+      "x": -1196.0478454192496,
+      "y": -945.5357577190655,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803550546613,
+      "file": "Baum 1b.webp",
+      "label": "Baum 1b",
+      "scale": 0.2,
+      "x": -1941.48828125,
+      "y": -1134.164093482662,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803553138462,
+      "file": "Baum 1b.webp",
+      "label": "Baum 1b",
+      "scale": 0.2,
+      "x": -1725.44140625,
+      "y": -1027.980499732662,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803600674408,
+      "file": "Nebel klein 2.webp",
+      "label": "Nebel klein 2",
+      "scale": 0.2,
+      "x": -415.9296875,
+      "y": -1347.328125,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803602067512,
+      "file": "Nebel klein 2.webp",
+      "label": "Nebel klein 2",
+      "scale": 0.2,
+      "x": -480,
+      "y": -1440,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803603746478,
+      "file": "Nebel klein 2.webp",
+      "label": "Nebel klein 2",
+      "scale": 0.2,
+      "x": -192.44140625,
+      "y": -1394.54296875,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803604851449,
+      "file": "Nebel klein 2.webp",
+      "label": "Nebel klein 2",
+      "scale": 0.2,
+      "x": 190,
+      "y": -1458,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803714020,
+      "file": "schild.webp",
+      "label": "schild",
+      "scale": 0.2,
+      "x": -744.01953125,
+      "y": -1298.537054470755,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803605492645,
+      "file": "Nebel klein 2.webp",
+      "label": "Nebel klein 2",
+      "scale": 0.2,
+      "x": 46,
+      "y": -1416,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803606178016,
+      "file": "Nebel klein 2.webp",
+      "label": "Nebel klein 2",
+      "scale": 0.2,
+      "x": 930,
+      "y": -1470,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803607202135,
+      "file": "Nebel klein 2.webp",
+      "label": "Nebel klein 2",
+      "scale": 0.2,
+      "x": 472,
+      "y": -1395,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803607762244,
+      "file": "Nebel klein 2.webp",
+      "label": "Nebel klein 2",
+      "scale": 0.2,
+      "x": 598,
+      "y": -1479,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803608258995,
+      "file": "Nebel klein 2.webp",
+      "label": "Nebel klein 2",
+      "scale": 0.2,
+      "x": 550,
+      "y": -1440,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803608642060,
+      "file": "Nebel klein 2.webp",
+      "label": "Nebel klein 2",
+      "scale": 0.2,
+      "x": 1470,
+      "y": -1410,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803641987854,
+      "file": "Nebel klein 2.webp",
+      "label": "Nebel klein 2",
+      "scale": 0.2,
+      "x": 1170,
+      "y": -1380,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803643683462,
+      "file": "Nebel klein 2.webp",
+      "label": "Nebel klein 2",
+      "scale": 0.2,
+      "x": -270,
+      "y": -1500,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803897972195,
+      "file": "Textur Gepinselt Grün.webp",
+      "label": "Textur Gepinselt Grün",
+      "scale": 0.2,
+      "x": -1380,
+      "y": -750,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803899654711,
+      "file": "Textur Gepinselt Grün.webp",
+      "label": "Textur Gepinselt Grün",
+      "scale": 0.2,
+      "x": -1455.27734375,
+      "y": -729.140625,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803900950770,
+      "file": "Textur Gepinselt Grün.webp",
+      "label": "Textur Gepinselt Grün",
+      "scale": 0.2,
+      "x": -1260,
+      "y": -600,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803902293179,
+      "file": "Textur Gepinselt Grün.webp",
+      "label": "Textur Gepinselt Grün",
+      "scale": 0.2,
+      "x": -1604.69140625,
+      "y": -569.71875,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772803903477501,
+      "file": "Textur Gepinselt Grün.webp",
+      "label": "Textur Gepinselt Grün",
+      "scale": 0.2,
+      "x": -1290,
+      "y": -990,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809003325780,
+      "file": "Busch 2.webp",
+      "label": "Busch 2",
+      "scale": 0.2,
+      "x": 1020,
+      "y": 900,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809008173990,
+      "file": "Busch 2.webp",
+      "label": "Busch 2",
+      "scale": 0.2,
+      "x": 840,
+      "y": 1020,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809011389185,
+      "file": "Busch 2.webp",
+      "label": "Busch 2",
+      "scale": 0.2,
+      "x": 720,
+      "y": 990,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809031086956,
+      "file": "Busch 2.webp",
+      "label": "Busch 2",
+      "scale": 0.2,
+      "x": -960,
+      "y": 900,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809252068,
+      "file": "Grasblume_orange_1.webp",
+      "label": "Grasblume_orange_1",
+      "scale": 0.2,
+      "x": -330,
+      "y": -990,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809253515,
+      "file": "Grasblume_gelb_3.webp",
+      "label": "Grasblume_gelb_3",
+      "scale": 0.2,
+      "x": -300,
+      "y": -1050,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809255315,
+      "file": "Grasblume_gelb_4.webp",
+      "label": "Grasblume_gelb_4",
+      "scale": 0.2,
+      "x": -420,
+      "y": -990,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809259051,
+      "file": "Grasblume_rot_4.webp",
+      "label": "Grasblume_rot_4",
+      "scale": 0.2,
+      "x": -510,
+      "y": -990,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809298205,
+      "file": "Nebelschwade 6 transparent.webp",
+      "label": "Nebelschwade 6 transparent",
+      "scale": 0.2,
+      "x": -660,
+      "y": -1260,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809315915,
+      "file": "Nebelschwade 4.webp",
+      "label": "Nebelschwade 4",
+      "scale": 0.2,
+      "x": 180,
+      "y": -1290,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809317884,
+      "file": "Nebelschwade 6 transparent.webp",
+      "label": "Nebelschwade 6 transparent",
+      "scale": 0.2,
+      "x": 660,
+      "y": -1350,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809323548,
+      "file": "Nebel v2_4.webp",
+      "label": "Nebel v2_4",
+      "scale": 0.2,
+      "x": 0,
+      "y": -1410,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809341606809,
+      "file": "Nebel v2_4.webp",
+      "label": "Nebel v2_4",
+      "scale": 0.2,
+      "x": 1500,
+      "y": -1380,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809357055974,
+      "file": "Nebel v2_4.webp",
+      "label": "Nebel v2_4",
+      "scale": 0.2,
+      "x": 1260,
+      "y": -1380,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809376463352,
+      "file": "Nebel v2_4.webp",
+      "label": "Nebel v2_4",
+      "scale": 0.2,
+      "x": 1020,
+      "y": -1440,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809385248073,
+      "file": "Nebel v2_4.webp",
+      "label": "Nebel v2_4",
+      "scale": 0.2,
+      "x": -660,
+      "y": -1500,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809402548,
+      "file": "Busch 1.webp",
+      "label": "Busch 1",
+      "scale": 0.2,
+      "x": -480,
+      "y": -990,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809453805,
+      "file": "Textur Sprenkler Braun.webp",
+      "label": "Textur Sprenkler Braun",
+      "scale": 0.2,
+      "x": -780,
+      "y": 960,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809476860,
+      "file": "Löwenzahn.webp",
+      "label": "Löwenzahn",
+      "scale": 0.2,
+      "x": -450,
+      "y": 840,
+      "type": {
+        "kind": "default",
+        "label": "",
+        "customChapterId": 0
+      }
+    },
+    {
+      "id": 1772809480348,
+      "file": "Komischer Block.webp",
+      "label": "Komischer Block",
+      "scale": 0.2,
+      "x": -690,
+      "y": 930,
       "type": {
         "kind": "default",
         "label": "",
@@ -743,9 +2719,9 @@
     }
   ],
   "boundaries": {
-    "left": -1200,
-    "right": 1000,
-    "top": -1200,
-    "bottom": 1000
+    "left": -1800,
+    "right": 1800,
+    "top": -1400,
+    "bottom": 1400
   }
 }

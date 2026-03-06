@@ -43,6 +43,7 @@ type Props = {
   orgslug: string
   course: any
   selectedChapterId: number | null
+  selectedTabId: string | null
 }
 
 const CourseStartedView = ({
@@ -50,6 +51,7 @@ const CourseStartedView = ({
   orgslug,
   course,
   selectedChapterId,
+  selectedTabId,
 }: Props) => {
   const searchParams = useSearchParams()
   const chapterParam = searchParams.get('chapter') // ✅ read from URL
@@ -241,8 +243,11 @@ const CourseStartedView = ({
     if (initialTabParam && visibleTabs.some((tab) => tab.id === initialTabParam)) {
       return initialTabParam
     }
+    if (selectedTabId && visibleTabs.some((tab) => tab.id === selectedTabId)) {
+      return selectedTabId
+    }
     return fallbackTabId ?? 'default-map'
-  }, [fallbackTabId, visibleTabs])
+  }, [fallbackTabId, visibleTabs, selectedTabId])
 
   const [selectedTab, setSelectedTab] = useState(initialSelectedTab)
   const selectedTabRef = useRef(selectedTab)
@@ -556,9 +561,10 @@ const CourseStartedView = ({
     updateCourseCanvasInteractionState({
       courseUuid: `course_${courseuuid}`,
       selectedChapter: chapterDialogOpen ? selectedChapter : null,
+      selectedTabId: selectedTab,
       access_token,
     })
-  }, [selectedChapter, chapterDialogOpen, access_token, courseuuid])
+  }, [selectedChapter, chapterDialogOpen, access_token, courseuuid, selectedTab])
 
   if (!course) return <PageLoading />
 

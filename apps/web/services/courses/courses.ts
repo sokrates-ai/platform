@@ -134,6 +134,7 @@ interface CourseCanvasRead {
     course_id: number;
     user_id: number;
     selected_chapter_id: number | null;
+    selected_tab_id: string | null;
 }
 
 export async function getCourseCanvasInteractionState({
@@ -154,17 +155,27 @@ export async function getCourseCanvasInteractionState({
 
 export async function updateCourseCanvasInteractionState({
   selectedChapter,
+  selectedTabId,
   courseUuid,
   access_token,
 }: {
   selectedChapter: number | null,
+  selectedTabId: string | null,
   courseUuid: string
   access_token: any
 }) {
 
     const result: any = await fetch(
       `${getAPIUrl()}courses/${courseUuid}/canvas`,
-      RequestBodyWithAuthHeader('PUT', {selected_chapter_id: selectedChapter}, null, access_token)
+      RequestBodyWithAuthHeader(
+        'PUT',
+        {
+          selected_chapter_id: selectedChapter,
+          selected_tab_id: selectedTabId,
+        },
+        null,
+        access_token,
+      )
     )
     const res = await errorHandling(result)
     return res

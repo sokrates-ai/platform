@@ -89,6 +89,7 @@ const CoursePage = async (params: any) => {
         orgslug={orgslug}
         course={course_meta}
         selectedChapterId={courseCanvas.selected_chapter_id}
+        selectedTabId={courseCanvas.selected_tab_id}
       />
     </div>
   )

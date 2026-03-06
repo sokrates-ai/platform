@@ -35,6 +35,7 @@ def get_canvas(
     if not canvas:
         return CourseCanvasRead(
             selected_chapter_id= None,
+            selected_tab_id= None,
             course_id=course.id,
             user_id=user.id,
         )
@@ -67,16 +68,21 @@ def put_update(
         CourseCanvas.user_id == user.id,
     )
     canvas = db_session.exec(statement).first()
+    fields_set = getattr(course_canvas_update, "model_fields_set", set())
     if canvas:
-        canvas.selected_chapter_id = course_canvas_update.selected_chapter_id
+        if "selected_chapter_id" in fields_set:
+            canvas.selected_chapter_id = course_canvas_update.selected_chapter_id
+        if "selected_tab_id" in fields_set:
+            canvas.selected_tab_id = course_canvas_update.selected_tab_id
     else:
         canvas = CourseCanvas(
             selected_chapter_id=course_canvas_update.selected_chapter_id,
+            selected_tab_id=course_canvas_update.selected_tab_id,
             course_id=course.id,
             user_id=user.id,
         )
         db_session.add(canvas)
-    
+
     print(f"ID: {course_canvas_update.selected_chapter_id}")
     db_session.commit()
     

@@ -3,7 +3,8 @@ from sqlmodel import Field, SQLModel
 
 
 class CourseCanvasBase(SQLModel):
-    selected_chapter_id: int | None
+    selected_chapter_id: int | None = None
+    selected_tab_id: str | None = None
 
 class CourseCanvas(CourseCanvasBase, table=True):
     course_id: int | None = Field(
@@ -19,9 +20,11 @@ class CourseCanvas(CourseCanvasBase, table=True):
 
 
 class CourseCanvasUpdate(CourseCanvasBase):
-    selected_chapter_id: int | None
+    selected_chapter_id: int | None = None
+    selected_tab_id: str | None = None
 
 class CourseCanvasRead(CourseCanvasBase):
     course_id: int
     user_id: int
     selected_chapter_id: int | None
+    selected_tab_id: str | None

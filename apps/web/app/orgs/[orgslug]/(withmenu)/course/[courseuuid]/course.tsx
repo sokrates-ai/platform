@@ -10,6 +10,7 @@ type Props = {
   orgslug: string
   course: any
   selectedChapterId: number | null
+  selectedTabId: string | null
 }
 
 const CourseClient = ({
@@ -17,6 +18,7 @@ const CourseClient = ({
   orgslug,
   course,
   selectedChapterId,
+  selectedTabId,
 }: Props) => {
   return courseIsStarted(course) ? (
     <CourseStartedView
@@ -24,6 +26,7 @@ const CourseClient = ({
       orgslug={orgslug}
       course={course}
       selectedChapterId={selectedChapterId}
+      selectedTabId={selectedTabId}
     />
   ) : (
     <CourseIntroView
