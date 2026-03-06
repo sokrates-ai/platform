@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useState, useRef } from 'react'
+import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation' // ✅ import hook
 import { Button } from '@/components/ui/button'
@@ -409,34 +409,47 @@ const CourseStartedView = ({
   const [viewport, setViewport] = useState<Viewport | null>(null)
   const [zoomPercent, setZoomPercent] = useState<number | null>(null)
   const initialZoomRef = useRef<number | null>(null)
+  const isAnimatingZoomRef = useRef(false)
+  const lastAnimatedKeyRef = useRef<string | null>(null)
+  const hasAppliedStoredZoomRef = useRef(false)
   const MIN_ZOOM = 0.1
   const MAX_ZOOM = 1
+  const ANIM_START_ZOOM = 0.05
+
+  const zoomStorageKey = useMemo(
+    () => `sokrates:course-map-zoom:${courseuuid}:${selectedTab}`,
+    [courseuuid, selectedTab],
+  )
+
+  const clampScale = useCallback(
+    (scale: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, scale)),
+    [MIN_ZOOM, MAX_ZOOM],
+  )
 
   useEffect(() => {
     if (!viewport) {
       return
     }
 
-    const clampZoom = (scale: number) =>
-      Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, scale))
-
     const updateZoom = () => {
       const rawScale = viewport.scale.x
-      const clampedScale = clampZoom(rawScale)
+      const minScale = isAnimatingZoomRef.current ? ANIM_START_ZOOM : MIN_ZOOM
+      const clampedScale = Math.min(
+        MAX_ZOOM,
+        Math.max(minScale, rawScale),
+      )
       if (clampedScale !== rawScale) {
         viewport.setZoom(clampedScale, true)
       }
       setZoomPercent(Math.round(clampedScale * 100))
+      if (!isAnimatingZoomRef.current && hasAppliedStoredZoomRef.current) {
+        localStorage.setItem(zoomStorageKey, clampedScale.toString())
+      }
     }
-
-    initialZoomRef.current = clampZoom(viewport.scale.x)
-    if (viewport.scale.x !== initialZoomRef.current) {
-      viewport.setZoom(initialZoomRef.current, true)
-    }
-
-    updateZoom()
 
     const handleZoom = () => updateZoom()
+
+    updateZoom()
     viewport.on('zoomed', handleZoom)
     viewport.on('zoomed-end', handleZoom)
 
@@ -444,7 +457,64 @@ const CourseStartedView = ({
       viewport.off('zoomed', handleZoom)
       viewport.off('zoomed-end', handleZoom)
     }
-  }, [viewport])
+  }, [viewport, clampScale, zoomStorageKey])
+
+  useEffect(() => {
+    if (!viewport) {
+      return
+    }
+
+    const clampPlugin = viewport.plugins.get('clamp-zoom', true) as
+      | { options?: { minWidth?: number | null; maxWidth?: number | null }; clamp?: () => void }
+      | undefined
+
+    const applyClampRange = (minZoom: number, maxZoom: number) => {
+      if (!clampPlugin?.options) return
+      const safeMin = Math.max(0.01, Math.min(minZoom, maxZoom))
+      const safeMax = Math.max(minZoom, maxZoom)
+      clampPlugin.options.minWidth = viewport.screenWidth / safeMax
+      clampPlugin.options.maxWidth = viewport.screenWidth / safeMin
+      clampPlugin.clamp?.()
+    }
+
+    let targetScale = MAX_ZOOM
+    const stored = localStorage.getItem(zoomStorageKey)
+    if (stored) {
+      const parsed = Number.parseFloat(stored)
+      if (Number.isFinite(parsed)) {
+        targetScale = clampScale(parsed)
+      }
+    }
+
+    initialZoomRef.current = targetScale
+
+    const shouldAnimate = lastAnimatedKeyRef.current !== zoomStorageKey
+    lastAnimatedKeyRef.current = zoomStorageKey
+
+    hasAppliedStoredZoomRef.current = true
+
+    if (shouldAnimate) {
+      applyClampRange(ANIM_START_ZOOM, MAX_ZOOM)
+      viewport.setZoom(ANIM_START_ZOOM, true)
+      isAnimatingZoomRef.current = true
+      viewport.animate({
+        scale: targetScale,
+        time: 700,
+        ease: 'easeInOutSine',
+        callbackOnComplete: () => {
+          isAnimatingZoomRef.current = false
+          applyClampRange(MIN_ZOOM, MAX_ZOOM)
+          setZoomPercent(Math.round(targetScale * 100))
+          localStorage.setItem(zoomStorageKey, targetScale.toString())
+        },
+      })
+    } else {
+      applyClampRange(MIN_ZOOM, MAX_ZOOM)
+      viewport.setZoom(targetScale, true)
+      setZoomPercent(Math.round(targetScale * 100))
+      localStorage.setItem(zoomStorageKey, targetScale.toString())
+    }
+  }, [viewport, clampScale, zoomStorageKey])
 
   const handleZoomIn = () => {
     if (!viewport) return
