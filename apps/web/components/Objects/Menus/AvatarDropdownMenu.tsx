@@ -35,7 +35,7 @@ export const AvatarDropdownMenu = ({
     ))
   }, [session?.status, session?.data?.roles, org?.id])
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         {children}
       </DropdownMenuTrigger>
