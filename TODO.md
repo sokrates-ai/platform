@@ -1,1 +1,2 @@
 - MIGRATIONS
+- make placeholder stones marginally bigger -> fixes improt
