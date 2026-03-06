@@ -135,7 +135,7 @@ async def authorization_verify_based_on_org_admin_status(
     # Find in roles list if there is a role that matches users action for this type of element
     for role in user_roles_in_organization_and_standard_roles:
         role = Role.model_validate(role)
-        if role.id == 1 or role.id == 2:
+        if role.id == 1 or role.role_uuid == "role_global_admin":
             return True
     else:
         return False

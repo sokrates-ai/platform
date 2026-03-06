@@ -139,9 +139,9 @@ export default function OpenSignUpComponent() {
   })
 
   useEffect(() => {
-    // Revalidate when step changes
+    // Revalidate when step or org changes without creating a render loop
     formik.validateForm()
-  }, [currentStep, org, formik])
+  }, [currentStep, org?.id, org?.slug])
 
   useEffect(() => {
     if (oauthErrorMessage && !error) {

@@ -21,7 +21,7 @@ import { updateCourseCanvasInteractionState } from '@services/courses/courses'
 import CourseChapter from '@components/Pages/Courses/CourseChapter'
 import { cn } from '@/lib/utils'
 import { DEFAULT_COURSE_TABS } from '@components/Objects/Modals/Course/Create/CourseTabSelector'
-import useAdminStatus from '@components/Hooks/useAdminStatus'
+import useCourseStaffStatus from '@components/Hooks/useCourseStaffStatus'
 
 const DEFAULT_BOUNDARIES = {
   left: -1000,
@@ -211,8 +211,8 @@ const CourseStartedView = ({
     ]
   }, [normalizedTabs])
 
-  const { isAdmin } = useAdminStatus()
-  const canSeeHiddenTabs = Boolean(isAdmin)
+  const { isCourseStaff } = useCourseStaffStatus()
+  const canSeeHiddenTabs = Boolean(isCourseStaff)
 
   const visibleTabs = useMemo(() => {
     if (canSeeHiddenTabs) {

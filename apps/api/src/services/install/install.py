@@ -127,7 +127,7 @@ def install_default_elements(db_session: Session):
     statement = select(Role).where(Role.role_type == RoleTypeEnum.TYPE_GLOBAL)
     roles = db_session.exec(statement).all()
 
-    if roles and len(roles) == 3:
+    if roles and len(roles) == 4:
         raise HTTPException(
             status_code=409,
             detail="Default roles already exist",
@@ -242,6 +242,60 @@ def install_default_elements(db_session: Session):
         update_date=str(datetime.now()),
     )
 
+    role_global_tutor = Role(
+        name="Tutor",
+        description="Standard Tutor Role",
+        id=4,
+        role_type=RoleTypeEnum.TYPE_GLOBAL,
+        role_uuid="role_global_tutor",
+        rights=Rights(
+            courses=Permission(
+                action_create=False,
+                action_read=True,
+                action_update=False,
+                action_delete=False,
+            ),
+            users=Permission(
+                action_create=False,
+                action_read=False,
+                action_update=False,
+                action_delete=False,
+            ),
+            usergroups=Permission(
+                action_create=False,
+                action_read=False,
+                action_update=False,
+                action_delete=False,
+            ),
+            collections=Permission(
+                action_create=False,
+                action_read=False,
+                action_update=False,
+                action_delete=False,
+            ),
+            organizations=Permission(
+                action_create=False,
+                action_read=False,
+                action_update=False,
+                action_delete=False,
+            ),
+            coursechapters=Permission(
+                action_create=False,
+                action_read=True,
+                action_update=False,
+                action_delete=False,
+            ),
+            activities=Permission(
+                action_create=False,
+                action_read=True,
+                action_update=False,
+                action_delete=False,
+            ),
+        ),
+        creation_date=str(datetime.now()),
+        update_date=str(datetime.now()),
+    )
+
     role_global_user = Role(
         name="User",
         description="Standard User Role",
@@ -299,11 +353,13 @@ def install_default_elements(db_session: Session):
     # Serialize rights to JSON
     role_global_admin.rights = role_global_admin.rights.dict()  # type: ignore
     role_global_maintainer.rights = role_global_maintainer.rights.dict()  # type: ignore
+    role_global_tutor.rights = role_global_tutor.rights.dict()  # type: ignore
     role_global_user.rights = role_global_user.rights.dict()  # type: ignore
 
     # Insert roles in DB
     db_session.add(role_global_admin)
     db_session.add(role_global_maintainer)
+    db_session.add(role_global_tutor)
     db_session.add(role_global_user)
 
     # commit changes

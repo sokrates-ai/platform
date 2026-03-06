@@ -1,4 +1,5 @@
 "use client"
+import React, { useMemo } from "react"
 import Link from "next/link"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Settings, LogOut, Home, Backpack, School, Users } from "lucide-react"
@@ -13,12 +14,26 @@ interface AvatarDropdownMenuProps {
 }
 
 export const AvatarDropdownMenu = ({ 
-  children, 
-  session, 
-  org, 
-  isUserAdmin, 
-  onLogout 
+  children,
+  session,
+  org,
+  isUserAdmin,
+  onLogout
 }: AvatarDropdownMenuProps) => {
+  const canSeeExercises = useMemo(() => {
+    if (session?.status !== 'authenticated') return false
+    const roles = session?.data?.roles || []
+    const orgId = org?.id
+    const rolesForOrg = orgId ? roles.filter((role: any) => role?.org?.id === orgId) : roles
+    return rolesForOrg.some((role: any) => (
+      role?.role?.role_uuid === 'role_global_admin' ||
+      role?.role?.role_uuid === 'role_global_maintainer' ||
+      role?.role?.role_uuid === 'role_global_tutor' ||
+      role?.role?.id === 1 ||
+      role?.role?.id === 2 ||
+      role?.role?.id === 4
+    ))
+  }, [session?.status, session?.data?.roles, org?.id])
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -49,12 +64,14 @@ export const AvatarDropdownMenu = ({
               </DropdownMenuItem>
             </Link>
 
-            <Link href={"/dash/exercises"}>
-              <DropdownMenuItem>
-                <Backpack size={14} className="mr-2" />
-                Exercises
-              </DropdownMenuItem>
-            </Link>
+            {canSeeExercises && (
+              <Link href={"/dash/exercises"}>
+                <DropdownMenuItem>
+                  <Backpack size={14} className="mr-2" />
+                  Exercises
+                </DropdownMenuItem>
+              </Link>
+            )}
 
             {isUserAdmin?.isAdmin && (
               <Link href={"/dash/users/settings/users"}>

@@ -25,6 +25,32 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
   const org = useOrg() as any
   const isUserAdmin = useAdminStatus() as any
 
+  const roleBadge = React.useMemo(() => {
+    if (session?.status !== 'authenticated') return null
+    const roles = session?.data?.roles || []
+    const orgId = org?.id
+    const rolesForOrg = orgId
+      ? roles.filter((role: any) => role?.org?.id === orgId)
+      : roles
+    const hasAdmin = rolesForOrg.some(
+      (role: any) =>
+        role?.role?.role_uuid === 'role_global_admin' || role?.role?.id === 1,
+    )
+    if (hasAdmin) return 'ADMIN'
+    const hasMaintainer = rolesForOrg.some(
+      (role: any) =>
+        role?.role?.role_uuid === 'role_global_maintainer' ||
+        role?.role?.id === 2,
+    )
+    if (hasMaintainer) return 'MAINTAINER'
+    const hasTutor = rolesForOrg.some(
+      (role: any) =>
+        role?.role?.role_uuid === 'role_global_tutor' || role?.role?.id === 4,
+    )
+    if (hasTutor) return 'TUTOR'
+    return null
+  }, [session?.status, session?.data?.roles, org?.id])
+
   const logout = () =>
     (window.location.href = getUriWithoutOrg('/login?orgslug=' + org?.slug))
 
@@ -79,7 +105,7 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
   return (
     <header className="fixed inset-x-0 z-50 flex justify-center top-4 px-4 sm:px-0">
       <div className="relative w-full sm:w-3/4 md:w-2/3 lg:w-1/2">
-        <div className="relative grid w-full grid-cols-[1fr_auto_40px] sm:grid-cols-[1fr_auto_100px] lg:grid-cols-[1fr_auto_110px] items-center">
+        <div className="relative grid w-full grid-cols-[1fr_auto_auto] items-center">
           <LeftRail
             orgslug={orgslug}
             org={org}
@@ -92,7 +118,7 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
             isUserAdmin={isUserAdmin}
             onLogout={logout}
           />
-          <RightRail />
+          <RightRail roleBadge={roleBadge} />
         </div>
       </div>
     </header>
@@ -131,21 +157,26 @@ function LeftRail({ orgslug, org, session, isUserAdmin }: any) {
           <span className="mr-1">🪙</span>
           {session?.data?.user?.coins ?? -1}
         </Badge>
-        {isUserAdmin.isAdmin ? (<Badge className="hidden xl:flex" style={{ backgroundColor: '#E25A26', borderColor: '#E25A26', color: 'white' }}>
-            Admin
-          </Badge>) : <></>
-        }
       </div>
     </div>
   )
 }
 
-function RightRail() {
+function RightRail({ roleBadge }: { roleBadge: string | null }) {
   return (
     <div
-      className="relative h-12 sm:h-14 md:h-16 lg:h-[71px] w-full"
+      className="relative flex h-12 sm:h-14 md:h-16 lg:h-[71px] min-w-[40px] sm:min-w-[100px] lg:min-w-[110px] items-center justify-end px-3 sm:px-4"
       style={railStyle('right')}
-    />
+    >
+      {roleBadge ? (
+        <Badge
+          className="whitespace-nowrap"
+          style={{ backgroundColor: '#E25A26', borderColor: '#E25A26', color: 'white' }}
+        >
+          {roleBadge}
+        </Badge>
+      ) : null}
+    </div>
   )
 }
 

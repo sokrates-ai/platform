@@ -5,6 +5,8 @@ from sqlmodel import Session, select, or_, and_
 from src.db.usergroup_resources import UserGroupResource
 from src.db.usergroup_user import UserGroupUser
 from src.db.organizations import Organization
+from src.db.roles import Role
+from src.db.user_organizations import UserOrganization
 from src.security.features_utils.usage import (
     check_limits_with_usage,
     decrease_feature_usage,
@@ -395,6 +397,12 @@ async def get_courses_orgslug(
 ) -> List[CourseRead]:
     offset = (page - 1) * limit
 
+    org = db_session.exec(
+        select(Organization).where(Organization.slug == org_slug)
+    ).first()
+    if not org:
+        return []
+
     # Base query
     query = (
         select(Course)
@@ -406,26 +414,48 @@ async def get_courses_orgslug(
         # For anonymous users, only show public courses
         query = query.where(Course.public == True)
     else:
-        # For authenticated users, show:
-        # 1. Public courses
-        # 2. Courses not in any UserGroup
-        # 3. Courses in UserGroups where the user is a member
-        # 4. Courses where the user is a resource author
-        query = (
-            query
-            .outerjoin(UserGroupResource, UserGroupResource.resource_uuid == Course.course_uuid)  # type: ignore
-            .outerjoin(UserGroupUser, and_(
-                UserGroupUser.usergroup_id == UserGroupResource.usergroup_id,
-                UserGroupUser.user_id == current_user.id
-            ))
-            .outerjoin(ResourceAuthor, ResourceAuthor.resource_uuid == Course.course_uuid)  # type: ignore
-            .where(or_(
-                Course.public == True,
-                UserGroupResource.resource_uuid == None,  # Courses not in any UserGroup # noqa: E711
-                UserGroupUser.user_id == current_user.id,  # Courses in UserGroups where user is a member
-                ResourceAuthor.user_id == current_user.id  # Courses where user is a resource author
-            ))
+        roles_statement = (
+            select(Role)
+            .join(UserOrganization, UserOrganization.role_id == Role.id)
+            .where(
+                UserOrganization.user_id == current_user.id,
+                UserOrganization.org_id == org.id,
+            )
         )
+        roles = db_session.exec(roles_statement).all()
+
+        has_course_read = False
+        for role in roles:
+            role = Role.model_validate(role)
+            if role.rights:
+                try:
+                    if role.rights["courses"]["action_read"] is True:
+                        has_course_read = True
+                        break
+                except Exception:
+                    continue
+
+        if not has_course_read:
+            # For authenticated users without course read rights, show:
+            # 1. Public courses
+            # 2. Courses not in any UserGroup
+            # 3. Courses in UserGroups where the user is a member
+            # 4. Courses where the user is a resource author
+            query = (
+                query
+                .outerjoin(UserGroupResource, UserGroupResource.resource_uuid == Course.course_uuid)  # type: ignore
+                .outerjoin(UserGroupUser, and_(
+                    UserGroupUser.usergroup_id == UserGroupResource.usergroup_id,
+                    UserGroupUser.user_id == current_user.id
+                ))
+                .outerjoin(ResourceAuthor, ResourceAuthor.resource_uuid == Course.course_uuid)  # type: ignore
+                .where(or_(
+                    Course.public == True,
+                    UserGroupResource.resource_uuid == None,  # Courses not in any UserGroup # noqa: E711
+                    UserGroupUser.user_id == current_user.id,  # Courses in UserGroups where user is a member
+                    ResourceAuthor.user_id == current_user.id  # Courses where user is a resource author
+                ))
+            )
 
     # Apply pagination
     # The distinct columns are a hack that prevents that the = operator is used on a JSON column.

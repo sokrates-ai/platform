@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import useAdminStatus from '@components/Hooks/useAdminStatus';
+import useCourseStaffStatus from '@components/Hooks/useCourseStaffStatus';
 import { usePathname, useRouter } from 'next/navigation';
 import PageLoading from '@components/Objects/Loaders/PageLoading';
 
@@ -10,20 +11,26 @@ type AuthorizationProps = {
   authorizationMode: 'component' | 'page';
 };
 
-const ADMIN_PATHS = [
+const COURSE_STAFF_PATHS = [
+  '/dash/courses/*',
+  '/dash/courses',
+];
+
+const ADMIN_ONLY_PATHS = [
   '/dash/org/*',
   '/dash/org',
   '/dash/users/*',
   '/dash/users',
-  '/dash/courses/*',
-  '/dash/courses',
   '/dash/org/settings/general',
 ];
+
+const ADMIN_PATHS = [...ADMIN_ONLY_PATHS, ...COURSE_STAFF_PATHS];
 
 const AdminAuthorization: React.FC<AuthorizationProps> = ({ children, authorizationMode }) => {
   const session = useSokratesSession() as any;  const pathname = usePathname();
   const router = useRouter();
   const { isAdmin, loading } = useAdminStatus() as any
+  const { isCourseStaff, loading: courseStaffLoading } = useCourseStaffStatus() as any
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   const isUserAuthenticated = useMemo(() => session.status === 'authenticated', [session.status]);
@@ -43,9 +50,13 @@ const AdminAuthorization: React.FC<AuthorizationProps> = ({ children, authorizat
 
 
   const isAdminPath = useMemo(() => ADMIN_PATHS.some(path => checkPathname(path, pathname)), [pathname, checkPathname]);
+  const isCourseStaffPath = useMemo(
+    () => COURSE_STAFF_PATHS.some(path => checkPathname(path, pathname)),
+    [pathname, checkPathname],
+  );
 
   const authorizeUser = useCallback(() => {
-    if (loading) {
+    if (loading || courseStaffLoading) {
       return; // Wait until the admin status is determined
     }
 
@@ -56,7 +67,8 @@ const AdminAuthorization: React.FC<AuthorizationProps> = ({ children, authorizat
 
     if (authorizationMode === 'page') {
       if (isAdminPath) {
-        if (isAdmin) {
+        const isAllowed = isAdmin || (isCourseStaffPath && isCourseStaff);
+        if (isAllowed) {
           setIsAuthorized(true);
         } else {
           setIsAuthorized(false);
@@ -68,13 +80,13 @@ const AdminAuthorization: React.FC<AuthorizationProps> = ({ children, authorizat
     } else if (authorizationMode === 'component') {
       setIsAuthorized(isAdmin);
     }
-  }, [loading, isUserAuthenticated, isAdmin, isAdminPath, authorizationMode, router]);
+  }, [loading, courseStaffLoading, isUserAuthenticated, isAdmin, isAdminPath, isCourseStaff, isCourseStaffPath, authorizationMode, router]);
 
   useEffect(() => {
     authorizeUser();
   }, [authorizeUser]);
 
-  if (loading) {
+  if (loading || courseStaffLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <PageLoading />

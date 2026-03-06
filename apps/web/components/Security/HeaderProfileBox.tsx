@@ -1,10 +1,9 @@
 'use client'
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import styled from 'styled-components'
 import Link from 'next/link'
 import { Package2, Settings } from 'lucide-react'
 import UserAvatar from '@components/Objects/UserAvatar'
-import useAdminStatus from '@components/Hooks/useAdminStatus'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { getUriWithoutOrg } from '@services/config/config'
@@ -12,11 +11,30 @@ import Tooltip from '@components/Objects/StyledElements/Tooltip/Tooltip'
 
 export const HeaderProfileBox = () => {
   const session = useSokratesSession() as any;
-  const isUserAdmin = useAdminStatus()
   const org = useOrg() as any
 
   useEffect(() => { }
     , [session])
+
+  const roleBadge = useMemo(() => {
+    if (session.status !== 'authenticated') return null
+    const roles = session?.data?.roles || []
+    const orgId = org?.id
+    const rolesForOrg = orgId ? roles.filter((role: any) => role?.org?.id === orgId) : roles
+    const hasAdmin = rolesForOrg.some((role: any) =>
+      role?.role?.role_uuid === 'role_global_admin' || role?.role?.id === 1
+    )
+    if (hasAdmin) return 'ADMIN'
+    const hasMaintainer = rolesForOrg.some((role: any) =>
+      role?.role?.role_uuid === 'role_global_maintainer' || role?.role?.id === 2
+    )
+    if (hasMaintainer) return 'MAINTAINER'
+    const hasTutor = rolesForOrg.some((role: any) =>
+      role?.role?.role_uuid === 'role_global_tutor' || role?.role?.id === 4
+    )
+    if (hasTutor) return 'TUTOR'
+    return null
+  }, [session.status, session?.data?.roles, org?.id])
 
   return (
     <ProfileArea>
@@ -38,7 +56,11 @@ export const HeaderProfileBox = () => {
           <div className="flex items-center space-x-2">
             <div className='flex items-center space-x-2' >
               <p className='text-sm capitalize'>{session.data.user.username}</p>
-              {isUserAdmin.isAdmin && <div className="text-[10px] bg-rose-300 px-2 font-bold rounded-md shadow-inner py-1">ADMIN</div>}
+              {roleBadge && (
+                <div className="text-[10px] bg-rose-300 px-2 font-bold rounded-md shadow-inner py-1">
+                  {roleBadge}
+                </div>
+              )}
             </div>
 
             <div className="flex items-center space-x-2">

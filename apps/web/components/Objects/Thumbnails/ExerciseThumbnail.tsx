@@ -1,11 +1,9 @@
 'use client'
-import { useOrg } from '@components/Contexts/OrgContext'
 import AuthenticatedClientElement from '@components/Security/AuthenticatedClientElement'
 import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationModal/ConfirmationModal'
 import { revalidateTags } from '@services/utils/ts/requests'
 import { BookMinus, MoreVertical, Pencil, Eye } from 'lucide-react'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
-import { useRouter } from 'next/navigation'
 import React from 'react'
 import toast from 'react-hot-toast'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
@@ -44,10 +42,10 @@ type PropsType = {
 }
 
 function ExerciseThumbnail(props: PropsType) {
-  const router = useRouter()
-  const org = useOrg() as any
   const session = useSokratesSession() as any;
   const [viewExerciseModal, setViewExerciseModal] = React.useState(false)
+  const [modifyExerciseModal, setModifyExerciseModal] = React.useState(false)
+  const [dropdownOpen, setDropdownOpen] = React.useState(false)
 
   const deleteExercise = async () => {
     const toastId = toast.loading('Deleting exercise...')
@@ -66,16 +64,77 @@ function ExerciseThumbnail(props: PropsType) {
   return (
     <Card className="relative bg-gray-200 p-2 rounded-l overflow-hidden">
       <CardContent>
-        <AdminEditOptions
-          exercise={props.exercise}
-          orgSlug={props.orgslug}
-          orgId={props.orgId}
-          mutateURL={props.mutateURL}
-          deleteExercise={deleteExercise}
-          tags={props.tags}
-          courses={props.courses}
-          onView={() => setViewExerciseModal(true)}
-        />
+        <div className="absolute top-2 right-2 z-20 flex items-center gap-2">
+          <AuthenticatedClientElement
+            action="read"
+            ressourceType="activities"
+            checkMethod="roles"
+            orgId={props.orgId}
+          >
+            <button
+              className="p-1 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-md"
+              aria-label="View exercise"
+              onClick={(e) => { e.stopPropagation(); setViewExerciseModal(true); }}
+              onMouseDown={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <Eye size={20} className="text-gray-700" />
+            </button>
+          </AuthenticatedClientElement>
+          <AuthenticatedClientElement
+            action="update"
+            ressourceType="activities"
+            checkMethod="roles"
+            orgId={props.orgId}
+          >
+            <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="p-1 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-md"
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  aria-label="More options"
+                >
+                  <MoreVertical size={20} className="text-gray-700" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-56"
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+              >
+                <DropdownMenuItem onSelect={() => setModifyExerciseModal(true)}>
+                  <Pencil className="mr-4 h-4 w-4" /> Modify Exercise
+                </DropdownMenuItem>
+
+                <div className="my-2"></div>
+
+                <DropdownMenuItem asChild>
+                  <ConfirmationModal
+                    confirmationButtonText="Delete Exercise"
+                    confirmationMessage="Are you sure you want to delete this exercise?"
+                    dialogTitle={`Delete ${props.exercise.title}?`}
+                    dialogTrigger={
+                      <button
+                        className="w-full text-left flex items-center px-2 py-1 rounded-md text-sm bg-rose-500/10 hover:bg-rose-500/20 transition-colors text-red-600"
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
+                      >
+                        <BookMinus className="mr-4 h-6 w-4" /> Delete Exercise
+                      </button>
+                    }
+                    functionToExecute={deleteExercise}
+                    status="warning"
+                  />
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </AuthenticatedClientElement>
+        </div>
         <div className='flex flex-col w-full pt-3 space-y-2'>
           <h2 className="font-bold text-gray-800 line-clamp-2 leading-tight text-lg capitalize">{props.exercise.title}</h2>
           <p className='text-sm text-gray-700 leading-normal line-clamp-3'>{props.exercise.description}</p>
@@ -114,89 +173,7 @@ function ExerciseThumbnail(props: PropsType) {
         dialogTitle="Exercise Details"
         dialogDescription="View exercise details"
       />
-    </Card>
-  )
-}
 
-const AdminEditOptions = ({ exercise, orgId, orgSlug, mutateURL, deleteExercise, tags, courses, onView }: {
-  exercise: Exercise,
-  orgId: string,
-  orgSlug: string,
-  mutateURL: string,
-  tags: any[],
-  courses: any[],
-  deleteExercise: () => Promise<void>,
-  onView: () => void,
-}) => {
-  const [modifyExerciseModal, setModifyExerciseModal] = React.useState(false)
-  const [dropdownOpen, setDropdownOpen] = React.useState(false)
-
-  return (
-    <AuthenticatedClientElement
-      action="update"
-      ressourceType="courses"
-      checkMethod="roles"
-      orgId={orgId}
-    >
-      <div className="absolute top-2 right-2 z-20 flex items-center gap-2">
-        <button
-          className="p-1 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-md"
-          aria-label="View exercise"
-          onClick={(e) => { e.stopPropagation(); onView(); }}
-          onMouseDown={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <Eye size={20} className="text-gray-700" />
-        </button>
-        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-          <DropdownMenuTrigger asChild>
-            <button
-              className="p-1 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-md"
-              onClick={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-              onPointerDown={(e) => e.stopPropagation()}
-              aria-label="More options"
-            >
-              <MoreVertical size={20} className="text-gray-700" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="w-56"
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            <DropdownMenuItem onSelect={() => setModifyExerciseModal(true)}>
-              <Pencil className="mr-4 h-4 w-4" /> Modify Exercise
-            </DropdownMenuItem>
-
-            <div className="my-2"></div>
-
-            <DropdownMenuItem asChild>
-              <ConfirmationModal
-                confirmationButtonText="Delete Exercise"
-                confirmationMessage="Are you sure you want to delete this exercise?"
-                dialogTitle={`Delete ${exercise.title}?`}
-                dialogTrigger={
-                  <button
-                    className="w-full text-left flex items-center px-2 py-1 rounded-md text-sm bg-rose-500/10 hover:bg-rose-500/20 transition-colors text-red-600"
-                    onClick={(e) => e.stopPropagation()}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onPointerDown={(e) => e.stopPropagation()}
-                  >
-                    <BookMinus className="mr-4 h-6 w-4" /> Delete Exercise
-                  </button>
-                }
-                functionToExecute={deleteExercise}
-                status="warning"
-              />
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      {/* Modify Exercise Modal */}
       <Modal
         isDialogOpen={modifyExerciseModal}
         onOpenChange={setModifyExerciseModal}
@@ -204,22 +181,21 @@ const AdminEditOptions = ({ exercise, orgId, orgSlug, mutateURL, deleteExercise,
         minWidth="xl"
         dialogContent={
           <ModifyExerciseModal
-            orgslug={orgSlug}
-            mutateURL={mutateURL}
-            exercise={exercise}
+            orgslug={props.orgslug}
+            mutateURL={props.mutateURL}
+            exercise={props.exercise}
             closeModal={() => {
               setModifyExerciseModal(false)
               setDropdownOpen(false)
             }}
-            tags={tags}
-            courses={courses}
+            tags={props.tags}
+            courses={props.courses}
           />
         }
         dialogTitle="Modify Exercise"
         dialogDescription="Modify this exercise"
       />
-    </AuthenticatedClientElement>
+    </Card>
   )
 }
-
 export default ExerciseThumbnail

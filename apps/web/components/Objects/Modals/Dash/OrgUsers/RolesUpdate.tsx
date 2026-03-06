@@ -80,6 +80,7 @@ function RolesUpdate(props: Props) {
             >
               <option value="role_global_admin">Admin </option>
               <option value="role_global_maintainer">Maintainer</option>
+              <option value="role_global_tutor">Tutor</option>
               <option value="role_global_user">User</option>
             </select>
           </Form.Control>
