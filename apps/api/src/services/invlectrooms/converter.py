@@ -39,6 +39,11 @@ from .schemas import (
 COOL_STONE_ASSET = "Stein_Moos.webp"
 COOL_STONE_LABEL = "cool"
 PLACEHOLDER_FILE = "Placeholder.webp"
+PLACEHOLDER_HIDE_FILE = "placeholder.png"
+# Placeholder.webp is rendered as a top-left-anchored sprite in the template map.
+# Keep its dimensions in sync with the asset to preserve visual positions.
+PLACEHOLDER_WIDTH = 738
+PLACEHOLDER_HEIGHT = 475
 TEMPLATE_MAP_FILENAME = "template_map.json"
 
 CHECKPOINT_DISPLAY_NAMES = {
@@ -72,10 +77,20 @@ def _hydrate_chapter_slot(
     chapter: ChapterRead,
     checkpoint_level: Optional[str],
     problem: Optional[InvlectRoomsProblemPayload],
+    *,
+    preserve_placeholder_position: bool = False,
 ) -> None:
     chapter_id = chapter.id
     if chapter_id is None:
         return
+
+    if preserve_placeholder_position:
+        scale = slot.get("scale", 1)
+        x = slot.get("x")
+        y = slot.get("y")
+        if isinstance(scale, (int, float)) and isinstance(x, (int, float)) and isinstance(y, (int, float)):
+            slot["x"] = x + (PLACEHOLDER_WIDTH * scale) / 2
+            slot["y"] = y + (PLACEHOLDER_HEIGHT * scale) / 2
 
     slot["id"] = -int(chapter_id)
     slot["type"] = {
@@ -352,7 +367,13 @@ def _build_content_map(
         if chapter_id is None:
             continue
         slot = objects[object_index]
-        _hydrate_chapter_slot(slot, chapter, checkpoint_level, problem)
+        _hydrate_chapter_slot(
+            slot,
+            chapter,
+            checkpoint_level,
+            problem,
+            preserve_placeholder_position=True,
+        )
         chapter_positions[int(chapter_id)] = slot
 
     extra_contexts = chapter_contexts[len(mapped_indices) :]
@@ -387,15 +408,27 @@ def _build_content_map(
             objects.append(slot)
             chapter_positions[int(chapter_id)] = slot
 
-    template["objects"] = [
-        obj
-        for index, obj in enumerate(objects)
-        if not (
-            isinstance(obj, dict)
-            and obj.get("file") == PLACEHOLDER_FILE
-            and index not in used_placeholder_indices
-        )
-    ]
+    for index in placeholder_indices:
+        if index in used_placeholder_indices:
+            continue
+        slot = objects[index]
+        if not isinstance(slot, dict):
+            continue
+        slot["file"] = PLACEHOLDER_HIDE_FILE
+        slot["scale"] = 0
+        slot["label"] = ""
+        slot_type = slot.get("type")
+        if isinstance(slot_type, dict):
+            slot_type = dict(slot_type)
+            slot_type["kind"] = "default"
+            slot_type.pop("associatedChapterID", None)
+            slot_type.pop("customChapterId", None)
+            slot_type.pop("label", None)
+            slot["type"] = slot_type
+        else:
+            slot["type"] = {"kind": "default", "label": "", "customChapterId": 0}
+
+    template["objects"] = objects
 
     if "boundaries" not in template or not isinstance(template["boundaries"], dict):
         template["boundaries"] = deepcopy(default_map_state().get("boundaries", {}))

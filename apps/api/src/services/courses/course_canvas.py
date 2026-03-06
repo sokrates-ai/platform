@@ -1,9 +1,9 @@
 from fastapi import HTTPException, Request, status
 from sqlmodel import Session, select
-
 from src.db.courses.course_canvas import CourseCanvas, CourseCanvasRead, CourseCanvasUpdate
 from src.db.courses.courses import Course
 from src.db.users import AnonymousUser, PublicUser
+
 
 def get_canvas(
     _request: Request,
@@ -39,7 +39,13 @@ def get_canvas(
             course_id=course.id,
             user_id=user.id,
         )
-    return CourseCanvasRead(**canvas.model_dump())
+    return CourseCanvasRead(
+        course_id=canvas.course_id,
+        user_id=canvas.user_id,
+        selected_chapter_id=canvas.selected_chapter_id,
+        selected_tab_id=canvas.selected_tab_id,
+    )
+
 
 def put_update(
     _request: Request,
@@ -47,7 +53,7 @@ def put_update(
     course_canvas_update: CourseCanvasUpdate,
     user: PublicUser | AnonymousUser,
     db_session: Session,
-):  
+):
     statement = select(Course).where(
         Course.course_uuid == course_uuid
     )
@@ -63,12 +69,18 @@ def put_update(
             status_code=status.HTTP_403_FORBIDDEN, detail="Anonymous User cannot update the course canvas."
         )
     
+    print(f"Course is: {course.id}")
     statement = select(CourseCanvas).where(
         CourseCanvas.course_id == course.id,
         CourseCanvas.user_id == user.id,
     )
     canvas = db_session.exec(statement).first()
-    fields_set = getattr(course_canvas_update, "model_fields_set", set())
+    print(canvas)
+    fields_set = getattr(course_canvas_update, "model_fields_set", None)
+    if not fields_set:
+        fields_set = getattr(course_canvas_update, "__fields_set__", set())
+    if not fields_set:
+        fields_set = {"selected_chapter_id", "selected_tab_id"}
     if canvas:
         if "selected_chapter_id" in fields_set:
             canvas.selected_chapter_id = course_canvas_update.selected_chapter_id
@@ -86,4 +98,9 @@ def put_update(
     print(f"ID: {course_canvas_update.selected_chapter_id}")
     db_session.commit()
     
-    return canvas
+    return CourseCanvasRead(
+        course_id=canvas.course_id,
+        user_id=canvas.user_id,
+        selected_chapter_id=canvas.selected_chapter_id,
+        selected_tab_id=canvas.selected_tab_id,
+    )

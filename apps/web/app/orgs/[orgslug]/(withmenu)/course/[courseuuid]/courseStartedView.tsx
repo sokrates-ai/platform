@@ -255,6 +255,7 @@ const CourseStartedView = ({
   
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const shouldPersistCanvasRef = useRef(false)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -558,6 +559,9 @@ const CourseStartedView = ({
   const access_token: string | undefined = session?.data?.tokens?.access_token
 
   useEffect(() => {
+    if (!shouldPersistCanvasRef.current) {
+      return
+    }
     updateCourseCanvasInteractionState({
       courseUuid: `course_${courseuuid}`,
       selectedChapter: chapterDialogOpen ? selectedChapter : null,
@@ -625,6 +629,7 @@ const CourseStartedView = ({
                     key={tab.id}
                     type="button"
                     onClick={() => {
+                      shouldPersistCanvasRef.current = true
                       setSelectedTab(tab.id)
                       setMenuOpen(false)
                     }}
@@ -732,6 +737,7 @@ const CourseStartedView = ({
               )
             }}
             onChapterClick={(chapterId: number) => {
+              shouldPersistCanvasRef.current = true
               setSelectedChapter(chapterId)
               setChapterDialogOpen(true)
             }}

@@ -508,7 +508,6 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                             className={cn(
                               'relative flex gap-2 rounded-md',
                               showVisibilityControls && isVertical ? 'items-start' : 'items-center',
-                              showVisibilityControls && isVertical ? 'min-h-[96px]' : '',
                               snapshot.isDragging && 'opacity-80 shadow-lg',
                               isVertical ? 'w-full' : '',
                             )}
@@ -532,10 +531,12 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                               className={cn(
                                 'flex w-full flex-col gap-2',
                                 showVisibilityControls && isVertical
-                                  ? 'rounded-md border border-gray-300 bg-white/70 p-2'
+                                  ? 'rounded-md border border-transparent bg-white/70 p-2'
                                   : '',
-                                showVisibilityControls && isVertical && tab.id === activeTab
-                                  ? 'border-[#FF6934] ring-1 ring-[#FF6934]/30'
+                                showVisibilityControls && isVertical
+                                  ? (tab.id === activeTab
+                                      ? 'border-[#FF6934] ring-1 ring-[#FF6934]/30'
+                                      : 'border-gray-300')
                                   : '',
                               )}
                             >
@@ -612,7 +613,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                                 </div>
                               </TabsTrigger>
                               {showVisibilityControls && isVertical ? (
-                                <div className="px-1 pb-1">
+                                <div className="px-1 pb-0">
                                   {/* Segmented Control */}
                                   <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-gray-100 p-1">
                                   {/* Instant */}
@@ -659,7 +660,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                                   {/* Slide-Down Controls */}
                                   <div className={cn(
                                     'overflow-hidden transition-all duration-200',
-                                    isInstant ? 'max-h-24 h-24 mt-1.5 opacity-100' : 'max-h-0 h-0 opacity-0',
+                                    isInstant ? 'max-h-20 h-20 mt-1.5 opacity-100' : 'max-h-0 h-0 opacity-0',
                                   )}>
                                     <div
                                       className={cn(
@@ -688,7 +689,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                                   </div>
                                   <div className={cn(
                                     'overflow-hidden transition-all duration-200',
-                                    isPlanned ? 'max-h-24 h-24 mt-1.5 opacity-100' : 'max-h-0 h-0 opacity-0',
+                                    isPlanned ? 'max-h-20 h-20 mt-1.5 opacity-100' : 'max-h-0 h-0 opacity-0',
                                   )}>
                                     <div className="rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-2">
                                       <input
