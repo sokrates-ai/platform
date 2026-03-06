@@ -63,6 +63,8 @@ interface CanvasViewportProps {
   effectiveGridSize?: number
   chapterStates?: Record<number, 'locked' | 'unlocked' | 'finished'>
   clampToMap?: boolean
+  minZoom?: number
+  maxZoom?: number
 }
 
 // Default boundaries
@@ -90,6 +92,8 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
     effectiveGridSize,
     chapterStates,
     clampToMap,
+    minZoom,
+    maxZoom,
   }) => {
 
     const { app } = useApplication()
@@ -99,8 +103,8 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
     const worldWidth = Math.abs(right - left)
     const worldHeight = Math.abs(bottom - top)
 
-    const [viewport, setViewport] = useState<Viewport | null>(null)
-    const zoom = useZoomLevel()
+  const [viewport, setViewport] = useState<Viewport | null>(null)
+  const zoom = useZoomLevel()
 
     const gridSize =
       effectiveGridSize || MINOR_GRID_SIZE * (11 - gridGranularity)
@@ -145,10 +149,24 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
             .wheel({ percent: 0.15 })
 
           if (readOnly) {
-            node.clampZoom({
-              minWidth: app.renderer.width * 0.75,
-              maxWidth: app.renderer.width * 1,
-            })
+            if (minZoom || maxZoom) {
+              const resolvedMin = minZoom ?? 0.1
+              const resolvedMax = maxZoom ?? 1
+              const safeMin = Math.max(
+                0.01,
+                Math.min(resolvedMin, resolvedMax),
+              )
+              const safeMax = Math.max(resolvedMin, resolvedMax)
+              node.clampZoom({
+                minWidth: app.renderer.width / safeMax,
+                maxWidth: app.renderer.width / safeMin,
+              })
+            } else {
+              node.clampZoom({
+                minWidth: app.renderer.width * 0.75,
+                maxWidth: app.renderer.width * 1,
+              })
+            }
           } else {
             node.clampZoom({
               minWidth: app.renderer.width * 0.2,
@@ -207,6 +225,54 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
         clampToMap,
       ]
     )
+
+    useEffect(() => {
+      if (!viewport || !readOnly) return
+
+      const updateClamp = () => {
+        const screenWorldWidth = viewport.worldScreenWidth
+        const screenWorldHeight = viewport.worldScreenHeight
+        const extraX = Math.max(0, (screenWorldWidth - worldWidth) / 2)
+        const extraY = Math.max(0, (screenWorldHeight - worldHeight) / 2)
+        const padding = Math.min(worldWidth, worldHeight) * 0.05
+
+        viewport.clamp({
+          left: left - extraX - padding,
+          right: right + extraX + padding,
+          top: top - extraY - padding,
+          bottom: bottom + extraY + padding,
+          underflow: 'none',
+        })
+      }
+
+      updateClamp()
+      viewport.on('zoomed', updateClamp)
+      viewport.on('zoomed-end', updateClamp)
+
+      return () => {
+        viewport.off('zoomed', updateClamp)
+        viewport.off('zoomed-end', updateClamp)
+      }
+    }, [viewport, readOnly, left, right, top, bottom, worldWidth, worldHeight])
+
+    useEffect(() => {
+      if (!viewport || !readOnly) return
+
+      const updateDragFactor = () => {
+        const drag = viewport.plugins.get('drag') as { options?: { factor?: number } } | undefined
+        if (!drag?.options) return
+        drag.options.factor = Math.max(0.05, Math.min(1, viewport.scale.x))
+      }
+
+      updateDragFactor()
+      viewport.on('zoomed', updateDragFactor)
+      viewport.on('zoomed-end', updateDragFactor)
+
+      return () => {
+        viewport.off('zoomed', updateDragFactor)
+        viewport.off('zoomed-end', updateDragFactor)
+      }
+    }, [viewport, readOnly])
 
     /* ↑ both handlers now come straight from the hook */
 

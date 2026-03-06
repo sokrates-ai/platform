@@ -10,6 +10,7 @@ import { DoorOpen, EyeOff, Menu, X } from 'lucide-react'
 import { getUriWithOrg } from '@services/config/config'
 import usePrefetchPixiAssets from '@components/Objects/ContentMap/hooks/usePrefetchPixiAssets'
 import { AnimatePresence, motion } from 'framer-motion'
+import type { Viewport } from 'pixi-viewport'
 import {
   DEFAULT_CHAPTER_STONE_ICON,
   DEFAULT_CHAPTER_STONE_THEME,
@@ -405,6 +406,71 @@ const CourseStartedView = ({
 
   const assetsReady = usePrefetchPixiAssets(prefetchUrls, !!course)
 
+  const [viewport, setViewport] = useState<Viewport | null>(null)
+  const [zoomPercent, setZoomPercent] = useState<number | null>(null)
+  const initialZoomRef = useRef<number | null>(null)
+  const MIN_ZOOM = 0.1
+  const MAX_ZOOM = 1
+
+  useEffect(() => {
+    if (!viewport) {
+      return
+    }
+
+    const clampZoom = (scale: number) =>
+      Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, scale))
+
+    const updateZoom = () => {
+      const rawScale = viewport.scale.x
+      const clampedScale = clampZoom(rawScale)
+      if (clampedScale !== rawScale) {
+        viewport.setZoom(clampedScale, true)
+      }
+      setZoomPercent(Math.round(clampedScale * 100))
+    }
+
+    initialZoomRef.current = clampZoom(viewport.scale.x)
+    if (viewport.scale.x !== initialZoomRef.current) {
+      viewport.setZoom(initialZoomRef.current, true)
+    }
+
+    updateZoom()
+
+    const handleZoom = () => updateZoom()
+    viewport.on('zoomed', handleZoom)
+    viewport.on('zoomed-end', handleZoom)
+
+    return () => {
+      viewport.off('zoomed', handleZoom)
+      viewport.off('zoomed-end', handleZoom)
+    }
+  }, [viewport])
+
+  const handleZoomIn = () => {
+    if (!viewport) return
+    const nextScale = Math.min(MAX_ZOOM, viewport.scale.x * 1.15)
+    viewport.setZoom(nextScale, true)
+    setZoomPercent(Math.round(nextScale * 100))
+  }
+
+  const handleZoomOut = () => {
+    if (!viewport) return
+    const nextScale = Math.max(MIN_ZOOM, viewport.scale.x * 0.85)
+    viewport.setZoom(nextScale, true)
+    setZoomPercent(Math.round(nextScale * 100))
+  }
+
+  const handleZoomReset = () => {
+    if (!viewport) return
+    const initialZoom = initialZoomRef.current ?? viewport.scale.x
+    const clampedInitial = Math.min(
+      MAX_ZOOM,
+      Math.max(MIN_ZOOM, initialZoom),
+    )
+    viewport.setZoom(clampedInitial, true)
+    setZoomPercent(Math.round(clampedInitial * 100))
+  }
+
   // ✅ Initialize from URL param first, then fall back to prop
   const [chapterDialogOpen, setChapterDialogOpen] = useState(
     chapterFromUrl != null || selectedChapterId != null,
@@ -525,6 +591,55 @@ const CourseStartedView = ({
         </Button>
       </Link>
 
+      <div className="absolute bottom-8 right-8 z-20 flex items-center gap-1 rounded-xl border border-gray-200 bg-white/90 px-2 py-1 shadow-lg backdrop-blur">
+        <button
+          type="button"
+          onClick={handleZoomOut}
+          disabled={!viewport}
+          className={cn(
+            'flex h-8 w-8 items-center justify-center rounded-lg border text-sm font-semibold transition-all',
+            viewport
+              ? 'border-gray-200 text-gray-700 hover:bg-gray-100'
+              : 'cursor-not-allowed border-gray-100 text-gray-300',
+          )}
+          aria-label="Zoom out"
+        >
+          –
+        </button>
+        <div className="min-w-[3.5rem] text-center text-sm font-semibold text-gray-700">
+          {zoomPercent !== null ? `${zoomPercent}%` : '--%'}
+        </div>
+        <button
+          type="button"
+          onClick={handleZoomIn}
+          disabled={!viewport}
+          className={cn(
+            'flex h-8 w-8 items-center justify-center rounded-lg border text-sm font-semibold transition-all',
+            viewport
+              ? 'border-gray-200 text-gray-700 hover:bg-gray-100'
+              : 'cursor-not-allowed border-gray-100 text-gray-300',
+          )}
+          aria-label="Zoom in"
+        >
+          +
+        </button>
+        <div className="mx-1 h-6 w-px bg-gray-200" />
+        <button
+          type="button"
+          onClick={handleZoomReset}
+          disabled={!viewport}
+          className={cn(
+            'flex h-8 items-center justify-center rounded-lg border px-2 text-xs font-semibold uppercase tracking-wide transition-all',
+            viewport
+              ? 'border-gray-200 text-gray-600 hover:bg-gray-100'
+              : 'cursor-not-allowed border-gray-100 text-gray-300',
+          )}
+          aria-label="Reset zoom"
+        >
+          Reset
+        </button>
+      </div>
+
       <div className="relative flex-1 overflow-hidden flex flex-col">
         <div className="relative flex-1">
           <Canvas
@@ -532,6 +647,9 @@ const CourseStartedView = ({
             layout={layout}
             readOnly
             chapterStates={chapterStates}
+            onViewportReady={setViewport}
+            minZoom={MIN_ZOOM}
+            maxZoom={MAX_ZOOM}
             setLayout={() => {
               throw new Error(
                 'BUG: Canvas layout mutation should not be called from read-only view.',

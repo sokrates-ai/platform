@@ -30,6 +30,9 @@ export interface CanvasProps {
     layout: LayoutState;
     setLayout: Dispatch<SetStateAction<LayoutState>>;
     onChapterClick: (chapterID: number) => void;
+    onViewportReady?: (viewport: any) => void;
+    minZoom?: number;
+    maxZoom?: number;
     readOnly?: boolean;
     showGrid?: boolean;
     snapToGrid?: boolean;
@@ -46,6 +49,9 @@ const Canvas: React.FC<CanvasProps> = ({
     layout,
     setLayout,
     onChapterClick,
+    onViewportReady,
+    minZoom,
+    maxZoom,
     readOnly = false,
     showGrid = true,
     snapToGrid = true,
@@ -61,6 +67,13 @@ const Canvas: React.FC<CanvasProps> = ({
     const [layerInput, setLayerInput] = useState<string>("");
     const [layerInputError, setLayerInputError] = useState(false);
     const [viewport, setViewport] = useState<any>(null);
+    const handleViewportReady = useCallback(
+        (nextViewport: any) => {
+            setViewport(nextViewport);
+            onViewportReady?.(nextViewport);
+        },
+        [onViewportReady]
+    );
     const dispatchRef = useRef<typeof undoRedo | null>(undoRedo || null);
 
     // Update dispatch ref when undoRedo changes
@@ -368,11 +381,13 @@ const Canvas: React.FC<CanvasProps> = ({
                         placedAssets={layout.layout || []}
                         selectedIds={selectedIds}
                         onSelectIds={setSelectedIds}
-                        onViewportReady={setViewport}
+                        onViewportReady={handleViewportReady}
                         onAssetPositionChange={handleAssetPositionChange}
                         onAssetContextMenu={handleAssetContextMenu}
                         onChapterClick={onChapterClick}
                         readOnly={!!readOnly}
+                        minZoom={minZoom}
+                        maxZoom={maxZoom}
                         boundaries={layout.boundaries}
                         showGrid={showGrid}
                         snapToGrid={snapToGrid}
