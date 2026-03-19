@@ -121,9 +121,9 @@ docker-build() {
 
     DOMAIN="ERROR"
     if [ "${TAG}" = "prod" ]; then
-        DOMAIN="sokrates.ae.org"
+        DOMAIN="sokrates-hpi.de"
     elif [ "${TAG}" = "staging" ]; then
-        DOMAIN="staging.sokrates.ae.org"
+        DOMAIN="staging.sokrates-hpi.de"
     else
         echo "[ERROR]: Unknown TAG: ${TAG}"
         dfail
