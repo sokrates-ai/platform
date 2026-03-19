@@ -119,6 +119,14 @@ interface LayoutHistoryState extends LayoutState {
     };
 }
 
+type SpriteEntry = {
+    file: string;
+    label: string;
+    scale: number;
+    sourceUrl?: string;
+    previewSrc?: string;
+};
+
 type LayoutAction =
     | { type: 'init'; payload: { layout: AssetData[]; boundaries?: { left: number; right: number; top: number; bottom: number } } }
     | { type: 'set_layout'; payload: LayoutState }
@@ -220,7 +228,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
     const [gridGranularity, setGridGranularity] = React.useState<number>(5)
     const [clampToMap, setClampToMap] = React.useState<boolean>(true)
     const [assetPanelOpen, setAssetPanelOpen] = useState(false)
-    const [customSprites, setCustomSprites] = useState<{ file: string; label: string; scale: number; sourceUrl: string; previewSrc?: string }[]>([])
+    const [customSprites, setCustomSprites] = useState<SpriteEntry[]>([])
     const [customSpriteUrl, setCustomSpriteUrl] = useState<string>('')
     const [customSpriteLabel, setCustomSpriteLabel] = useState<string>('')
     const [customSpriteError, setCustomSpriteError] = useState<string | null>(null)
@@ -781,9 +789,9 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
         });
     }, [customSpriteUrl, customSpriteLabel, deriveLabelFromUrl, toProxiedAssetUrl]);
 
-    const allSprites = React.useMemo(() => [
+    const allSprites = React.useMemo<SpriteEntry[]>(() => [
         ...customSprites,
-        ...SPRITES,
+        ...(SPRITES as SpriteEntry[]),
     ], [customSprites]);
 
     const assetBrowserSprites = React.useMemo(() => {

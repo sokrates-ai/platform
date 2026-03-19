@@ -124,20 +124,21 @@ function courseReducer(state: any, action: any) {
       }
     }
     case 'setCourseTabsStore':
+      const nextTabsStore = action.payload as CourseTabsStore | undefined;
       return {
         ...state,
-        courseTabsStore: action.payload,
+        courseTabsStore: nextTabsStore,
         courseStructure: {
           ...state.courseStructure,
-          tabStore: action.payload,
-          tab_store: action.payload,
+          tabStore: nextTabsStore,
+          tab_store: nextTabsStore,
           tabMapStore: Object.fromEntries(
-            Object.entries(action.payload ?? {}).map(([tabId, value]) => [
+            Object.entries(nextTabsStore ?? {}).map(([tabId, value]) => [
               tabId,
               value?.map ? { ...value.map } : { ...EMPTY_MAP_STATE },
             ]),
           ),
-          chapters: ensureActivitiesArray(action.payload?.[state.activeTabId]?.content?.chapters),
+          chapters: ensureActivitiesArray(nextTabsStore?.[state.activeTabId]?.content?.chapters),
         },
       }
     case 'setCourseTabMetadata':
