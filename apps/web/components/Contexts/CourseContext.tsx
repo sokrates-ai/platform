@@ -57,7 +57,7 @@ export function CourseProvider({ children, courseuuid }: any) {
         : [];
       const metadataIds = metadata
         .map((tab: any) => tab?.id ?? tab?.tab_uuid ?? null)
-        .filter((value): value is string => Boolean(value));
+        .filter((value: string | null): value is string => Boolean(value));
       const storeKeys = Object.keys(transformed.courseTabsStore ?? {});
       const previousActive = activeTabIdRef.current;
       const fallbackTabId =
