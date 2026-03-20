@@ -1,5 +1,6 @@
 import os
 import random
+import logging
 from typing import Optional
 from fastapi import Depends, HTTPException, Request
 import httpx
@@ -9,6 +10,8 @@ from src.db.organizations import Organization
 from src.db.users import User, UserCreate, UserRead
 from src.security.auth import get_current_user
 from src.services.users.users import create_user
+
+logger = logging.getLogger(__name__)
 
 async def get_keycloak_user_info(access_token: str, issuer: str):
     issuer = issuer.rstrip("/")
@@ -37,6 +40,7 @@ async def signWithKeycloak(
         "KEYCLOAK_ISSUER"
     )
     if not keycloak_issuer:
+        logger.error("Keycloak issuer is not configured (LEARNHOUSE_KEYCLOAK_ISSUER/KEYCLOAK_ISSUER missing)")
         raise HTTPException(
             status_code=500, detail="Keycloak issuer is not configured"
         )
