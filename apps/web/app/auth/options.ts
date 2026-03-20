@@ -54,13 +54,21 @@ export const nextAuthOptions = {
 			process.env.LEARNHOUSE_KEYCLOAK_CLIENT_ID || process.env.KEYCLOAK_CLIENT_ID
 		const keycloakClientSecret =
 			process.env.LEARNHOUSE_KEYCLOAK_CLIENT_SECRET || process.env.KEYCLOAK_CLIENT_SECRET
+		const keycloakIdTokenAlg =
+			process.env.LEARNHOUSE_KEYCLOAK_ID_TOKEN_ALG ||
+			process.env.KEYCLOAK_ID_TOKEN_ALG
 
 		if (keycloakIssuer && keycloakClientId && keycloakClientSecret) {
+			const keycloakClient = keycloakIdTokenAlg
+				? { id_token_signed_response_alg: keycloakIdTokenAlg }
+				: undefined
+
 			providers.push(
 				KeycloakProvider({
 					clientId: keycloakClientId,
 					clientSecret: keycloakClientSecret,
 					issuer: keycloakIssuer,
+					client: keycloakClient,
 				})
 			)
 		}
