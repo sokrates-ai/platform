@@ -38,6 +38,7 @@ export default function HpiKeycloakButton({
       className={`w-full h-12 border-2 border-[#707070] bg-white hover:bg-gray-50 rounded-lg flex items-center justify-center gap-2 ${className}`}
       type="button"
       onClick={async () => {
+        onError?.('')
         try {
           const res = await signIn('keycloak', {
             callbackUrl: '/redirect_from_auth',
@@ -53,8 +54,6 @@ export default function HpiKeycloakButton({
             onError?.(getErrorMessage(res.error))
             return
           }
-
-          onError?.('Keycloak sign-in failed. Please try again.')
         } catch (err) {
           onError?.('Keycloak sign-in failed. Check realm/issuer/client settings.')
         }

@@ -1,5 +1,6 @@
 import uvicorn
 from fastapi import FastAPI, Request
+import logging
 from config.config import LearnHouseConfig, get_learnhouse_config
 from src.core.events.events import shutdown_app, startup_app
 from src.router import v1_router
@@ -37,6 +38,8 @@ app = FastAPI(
     version='0.1.0',
 )
 
+logger = logging.getLogger(__name__)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=learnhouse_config.hosting_config.allowed_regexp,
@@ -71,6 +74,34 @@ app.mount('/content', StaticFiles(directory=base_path), name='content')
 
 # Global Routes
 app.include_router(v1_router)
+
+
+@app.middleware('http')
+async def log_server_errors_middleware(request: Request, call_next):
+    try:
+        response = await call_next(request)
+    except Exception:
+        logger.exception(
+            "Unhandled server error",
+            extra={
+                "method": request.method,
+                "path": request.url.path,
+                "client": request.client.host if request.client else None,
+            },
+        )
+        raise
+
+    if response.status_code >= 500:
+        logger.error(
+            "Server error response",
+            extra={
+                "method": request.method,
+                "path": request.url.path,
+                "status_code": response.status_code,
+                "client": request.client.host if request.client else None,
+            },
+        )
+    return response
 
 
 @app.middleware('http')
