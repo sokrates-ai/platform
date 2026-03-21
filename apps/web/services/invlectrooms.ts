@@ -59,6 +59,8 @@ export interface InvlectRoomsApplyPayload {
   course_uuid: string;
   tab_uuid?: string;
   chapter_name?: string;
+  xp_reward?: number;
+  coin_reward?: number;
   problems: InvlectRoomsProblemPayload[];
 }
 

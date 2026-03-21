@@ -254,6 +254,8 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
   const [importSource, setImportSource] = useState('');
   const [isApplying, setIsApplying] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
+  const [xpReward, setXpReward] = useState(0);
+  const [coinReward, setCoinReward] = useState(0);
   const [steps, setSteps] = useState<ImportStepState[]>(() =>
     MOCK_IMPORT_STEPS.map((step) => ({ ...step, status: 'pending' })),
   );
@@ -279,6 +281,8 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
       setImportSource('');
       setIsApplying(false);
       setApplyError(null);
+      setXpReward(0);
+      setCoinReward(0);
       setSteps(MOCK_IMPORT_STEPS.map((step) => ({ ...step, status: 'pending' })));
     }
   }, [isOpen]);
@@ -482,6 +486,8 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
           url: importResult.url || sourceUrl,
           course_uuid: courseUuid,
           tab_uuid: tabUuid,
+          xp_reward: xpReward,
+          coin_reward: coinReward,
           problems: problems.map((problem, index) => ({
             id: problem.id,
             title: problem.title,
@@ -509,7 +515,7 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
     } finally {
       setIsApplying(false);
     }
-  }, [isApplying, importResult, courseUuid, tabUuid, chapterNames, problems, sourceUrl, access_token, onApplied, onCancel]);
+  }, [isApplying, importResult, courseUuid, tabUuid, chapterNames, problems, sourceUrl, access_token, onApplied, onCancel, xpReward, coinReward]);
 
   const validationMessage =
     touched && !isValidUrl ? 'Enter a valid URL (starting with http:// or https://).' : undefined;
@@ -762,6 +768,35 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
       {applyError && (
         <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {applyError}
+        </div>
+      )}
+
+      {hasCompleted && (
+        <div className="rounded-md border border-gray-200 bg-white/70 px-3 py-3">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-col items-start space-y-1">
+              <span className="text-xs text-neutral-600">XP reward per chapter: {xpReward}</span>
+              <input
+                type="range"
+                min={0}
+                max={50}
+                value={xpReward}
+                onChange={(event) => setXpReward(Number(event.target.value))}
+                disabled={isApplying}
+              />
+            </div>
+            <div className="flex flex-col items-start space-y-1">
+              <span className="text-xs text-neutral-600">Coin reward per chapter: {coinReward}</span>
+              <input
+                type="range"
+                min={0}
+                max={10}
+                value={coinReward}
+                onChange={(event) => setCoinReward(Number(event.target.value))}
+                disabled={isApplying}
+              />
+            </div>
+          </div>
         </div>
       )}
 

@@ -37,6 +37,8 @@ class InvlectRoomsApplyRequest(BaseModel):
     course_uuid: str
     tab_uuid: Optional[str] = None
     chapter_name: Optional[str] = None
+    xp_reward: Optional[int] = None
+    coin_reward: Optional[int] = None
     problems: List[InvlectRoomsProblemPayload]
 
 

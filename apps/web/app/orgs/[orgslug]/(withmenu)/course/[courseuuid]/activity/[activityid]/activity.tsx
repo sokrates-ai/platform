@@ -25,6 +25,8 @@ import WorkspaceActivity from '@components/Objects/Activities/Workspace/Workspac
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import useSWR from 'swr'
+import { swrFetcher } from '@services/utils/ts/requests'
 
 
 
@@ -230,6 +232,11 @@ export function MarkStatus(props: {
   const router = useRouter()
   const session = useSokratesSession() as any;
   const isMobile = useMediaQuery('(max-width: 768px)')
+  const accessToken = session?.data?.tokens?.access_token
+  const { data: trail, mutate: mutateTrail } = useSWR(
+    accessToken ? `${getAPIUrl()}trail` : null,
+    (url: string) => swrFetcher(url, accessToken)
+  )
 
   // TODO: hit this route from the workspace!
   async function markActivityAsCompleteFront() {
@@ -237,13 +244,17 @@ export function MarkStatus(props: {
       props.orgslug,
       props.course.course_uuid,
       'activity_' + props.activityid,
-      session.data?.tokens?.access_token
+      accessToken
     )
+    if (mutateTrail) {
+      mutateTrail()
+    }
     router.refresh()
   }
 
   const isActivityCompleted = () => {
-    let run = props.course.trail.runs.find(
+    const trailSource = trail ?? props.course?.trail
+    const run = trailSource?.runs?.find(
       (run: any) => run.course_id == props.course.id
     )
     if (run) {
@@ -252,10 +263,42 @@ export function MarkStatus(props: {
       )
     }
   }
+  const isCompleted = Boolean(isActivityCompleted())
+  const isDynamicPage =
+    props.activity?.activity_type === 'TYPE_DYNAMIC' ||
+    props.activity?.activity_sub_type === 'SUBTYPE_DYNAMIC_PAGE'
+
+  if (isDynamicPage) {
+    return (
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="rounded-full border border-gray-300 bg-white px-4 py-2 text-xs font-bold text-gray-700 shadow-sm transition hover:bg-gray-50"
+        >
+          Back
+        </button>
+        <button
+          type="button"
+          onClick={markActivityAsCompleteFront}
+          disabled={isCompleted}
+          className={cn(
+            'rounded-full px-5 py-2 text-xs font-bold shadow-sm transition flex items-center gap-2',
+            isCompleted
+              ? 'bg-emerald-600 text-white cursor-not-allowed'
+              : 'bg-gray-800 text-white hover:bg-gray-700'
+          )}
+        >
+          <Check size={17}></Check>
+          {!isMobile && <span>{isCompleted ? 'Done' : 'Mark as complete'}</span>}
+        </button>
+      </div>
+    )
+  }
 
   return (
     <>
-      {isActivityCompleted() ? (
+      {isCompleted ? (
         <div className="bg-teal-600 rounded-full px-5 drop-shadow-md flex items-center space-x-2  p-2.5  text-white hover:cursor-pointer transition delay-150 duration-300 ease-in-out">
           <i>
             <Check size={17}></Check>

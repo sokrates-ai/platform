@@ -52,6 +52,33 @@ CHECKPOINT_DISPLAY_NAMES = {
     "gold": "Gold",
 }
 
+_CHAPTER_NUMBER_PATTERN = r"(?:\d+|[IVXLCDM]+)"
+_CHAPTER_SEPARATOR_PATTERN = r"(?:-+|–+|—+|::|:|/|\||·|•)"
+_CHAPTER_PUNCT_PATTERN = r"(?:[.)])"
+
+_CHAPTER_TITLE_SPLIT_PATTERNS = [
+    re.compile(
+        rf"^(?P<prefix>.+?)\s*{_CHAPTER_SEPARATOR_PATTERN}\s*(?P<number>{_CHAPTER_NUMBER_PATTERN})\s*{_CHAPTER_PUNCT_PATTERN}\s*(?P<rest>.+)$",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        rf"^(?P<prefix>.+?)\s*{_CHAPTER_SEPARATOR_PATTERN}\s*(?P<number>{_CHAPTER_NUMBER_PATTERN})\s*{_CHAPTER_SEPARATOR_PATTERN}\s*(?P<rest>.+)$",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        rf"^(?P<prefix>.+?)\s*{_CHAPTER_SEPARATOR_PATTERN}\s*(?P<number>{_CHAPTER_NUMBER_PATTERN})\s+(?P<rest>.+)$",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        rf"^(?P<prefix>.+?)\s+(?P<number>{_CHAPTER_NUMBER_PATTERN})\s*{_CHAPTER_PUNCT_PATTERN}\s*(?P<rest>.+)$",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        rf"^(?P<prefix>.+?)\s+(?P<number>{_CHAPTER_NUMBER_PATTERN})\s*{_CHAPTER_SEPARATOR_PATTERN}\s*(?P<rest>.+)$",
+        re.IGNORECASE,
+    ),
+]
+
 ChapterContext = Tuple[
     ChapterRead,
     Optional[InvlectRoomsProblemPayload],
@@ -125,7 +152,87 @@ def _hydrate_chapter_slot(
 def _normalize_text(value: Optional[str]) -> str:
     if not value:
         return ""
-    return re.sub(r"\s+", " ", value).strip()
+    normalized = re.sub(r"\s+", " ", value).strip()
+    normalized = normalized.replace("\\realnum", "\\mathbb{R}")
+    normalized = normalized.replace("\\natnum", "\\mathbb{N}")
+    return normalized
+
+
+def _split_chapter_title(title: str) -> Tuple[str, Optional[str]]:
+    normalized = _normalize_text(title)
+    if not normalized:
+        return "", None
+
+    for pattern in _CHAPTER_TITLE_SPLIT_PATTERNS:
+        match = pattern.match(normalized)
+        if not match:
+            continue
+        prefix = _normalize_text(match.group("prefix") or "")
+        number = _normalize_text(match.group("number") or "")
+        rest = _normalize_text(match.group("rest") or "").lstrip(" -–—:;,.")
+        if not prefix or not number or not rest:
+            continue
+        return f"{prefix} - {number}", rest
+
+    return normalized, None
+
+
+_IMAGE_ONLY_TEXT_PATTERN = re.compile(
+    r"^(?:image:\s*)?(?:/content/|https?://).+\.(?:png|jpe?g|gif|webp|svg)(?:\?.*)?$",
+    re.IGNORECASE,
+)
+
+
+def _is_image_only_text(value: str) -> bool:
+    normalized = _normalize_text(value)
+    if not normalized:
+        return True
+    return bool(_IMAGE_ONLY_TEXT_PATTERN.match(normalized))
+
+
+def _is_image_only_problem(problem: InvlectRoomsProblemPayload) -> bool:
+    html = problem.html or ""
+    plain_text = problem.plain_text or ""
+
+    image_payload = problem.image if isinstance(problem.image, dict) else {}
+    has_image = any(
+        isinstance(image_payload.get(key), str) and image_payload.get(key)
+        for key in ("local", "original", "url", "src")
+    )
+
+    has_text = False
+    has_html_image = False
+    if html:
+        soup = BeautifulSoup(html, "html.parser")
+        has_html_image = soup.find("img") is not None
+        text_content = _normalize_text(soup.get_text(" "))
+        has_text = bool(text_content)
+
+    if plain_text and not _is_image_only_text(plain_text):
+        has_text = True
+
+    if not has_image and has_html_image:
+        has_image = True
+
+    return has_image and not has_text
+
+
+def _extract_image_urls(
+    problem: Optional[InvlectRoomsProblemPayload],
+) -> Tuple[Optional[str], Optional[str]]:
+    if problem is None:
+        return None, None
+    image_payload = problem.image
+    if isinstance(image_payload, dict):
+        original_url = image_payload.get("original")
+        local_url = image_payload.get("local")
+    elif isinstance(image_payload, str):
+        original_url = image_payload
+        local_url = None
+    else:
+        original_url = None
+        local_url = None
+    return original_url or local_url, original_url
 
 
 def _extract_paragraphs(
@@ -266,13 +373,6 @@ def build_activity_content(
                 }
             )
 
-    nodes.append(
-        {
-            "type": "paragraph",
-            "content": _inline_math_content(f"Source: {source_url}"),
-        }
-    )
-
     if not nodes:
         nodes.append(
             {
@@ -341,6 +441,7 @@ def _select_placeholder_positions(total_slots: int, required: int) -> List[int]:
 
 def _build_content_map(
     chapter_contexts: List[ChapterContext],
+    image_only_problems: List[InvlectRoomsProblemPayload],
 ) -> Dict[str, Any]:
     template = deepcopy(_load_template_map())
     objects = template.get("objects", [])
@@ -457,18 +558,7 @@ def _build_content_map(
         chapter_obj = chapter_positions.get(int(chapter_id))
         if not chapter_obj:
             continue
-        image_payload = getattr(problem, "image", None) or {}
-        original_url = (
-            image_payload.get("original")
-            if isinstance(image_payload, dict)
-            else None
-        )
-        local_url = (
-            image_payload.get("local")
-            if isinstance(image_payload, dict)
-            else None
-        )
-        image_url = original_url or local_url
+        image_url, original_url = _extract_image_urls(problem)
         if not image_url:
             continue
 
@@ -476,8 +566,14 @@ def _build_content_map(
         offset_y = -140
         target_x = (chapter_obj.get("x") or 0) + offset_x
         target_y = (chapter_obj.get("y") or 0) + offset_y
-        target_x = max(left_boundary + boundary_margin, min(right_boundary - boundary_margin, target_x))
-        target_y = max(top_boundary + boundary_margin, min(bottom_boundary - boundary_margin, target_y))
+        target_x = max(
+            left_boundary + boundary_margin,
+            min(right_boundary - boundary_margin, target_x),
+        )
+        target_y = max(
+            top_boundary + boundary_margin,
+            min(bottom_boundary - boundary_margin, target_y),
+        )
 
         image_assets.append(
             {
@@ -499,6 +595,71 @@ def _build_content_map(
         used_ids.add(next_id)
         next_id += 1
 
+    if image_only_problems:
+        available_placeholders = [
+            index
+            for index in placeholder_indices
+            if index not in used_placeholder_indices
+        ]
+        if available_placeholders:
+            image_slots = _select_placeholder_positions(
+                len(available_placeholders),
+                len(image_only_problems),
+            )
+            image_slot_indices = [
+                available_placeholders[position] for position in image_slots
+            ]
+        else:
+            image_slot_indices = []
+
+        fallback_x = 0
+        fallback_y = 0
+        if chapter_positions:
+            last_slot = next(reversed(chapter_positions.values()))
+            fallback_x = last_slot.get("x", 0)
+            fallback_y = last_slot.get("y", 0)
+
+        for offset_index, problem in enumerate(image_only_problems):
+            image_url, original_url = _extract_image_urls(problem)
+            if not image_url:
+                continue
+            if offset_index < len(image_slot_indices):
+                slot = objects[image_slot_indices[offset_index]]
+                target_x = slot.get("x", 0)
+                target_y = slot.get("y", 0)
+            else:
+                target_x = fallback_x + 160 * (offset_index + 1)
+                target_y = fallback_y
+
+            target_x = max(
+                left_boundary + boundary_margin,
+                min(right_boundary - boundary_margin, target_x),
+            )
+            target_y = max(
+                top_boundary + boundary_margin,
+                min(bottom_boundary - boundary_margin, target_y),
+            )
+
+            image_assets.append(
+                {
+                    "id": next_id,
+                    "x": target_x,
+                    "y": target_y,
+                    "scale": 0.18,
+                    "file": image_url,
+                    "label": (problem.title or "").strip() or f"Image {next_id}",
+                    "sourceUrl": original_url or image_url,
+                    "type": {
+                        "kind": "default",
+                        "label": (problem.title or "").strip(),
+                        "customChapterId": 0,
+                        "associatedChapterID": None,
+                    },
+                }
+            )
+            used_ids.add(next_id)
+            next_id += 1
+
     if image_assets:
         template["objects"].extend(image_assets)
 
@@ -518,11 +679,15 @@ async def convert_invlectrooms_payload_to_course(
     activities: List[ActivityRead] = []
     source_url = str(payload.url)
     chapter_contexts: List[ChapterContext] = []
+    image_only_problems: List[InvlectRoomsProblemPayload] = []
+    xp_reward = payload.xp_reward or 0
+    coin_reward = payload.coin_reward or 0
 
     for index, problem in enumerate(payload.problems):
         checkpoint_level = _normalize_checkpoint_level(problem.checkpoint_level)
         if not checkpoint_level:
             checkpoint_level = _detect_checkpoint(problem)
+
         if checkpoint_level:
             chapter, activity = await _create_checkpoint_chapter(
                 level=checkpoint_level,
@@ -531,6 +696,8 @@ async def convert_invlectrooms_payload_to_course(
                 source_url=source_url,
                 payload=payload,
                 course=course,
+                xp_reward=xp_reward,
+                coin_reward=coin_reward,
                 request=request,
                 current_user=current_user,
                 db_session=db_session,
@@ -539,6 +706,10 @@ async def convert_invlectrooms_payload_to_course(
             chapter.activities = [activity]
             chapters.append(chapter)
             chapter_contexts.append((chapter, problem, checkpoint_level))
+            continue
+
+        if _is_image_only_problem(problem):
+            image_only_problems.append(problem)
             continue
 
         problem_title = _normalize_text(problem.title or "") or f"Problem {index + 1}"
@@ -550,14 +721,15 @@ async def convert_invlectrooms_payload_to_course(
         else:
             chapter_title = problem_title
 
+        chapter_name, chapter_description = _split_chapter_title(chapter_title)
         chapter_request = ChapterCreate(
-            name=chapter_title,
-            description=f"Imported from {payload.url}",
+            name=chapter_name,
+            description=chapter_description or "",
             thumbnail_image="",
             org_id=course.org_id,
             course_id=course.id,
-            xp_reward=0,
-            coin_reward=0,
+            xp_reward=xp_reward,
+            coin_reward=coin_reward,
             tab_uuid=payload.tab_uuid,
         )
 
@@ -584,11 +756,11 @@ async def convert_invlectrooms_payload_to_course(
         chapters.append(chapter)
         chapter_contexts.append((chapter, problem, None))
 
-    if chapters:
+    if chapters or image_only_problems:
         tab_store = dict(course.tab_store or {})
         tab_uuid = payload.tab_uuid or next(iter(tab_store), "tab-1")
 
-        map_state = _build_content_map(chapter_contexts)
+        map_state = _build_content_map(chapter_contexts, image_only_problems)
         course.map_state = deepcopy(map_state)
         tab_store[tab_uuid] = deepcopy(map_state)
         course.tab_store = tab_store
@@ -640,6 +812,8 @@ async def _create_checkpoint_chapter(
     source_url: str,
     payload: InvlectRoomsApplyRequest,
     course: Course,
+    xp_reward: int,
+    coin_reward: int,
     request: Request,
     current_user: PublicUser | AnonymousUser,
     db_session: Session,
@@ -653,14 +827,15 @@ async def _create_checkpoint_chapter(
     else:
         chapter_title = f"Checkpoint {display_name}"
 
+    chapter_name, chapter_description = _split_chapter_title(chapter_title)
     chapter_request = ChapterCreate(
-        name=chapter_title,
-        description=f"Checkpoint {display_name} imported from {payload.url}",
+        name=chapter_name,
+        description=chapter_description or "",
         thumbnail_image="",
         org_id=course.org_id,
         course_id=course.id,
-        xp_reward=0,
-        coin_reward=0,
+        xp_reward=xp_reward,
+        coin_reward=coin_reward,
         tab_uuid=payload.tab_uuid,
     )
 
@@ -724,18 +899,6 @@ def _build_checkpoint_content(
                 ],
             },
         )
-
-    nodes.append(
-        {
-            "type": "paragraph",
-            "content": [
-                {
-                    "type": "text",
-                    "text": f"Source: {source_url}",
-                }
-            ],
-        }
-    )
 
     metadata: Dict[str, Any] = {
         "provider": "invlectrooms",

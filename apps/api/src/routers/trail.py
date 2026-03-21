@@ -93,19 +93,24 @@ async def api_remove_course_to_trail(
     )
 
 
+class TrailActivityResponse(BaseModel):
+    was_initial: bool
+
+
 @router.post('/add_activity/{activity_uuid}')
 async def api_add_activity_to_trail(
     request: Request,
     activity_uuid: str,
     user=Depends(get_current_user),
     db_session=Depends(get_db_session),
-) -> TrailRead:
+) -> TrailActivityResponse:
     """
     Add Course to trail
     """
-    return await add_activity_to_trail(
+    was_initial = await add_activity_to_trail(
         request, user, activity_uuid, db_session
     )
+    return TrailActivityResponse(was_initial=bool(was_initial))
 
 
 class WSRecordSolution(BaseModel):
@@ -113,6 +118,8 @@ class WSRecordSolution(BaseModel):
     user_uuid: str
     task_id: int
     correct: bool
+
+
 
 
 @router.post('/ws_record_solution')

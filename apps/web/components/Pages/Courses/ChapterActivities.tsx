@@ -204,7 +204,7 @@ export default function ChapterActivities({
 	return (
 		<div className="space-y-4 mt-4 sm:mt-12 mx-0 sm:mx-16">
 			<div className="relative">
-		{activities.map((activity: any, idx: number) => {
+				{activities.map((activity: any, idx: number) => {
 					const state = stateOf(idx)
 					const prevState = idx > 0 ? stateOf(idx - 1) : null
 					const nextState =
@@ -218,22 +218,32 @@ export default function ChapterActivities({
 					const bottomColour =
 						state === 'done' ? green : grey
 
-						const isPreviewing =
-							selectedId === activity.id &&
-							dynamicActivity?.activity_uuid === activity.activity_uuid &&
-							!isLoadingDynamic &&
-							!dynamicError
+					const isPreviewing =
+						selectedId === activity.id &&
+						dynamicActivity?.activity_uuid === activity.activity_uuid &&
+						!isLoadingDynamic &&
+						!dynamicError
+					const isSelected = activity.id === selectedActivity?.id
+					const isPreviewActive =
+						isDynamicActivity(activity) &&
+						selectedId === activity.id &&
+						latestDynamicRequest.current === activity.activity_uuid
+					const shouldShowMarkComplete =
+						isPreviewActive &&
+						isSelected &&
+						!isSelectedActivityCompleted() &&
+						state !== 'done'
 
-						return (
-							<div
-								key={activity.activity_uuid ?? activity.id ?? idx}
-								className="relative flex gap-4 cursor-pointer"
-								onClick={() => setSelectedId(activity.id)}
-							>
-								<ChapterActivity
-									activity={activity}
-									course={course}
-									orgslug={orgslug}
+					return (
+						<div
+							key={activity.activity_uuid ?? activity.id ?? idx}
+							className="relative flex gap-4 cursor-pointer"
+							onClick={() => setSelectedId(activity.id)}
+						>
+							<ChapterActivity
+								activity={activity}
+								course={course}
+								orgslug={orgslug}
 								state={state}
 								access_token={access_token}
 								showTop={idx !== 0}
@@ -246,15 +256,10 @@ export default function ChapterActivities({
 								onStartActivity={(evt) =>
 									handleActivityStart(activity, evt, isPreviewing)
 								}
-								onMarkComplete={
-									isDynamicActivity(activity) ? handleMarkComplete : undefined
-								}
-								overrideButtonText={
-									isPreviewing ? 'Expand' : undefined
-								}
+								onMarkComplete={shouldShowMarkComplete ? handleMarkComplete : undefined}
+								overrideButtonText={isPreviewing ? 'Expand' : undefined}
 								isCompleted={
-									isDynamicActivity(activity) &&
-									(activity.id === selectedActivity?.id)
+									isDynamicActivity(activity) && isSelected
 										? isSelectedActivityCompleted()
 										: state === 'done'
 								}
@@ -264,7 +269,7 @@ export default function ChapterActivities({
 				})}
 			</div>
 
-				{shouldShowDynamicPreview && (
+			{shouldShowDynamicPreview && (
 				<div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-4">
 					<div className="mb-4">
 						<h3 className="text-lg font-semibold text-gray-900">

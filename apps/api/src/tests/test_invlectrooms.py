@@ -278,6 +278,8 @@ def test_apply_invlectrooms_creates_activities(
             "url": "https://hpi.de/friedrich/docs/InvLectRooms/example/tutorium",
             "course_uuid": course.course_uuid,
             "tab_uuid": tab_uuid,
+            "xp_reward": 12,
+            "coin_reward": 3,
             "problems": [
                 {
                     "id": 603,
@@ -314,6 +316,8 @@ def test_apply_invlectrooms_creates_activities(
             "Tutorium — Follow sequences",
             "Tutorium — Emoji challenge",
         ]
+        assert all(chapter["xp_reward"] == 12 for chapter in data["chapters"])
+        assert all(chapter["coin_reward"] == 3 for chapter in data["chapters"])
         assert len(data["activities"]) == 2
         first_activity = data["activities"][0]
         assert first_activity["name"] == "Follow sequences"
@@ -362,6 +366,78 @@ def test_apply_invlectrooms_creates_activities(
         tab_map = course.tab_store.get("tab-1")
         assert isinstance(tab_map, dict)
         assert tab_map == map_state
+    finally:
+        client.app.dependency_overrides.pop(get_current_user, None)
+
+
+def test_apply_invlectrooms_skips_image_only_problem(
+    client: TestClient,
+    session: Session,
+):
+    course, tab_uuid, public_user = _prepare_course_with_author(session)
+
+    async def override_current_user():
+        return public_user
+
+    client.app.dependency_overrides[get_current_user] = override_current_user
+
+    try:
+        payload = {
+            "url": "https://hpi.de/friedrich/docs/InvLectRooms/example/tutorium",
+            "course_uuid": course.course_uuid,
+            "tab_uuid": tab_uuid,
+            "problems": [
+                {
+                    "id": 701,
+                    "title": "Image-only",
+                    "status": "UNSOLVED",
+                    "html": "",
+                    "plain_text": "",
+                    "image": {
+                        "original": "https://example.com/image-only.jpg",
+                        "local": "/content/invlectrooms/image-only.jpg",
+                    },
+                    "chapter_name": "Tutorium — Image-only",
+                },
+                {
+                    "id": 702,
+                    "title": "Text problem",
+                    "status": "UNSOLVED",
+                    "html": "<p>Answer the question.</p>",
+                    "plain_text": "Answer the question.",
+                    "image": None,
+                    "chapter_name": "Tutorium — Text problem",
+                },
+            ],
+        }
+
+        response = client.post("/api/v1/invlectrooms/apply", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+
+        assert len(data["chapters"]) == 1
+        assert len(data["activities"]) == 1
+
+        session.refresh(course)
+        map_state = course.map_state
+        assert isinstance(map_state, dict)
+        objects = map_state.get("objects") or []
+
+        image_assets = [
+            obj
+            for obj in objects
+            if isinstance(obj, dict)
+            and obj.get("file") == "https://example.com/image-only.jpg"
+        ]
+        assert len(image_assets) == 1
+
+        chapter_nodes = [
+            obj
+            for obj in objects
+            if isinstance(obj, dict)
+            and (obj.get("type") or {}).get("kind") == "chapter"
+        ]
+        assert len(chapter_nodes) == 1
     finally:
         client.app.dependency_overrides.pop(get_current_user, None)
 
