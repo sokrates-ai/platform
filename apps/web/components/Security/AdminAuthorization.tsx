@@ -22,6 +22,8 @@ const ADMIN_ONLY_PATHS = [
   '/dash/users/*',
   '/dash/users',
   '/dash/org/settings/general',
+  '/dash/admin/*',
+  '/dash/admin',
 ];
 
 const ADMIN_PATHS = [...ADMIN_ONLY_PATHS, ...COURSE_STAFF_PATHS];

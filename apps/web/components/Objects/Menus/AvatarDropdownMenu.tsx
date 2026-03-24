@@ -2,7 +2,7 @@
 import React, { useMemo } from "react"
 import Link from "next/link"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
-import { Settings, LogOut, Home, Backpack, School, Users } from "lucide-react"
+import { Settings, LogOut, Home, Backpack, School, Users, Shield } from "lucide-react"
 import { getUriWithoutOrg } from '@services/config/config'
 
 interface AvatarDropdownMenuProps {
@@ -78,6 +78,15 @@ export const AvatarDropdownMenu = ({
                 <DropdownMenuItem>
                   <Users size={14} className="mr-2" />
                   Users
+                </DropdownMenuItem>
+              </Link>
+            )}
+
+            {isUserAdmin?.isAdmin && (
+              <Link href={"/dash/admin"}>
+                <DropdownMenuItem>
+                  <Shield size={14} className="mr-2" />
+                  Admin
                 </DropdownMenuItem>
               </Link>
             )}
