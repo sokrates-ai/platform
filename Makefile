@@ -1,4 +1,4 @@
-.PHONY: setup check sprites
+.PHONY: setup check sprites staging prod
 
 env:
 	./dev.sh env
@@ -27,6 +27,18 @@ docker-prod:
 	
 docker-staging:
 	bash ./dev.sh docker sokrates-ai staging
+
+staging:
+	git checkout staging
+	git merge dev
+	git push origin staging
+	git checkout dev
+
+prod:
+	git checkout prod
+	git merge staging
+	git push origin prod
+	git checkout dev
 
 db:
 	./dev.sh db
