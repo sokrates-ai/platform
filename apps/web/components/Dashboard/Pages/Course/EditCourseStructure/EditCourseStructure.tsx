@@ -385,6 +385,95 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
     onCancel();
   }, [isRunning, onCancel]);
 
+  const mapProxyBaseUrl = useMemo(() => {
+    const apiBase = getAPIUrl();
+    if (!apiBase || apiBase === 'error') {
+      return '/api/v1/mapProxy';
+    }
+    const normalizedBase = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
+    return `${normalizedBase}/mapProxy`;
+  }, []);
+
+  const normalizeRemoteUrl = useCallback((input: string) => {
+    if (!input) return input;
+    if (input.startsWith('//')) {
+      const protocol =
+        typeof window !== 'undefined' && window.location?.protocol
+          ? window.location.protocol
+          : 'https:';
+      return `${protocol}${input}`;
+    }
+    return input;
+  }, []);
+
+  const filenameFromUrl = useCallback((url: string | undefined) => {
+    if (!url) return undefined;
+    try {
+      const parsed = new URL(url);
+      const segments = parsed.pathname.split('/').filter(Boolean);
+      if (segments.length === 0) {
+        return undefined;
+      }
+      const last = segments[segments.length - 1];
+      return last ? last.split('?')[0] : undefined;
+    } catch {
+      return undefined;
+    }
+  }, []);
+
+  const ensureFilenameWithExtension = useCallback((filename: string | undefined, label?: string) => {
+    const ALLOWED_EXTENSION = /\.(png|jpe?g|gif|webp|svg)$/i;
+    if (filename) {
+      const trimmed = filename.trim();
+      if (trimmed.length > 0) {
+        if (ALLOWED_EXTENSION.test(trimmed)) {
+          return trimmed;
+        }
+        return `${trimmed}.png`;
+      }
+    }
+    if (label && label.trim().length > 0) {
+      const base = label
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'asset';
+      return `${base}.png`;
+    }
+    return 'asset.png';
+  }, []);
+
+  const toProxiedImageUrl = useCallback((file: string, label?: string) => {
+    if (!file) return file;
+    const trimmed = file.trim();
+    if (!trimmed) return trimmed;
+
+    if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
+      return trimmed;
+    }
+
+    const alreadyProxy =
+      trimmed.includes('/mapProxy?url=') ||
+      (trimmed.includes('/mapProxy/') && trimmed.includes('?url='));
+    if (alreadyProxy) {
+      return trimmed;
+    }
+
+    const normalizedSource = normalizeRemoteUrl(trimmed);
+    const isRemote = /^(https?:)?\/\//i.test(normalizedSource);
+    if (!isRemote) {
+      return trimmed;
+    }
+
+    if (!mapProxyBaseUrl) {
+      return normalizedSource;
+    }
+
+    const filenameCandidate = filenameFromUrl(normalizedSource);
+    const safeFilename = ensureFilenameWithExtension(filenameCandidate, label);
+    return `${mapProxyBaseUrl}/${encodeURIComponent(safeFilename)}?url=${encodeURIComponent(normalizedSource)}`;
+  }, [mapProxyBaseUrl, normalizeRemoteUrl, filenameFromUrl, ensureFilenameWithExtension]);
+
   const problems = useMemo(() => {
     const list = importResult?.refresh && Array.isArray(importResult.refresh.problems)
       ? importResult.refresh.problems
@@ -396,29 +485,38 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
     const MAX_PREVIEW_LENGTH = 220;
 
     return list.map((problem: any, index: number) => {
-      const rawImg = problem?.img;
-      let imagePreview: string | undefined;
-      let imageMeta: { original?: string; local?: string } | null = null;
-      if (typeof rawImg === 'string') {
-        imageMeta = { original: rawImg };
-        imagePreview = /^https?:\/\//i.test(rawImg) ? rawImg : `${backendUrl}${rawImg}`;
-      } else if (rawImg && typeof rawImg === 'object') {
-        const localImg = typeof rawImg.local === 'string' ? rawImg.local : undefined;
-        const originalImg = typeof rawImg.original === 'string' ? rawImg.original : undefined;
-        imageMeta = {
-          ...(originalImg ? { original: originalImg } : {}),
-          ...(localImg ? { local: localImg } : {}),
-        };
-        if (localImg) {
-          imagePreview = /^https?:\/\//i.test(localImg) ? localImg : `${backendUrl}${localImg}`;
-        } else if (originalImg) {
-          imagePreview = originalImg;
-        }
-      }
       const title =
         typeof problem?.title === 'string' && problem.title.trim().length > 0
           ? problem.title.trim()
           : `Problem ${index + 1}`;
+      const rawImg = problem?.img;
+      let imagePreview: string | undefined;
+      let imageMeta: { original?: string; local?: string } | null = null;
+      if (typeof rawImg === 'string') {
+        const proxiedOriginal = toProxiedImageUrl(rawImg, title);
+        imageMeta = { original: proxiedOriginal };
+        if (/^(https?:)?\/\//i.test(rawImg)) {
+          imagePreview = proxiedOriginal;
+        } else {
+          imagePreview = `${backendUrl}${rawImg}`;
+        }
+      } else if (rawImg && typeof rawImg === 'object') {
+        const localImg = typeof rawImg.local === 'string' ? rawImg.local : undefined;
+        const originalImg = typeof rawImg.original === 'string' ? rawImg.original : undefined;
+        if (localImg) {
+          imagePreview = /^(https?:)?\/\//i.test(localImg)
+            ? toProxiedImageUrl(localImg, title)
+            : `${backendUrl}${localImg}`;
+        } else if (originalImg) {
+          imagePreview = toProxiedImageUrl(originalImg, title);
+        }
+        const proxiedOriginal = originalImg ? toProxiedImageUrl(originalImg, title) : undefined;
+        const proxiedLocal = localImg ? toProxiedImageUrl(localImg, title) : undefined;
+        imageMeta = {
+          ...(proxiedOriginal ? { original: proxiedOriginal } : {}),
+          ...(proxiedLocal ? { local: proxiedLocal } : {}),
+        };
+      }
       const status = typeof problem?.status === 'string' ? problem.status : undefined;
       const html = typeof problem?.body === 'string' ? problem.body : '';
       const segments = extractTextSegments(html);
@@ -451,7 +549,7 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
         checkpointLevel,
       };
     });
-  }, [importResult]);
+  }, [importResult, toProxiedImageUrl]);
 
   const handleApply = useCallback(async () => {
     if (isApplying) {

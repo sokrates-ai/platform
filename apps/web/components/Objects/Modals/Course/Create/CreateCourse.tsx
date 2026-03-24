@@ -1,12 +1,6 @@
 'use client'
 import { Input } from "@components/ui/input"
 import { Textarea } from "@components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select"
-import FormLayout, {
-  FormField,
-  FormLabelAndMessage,
-} from '@components/Objects/StyledElements/Form/Form'
-import * as Form from '@radix-ui/react-form'
 import { createNewCourse } from '@services/courses/courses'
 import { getOrganizationContextInfoWithoutCredentials } from '@services/organizations/orgs'
 import React, { useEffect } from 'react'
@@ -17,7 +11,7 @@ import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import toast from 'react-hot-toast'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
-import {  UploadCloud, Image as ImageIcon } from 'lucide-react'
+import { Info, UploadCloud, Image as ImageIcon } from 'lucide-react'
 import UnsplashImagePicker from "@components/Dashboard/Pages/Course/EditCourseGeneral/UnsplashImagePicker"
 import { Button } from '@components/ui/button'
 
@@ -122,41 +116,61 @@ function CreateCourseModal({ closeModal, orgslug }: any) {
   }
 
   return (
-    <FormLayout onSubmit={formik.handleSubmit} >
-      <FormField name="name">
-        <FormLabelAndMessage 
-          label="Course Name" 
-          message={formik.errors.name}
+    <form onSubmit={formik.handleSubmit} className="h-fit">
+      <div className="grid mb-2">
+        <div className="flex items-center space-x-3">
+          <label htmlFor="name" className="grow text-sm font-medium leading-[35px] text-black">
+            Course Name
+          </label>
+          {formik.errors.name && (
+            <div className="text-red-700 text-sm items-center rounded-md flex space-x-1">
+              <Info size={10} />
+              <div>{formik.errors.name}</div>
+            </div>
+          )}
+        </div>
+        <Input
+          id="name"
+          name="name"
+          onChange={formik.handleChange}
+          value={formik.values.name}
+          type="text"
+          required
         />
-        <Form.Control asChild>
-          <Input
-            onChange={formik.handleChange}
-            value={formik.values.name}
-            type="text"
-            required
-          />
-        </Form.Control>
-      </FormField>
+      </div>
 
-      <FormField name="description">
-        <FormLabelAndMessage 
-          label="Description" 
-          message={formik.errors.description}
+      <div className="grid mb-2">
+        <div className="flex items-center space-x-3">
+          <label htmlFor="description" className="grow text-sm font-medium leading-[35px] text-black">
+            Description
+          </label>
+          {formik.errors.description && (
+            <div className="text-red-700 text-sm items-center rounded-md flex space-x-1">
+              <Info size={10} />
+              <div>{formik.errors.description}</div>
+            </div>
+          )}
+        </div>
+        <Textarea
+          id="description"
+          name="description"
+          onChange={formik.handleChange}
+          value={formik.values.description}
         />
-        <Form.Control asChild>
-          <Textarea
-            onChange={formik.handleChange}
-            value={formik.values.description}
-            
-          />
-        </Form.Control>
-      </FormField>
+      </div>
 
-      <FormField name="thumbnail">
-        <FormLabelAndMessage 
-          label="Course Thumbnail"
-          message={formik.errors.thumbnail}
-        />
+      <div className="grid mb-2">
+        <div className="flex items-center space-x-3">
+          <label htmlFor="fileInput" className="grow text-sm font-medium leading-[35px] text-black">
+            Course Thumbnail
+          </label>
+          {formik.errors.thumbnail && (
+            <div className="text-red-700 text-sm items-center rounded-md flex space-x-1">
+              <Info size={10} />
+              <div>{formik.errors.thumbnail}</div>
+            </div>
+          )}
+        </div>
         <div className="w-auto bg-gray-50 rounded-xl outline outline-1 outline-gray-200 h-[200px] shadow">
           <div className="flex flex-col justify-center items-center h-full">
             <div className="flex flex-col justify-center items-center">
@@ -184,6 +198,7 @@ function CreateCourseModal({ closeModal, orgslug }: any) {
                 <Button
                   variant={"outline"}
                   className="font-bold antialiased items-center text-gray text-sm rounded-md px-4 mt-6 flex"
+                  type="button"
                   onClick={() => document.getElementById('fileInput')?.click()}
                 >
                   <UploadCloud size={16} className="mr-2" />
@@ -192,6 +207,7 @@ function CreateCourseModal({ closeModal, orgslug }: any) {
                 <Button 
                   variant={"outline"}
                   className="font-bold antialiased items-center text-gray text-sm rounded-md px-4 mt-6 flex"
+                  type="button"
                   onClick={() => setShowUnsplashPicker(true)}
                 >
                   <ImageIcon size={16} className="mr-2" />
@@ -201,27 +217,35 @@ function CreateCourseModal({ closeModal, orgslug }: any) {
             </div>
           </div>
         </div>
-      </FormField>
+      </div>
 
-      <FormField name="tags">
-        <FormLabelAndMessage 
-          label="Course Tags"
-          message={formik.errors.tags}
+      <div className="grid mb-2">
+        <div className="flex items-center space-x-3">
+          <label htmlFor="tags" className="grow text-sm font-medium leading-[35px] text-black">
+            Course Tags
+          </label>
+          {formik.errors.tags && (
+            <div className="text-red-700 text-sm items-center rounded-md flex space-x-1">
+              <Info size={10} />
+              <div>{formik.errors.tags}</div>
+            </div>
+          )}
+        </div>
+        <Textarea
+          id="tags"
+          name="tags"
+          onChange={formik.handleChange}
+          value={formik.values.tags}
+          placeholder="Enter tags separated by commas"
         />
-        <Form.Control asChild>
-          <Textarea
-            onChange={formik.handleChange}
-            value={formik.values.tags}
-            placeholder="Enter tags separated by commas"
-          />
-        </Form.Control>
-      </FormField>
+      </div>
 
       <div className="flex justify-end mt-6">
         <Button
           variant={"secondary"}
           disabled={formik.isSubmitting}
           className="px-4 py-2 text-black text-sm font-bold rounded-md"
+          type="submit"
         >
           {formik.isSubmitting ? (
             <BarLoader
@@ -241,7 +265,7 @@ function CreateCourseModal({ closeModal, orgslug }: any) {
           onClose={() => setShowUnsplashPicker(false)}
         />
       )}
-    </FormLayout>
+    </form>
   )
 }
 

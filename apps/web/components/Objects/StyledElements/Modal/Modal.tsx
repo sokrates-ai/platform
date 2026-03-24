@@ -43,6 +43,16 @@ const Modal = (params: ModalParams) => {
     }
   }
 
+  const hasDescription = Boolean(params.dialogDescription)
+  const dialogHeader = params.dialogTitle ? (
+    <DialogHeader className="text-center flex flex-col space-y-0.5 w-full">
+      <DialogTitle>{params.dialogTitle}</DialogTitle>
+      {params.dialogDescription && (
+        <DialogDescription>{params.dialogDescription}</DialogDescription>
+      )}
+    </DialogHeader>
+  ) : null
+
   return (
     <Dialog open={params.isDialogOpen} onOpenChange={params.onOpenChange}>
       {params.dialogTrigger && (
@@ -54,13 +64,8 @@ const Modal = (params: ModalParams) => {
         getMinWidth(),
         params.customHeight,
         params.customWidth
-      )}>
-        {params.dialogTitle && params.dialogDescription && (
-          <DialogHeader className="text-center flex flex-col space-y-0.5 w-full">
-            <DialogTitle>{params.dialogTitle}</DialogTitle>
-            <DialogDescription>{params.dialogDescription}</DialogDescription>
-          </DialogHeader>
-        )}
+      )} {...(!hasDescription ? { "aria-describedby": undefined } : {})}>
+        {dialogHeader}
         <div className="overflow-auto">
           {params.dialogContent}
         </div>

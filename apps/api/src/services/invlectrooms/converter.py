@@ -155,6 +155,7 @@ def _normalize_text(value: Optional[str]) -> str:
     normalized = re.sub(r"\s+", " ", value).strip()
     normalized = normalized.replace("\\realnum", "\\mathbb{R}")
     normalized = normalized.replace("\\natnum", "\\mathbb{N}")
+    normalized = normalized.replace("\\integers", "\\mathbb{Z}")
     return normalized
 
 

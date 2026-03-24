@@ -91,12 +91,14 @@ export const AvatarDropdownMenu = ({
               </Link>
             )}
 
-            <Link href={"/dash/org/settings/general"}>
-              <DropdownMenuItem>
-                <School size={14} className="mr-2" />
-                School
-              </DropdownMenuItem>
-            </Link>
+            {isUserAdmin?.isAdmin && (
+              <Link href={"/dash/org/settings/general"}>
+                <DropdownMenuItem>
+                  <School size={14} className="mr-2" />
+                  School
+                </DropdownMenuItem>
+              </Link>
+            )}
 
             <DropdownMenuItem onClick={onLogout}>
               <LogOut size={14} className="mr-2" />
