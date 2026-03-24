@@ -34,6 +34,33 @@ export default async function middleware(req: NextRequest) {
   const default_org = getDefaultOrg()
   const { pathname, search } = req.nextUrl
   const fullhost = req.headers ? req.headers.get('host') : ''
+  const nextAction = req.headers.get('next-action')
+  const nextRouterStateTree = req.headers.get('next-router-state-tree')
+
+  if (req.method === 'POST' && nextAction) {
+    const origin = req.headers.get('origin')
+    const forwardedHost = req.headers.get('x-forwarded-host')
+    const allowedHosts = new Set(
+      [req.nextUrl.host, forwardedHost].filter(Boolean) as string[]
+    )
+
+    if (!origin) {
+      return new NextResponse('Missing Origin header.', { status: 403 })
+    }
+
+    try {
+      const originHost = new URL(origin).host
+      if (!allowedHosts.has(originHost)) {
+        return new NextResponse('Invalid Origin header.', { status: 403 })
+      }
+    } catch {
+      return new NextResponse('Invalid Origin header.', { status: 403 })
+    }
+
+    if (!nextRouterStateTree) {
+      return new NextResponse('Invalid Server Action request.', { status: 400 })
+    }
+  }
 
   // if (!getAPIUrl()) {
   //   setAPIURL(`http://${fullhost}/api/v1`)
