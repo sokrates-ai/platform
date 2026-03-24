@@ -1,4 +1,4 @@
-.PHONY: setup check sprites staging prod
+.PHONY: setup check sprites staging prod set-version
 
 env:
 	./dev.sh env
@@ -21,6 +21,9 @@ api-dev:
 
 lint:
 	./dev.sh lint
+
+version:
+	./dev.sh set-version
 
 docker-prod:
 	bash ./dev.sh docker sokrates-ai prod

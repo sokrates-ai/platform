@@ -106,6 +106,66 @@ lint() {
     lint_api || exit 1
 }
 
+set_version() {
+    local version_file="./apps/web/package.json"
+    local new_version="$1"
+    local current_version
+
+    if [ ! -f "${version_file}" ]; then
+        echo "[ERROR]: Could not find ${version_file}"
+        exit 1
+    fi
+
+    current_version="$(python3 - "${version_file}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+version_file = Path(sys.argv[1])
+try:
+    data = json.loads(version_file.read_text())
+    print(data.get("version", "unknown"))
+except Exception:
+    print("unknown")
+PY
+)"
+
+    echo "[INFO]: Current version is ${current_version}"
+
+    if [ -z "${new_version}" ]; then
+        printf "Enter new version: "
+        IFS= read -r new_version
+    fi
+
+    if [ -z "${new_version}" ]; then
+        echo "[ERROR]: Version cannot be empty"
+        exit 1
+    fi
+
+    if [[ "${new_version}" == v* ]]; then
+        new_version="${new_version#v}"
+    fi
+
+    if [[ ! "${new_version}" =~ ^[0-9]+(\.[0-9]+){2}([\-+][0-9A-Za-z.-]+)?$ ]]; then
+        echo "[ERROR]: Invalid version. Expected semver like 1.2.3 or 1.2.3-alpha.1"
+        exit 1
+    fi
+
+    python3 - "${version_file}" "${new_version}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+version_file = Path(sys.argv[1])
+new_version = sys.argv[2]
+
+data = json.loads(version_file.read_text())
+data["version"] = new_version
+version_file.write_text(json.dumps(data, indent=2) + "\n")
+print(f"[DONE]: Updated {version_file} to {new_version}")
+PY
+}
+
 #
 # Docker build.
 #
@@ -158,6 +218,8 @@ elif [ "${ARG}" = "reset" ]; then
     reset
 elif [ "${ARG}" = "lint" ]; then
     lint
+elif [ "${ARG}" = "set-version" ]; then
+    set_version "$2"
 elif [ "${ARG}" = "docker" ]; then
     docker-build "$2" "$3"
 elif [ "${ARG}" = "db" ]; then
