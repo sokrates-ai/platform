@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 # Use an official Python runtime as a parent image
 FROM python:3.12.3-slim
 
@@ -14,15 +15,19 @@ WORKDIR /usr/learnhouse-api
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     build-essential \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip install --no-cache-dir poetry \
+    && rm -rf /var/lib/apt/lists/*
+RUN --mount=type=cache,target=/root/.cache/pip \
+    --mount=type=cache,target=/root/.cache/pypoetry \
+    pip install poetry \
     && poetry config virtualenvs.create false
 
 # Copy only requirements to cache them in docker layer
 COPY poetry.lock pyproject.toml ./
 
 # Install dependencies
-RUN poetry install --no-interaction --no-ansi --no-root --only main
+RUN --mount=type=cache,target=/root/.cache/pip \
+    --mount=type=cache,target=/root/.cache/pypoetry \
+    poetry install --no-interaction --no-ansi --no-root --only main
 
 # Copy the current directory contents into the container
 COPY . .

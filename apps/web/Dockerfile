@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 FROM node:22-alpine AS base
 
 # Install dependencies only when needed
@@ -7,9 +8,11 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
-RUN \
-  if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
+RUN --mount=type=cache,target=/root/.pnpm-store \
+  if [ -f pnpm-lock.yaml ]; then corepack enable pnpm \
+    && pnpm config set store-dir /root/.pnpm-store \
+    && pnpm i --frozen-lockfile; \
   else echo "Lockfile not found." && exit 1; \
   fi
 
@@ -25,12 +28,9 @@ COPY . .
 # Uncomment the following line in case you want to disable telemetry during the build.
 # ENV NEXT_TELEMETRY_DISABLED 1
 
-# Remove .env files from the final image
-# This is a good practice to avoid leaking sensitive data
-# Learn more about it in the Next.js documentation: https://nextjs.org/docs/basic-features/environment-variables
-RUN rm -f .env*
+ENV NEXT_TELEMETRY_DISABLED 1
 
-RUN \
+RUN --mount=type=cache,target=/app/.next/cache \
   if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
   else echo "Lockfile not found." && exit 1; \
   fi

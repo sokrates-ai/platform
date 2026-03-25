@@ -275,7 +275,7 @@ export default function ChapterActivity({
           )}
         >
           {activity.description ??
-            'Lorem Ipsum set dolor sit amet, nucti consentur…'}
+            ' '}
         </p>
       </div>
 

@@ -6,7 +6,6 @@ import {
 	buildActivityTabIndex,
 	getCourseFallbackTabId,
 	isActivityDone,
-	isActivityLocked,
 } from './utils'
 import { getActivity } from '@services/courses/activities'
 import Canva from '@components/Objects/Activities/DynamicCanva/DynamicCanva'
@@ -38,6 +37,9 @@ export default function ChapterActivities({
 	const [dynamicError, setDynamicError] = useState<string | null>(null)
 	const [isLoadingDynamic, setIsLoadingDynamic] = useState(false)
 	const latestDynamicRequest = useRef<string | null>(null)
+	const [optimisticCompleted, setOptimisticCompleted] = useState<Set<string>>(
+		() => new Set(),
+	)
 
 	const chapter = useMemo(
 		() => course?.chapters?.find((c: any) => c.id === chapterID),
@@ -65,6 +67,39 @@ export default function ChapterActivities({
 		[activities, selectedId],
 	)
 
+	const getActivityKey = (activity: any): string | null => {
+		const raw =
+			activity?.activity_uuid ??
+			activity?.activityUuid ??
+			activity?.activityUUID ??
+			activity?.id ??
+			activity
+		if (raw === null || raw === undefined) return null
+		const value = String(raw)
+		if (!value.length) return null
+		return value.startsWith('activity_') ? value : `activity_${value}`
+	}
+
+	const isOptimisticallyCompleted = (activity: any) => {
+		const key = getActivityKey(activity)
+		return key ? optimisticCompleted.has(key) : false
+	}
+
+	const isActivityMarkedDone = (
+		activity: any,
+		options: {
+			activeTabId?: string | null
+			activityTabIndex?: Record<string, string>
+			fallbackTabId?: string
+		},
+	) => {
+		if (isOptimisticallyCompleted(activity)) return true
+		const key = getActivityKey(activity)
+		return key
+			? isActivityDone(course, key, options)
+			: false
+	}
+
 	const isDynamicActivity = (activity: any) =>
 		activity?.activity_type === 'TYPE_DYNAMIC' ||
 		activity?.activity_sub_type === 'SUBTYPE_DYNAMIC_PAGE'
@@ -78,6 +113,7 @@ export default function ChapterActivities({
 	const selectedCourseTrail = course?.trail
 	const isSelectedActivityCompleted = () => {
 		if (!selectedActivity) return false
+		if (isOptimisticallyCompleted(selectedActivity)) return true
 		const activityId = selectedActivity.id
 		const run = selectedCourseTrail?.runs?.find(
 			(run: any) => run.course_id === course?.id,
@@ -92,6 +128,15 @@ export default function ChapterActivities({
 
 	const handleMarkComplete = async () => {
 		if (!selectedActivity) return
+		const optimisticKey = getActivityKey(selectedActivity)
+		if (optimisticKey) {
+			setOptimisticCompleted((prev) => {
+				if (prev.has(optimisticKey)) return prev
+				const next = new Set(prev)
+				next.add(optimisticKey)
+				return next
+			})
+		}
 		try {
 			await markActivityAsComplete(
 				orgslug,
@@ -102,6 +147,14 @@ export default function ChapterActivities({
 			toast.success('Activity marked as complete')
 			router.refresh()
 		} catch (error) {
+			if (optimisticKey) {
+				setOptimisticCompleted((prev) => {
+					if (!prev.has(optimisticKey)) return prev
+					const next = new Set(prev)
+					next.delete(optimisticKey)
+					return next
+				})
+			}
 			toast.error('Could not mark activity as complete')
 		}
 	}
@@ -182,17 +235,15 @@ export default function ChapterActivities({
 
 	const stateOf = (idx: number): ACTIVITY_STATE => {
 		const a = activities[idx]
-		const activityUuid =
-			a?.activity_uuid ?? a?.activityUuid ?? a?.activityUUID ?? a?.id
-		if (
-			isActivityLocked(course, chapter, activityUuid, {
+		const isLocked =
+			idx > 0 &&
+			!isActivityMarkedDone(activities[idx - 1], {
 				activeTabId: effectiveTabId,
 				activityTabIndex,
 				fallbackTabId,
 			})
-		)
-			return 'locked'
-		return isActivityDone(course, activityUuid, {
+		if (isLocked) return 'locked'
+		return isActivityMarkedDone(a, {
 			activeTabId: effectiveTabId,
 			activityTabIndex,
 			fallbackTabId,
