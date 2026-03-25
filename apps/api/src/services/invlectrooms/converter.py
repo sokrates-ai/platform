@@ -4,6 +4,7 @@ import re
 import json
 import math
 from copy import deepcopy
+import logging
 from functools import lru_cache
 from importlib import resources
 from typing import Any, Dict, List, Optional, Tuple
@@ -35,6 +36,17 @@ from .schemas import (
     InvlectRoomsApplyResponse,
     InvlectRoomsProblemPayload,
 )
+
+logger = logging.getLogger(__name__)
+
+def _filename_from_url(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+    try:
+        path = unquote(urlsplit(value).path or "")
+    except Exception:
+        path = value
+    return path.rsplit("/", 1)[-1] or None
 
 COOL_STONE_ASSET = "Stein_Moos.webp"
 COOL_STONE_LABEL = "cool"
@@ -223,6 +235,7 @@ def _extract_image_urls(
     problem: Optional[InvlectRoomsProblemPayload],
 ) -> Tuple[Optional[str], Optional[str]]:
     if problem is None:
+        logger.debug("InvlectRooms: _extract_image_urls called with None problem")
         return None, None
     image_payload = problem.image
     if isinstance(image_payload, dict):
@@ -234,6 +247,14 @@ def _extract_image_urls(
     else:
         original_url = None
         local_url = None
+    # logger.debug(
+    #     "InvlectRooms: extracted image urls (problem_id=%s, original=%s, local=%s, original_file=%s, local_file=%s)",
+    #     getattr(problem, "id", None),
+    #     original_url,
+    #     local_url,
+    #     _filename_from_url(original_url),
+    #     _filename_from_url(local_url),
+    # )
     return original_url or local_url, original_url
 
 
@@ -482,6 +503,14 @@ def _build_content_map(
     image_only_problems: List[InvlectRoomsProblemPayload],
     map_sequence: Optional[List[MapSequenceItem]] = None,
 ) -> Dict[str, Any]:
+    logger.info(
+        "InvlectRooms: building content map",
+        extra={
+            "chapter_count": len(chapter_contexts),
+            "image_only_count": len(image_only_problems),
+            "sequence_count": len(map_sequence) if map_sequence else 0,
+        },
+    )
     template = deepcopy(_load_template_map())
     objects = template.get("objects", [])
     placeholder_entries: List[Tuple[int, Dict[str, Any]]] = [
@@ -548,6 +577,15 @@ def _build_content_map(
                     chapter_positions[int(chapter_id)] = slot
                 elif kind == "image_only":
                     if isinstance(payload, InvlectRoomsProblemPayload):
+                        logger.debug(
+                            "InvlectRooms: assigning image-only to placeholder",
+                            extra={
+                                "sequence_index": sequence_index,
+                                "placeholder_index": object_index,
+                                "problem_id": payload.id,
+                                "order": objects[object_index].get("order"),
+                            },
+                        )
                         image_slot_indices.append(object_index)
                         image_slot_problems.append(payload)
             else:
@@ -579,6 +617,15 @@ def _build_content_map(
                 checkpoint_level,
                 problem,
                 preserve_placeholder_position=True,
+            )
+            logger.debug(
+                "InvlectRooms: assigned chapter to placeholder",
+                extra={
+                    "chapter_id": chapter_id,
+                    "problem_id": getattr(problem, "id", None),
+                    "placeholder_index": object_index,
+                    "order": slot.get("order"),
+                },
             )
             chapter_placeholder_indices.append(object_index)
             chapter_positions[int(chapter_id)] = slot
@@ -738,6 +785,13 @@ def _build_content_map(
             slot = objects[slot_index]
             image_url, original_url = _extract_image_urls(problem)
             if not image_url:
+                logger.warning(
+                    "InvlectRooms: image-only problem missing image url",
+                    extra={
+                        "problem_id": problem.id,
+                        "placeholder_index": slot_index,
+                    },
+                )
                 slot["file"] = PLACEHOLDER_HIDE_FILE
                 slot["scale"] = 0
                 slot["label"] = ""
@@ -774,10 +828,24 @@ def _build_content_map(
                 "customChapterId": 0,
                 "associatedChapterID": None,
             }
+            logger.info(
+                "InvlectRooms: placed image-only asset (problem_id=%s, placeholder_index=%s, image_url=%s, image_file=%s, source_url=%s, source_file=%s, order=%s)",
+                problem.id,
+                slot_index,
+                image_url,
+                _filename_from_url(image_url),
+                original_url,
+                _filename_from_url(original_url),
+                slot.get("order"),
+            )
 
         for offset_index, problem in enumerate(remaining_image_only):
             image_url, original_url = _extract_image_urls(problem)
             if not image_url:
+                logger.warning(
+                    "InvlectRooms: remaining image-only problem missing image url",
+                    extra={"problem_id": problem.id},
+                )
                 continue
             target_x = fallback_x + 160 * (offset_index + 1)
             target_y = fallback_y
@@ -805,6 +873,14 @@ def _build_content_map(
                         "associatedChapterID": None,
                     },
                 }
+            )
+            logger.info(
+                "InvlectRooms: placed image-only asset (overflow) (problem_id=%s, image_url=%s, image_file=%s, source_url=%s, source_file=%s)",
+                problem.id,
+                image_url,
+                _filename_from_url(image_url),
+                original_url,
+                _filename_from_url(original_url),
             )
             used_ids.add(next_id)
             next_id += 1

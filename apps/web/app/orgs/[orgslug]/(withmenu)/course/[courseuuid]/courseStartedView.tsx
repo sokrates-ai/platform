@@ -381,6 +381,26 @@ const CourseStartedView = ({
     }
   }, [tabMaps, selectedTab, course])
 
+  const layeredLayout: LayoutState = useMemo(() => {
+    const assets = Array.isArray(layout.layout) ? layout.layout : []
+    if (!assets.length) {
+      return layout
+    }
+    const chapterAssets = assets.filter(
+      (asset) => asset?.type?.kind === 'chapter',
+    )
+    if (!chapterAssets.length) {
+      return layout
+    }
+    const nonChapterAssets = assets.filter(
+      (asset) => asset?.type?.kind !== 'chapter',
+    )
+    return {
+      ...layout,
+      layout: [...nonChapterAssets, ...chapterAssets],
+    }
+  }, [layout])
+
   const prefetchUrls = useMemo(() => {
     const urls = new Set<string>()
     const addUrl = (url?: string) => {
@@ -725,7 +745,7 @@ const CourseStartedView = ({
         <div className="relative flex-1">
           <Canvas
             key={selectedTab}
-            layout={layout}
+            layout={layeredLayout}
             readOnly
             chapterStates={chapterStates}
             onViewportReady={setViewport}

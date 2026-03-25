@@ -133,6 +133,7 @@ if __name__ == '__main__':
         port=learnhouse_config.hosting_config.port,
         reload=learnhouse_config.general_config.development_mode,
         forwarded_allow_ips='*',
+        log_level="debug"
     )
 
 # General Routes

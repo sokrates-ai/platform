@@ -150,10 +150,10 @@ async def create_chapter(
         # .order_by(CourseChapter.order)
     )
     course_chapters = db_session.exec(statement).all()
-    print(f"COURSE_CHAPTERS={course_chapters}")
+    # print(f"COURSE_CHAPTERS={course_chapters}")
 
     if course_chapters:
-        print("NOTE: previous chapters exist, adding an edge...")
+        # print("NOTE: previous chapters exist, adding an edge...")
 
         predecessor_id = course_chapters[-1].chapter_id
         chapter.predecessors = [predecessor_id]

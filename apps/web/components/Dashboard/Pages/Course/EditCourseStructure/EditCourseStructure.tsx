@@ -167,6 +167,76 @@ const CHECKPOINT_IMAGE_TOKENS: Record<CheckpointLevel, string[]> = {
   gold: ['platypusgold'],
 };
 
+const IMAGE_ONLY_TEXT_PATTERN =
+  /^(?:image:\s*)?(?:\/content\/|https?:\/\/).+\.(?:png|jpe?g|gif|webp|svg)(?:\?.*)?$/i;
+
+const isImageOnlyText = (value: string): boolean => {
+  const normalized = normalizeWhitespace(value ?? '');
+  if (!normalized) {
+    return true;
+  }
+  return IMAGE_ONLY_TEXT_PATTERN.test(normalized);
+};
+
+const detectImageOnlyProblem = ({
+  html,
+  plainText,
+  image,
+}: {
+  html?: string;
+  plainText?: string;
+  image?: unknown;
+}): boolean => {
+  let hasImage = false;
+  let hasText = false;
+  let hasHtmlImage = false;
+
+  if (typeof image === 'string') {
+    hasImage = image.trim().length > 0;
+  } else if (image && typeof image === 'object') {
+    const candidate = image as Record<string, unknown>;
+    for (const key of ['local', 'original']) {
+      const value = candidate[key];
+      if (typeof value === 'string' && value.trim().length > 0) {
+        hasImage = true;
+        break;
+      }
+    }
+  }
+
+  if (html) {
+    try {
+      if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
+        hasHtmlImage = /<img\b/i.test(html);
+        const fallback = normalizeWhitespace(html.replace(/<[^>]+>/g, ' '));
+        if (fallback) {
+          hasText = true;
+        }
+      } else {
+        const parser = new DOMParser();
+        const document = parser.parseFromString(html, 'text/html');
+        hasHtmlImage = !!document.querySelector('img');
+        const textContent = normalizeWhitespace(document.body?.textContent ?? '');
+        if (textContent) {
+          hasText = true;
+        }
+      }
+    } catch {
+      // ignore parsing failures
+    }
+  }
+
+  if (plainText && !isImageOnlyText(plainText)) {
+    hasText = true;
+  }
+
+  if (!hasImage && hasHtmlImage) {
+    hasImage = true;
+  }
+
+  return hasImage && !hasText;
+};
+
 type CheckpointDetectionInput = {
   title?: string;
   html?: string;
@@ -522,6 +592,11 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
       const segments = extractTextSegments(html);
       const plainText = segments.join(' ');
       const preview = buildPreview(segments, MAX_PREVIEW_LENGTH);
+      const imageOnly = detectImageOnlyProblem({
+        html,
+        plainText,
+        image: rawImg,
+      });
       const rawCheckpoint =
         typeof problem?.checkpointLevel === 'string' ? problem.checkpointLevel.trim().toLowerCase() : null;
       let checkpointLevel: CheckpointLevel | null = null;
@@ -547,6 +622,7 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
         image: imageMeta,
         imagePreview,
         checkpointLevel,
+        imageOnly,
       };
     });
   }, [importResult, toProxiedImageUrl]);
@@ -791,6 +867,14 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
                                   className={`shrink-0 whitespace-nowrap text-[10px] uppercase tracking-wide ${CHECKPOINT_BADGE_CLASSES[checkpointLevel]}`}
                                 >
                                   {CHECKPOINT_LABELS[checkpointLevel]} checkpoint
+                                </Badge>
+                              )}
+                              {problem.imageOnly && (
+                                <Badge
+                                  variant="outline"
+                                  className="shrink-0 whitespace-nowrap text-[10px] uppercase tracking-wide border-blue-300 text-blue-700 bg-blue-50"
+                                >
+                                  Image-only
                                 </Badge>
                               )}
                             </div>
