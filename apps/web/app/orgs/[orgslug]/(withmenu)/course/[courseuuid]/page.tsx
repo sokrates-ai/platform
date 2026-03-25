@@ -6,6 +6,9 @@ import { Metadata } from 'next'
 import { getCourseThumbnailMediaDirectory } from '@services/media/media'
 import { nextAuthOptions } from 'app/auth/options'
 import { getServerSession } from 'next-auth'
+import { notFound } from 'next/navigation'
+
+const isLikelyAssetRequest = (value: string) => value.includes('.')
 
 type MetadataProps = {
   params: { orgslug: string; courseuuid: string }
@@ -15,6 +18,15 @@ type MetadataProps = {
 export async function generateMetadata({
   params,
 }: MetadataProps): Promise<Metadata> {
+  if (isLikelyAssetRequest(params.courseuuid)) {
+    return {
+      title: 'Not Found',
+      robots: {
+        index: false,
+        follow: false,
+      },
+    }
+  }
   const session = await getServerSession(nextAuthOptions)
   const access_token = session?.tokens?.access_token
 
@@ -69,6 +81,9 @@ export async function generateMetadata({
 const CoursePage = async (params: any) => {
   const courseuuid = params.params.courseuuid
   const orgslug = params.params.orgslug
+  if (isLikelyAssetRequest(courseuuid)) {
+    notFound()
+  }
   const session = await getServerSession(nextAuthOptions)
   const access_token = session?.tokens?.access_token
   const course_meta = await getCourseMetadata(

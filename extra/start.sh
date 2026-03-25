@@ -16,8 +16,7 @@ export NEXTAUTH_URL="${URL}"
 export NEXT_PUBLIC_LEARNHOUSE_BASE_URL="${URL}"
 
 #
-# Start the services
+# Start the service
 #
-pm2 start server.js --cwd /app/web --name learnhouse-web >/dev/null 2>&1
-pm2 status
-pm2 logs
+cd /app/web || exit 1
+exec node server.js

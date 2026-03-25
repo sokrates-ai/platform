@@ -1,7 +1,7 @@
 # Base image
-FROM node:20-alpine as base
+FROM node:20-alpine as build
 
-RUN npm install -g corepack pm2
+RUN npm install -g corepack
 
 RUN addgroup --system --gid 1001 system \
     && adduser --system --uid 1001 app \
@@ -9,7 +9,7 @@ RUN addgroup --system --gid 1001 system \
     && chown app:system .next
 
 # Frontend Build
-FROM base AS deps
+FROM build AS deps
 
 ARG DOMAIN
 
@@ -22,7 +22,6 @@ ENV NEXT_PUBLIC_LEARNHOUSE_HTTPS=true
 
 COPY ./apps/web/ /app/web
 WORKDIR /app/web
-RUN ls -lah
 COPY ./apps/web/package.json ./apps/web/pnpm-lock.yaml ./
 RUN rm -f .env*
 RUN if [ -f pnpm-lock.yaml ]; then corepack enable pnpm;  \
@@ -38,18 +37,15 @@ RUN pnpm i --frozen-lockfile
 RUN pnpm run build;
 
 # Final image
-FROM base AS runner
-WORKDIR /
-COPY --from=deps /app/web/ ./app/web/
-COPY --from=deps /app/web/public ./app/web/public
-COPY --from=deps --chown=app:system /app/web/.next/standalone ./app/web/
-COPY --from=deps --chown=app:system /app/web/.next/static ./app/web/.next/static
-RUN ls -lah
-
-
+FROM node:20-alpine AS runner
+RUN addgroup --system --gid 1001 system \
+    && adduser --system --uid 1001 app
+WORKDIR /app/web
+ENV NODE_ENV=production
+COPY --from=deps /app/web/public ./public
+COPY --from=deps --chown=app:system /app/web/.next/standalone ./
+COPY --from=deps --chown=app:system /app/web/.next/static ./.next/static
 ARG DOMAIN
 ENV NEXT_PUBLIC_LEARNHOUSE_DOMAIN=https://${DOMAIN}
-RUN env
-
 COPY ./extra/start.sh start.sh
 CMD ["sh", "start.sh"]

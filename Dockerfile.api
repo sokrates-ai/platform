@@ -1,35 +1,47 @@
-# Base image
-FROM python:3.12.3-slim-bookworm AS base
+# Build stage
+FROM python:3.12.3-slim-bookworm AS builder
 
-# Install curl, and build-essential
-RUN apt update
-RUN apt install -y curl build-essential \
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
+
+# Install build tools needed for Python deps
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl build-essential \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN addgroup --system --gid 1001 system \
-    && adduser --system --uid 1001 app
-
-# Backend Build
 WORKDIR /app/api
 COPY ./apps/api/poetry.lock* ./
 COPY ./apps/api/pyproject.toml ./
 RUN pip install --upgrade pip \
-    && pip install poetry \
+    && pip install poetry poetry-plugin-export \
     && poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi
+    && poetry export --only main -f requirements.txt --without-hashes -o /tmp/requirements.txt \
+    && pip wheel --wheel-dir /tmp/wheels -r /tmp/requirements.txt \
+    && rm -rf /root/.cache/pip
 
-# Run the backend
+# Runtime stage
+FROM python:3.12.3-slim-bookworm AS runtime
+
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+RUN addgroup --system --gid 1001 system \
+    && adduser --system --uid 1001 app
 
 WORKDIR /app/api
+COPY --from=builder /tmp/requirements.txt /tmp/requirements.txt
+COPY --from=builder /tmp/wheels /tmp/wheels
+RUN pip install --no-cache-dir --no-index --find-links /tmp/wheels -r /tmp/requirements.txt \
+    && rm -rf /tmp/wheels /tmp/requirements.txt
+
 COPY ./apps/api ./
-RUN ls -lah
 COPY ./production_config.yaml ./config/config.yaml
 
 WORKDIR /app/
-
 COPY ./extra/start.sh /app/start.sh
 
 WORKDIR /app/api
-
 CMD ["python3", "app.py"]
