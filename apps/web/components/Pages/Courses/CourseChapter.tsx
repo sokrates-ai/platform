@@ -52,7 +52,7 @@ function CourseChapter(props: Props) {
               className="text-[#3C3C3C] mb-2 sm:mb-2"
             />
             <h3 className="text-lg sm:text-2xl md:text-3xl font-bold tracking-[0.02em] leading-[1.25] mb-2 text-[#3C3C3C]">
-              This chapter is locked
+              Chapter "{chapter.name}" is locked
             </h3>
             <p className="text-xs sm:text-sm md:text-base tracking-[0.02em] leading-[1.25] max-w-[280px] sm:max-w-[350px] mx-auto text-[#3C3C3C]">
               Complete the previous chapters
