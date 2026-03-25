@@ -46,10 +46,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html className={dmSans.className} lang="en">
       <body>
-        <link
-          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500;1,700;1,900&display=swap"
-          rel="stylesheet"
-        />
         {isStaging && (
           <div
             className="flex justify-between bg-red-500/50 text-black p-2.5 text-center font-black text-4xl absolute w-full z-[999] bottom-0 overflow-x-hidden gap-4"

@@ -87,12 +87,14 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
             </Link>
 
             {/* Login / Sign up */}
-            <div className="ml-auto flex items-center gap-3">
+            <div className="ml-auto flex items-center gap-6">
               <Link href={getUriWithoutOrg('/login?orgslug=' + orgslug)}>
-                <Button variant="outline" className="relative top-1">Login</Button>
+                <Button variant="outline">Login</Button>
               </Link>
               <Link href={getUriWithoutOrg('/signup?orgslug=' + orgslug)}>
-                <Button>Sign up</Button>
+                <Button className="bg-SokratesOrangeShadow hover:bg-SokratesOrangeShadow/90">
+                  Sign up
+                </Button>
               </Link>
             </div>
           </div>

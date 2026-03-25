@@ -62,6 +62,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, orgslug }) => {
         <Link
           prefetch
           href={getUriWithOrg(orgslug, `/course/${removeCoursePrefix(course.course_uuid)}`)}
+          aria-label={`Open course ${course.name}`}
           className="
             block w-full relative h-0 pb-[61%]
             overflow-hidden rounded-xl border border-gray-600 bg-gray-100
@@ -72,6 +73,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, orgslug }) => {
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${thumbnailImage})` }}
           />
+          <span className="sr-only">{course.name}</span>
         </Link>
       </motion.div>
 

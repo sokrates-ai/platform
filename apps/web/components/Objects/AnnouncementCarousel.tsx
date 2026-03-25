@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Image from 'next/image'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export interface Slide {
@@ -79,15 +80,24 @@ const AnnouncementCarousel: React.FC<AnnouncementCarouselProps> = ({
         border-y-2 sm:border-b-2 mt-36 sm:mt-0 overflow-hidden
         h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[80vh]
       "
-      style={
-        current.bgImage
-          ? { backgroundImage: `url(${current.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-          : { backgroundColor: current.color }
-      }
     >
+      {current.bgImage ? (
+        <Image
+          src={current.bgImage}
+          alt={current.text}
+          fill
+          priority={currentSlide === 0}
+          fetchPriority={currentSlide === 0 ? 'high' : 'auto'}
+          sizes="100vw"
+          className="object-cover"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-[#EBEBEB]" />
+      )}
+
       {/* overlay only if bgImage exists */}
       {current.bgImage && (
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
       )}
 
       <span className="z-10 px-4 text-center text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-[#F5F5F5]">
@@ -95,31 +105,40 @@ const AnnouncementCarousel: React.FC<AnnouncementCarouselProps> = ({
       </span>
 
       <button
+        type="button"
         onClick={prevSlide}
+        aria-label="Previous announcement"
         className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 p-2 sm:p-3 lg:p-4 z-10"
       >
         <ChevronLeft
           size={30}
           className="text-[#F5F5F5] sm:w-8 sm:h-8 lg:w-10 lg:h-10"
+          aria-hidden="true"
         />
       </button>
       <button
+        type="button"
         onClick={nextSlide}
+        aria-label="Next announcement"
         className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 p-2 sm:p-3 lg:p-4 z-10"
       >
         <ChevronRight
           size={30}
           className="text-[#F5F5F5] sm:w-8 sm:h-8 lg:w-10 lg:h-10"
+          aria-hidden="true"
         />
       </button>
 
       <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex space-x-2 z-10">
-        {slides.map((_, idx) => {
+        {slides.map((slide, idx) => {
           const isActive = currentSlide === idx
           return (
             <button
               key={idx}
+              type="button"
               onClick={() => goToSlide(idx)}
+              aria-label={`Go to slide ${idx + 1} of ${slides.length}: ${slide.text}`}
+              aria-current={isActive ? 'true' : undefined}
               className={`
                 relative overflow-hidden transition-all duration-200
                 ${isActive
