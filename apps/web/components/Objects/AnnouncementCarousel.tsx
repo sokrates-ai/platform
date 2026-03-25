@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import Image from 'next/image'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export interface Slide {
@@ -80,20 +79,12 @@ const AnnouncementCarousel: React.FC<AnnouncementCarouselProps> = ({
         border-y-2 sm:border-b-2 mt-36 sm:mt-0 overflow-hidden
         h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[80vh]
       "
+      style={
+        current.bgImage
+          ? { backgroundImage: `url(${current.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+          : { backgroundColor: current.color }
+      }
     >
-      {current.bgImage ? (
-        <Image
-          src={current.bgImage}
-          alt={current.text}
-          fill
-          priority={currentSlide === 0}
-          fetchPriority={currentSlide === 0 ? 'high' : 'auto'}
-          sizes="100vw"
-          className="object-cover"
-        />
-      ) : (
-        <div className="absolute inset-0 bg-[#EBEBEB]" />
-      )}
 
       {/* overlay only if bgImage exists */}
       {current.bgImage && (
