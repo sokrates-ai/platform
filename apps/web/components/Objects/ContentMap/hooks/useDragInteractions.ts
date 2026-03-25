@@ -14,6 +14,7 @@ interface Props {
     assetId: number,
     pos: { clientX: number; clientY: number }
   ) => void;
+  onAssetClick?: (asset: AssetData) => void;
   onChapterClick?: (chapterID: number) => void;
   readOnly: boolean;
   viewport: Viewport | null;
@@ -27,6 +28,7 @@ export default function useDragInteractions({
   onSelectIds,
   onAssetPositionChange,
   onAssetContextMenu,
+  onAssetClick,
   onChapterClick,
   readOnly,
   viewport,
@@ -36,6 +38,12 @@ export default function useDragInteractions({
   /** ---- refs / state --------------------------------------------------- */
   const canvasRef = useRef<HTMLElement | null>(null);
   const dragRef = useRef<any>(null);
+  const clickRef = useRef<{
+    id: number;
+    startX: number;
+    startY: number;
+    moved: boolean;
+  } | null>(null);
   const [tempPos, setTempPos] = useState(
     new Map<number, { x: number; y: number }>()
   );
@@ -131,6 +139,21 @@ export default function useDragInteractions({
     viewport?.plugins?.resume("drag");
   }, [gridSize, onAssetPositionChange, snapToGrid, viewport, onMove]);
 
+  const handleClickMove = useCallback((evt: PointerEvent) => {
+    if (!clickRef.current) return;
+    const dx = evt.clientX - clickRef.current.startX;
+    const dy = evt.clientY - clickRef.current.startY;
+    if (Math.hypot(dx, dy) > 5) {
+      clickRef.current.moved = true;
+    }
+  }, []);
+
+  const clearClickTracking = useCallback(() => {
+    clickRef.current = null;
+    window.removeEventListener("pointermove", handleClickMove);
+    window.removeEventListener("pointerup", clearClickTracking);
+  }, [handleClickMove]);
+
   /** ---- public handlers ------------------------------------------------ */
   const onPointerDown = useCallback(
     (_e: any, asset: AssetData, target: PIXI.Container | PIXI.Sprite) => {
@@ -147,11 +170,17 @@ export default function useDragInteractions({
         return;
       }
 
-      /* read-only: left-click chapter stone opens chapter */
-    //   if (readOnly && asset.type.kind === "chapter" && orig.button === 0) {
-    //     onChapterClick?.(asset.type.associatedChapterID!);
-    //     return;
-    //   }
+      if (readOnly && orig.button === 0) {
+        clickRef.current = {
+          id: asset.id,
+          startX: orig.clientX,
+          startY: orig.clientY,
+          moved: false,
+        };
+        window.addEventListener("pointermove", handleClickMove);
+        window.addEventListener("pointerup", clearClickTracking);
+        return;
+      }
 
       if (orig.button !== 0 || readOnly) return;
 
@@ -194,6 +223,8 @@ export default function useDragInteractions({
       viewport,
       onMove,
       endDrag,
+      handleClickMove,
+      clearClickTracking,
     ]
   );
 
@@ -203,12 +234,23 @@ export default function useDragInteractions({
       if (!orig || orig.button !== 0) return;
       if (dragRef.current?.moved) return; // it was a drag, not a click
 
+      const trackedClick = clickRef.current;
+      if (trackedClick) {
+        clearClickTracking();
+        if (trackedClick.id !== asset.id || trackedClick.moved) {
+          return;
+        }
+      }
+
       /* read-only click on a chapter stone */
       if (readOnly && asset.type.kind === "chapter") {
         onChapterClick?.(asset.type.associatedChapterID!);
         return;
       }
-      if (readOnly) return;
+      if (readOnly) {
+        onAssetClick?.(asset);
+        return;
+      }
 
       /* selection */
       const already = selectedIds.includes(asset.id);
@@ -220,7 +262,14 @@ export default function useDragInteractions({
         onSelectIds([asset.id]);
       }
     },
-    [readOnly, onChapterClick, selectedIds, onSelectIds]
+    [
+      readOnly,
+      onChapterClick,
+      onAssetClick,
+      selectedIds,
+      onSelectIds,
+      clearClickTracking,
+    ]
   );
 
   return {

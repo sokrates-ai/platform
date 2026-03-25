@@ -16,6 +16,7 @@ import {
   DEFAULT_CHAPTER_STONE_THEME,
 } from '@components/Objects/ContentMap/assets/ChapterStoneAsset'
 import { getSpriteUrl } from '@components/Objects/ContentMap/utils/spriteUrl'
+import type { AssetData } from '@components/Objects/ContentMap/Asset/assetTypes'
 import {
   buildActivityTabIndex,
   getCourseFallbackTabId,
@@ -574,9 +575,45 @@ const CourseStartedView = ({
   const [selectedChapter, setSelectedChapter] = useState(
     chapterFromUrl ?? selectedChapterId ?? 0,
   )
+  const [imageDialogOpen, setImageDialogOpen] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<{
+    src: string
+    label?: string
+  } | null>(null)
 
   const session = useSokratesSession() as any
   const access_token: string | undefined = session?.data?.tokens?.access_token
+
+  const isCustomImageAsset = useCallback((asset: AssetData) => {
+    if (!asset || asset.type?.kind === 'chapter') {
+      return false
+    }
+    if (typeof asset.sourceUrl === 'string' && asset.sourceUrl.trim()) {
+      return true
+    }
+    const file = typeof asset.file === 'string' ? asset.file.trim() : ''
+    if (!file) return false
+    if (file.startsWith('data:') || file.startsWith('blob:')) {
+      return true
+    }
+    if (file.includes('/mapProxy?') || file.includes('/mapProxy/')) {
+      return true
+    }
+    return false
+  }, [])
+
+  const handleAssetClick = useCallback(
+    (asset: AssetData) => {
+      if (!isCustomImageAsset(asset)) {
+        return
+      }
+      const src = getSpriteUrl(asset.file)
+      if (!src) return
+      setSelectedImage({ src, label: asset.label })
+      setImageDialogOpen(true)
+    },
+    [isCustomImageAsset],
+  )
 
   useEffect(() => {
     if (!shouldPersistCanvasRef.current) {
@@ -621,6 +658,28 @@ const CourseStartedView = ({
           access_token={access_token ?? ''}
           selectedTabId={selectedTab}
         />}
+      />
+      <Modal
+        isDialogOpen={imageDialogOpen}
+        onOpenChange={(open) => {
+          setImageDialogOpen(open)
+          if (!open) {
+            setSelectedImage(null)
+          }
+        }}
+        customWidth="w-[85vw] max-w-[64rem] p-0 gap-0"
+        customHeight="h-[75vh] max-h-[75vh] p-0"
+        dialogContent={
+          selectedImage ? (
+            <div className="flex h-full w-full items-center justify-center">
+              <img
+                src={selectedImage.src}
+                alt={selectedImage.label || 'Custom asset'}
+                className="max-h-full w-auto max-w-full object-contain"
+              />
+            </div>
+          ) : null
+        }
       />
 
       {/* Hamburger Menu Button */}
@@ -761,6 +820,7 @@ const CourseStartedView = ({
               setSelectedChapter(chapterId)
               setChapterDialogOpen(true)
             }}
+            onAssetClick={handleAssetClick}
           />
         </div>
       </div>

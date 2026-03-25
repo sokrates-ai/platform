@@ -49,6 +49,7 @@ interface CanvasViewportProps {
     assetId: number,
     pos: { clientX: number; clientY: number }
   ) => void
+  onAssetClick?: (asset: AssetData) => void
   onChapterClick?: (chapterID: number) => void
   readOnly: boolean
   boundaries?: {
@@ -83,6 +84,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
     onViewportReady,
     onAssetPositionChange,
     onAssetContextMenu,
+    onAssetClick,
     onChapterClick,
     readOnly,
     boundaries,
@@ -120,6 +122,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
       onSelectIds,
       onAssetPositionChange,
       onAssetContextMenu,
+      onAssetClick,
       onChapterClick,
       readOnly,
       viewport,

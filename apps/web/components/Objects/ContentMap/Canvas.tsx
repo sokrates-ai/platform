@@ -30,6 +30,7 @@ export interface CanvasProps {
     layout: LayoutState;
     setLayout: Dispatch<SetStateAction<LayoutState>>;
     onChapterClick: (chapterID: number) => void;
+    onAssetClick?: (asset: AssetData) => void;
     onViewportReady?: (viewport: any) => void;
     minZoom?: number;
     maxZoom?: number;
@@ -49,6 +50,7 @@ const Canvas: React.FC<CanvasProps> = ({
     layout,
     setLayout,
     onChapterClick,
+    onAssetClick,
     onViewportReady,
     minZoom,
     maxZoom,
@@ -437,6 +439,7 @@ const Canvas: React.FC<CanvasProps> = ({
                         onViewportReady={handleViewportReady}
                         onAssetPositionChange={handleAssetPositionChange}
                         onAssetContextMenu={handleAssetContextMenu}
+                        onAssetClick={onAssetClick}
                         onChapterClick={onChapterClick}
                         readOnly={!!readOnly}
                         minZoom={minZoom}
