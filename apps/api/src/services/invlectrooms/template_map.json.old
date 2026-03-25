@@ -707,14 +707,13 @@
       "file": "Placeholder.webp",
       "label": "Placeholder",
       "scale": 0.2,
-      "x": -480,
-      "y": -720,
+      "x": -495.92750908999244,
+      "y": -718.4315736553457,
       "type": {
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 2
+      }
     },
     {
       "id": 1766007970758358,
@@ -727,8 +726,7 @@
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 3
+      }
     },
     {
       "id": 1766007956998823,
@@ -741,8 +739,7 @@
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 4
+      }
     },
     {
       "id": 1766007956835101,
@@ -755,8 +752,7 @@
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 5
+      }
     },
     {
       "id": 1772809501100,
@@ -821,8 +817,7 @@
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 1
+      }
     },
     {
       "id": 1766009991908,
@@ -887,8 +882,7 @@
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 6
+      }
     },
     {
       "id": 1766007969640970,
@@ -940,8 +934,7 @@
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 7
+      }
     },
     {
       "id": 1766008008584088,
@@ -954,8 +947,7 @@
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 8
+      }
     },
     {
       "id": 1766008024036112,
@@ -968,8 +960,7 @@
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 9
+      }
     },
     {
       "id": 1766008025344213,
@@ -982,8 +973,7 @@
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 10
+      }
     },
     {
       "id": 1766008048089690,
@@ -996,8 +986,7 @@
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 11
+      }
     },
     {
       "id": 1766008052928325,
@@ -1010,8 +999,7 @@
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 12
+      }
     },
     {
       "id": 1766008055335722,
@@ -1024,8 +1012,7 @@
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 13
+      }
     },
     {
       "id": 1766008056823873,
@@ -1038,8 +1025,7 @@
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 14
+      }
     },
     {
       "id": 1766008058679973,
@@ -1052,8 +1038,7 @@
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 15
+      }
     },
     {
       "id": 1766008060485031,
@@ -1066,16 +1051,15 @@
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 16
+      }
     },
     {
       "id": 1766010163904,
       "file": "Textur Spritzer Grün.webp",
       "label": "Textur Spritzer Grün",
       "scale": 0.2,
-      "x": -690,
-      "y": -270,
+      "x": -624.6787305530439,
+      "y": -196.48348706149025,
       "type": {
         "kind": "default",
         "label": "",
@@ -1087,14 +1071,13 @@
       "file": "Placeholder.webp",
       "label": "Placeholder",
       "scale": 0.2,
-      "x": 360,
-      "y": 660,
+      "x": 366.41676811718673,
+      "y": 662.9945315047555,
       "type": {
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 17
+      }
     },
     {
       "id": 1766008065440697,
@@ -1107,8 +1090,7 @@
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 18
+      }
     },
     {
       "id": 1766008068953266,
@@ -1121,8 +1103,7 @@
         "kind": "default",
         "label": "",
         "customChapterId": 0
-      },
-      "order": 19
+      }
     },
     {
       "id": 1766009936757,
@@ -1350,8 +1331,8 @@
       "file": "Baum 4 b.webp",
       "label": "Baum 4 b",
       "scale": 0.2,
-      "x": -330,
-      "y": -870,
+      "x": -342.18577131673806,
+      "y": -840,
       "type": {
         "kind": "default",
         "label": "",

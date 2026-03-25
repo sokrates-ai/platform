@@ -1,6 +1,7 @@
 from typing import Any, Dict, Literal, List
 from uuid import uuid4
 from src.db.courses.chapters import Chapter
+from src.db.courses.course_canvas import CourseCanvas
 from sqlmodel import Session, select, or_, and_
 from src.db.usergroup_resources import UserGroupResource
 from src.db.usergroup_user import UserGroupUser
@@ -754,6 +755,10 @@ async def delete_course(
     statement = select(Chapter).where(Chapter.course_id == course.id)
     chapters = db_session.exec(statement).all()
 
+    # Delete user canvas state tied to this course to avoid FK violations.
+    statement = select(CourseCanvas).where(CourseCanvas.course_id == course.id)
+    canvases = db_session.exec(statement).all()
+
     # RBAC check
     await rbac_check(request, course.course_uuid, current_user, "delete", db_session)
 
@@ -762,6 +767,8 @@ async def delete_course(
 
     for chapter in chapters:
         db_session.delete(chapter)
+    for canvas in canvases:
+        db_session.delete(canvas)
     db_session.delete(course)
     db_session.commit()
 

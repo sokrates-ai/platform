@@ -84,6 +84,7 @@ ChapterContext = Tuple[
     Optional[InvlectRoomsProblemPayload],
     Optional[str],
 ]
+MapSequenceItem = Tuple[str, Any]
 
 def _normalize_checkpoint_level(value: Optional[str]) -> Optional[str]:
     if not value:
@@ -440,49 +441,150 @@ def _select_placeholder_positions(total_slots: int, required: int) -> List[int]:
     return indices
 
 
+def _parse_placeholder_order(value: Any) -> Optional[int]:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        if math.isfinite(value):
+            return int(value)
+        return None
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped.isdigit():
+            return int(stripped)
+    return None
+
+
+def _order_placeholder_indices(
+    placeholder_entries: List[Tuple[int, Dict[str, Any]]],
+) -> Optional[List[int]]:
+    ordered: List[Tuple[Optional[int], int]] = []
+    has_order = False
+    for index, obj in placeholder_entries:
+        order = _parse_placeholder_order(obj.get("order"))
+        if order is not None:
+            has_order = True
+        ordered.append((order, index))
+    if not has_order:
+        return None
+    ordered.sort(
+        key=lambda item: (
+            item[0] is None,
+            item[0] if item[0] is not None else 0,
+            item[1],
+        )
+    )
+    return [index for _, index in ordered]
+
+
 def _build_content_map(
     chapter_contexts: List[ChapterContext],
     image_only_problems: List[InvlectRoomsProblemPayload],
+    map_sequence: Optional[List[MapSequenceItem]] = None,
 ) -> Dict[str, Any]:
     template = deepcopy(_load_template_map())
     objects = template.get("objects", [])
-    placeholder_indices = [
-        index
+    placeholder_entries: List[Tuple[int, Dict[str, Any]]] = [
+        (index, obj)
         for index, obj in enumerate(objects)
         if isinstance(obj, dict) and obj.get("file") == PLACEHOLDER_FILE
     ]
+    placeholder_indices = [index for index, _ in placeholder_entries]
+    ordered_placeholder_indices = _order_placeholder_indices(placeholder_entries)
 
-    chapter_slots = _select_placeholder_positions(
-        len(placeholder_indices),
-        len(chapter_contexts),
-    )
-    mapped_indices = [placeholder_indices[position] for position in chapter_slots]
-
-    used_placeholder_indices = set(mapped_indices)
+    used_placeholder_indices: set[int] = set()
     chapter_positions: Dict[int, Dict[str, Any]] = {}
+    chapter_placeholder_indices: List[int] = []
+    image_slot_indices: List[int] = []
+    image_slot_problems: List[InvlectRoomsProblemPayload] = []
+    remaining_image_only: List[InvlectRoomsProblemPayload] = []
+    extra_contexts: List[ChapterContext] = []
 
-    for (chapter, problem, checkpoint_level), object_index in zip(
-        chapter_contexts,
-        mapped_indices,
-    ):
-        chapter_id = chapter.id
-        if chapter_id is None:
-            continue
-        slot = objects[object_index]
-        _hydrate_chapter_slot(
-            slot,
-            chapter,
-            checkpoint_level,
-            problem,
-            preserve_placeholder_position=True,
+    if ordered_placeholder_indices is not None and map_sequence:
+        total_placeholders = len(ordered_placeholder_indices)
+        for sequence_index, (kind, payload) in enumerate(map_sequence):
+            if sequence_index < total_placeholders:
+                object_index = ordered_placeholder_indices[sequence_index]
+                if kind == "chapter":
+                    chapter, problem, checkpoint_level = payload
+                    chapter_id = chapter.id
+                    if chapter_id is None:
+                        continue
+                    slot = objects[object_index]
+                    _hydrate_chapter_slot(
+                        slot,
+                        chapter,
+                        checkpoint_level,
+                        problem,
+                        preserve_placeholder_position=True,
+                    )
+                    used_placeholder_indices.add(object_index)
+                    chapter_placeholder_indices.append(object_index)
+                    chapter_positions[int(chapter_id)] = slot
+                elif kind == "image_only":
+                    if isinstance(payload, InvlectRoomsProblemPayload):
+                        image_slot_indices.append(object_index)
+                        image_slot_problems.append(payload)
+            else:
+                if kind == "chapter":
+                    extra_contexts.append(payload)
+                elif kind == "image_only" and isinstance(
+                    payload, InvlectRoomsProblemPayload
+                ):
+                    remaining_image_only.append(payload)
+    else:
+        chapter_slots = _select_placeholder_positions(
+            len(placeholder_indices),
+            len(chapter_contexts),
         )
-        chapter_positions[int(chapter_id)] = slot
+        mapped_indices = [placeholder_indices[position] for position in chapter_slots]
+        used_placeholder_indices = set(mapped_indices)
 
-    extra_contexts = chapter_contexts[len(mapped_indices) :]
+        for (chapter, problem, checkpoint_level), object_index in zip(
+            chapter_contexts,
+            mapped_indices,
+        ):
+            chapter_id = chapter.id
+            if chapter_id is None:
+                continue
+            slot = objects[object_index]
+            _hydrate_chapter_slot(
+                slot,
+                chapter,
+                checkpoint_level,
+                problem,
+                preserve_placeholder_position=True,
+            )
+            chapter_placeholder_indices.append(object_index)
+            chapter_positions[int(chapter_id)] = slot
+
+        extra_contexts = chapter_contexts[len(mapped_indices) :]
+
+        if image_only_problems:
+            available_placeholders = [
+                index
+                for index in placeholder_indices
+                if index not in used_placeholder_indices
+            ]
+            if available_placeholders:
+                image_slots = _select_placeholder_positions(
+                    len(available_placeholders),
+                    len(image_only_problems),
+                )
+                image_slot_indices = [
+                    available_placeholders[position] for position in image_slots
+                ]
+            else:
+                image_slot_indices = []
+
+            image_slot_problems = image_only_problems[: len(image_slot_indices)]
+            remaining_image_only = image_only_problems[len(image_slot_indices) :]
+
     if extra_contexts:
-        last_position = (
-            objects[mapped_indices[-1]] if mapped_indices else {"x": 0, "y": 0}
-        )
+        if chapter_placeholder_indices:
+            last_position = objects[chapter_placeholder_indices[-1]]
+        else:
+            last_position = {"x": 0, "y": 0}
         base_x = last_position.get("x", 0)
         base_y = last_position.get("y", 0)
         offset = 180
@@ -597,22 +699,6 @@ def _build_content_map(
         next_id += 1
 
     if image_only_problems:
-        available_placeholders = [
-            index
-            for index in placeholder_indices
-            if index not in used_placeholder_indices
-        ]
-        if available_placeholders:
-            image_slots = _select_placeholder_positions(
-                len(available_placeholders),
-                len(image_only_problems),
-            )
-            image_slot_indices = [
-                available_placeholders[position] for position in image_slots
-            ]
-        else:
-            image_slot_indices = []
-
         fallback_x = 0
         fallback_y = 0
         if chapter_positions:
@@ -620,25 +706,53 @@ def _build_content_map(
             fallback_x = last_slot.get("x", 0)
             fallback_y = last_slot.get("y", 0)
 
-        for offset_index, problem in enumerate(image_only_problems):
+        for slot_index, problem in zip(image_slot_indices, image_slot_problems):
             image_url, original_url = _extract_image_urls(problem)
             if not image_url:
                 continue
-            if offset_index < len(image_slot_indices):
-                slot = objects[image_slot_indices[offset_index]]
-                target_x = slot.get("x", 0)
-                target_y = slot.get("y", 0)
-            else:
-                target_x = fallback_x + 160 * (offset_index + 1)
-                target_y = fallback_y
-
+            slot = objects[slot_index]
+            target_x = slot.get("x", 0)
+            target_y = slot.get("y", 0)
             target_x = max(
                 left_boundary + boundary_margin,
                 min(right_boundary - boundary_margin, target_x),
             )
             target_y = max(
-                top_boundary + boundary_margin,
-                min(bottom_boundary - boundary_margin, target_y),
+                top_boundary + boundary_margin, min(bottom_boundary - boundary_margin, target_y)
+            )
+
+            image_assets.append(
+                {
+                    "id": next_id,
+                    "x": target_x,
+                    "y": target_y,
+                    "scale": 0.18,
+                    "file": image_url,
+                    "label": (problem.title or "").strip() or f"Image {next_id}",
+                    "sourceUrl": original_url or image_url,
+                    "type": {
+                        "kind": "default",
+                        "label": (problem.title or "").strip(),
+                        "customChapterId": 0,
+                        "associatedChapterID": None,
+                    },
+                }
+            )
+            used_ids.add(next_id)
+            next_id += 1
+
+        for offset_index, problem in enumerate(remaining_image_only):
+            image_url, original_url = _extract_image_urls(problem)
+            if not image_url:
+                continue
+            target_x = fallback_x + 160 * (offset_index + 1)
+            target_y = fallback_y
+            target_x = max(
+                left_boundary + boundary_margin,
+                min(right_boundary - boundary_margin, target_x),
+            )
+            target_y = max(
+                top_boundary + boundary_margin, min(bottom_boundary - boundary_margin, target_y)
             )
 
             image_assets.append(
@@ -681,6 +795,7 @@ async def convert_invlectrooms_payload_to_course(
     source_url = str(payload.url)
     chapter_contexts: List[ChapterContext] = []
     image_only_problems: List[InvlectRoomsProblemPayload] = []
+    map_sequence: List[MapSequenceItem] = []
     xp_reward = payload.xp_reward or 0
     coin_reward = payload.coin_reward or 0
 
@@ -707,10 +822,12 @@ async def convert_invlectrooms_payload_to_course(
             chapter.activities = [activity]
             chapters.append(chapter)
             chapter_contexts.append((chapter, problem, checkpoint_level))
+            map_sequence.append(("chapter", (chapter, problem, checkpoint_level)))
             continue
 
         if _is_image_only_problem(problem):
             image_only_problems.append(problem)
+            map_sequence.append(("image_only", problem))
             continue
 
         problem_title = _normalize_text(problem.title or "") or f"Problem {index + 1}"
@@ -756,12 +873,17 @@ async def convert_invlectrooms_payload_to_course(
         chapter.activities = [activity]
         chapters.append(chapter)
         chapter_contexts.append((chapter, problem, None))
+        map_sequence.append(("chapter", (chapter, problem, None)))
 
     if chapters or image_only_problems:
         tab_store = dict(course.tab_store or {})
         tab_uuid = payload.tab_uuid or next(iter(tab_store), "tab-1")
 
-        map_state = _build_content_map(chapter_contexts, image_only_problems)
+        map_state = _build_content_map(
+            chapter_contexts,
+            image_only_problems,
+            map_sequence,
+        )
         course.map_state = deepcopy(map_state)
         tab_store[tab_uuid] = deepcopy(map_state)
         course.tab_store = tab_store

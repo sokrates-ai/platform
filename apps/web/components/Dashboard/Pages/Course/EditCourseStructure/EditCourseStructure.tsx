@@ -646,7 +646,7 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
           Source URL
           <Input
             type="url"
-            placeholder="https://example.com/course-export.json"
+            placeholder="https://hpi.de/friedrich/docs/InvLectRooms/..."
             value={sourceUrl}
             onChange={(event) => setSourceUrl(event.target.value)}
             required

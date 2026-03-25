@@ -60,12 +60,15 @@ const Canvas: React.FC<CanvasProps> = ({
     undoRedo,
     clampToMap,
 }) => {
+    const PLACEHOLDER_STONE_FILE = "Placeholder.webp";
     const parentRef = useRef<HTMLDivElement>(null);
     const contextMenuRef = useRef<HTMLDivElement>(null);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [contextMenu, setContextMenu] = useState<ContextMenuData | null>(null);
     const [layerInput, setLayerInput] = useState<string>("");
     const [layerInputError, setLayerInputError] = useState(false);
+    const [orderInput, setOrderInput] = useState<string>("");
+    const [orderInputError, setOrderInputError] = useState(false);
     const [viewport, setViewport] = useState<any>(null);
     const handleViewportReady = useCallback(
         (nextViewport: any) => {
@@ -208,12 +211,27 @@ const Canvas: React.FC<CanvasProps> = ({
         };
     }, [contextMenu]);
 
+    const isPlaceholderStone = useCallback(
+        (asset?: AssetData | null) =>
+            typeof asset?.file === "string" &&
+            asset.file.endsWith(PLACEHOLDER_STONE_FILE),
+        [PLACEHOLDER_STONE_FILE]
+    );
+
     useEffect(() => {
         if (!contextMenu || !layout.layout) return;
         const index = layout.layout.findIndex((asset) => asset.id === contextMenu.assetId);
+        const asset = index !== -1 ? layout.layout[index] : null;
         setLayerInput(index !== -1 ? String(index + 1) : "");
         setLayerInputError(false);
-    }, [contextMenu?.assetId, layout.layout]);
+        if (isPlaceholderStone(asset)) {
+            const nextOrder = asset?.order ?? 0;
+            setOrderInput(String(nextOrder));
+        } else {
+            setOrderInput("");
+        }
+        setOrderInputError(false);
+    }, [contextMenu?.assetId, layout.layout, isPlaceholderStone]);
 
     const handleIncreaseLayer = () => {
         if (!layout.layout) return;
@@ -281,40 +299,75 @@ const Canvas: React.FC<CanvasProps> = ({
         setLayerInput(String(targetIndex + 1));
     };
 
-    const handleDecreaseAssetStoneId = () => {
+    const handleDecreaseOrder = () => {
         if (!layout.layout) return;
         const index = layout.layout.findIndex(asset => asset.id === contextMenu?.assetId);
         if (index === -1) return;
         const newLayout = [...layout.layout];
         const asset = newLayout[index];
-        if (asset.type.customChapterId === undefined) {
-            asset.type.customChapterId = 0;
-        } else {
-            asset.type.customChapterId -= 1;
+        if (!isPlaceholderStone(asset)) return;
+        if (asset.order === undefined) {
+            asset.order = 0;
         }
+        asset.order -= 1;
         setLayout({
             layout: newLayout,
             updateOriginator: "user",
             boundaries: layout.boundaries
         });
+        setOrderInput(String(asset.order));
+        setOrderInputError(false);
     };
 
-    const handleIncreaseAssetStoneId = () => {
+    const handleIncreaseOrder = () => {
         if (!layout.layout) return;
         const index = layout.layout.findIndex(asset => asset.id === contextMenu?.assetId);
         if (index === -1) return;
         const newLayout = [...layout.layout];
         const asset = newLayout[index];
-        if (asset.type.customChapterId === undefined) {
-            asset.type.customChapterId = 0;
-        } else {
-            asset.type.customChapterId += 1;
+        if (!isPlaceholderStone(asset)) return;
+        if (asset.order === undefined) {
+            asset.order = 0;
         }
+        asset.order += 1;
         setLayout({
             layout: newLayout,
             updateOriginator: "user",
             boundaries: layout.boundaries
         });
+        setOrderInput(String(asset.order));
+        setOrderInputError(false);
+    };
+
+    const commitOrderInput = () => {
+        if (!layout.layout || !contextMenu) return;
+        const trimmed = orderInput.trim();
+        const currentIndex = layout.layout.findIndex((asset) => asset.id === contextMenu.assetId);
+        if (currentIndex === -1) return;
+        const asset = layout.layout[currentIndex];
+        if (!isPlaceholderStone(asset)) return;
+        if (!trimmed) {
+            setOrderInputError(true);
+            return;
+        }
+        if (!/^\d+$/.test(trimmed)) {
+            setOrderInputError(true);
+            return;
+        }
+        const parsed = Number(trimmed);
+        if (!Number.isFinite(parsed)) {
+            setOrderInputError(true);
+            return;
+        }
+        const newLayout = [...layout.layout];
+        newLayout[currentIndex] = { ...asset, order: parsed };
+        setLayout({
+            layout: newLayout,
+            updateOriginator: "user",
+            boundaries: layout.boundaries
+        });
+        setOrderInputError(false);
+        setOrderInput(String(parsed));
     };
 
     const handleDeleteAsset = () => {
@@ -501,55 +554,77 @@ const Canvas: React.FC<CanvasProps> = ({
                                     </Button>
                                 </div>
                             </div>
-                            {/* Only show stone id controls for chapter/lesson objects */}
                             {(() => {
                                 const asset = layout.layout!.find((a) => a.id === contextMenu.assetId);
-                                if (asset && asset.type.kind === "chapter") {
-                                    return (
-                                        <div className="flex items-center justify-between">
-                                            <Label htmlFor="stoneId" className="text-xs font-medium">
-                                                Stone Id
-                                            </Label>
-                                            <div className="flex h-7 items-center">
-                                                <Button
-                                                    variant="outline"
-                                                    size="icon"
-                                                    className="h-7 w-7 rounded-r-none px-1"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDecreaseAssetStoneId();
-                                                    }}
-                                                >
-                                                    <ChevronDown className="h-3 w-3" />
-                                                    <span className="sr-only">Decrease stone id</span>
-                                                </Button>
-                                                <Input
-                                                    id="stoneId"
-                                                    value={(() => {
-                                                        const index = layout.layout!.findIndex(asset => asset.id === contextMenu?.assetId);
-                                                        const chapterId = layout.layout![index]?.type.customChapterId;
-                                                        return chapterId != undefined ? chapterId.toString() : "0";
-                                                    })()}
-                                                    className="h-7 w-14 rounded-none text-center text-base font-semibold px-1"
-                                                    readOnly
-                                                />
-                                                <Button
-                                                    variant="outline"
-                                                    size="icon"
-                                                    className="h-7 w-7 rounded-l-none px-1"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleIncreaseAssetStoneId();
-                                                    }}
-                                                >
-                                                    <ChevronUp className="h-3 w-3" />
-                                                    <span className="sr-only">Increase stone id</span>
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    );
+                                if (!isPlaceholderStone(asset)) {
+                                    return null;
                                 }
-                                return null;
+                                return (
+                                    <div className="flex items-center justify-between">
+                                        <Label htmlFor="order" className="text-xs font-medium">
+                                            Order
+                                        </Label>
+                                        <div className="flex h-7 items-center">
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-7 w-7 rounded-r-none px-1"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDecreaseOrder();
+                                                }}
+                                            >
+                                                <ChevronDown className="h-3 w-3" />
+                                                <span className="sr-only">Decrease order</span>
+                                            </Button>
+                                            <Input
+                                                id="order"
+                                                value={orderInput}
+                                                onFocus={() => setOrderInputError(false)}
+                                                onChange={(event) => {
+                                                    const next = event.target.value;
+                                                    if (next === "" || /^\d+$/.test(next)) {
+                                                        if (orderInputError) setOrderInputError(false);
+                                                        setOrderInput(next);
+                                                    }
+                                                }}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter") {
+                                                        event.preventDefault();
+                                                        commitOrderInput();
+                                                    }
+                                                    if (event.key === "Escape") {
+                                                        event.preventDefault();
+                                                        const index = layout.layout!.findIndex(
+                                                            (a) => a.id === contextMenu.assetId
+                                                        );
+                                                        const nextOrder =
+                                                            index !== -1 ? layout.layout![index]?.order ?? 0 : 0;
+                                                        setOrderInput(String(nextOrder));
+                                                        setOrderInputError(false);
+                                                    }
+                                                }}
+                                                onBlur={commitOrderInput}
+                                                inputMode="numeric"
+                                                className={`h-7 w-14 rounded-none text-center text-base font-semibold px-1 ${
+                                                    orderInputError ? 'ring-2 ring-red-500 ring-offset-1 ring-offset-background' : ''
+                                                }`}
+                                            />
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-7 w-7 rounded-l-none px-1"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleIncreaseOrder();
+                                                }}
+                                            >
+                                                <ChevronUp className="h-3 w-3" />
+                                                <span className="sr-only">Increase order</span>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                );
                             })()}
                         </div>
                     </div>

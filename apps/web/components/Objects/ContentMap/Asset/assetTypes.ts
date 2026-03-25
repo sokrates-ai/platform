@@ -18,6 +18,7 @@ export interface AssetData {
     file: string;
     label?: string;
     sourceUrl?: string;
+    order?: number;
     type: AssetTypeData;
 }
 
