@@ -502,9 +502,34 @@ def _build_content_map(
 
     if ordered_placeholder_indices is not None and map_sequence:
         total_placeholders = len(ordered_placeholder_indices)
+        total_items = len(map_sequence)
+        mapped_indices: List[int] = []
+        if total_placeholders and total_items:
+            required = min(total_items, total_placeholders)
+            slot_positions = _select_placeholder_positions(
+                total_placeholders,
+                required,
+            )
+            mapped_indices = [
+                ordered_placeholder_indices[position]
+                for position in slot_positions
+            ]
+            mapped_order_keys = []
+            for mapped_index in mapped_indices:
+                order_value = _parse_placeholder_order(
+                    objects[mapped_index].get("order")
+                )
+                mapped_order_keys.append(
+                    (order_value is None, order_value if order_value is not None else 0)
+                )
+            assert mapped_order_keys == sorted(mapped_order_keys), (
+                "InvlectRooms placeholder order mapping wrapped: "
+                f"{mapped_order_keys}"
+            )
+
         for sequence_index, (kind, payload) in enumerate(map_sequence):
-            if sequence_index < total_placeholders:
-                object_index = ordered_placeholder_indices[sequence_index]
+            if sequence_index < len(mapped_indices):
+                object_index = mapped_indices[sequence_index]
                 if kind == "chapter":
                     chapter, problem, checkpoint_level = payload
                     chapter_id = chapter.id
@@ -612,6 +637,9 @@ def _build_content_map(
             objects.append(slot)
             chapter_positions[int(chapter_id)] = slot
 
+    if image_slot_indices:
+        used_placeholder_indices.update(image_slot_indices)
+
     for index in placeholder_indices:
         if index in used_placeholder_indices:
             continue
@@ -707,10 +735,23 @@ def _build_content_map(
             fallback_y = last_slot.get("y", 0)
 
         for slot_index, problem in zip(image_slot_indices, image_slot_problems):
+            slot = objects[slot_index]
             image_url, original_url = _extract_image_urls(problem)
             if not image_url:
+                slot["file"] = PLACEHOLDER_HIDE_FILE
+                slot["scale"] = 0
+                slot["label"] = ""
+                slot_type = slot.get("type")
+                if isinstance(slot_type, dict):
+                    slot_type = dict(slot_type)
+                    slot_type["kind"] = "default"
+                    slot_type.pop("associatedChapterID", None)
+                    slot_type.pop("customChapterId", None)
+                    slot_type.pop("label", None)
+                    slot["type"] = slot_type
+                else:
+                    slot["type"] = {"kind": "default", "label": "", "customChapterId": 0}
                 continue
-            slot = objects[slot_index]
             target_x = slot.get("x", 0)
             target_y = slot.get("y", 0)
             target_x = max(
@@ -721,25 +762,18 @@ def _build_content_map(
                 top_boundary + boundary_margin, min(bottom_boundary - boundary_margin, target_y)
             )
 
-            image_assets.append(
-                {
-                    "id": next_id,
-                    "x": target_x,
-                    "y": target_y,
-                    "scale": 0.18,
-                    "file": image_url,
-                    "label": (problem.title or "").strip() or f"Image {next_id}",
-                    "sourceUrl": original_url or image_url,
-                    "type": {
-                        "kind": "default",
-                        "label": (problem.title or "").strip(),
-                        "customChapterId": 0,
-                        "associatedChapterID": None,
-                    },
-                }
-            )
-            used_ids.add(next_id)
-            next_id += 1
+            slot["x"] = target_x
+            slot["y"] = target_y
+            slot["scale"] = 0.18
+            slot["file"] = image_url
+            slot["label"] = (problem.title or "").strip() or f"Image {slot.get('id')}"
+            slot["sourceUrl"] = original_url or image_url
+            slot["type"] = {
+                "kind": "default",
+                "label": (problem.title or "").strip(),
+                "customChapterId": 0,
+                "associatedChapterID": None,
+            }
 
         for offset_index, problem in enumerate(remaining_image_only):
             image_url, original_url = _extract_image_urls(problem)
