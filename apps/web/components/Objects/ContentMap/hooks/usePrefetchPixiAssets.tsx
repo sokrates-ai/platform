@@ -11,8 +11,6 @@ const normalizeUrls = (urls: string[]) => {
   return Array.from(unique)
 }
 
-const isGifUrl = (url: string) => /\.gif(?:$|[?#])/i.test(url)
-
 export default function usePrefetchPixiAssets(
   urls: string[],
   enabled = true,
@@ -33,14 +31,7 @@ export default function usePrefetchPixiAssets(
       return
     }
 
-    const gifUrls = normalizedUrls.filter(isGifUrl)
-    gifUrls.forEach((url) => {
-      PIXI.Texture.from(url)
-    })
-
-    const toLoad = normalizedUrls.filter(
-      (url) => !isGifUrl(url) && !PIXI.Assets.get(url),
-    )
+    const toLoad = normalizedUrls.filter((url) => !PIXI.Assets.get(url))
     if (toLoad.length === 0) {
       setReady(true)
       return

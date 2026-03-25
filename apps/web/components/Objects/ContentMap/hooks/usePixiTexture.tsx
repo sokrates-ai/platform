@@ -10,13 +10,6 @@ export default function usePixiTexture(url: string): PIXI.Texture | null {
     useEffect(() => {
     if (!url) return; // <-- just return, not null
 
-    const isGif = /\.gif(?:$|[?#])/i.test(url);
-    if (isGif) {
-        const gifTexture = PIXI.Texture.from(url);
-        setTexture(gifTexture);
-        return;
-    }
-
     const cached = PIXI.Assets.get(url);
     if (cached) {
         setTexture(cached);

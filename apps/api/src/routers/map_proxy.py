@@ -1,13 +1,19 @@
 import hashlib
 import logging
 import ssl
-from typing import Optional
+from io import BytesIO
+from typing import Optional, Tuple
 
 import httpx
 import redis
 from fastapi import APIRouter, HTTPException, Query, Response
 
 from config.config import get_learnhouse_config
+
+try:
+    from PIL import Image
+except Exception:  # pragma: no cover - optional dependency
+    Image = None
 
 router = APIRouter()
 
@@ -44,8 +50,9 @@ def _get_redis_client() -> Optional[redis.Redis]:
     return _redis_client
 
 
-def _cache_key_for_url(url: str) -> str:
-    digest = hashlib.sha256(url.encode("utf-8")).hexdigest()
+def _cache_key_for_url(url: str, format: Optional[str]) -> str:
+    cache_identity = url if not format else f"{url}|format={format}"
+    digest = hashlib.sha256(cache_identity.encode("utf-8")).hexdigest()
     return f"{CACHE_NAMESPACE}:{digest}"
 
 
@@ -73,6 +80,8 @@ def _is_ssl_error(error: httpx.HTTPError) -> bool:
 
 async def _handle_proxy_request(
     url: str,
+    *,
+    format: Optional[str] = None,
 ) -> Response:
     sanitized_url = url.strip()
     if not sanitized_url:
@@ -81,8 +90,30 @@ async def _handle_proxy_request(
     if not sanitized_url.lower().startswith(("http://", "https://")):
         raise HTTPException(status_code=400, detail="Only http(s) URLs can be proxied.")
 
-    cache_key = _cache_key_for_url(sanitized_url)
+    cache_key = _cache_key_for_url(sanitized_url, format)
     redis_client = _get_redis_client()
+
+    def _convert_gif(payload: bytes, target_format: str) -> Tuple[bytes, str]:
+        if Image is None:
+            LOGGER.warning("GIF conversion requested but Pillow is not installed.")
+            return payload, content_type
+        try:
+            with Image.open(BytesIO(payload)) as img:
+                if getattr(img, "is_animated", False):
+                    img.seek(0)
+                converted = img.convert("RGBA")
+                output = BytesIO()
+                if target_format == "webp":
+                    converted.save(output, format="WEBP")
+                    return output.getvalue(), "image/webp"
+                converted.save(output, format="PNG")
+                return output.getvalue(), "image/png"
+        except Exception:
+            LOGGER.exception("Failed to convert GIF for %s.", sanitized_url)
+            return payload, content_type
+
+    requested_format = (format or "").strip().lower() or None
+    is_gif_request = sanitized_url.lower().split("?")[0].endswith(".gif")
 
     if redis_client:
         try:
@@ -97,6 +128,22 @@ async def _handle_proxy_request(
             content_type = (
                 content_type_value.decode("utf-8") if isinstance(content_type_value, bytes) else content_type_value
             )
+            cached_is_gif = "image/gif" in (content_type or "").lower() or is_gif_request
+            if cached_is_gif and requested_format in (None, "png", "webp"):
+                target_format = requested_format or "png"
+                body, content_type = _convert_gif(body, target_format)
+                if redis_client and body:
+                    try:
+                        redis_client.hset(
+                            cache_key,
+                            mapping={
+                                "body": body,
+                                "content_type": content_type,
+                            },
+                        )
+                        redis_client.expire(cache_key, CACHE_TTL_SECONDS)
+                    except redis.RedisError:
+                        LOGGER.exception("Unable to update cached course map asset for key %s.", cache_key)
             response = Response(content=body, media_type=content_type or "application/octet-stream")
             response.headers["X-Proxy-Cache"] = "HIT"
             return response
@@ -135,6 +182,18 @@ async def _handle_proxy_request(
     body = upstream_response.content
     content_type = upstream_response.headers.get("content-type") or "application/octet-stream"
 
+    is_gif = "image/gif" in content_type.lower() or is_gif_request
+
+    if is_gif and (requested_format in (None, "png", "webp")):
+        target_format = requested_format or "png"
+        body, content_type = _convert_gif(body, target_format)
+        if content_type in ("image/png", "image/webp"):
+            LOGGER.info(
+                "Converted GIF to %s for %s.",
+                content_type.split("/")[-1],
+                sanitized_url,
+            )
+
     if redis_client and body:
         try:
             redis_client.hset(
@@ -158,13 +217,15 @@ async def _handle_proxy_request(
 @router.get("")
 async def proxy_course_map_asset(
     url: str = Query(..., description="Publicly accessible image URL to proxy for the course map."),
+    format: Optional[str] = Query(None, description="Optional output format (e.g. png)."),
 ):
-    return await _handle_proxy_request(url)
+    return await _handle_proxy_request(url, format=format)
 
 
 @router.get("/{_filename:path}")
 async def proxy_course_map_asset_with_filename(
     _filename: str,
     url: str = Query(..., description="Publicly accessible image URL to proxy for the course map."),
+    format: Optional[str] = Query(None, description="Optional output format (e.g. png)."),
 ):
-    return await _handle_proxy_request(url)
+    return await _handle_proxy_request(url, format=format)

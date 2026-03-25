@@ -497,6 +497,9 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
       const trimmed = filename.trim();
       if (trimmed.length > 0) {
         if (ALLOWED_EXTENSION.test(trimmed)) {
+          if (/\.gif$/i.test(trimmed)) {
+            return trimmed.replace(/\.gif$/i, '.png');
+          }
           return trimmed;
         }
         return `${trimmed}.png`;
@@ -541,7 +544,9 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
 
     const filenameCandidate = filenameFromUrl(normalizedSource);
     const safeFilename = ensureFilenameWithExtension(filenameCandidate, label);
-    return `${mapProxyBaseUrl}/${encodeURIComponent(safeFilename)}?url=${encodeURIComponent(normalizedSource)}`;
+    const isGifSource = /\.gif(?:$|[?#])/i.test(normalizedSource);
+    const formatParam = isGifSource ? '&format=png' : '';
+    return `${mapProxyBaseUrl}/${encodeURIComponent(safeFilename)}?url=${encodeURIComponent(normalizedSource)}${formatParam}`;
   }, [mapProxyBaseUrl, normalizeRemoteUrl, filenameFromUrl, ensureFilenameWithExtension]);
 
   const problems = useMemo(() => {
