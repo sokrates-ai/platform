@@ -37,6 +37,7 @@ export default function ChapterActivities({
 	const [dynamicError, setDynamicError] = useState<string | null>(null)
 	const [isLoadingDynamic, setIsLoadingDynamic] = useState(false)
 	const latestDynamicRequest = useRef<string | null>(null)
+	const [markingCompleteKey, setMarkingCompleteKey] = useState<string | null>(null)
 	const [optimisticCompleted, setOptimisticCompleted] = useState<Set<string>>(
 		() => new Set(),
 	)
@@ -129,6 +130,17 @@ export default function ChapterActivities({
 	const handleMarkComplete = async () => {
 		if (!selectedActivity) return
 		const optimisticKey = getActivityKey(selectedActivity)
+		const markingKey =
+			optimisticKey ??
+			(selectedActivity?.activity_uuid
+				? String(selectedActivity.activity_uuid)
+				: selectedActivity?.id
+					? String(selectedActivity.id)
+					: null)
+		if (markingKey && markingCompleteKey === markingKey) return
+		if (markingKey) {
+			setMarkingCompleteKey(markingKey)
+		}
 		if (optimisticKey) {
 			setOptimisticCompleted((prev) => {
 				if (prev.has(optimisticKey)) return prev
@@ -156,6 +168,10 @@ export default function ChapterActivities({
 				})
 			}
 			toast.error('Could not mark activity as complete')
+		} finally {
+			if (markingKey) {
+				setMarkingCompleteKey(null)
+			}
 		}
 	}
 
@@ -284,6 +300,16 @@ export default function ChapterActivities({
 						isSelected &&
 						!isSelectedActivityCompleted() &&
 						state !== 'done'
+					const activityKey =
+						getActivityKey(activity) ??
+						(activity?.activity_uuid
+							? String(activity.activity_uuid)
+							: activity?.id
+								? String(activity.id)
+								: null)
+					const isMarkingComplete =
+						Boolean(markingCompleteKey && activityKey) &&
+						markingCompleteKey === activityKey
 
 					return (
 						<div
@@ -309,6 +335,7 @@ export default function ChapterActivities({
 								}
 								onMarkComplete={shouldShowMarkComplete ? handleMarkComplete : undefined}
 								overrideButtonText={isPreviewing ? 'Expand' : undefined}
+								isMarkingComplete={isMarkingComplete}
 								isCompleted={
 									isDynamicActivity(activity) && isSelected
 										? isSelectedActivityCompleted()

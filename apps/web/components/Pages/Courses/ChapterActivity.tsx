@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Lock } from 'lucide-react'
+import { ArrowRight, Loader2, Lock } from 'lucide-react'
 import clsx from 'clsx'
 import { Button } from '@/components/ui/button'
 import { getUriWithOrg } from '@services/config/config'
@@ -26,6 +26,7 @@ interface Props {
   onStartActivity?: (event: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => void
   onMarkComplete?: (event: React.MouseEvent<HTMLButtonElement>) => void
   isCompleted?: boolean
+  isMarkingComplete?: boolean
   overrideButtonText?: string
 }
 
@@ -42,6 +43,7 @@ export default function ChapterActivity({
   onStartActivity,
   onMarkComplete,
   isCompleted = false,
+  isMarkingComplete = false,
   overrideButtonText,
 }: Props) {
   const isFreeSelect =
@@ -306,12 +308,20 @@ export default function ChapterActivity({
               'h-8 w-20 text-xs sm:h-10 sm:w-28 sm:text-sm',
               isCompleted
                 ? 'bg-teal-100 text-teal-900 hover:bg-teal-100'
-                : 'bg-gray-900 text-white hover:bg-gray-800',
+                : isMarkingComplete
+                  ? 'bg-gray-800 text-white'
+                  : 'bg-gray-900 text-white hover:bg-gray-800',
             )}
             onClick={(event) => onMarkComplete(event)}
-            disabled={isCompleted}
+            disabled={isCompleted || isMarkingComplete}
           >
-            {isCompleted ? 'Completed' : 'Done'}
+            {isMarkingComplete ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isCompleted ? (
+              'Completed'
+            ) : (
+              'Done'
+            )}
           </Button>
         </div>
       )}
