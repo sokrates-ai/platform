@@ -202,6 +202,16 @@ function SaveState(props: { orgslug: string }) {
     };
   }, [saveCourseState]);
 
+  useEffect(() => {
+    const handleAutoSave = () => {
+      saveCourseState();
+    };
+    window.addEventListener('course:autosave', handleAutoSave as EventListener);
+    return () => {
+      window.removeEventListener('course:autosave', handleAutoSave as EventListener);
+    };
+  }, [saveCourseState]);
+
   return (
     <div className="flex space-x-4">
       {saved ? (

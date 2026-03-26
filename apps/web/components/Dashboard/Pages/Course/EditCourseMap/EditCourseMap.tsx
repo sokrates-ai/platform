@@ -878,6 +878,7 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
                                 activeTab={selectedTabId}
                                 onTabsChange={onTabsChange}
                                 onActiveTabChange={onTabChange}
+                                allowTabEditing={false}
                                 orientation="vertical"
                                 renderTabContent={() => null}
                             />

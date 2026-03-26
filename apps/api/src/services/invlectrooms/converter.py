@@ -452,17 +452,24 @@ def _extract_paragraphs(
         for element in soup.select("script,style,noscript"):
             element.decompose()
         for node in soup.find_all(["p", "li"]):
-            text = _normalize_text(node.get_text(" "))
-            if text:
+            lines = node.get_text("\n").splitlines()
+            for raw_line in lines:
+                text = _normalize_text(raw_line)
+                if not text:
+                    continue
                 paragraphs.append(f"• {text}" if node.name == "li" else text)
         if not paragraphs:
-            fallback = _normalize_text(soup.get_text(" "))
-            if fallback:
-                paragraphs.append(fallback)
+            lines = soup.get_text("\n").splitlines()
+            for raw_line in lines:
+                text = _normalize_text(raw_line)
+                if text:
+                    paragraphs.append(text)
     if not paragraphs and plain_text:
-        normalized = _normalize_text(plain_text)
-        if normalized:
-            paragraphs.append(normalized)
+        lines = plain_text.splitlines()
+        for raw_line in lines:
+            text = _normalize_text(raw_line)
+            if text:
+                paragraphs.append(text)
     return paragraphs
 
 

@@ -93,6 +93,7 @@ export interface CourseTabSelectorProps {
   addButtonLabel?: string;
   orientation?: 'horizontal' | 'vertical';
   showVisibilityControls?: boolean;
+  allowTabEditing?: boolean;
 }
 
 export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
@@ -106,6 +107,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
   addButtonLabel = 'Add tab',
   orientation = 'horizontal',
   showVisibilityControls = false,
+  allowTabEditing = true,
 }) => {
   const resolvedInitialTabs = useMemo(
     () => (initialTabs?.length ? initialTabs : DEFAULT_COURSE_TABS),
@@ -434,6 +436,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
     ? 'flex flex-col items-stretch gap-3'
     : 'flex items-center justify-between gap-2';
   const addButtonClassName = isVertical ? 'w-full justify-center' : 'shrink-0';
+  const canEditTabs = allowTabEditing;
 
   // Hilfsfunktion: nächsten Montag als "YYYY-MM-DD"
   function getNextMondayAt8(): string {
@@ -450,6 +453,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
     <div className={cn(isVertical ? 'flex w-full flex-col' : 'w-full', className)}>
       <DragDropContext
         onDragEnd={(result: DropResult) => {
+          if (!canEditTabs) return;
           if (!result.destination) return;
           if (result.destination.index === result.source.index) return;
           const reordered = [...tabs];
@@ -499,7 +503,12 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                     const instantTextClass = visibilityValue ? 'text-emerald-700' : 'text-gray-600';
                     const instantIconClass = visibilityValue ? 'text-emerald-500' : 'text-gray-400';
                     return (
-                      <Draggable key={tab.id} draggableId={tab.id} index={index}>
+                      <Draggable
+                        key={tab.id}
+                        draggableId={tab.id}
+                        index={index}
+                        isDragDisabled={!canEditTabs}
+                      >
                         {(dragProvided, snapshot) => (
                           <div
                             ref={dragProvided.innerRef}
@@ -512,21 +521,23 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                               isVertical ? 'w-full' : '',
                             )}
                           >
-                            <button
-                              type="button"
-                              aria-label={`Reorder ${tab.name}`}
-                              {...dragProvided.dragHandleProps}
-                              className={cn(
-                                'flex h-8 w-8 items-center justify-center rounded-md border border-transparent bg-white/70 p-1 text-muted-foreground transition',
-                                'cursor-grab active:cursor-grabbing',
-                                'hover:bg-muted-foreground/10 hover:text-foreground',
-                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                                showVisibilityControls && isVertical ? 'self-center' : '',
-                                snapshot.isDragging && 'text-primary',
-                              )}
-                            >
-                              <GripVertical aria-hidden="true" className="h-4 w-4" />
-                            </button>
+                            {canEditTabs ? (
+                              <button
+                                type="button"
+                                aria-label={`Reorder ${tab.name}`}
+                                {...dragProvided.dragHandleProps}
+                                className={cn(
+                                  'flex h-8 w-8 items-center justify-center rounded-md border border-transparent bg-white/70 p-1 text-muted-foreground transition',
+                                  'cursor-grab active:cursor-grabbing',
+                                  'hover:bg-muted-foreground/10 hover:text-foreground',
+                                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                                  showVisibilityControls && isVertical ? 'self-center' : '',
+                                  snapshot.isDragging && 'text-primary',
+                                )}
+                              >
+                                <GripVertical aria-hidden="true" className="h-4 w-4" />
+                              </button>
+                            ) : null}
                             <div
                               className={cn(
                                 'flex w-full flex-col gap-2',
@@ -582,6 +593,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                                   ) : (
                                     <span
                                       onPointerDown={(event) => {
+                                        if (!canEditTabs) return;
                                         if (event.pointerType === 'mouse' && event.button !== 0) {
                                           return;
                                         }
@@ -591,6 +603,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                                       onPointerLeave={clearLongPressTimeout}
                                       onPointerCancel={clearLongPressTimeout}
                                       onClick={(event) => {
+                                        if (!canEditTabs) return;
                                         if (longPressTriggeredRef.current) {
                                           event.preventDefault();
                                           event.stopPropagation();
@@ -598,6 +611,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                                         }
                                       }}
                                       onDoubleClick={(event) => {
+                                        if (!canEditTabs) return;
                                         event.preventDefault();
                                         event.stopPropagation();
                                         startEditingTab(tab);
@@ -719,24 +733,26 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                                 </div>
                               ) : null}
                             </div>
-                            <button
-                              type="button"
-                              aria-label={`Remove ${tab.name}`}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                event.preventDefault();
-                                requestRemoveTab(tab);
-                              }}
-                              disabled={disableRemove}
-                              className={cn(
-                                'rounded-full p-0.5 text-muted-foreground transition',
-                                'hover:bg-muted-foreground/10 hover:text-destructive',
-                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                                disableRemove && 'pointer-events-none opacity-50',
-                              )}
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
+                            {canEditTabs ? (
+                              <button
+                                type="button"
+                                aria-label={`Remove ${tab.name}`}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  event.preventDefault();
+                                  requestRemoveTab(tab);
+                                }}
+                                disabled={disableRemove}
+                                className={cn(
+                                  'rounded-full p-0.5 text-muted-foreground transition',
+                                  'hover:bg-muted-foreground/10 hover:text-destructive',
+                                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                                  disableRemove && 'pointer-events-none opacity-50',
+                                )}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            ) : null}
                           </div>
                         )}
                       </Draggable>
@@ -746,16 +762,18 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
                 </TabsList>
               )}
             </StrictModeDroppable>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className={addButtonClassName}
-              onClick={() => setIsAddDialogOpen(true)}
-            >
-              <Plus className="h-4 w-4" />
-              {addButtonLabel}
-            </Button>
+            {canEditTabs ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className={addButtonClassName}
+                onClick={() => setIsAddDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+                {addButtonLabel}
+              </Button>
+            ) : null}
           </div>
           {tabs.map((tab) => (
             <TabsContent key={tab.id} value={tab.id}>
@@ -765,64 +783,68 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
         </Tabs>
       </DragDropContext>
 
-      <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add a new tab</DialogTitle>
-            <DialogDescription>
-              Give your tab a descriptive name so it is easy to find later.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
-              Tab name
-              <Input
-                value={newTabName}
-                onChange={(event) => setNewTabName(event.target.value)}
-                placeholder="My new tab"
-                autoFocus
-              />
-            </label>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => handleAddDialogOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="button" onClick={handleCreateTab} disabled={!newTabName.trim()}>
-              Add tab
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {canEditTabs ? (
+        <>
+          <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add a new tab</DialogTitle>
+                <DialogDescription>
+                  Give your tab a descriptive name so it is easy to find later.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2">
+                <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
+                  Tab name
+                  <Input
+                    value={newTabName}
+                    onChange={(event) => setNewTabName(event.target.value)}
+                    placeholder="My new tab"
+                    autoFocus
+                  />
+                </label>
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => handleAddDialogOpenChange(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="button" onClick={handleCreateTab} disabled={!newTabName.trim()}>
+                  Add tab
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
-      <Dialog open={isRemoveDialogOpen} onOpenChange={handleRemoveDialogOpenChange}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Remove tab</DialogTitle>
-            <DialogDescription>
-              {tabPendingRemoval
-                ? `Are you sure you want to delete "${tabPendingRemoval.name}"? This cannot be undone.`
-                : 'Are you sure you want to delete this tab? This cannot be undone.'}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => handleRemoveDialogOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="button" variant="destructive" onClick={confirmRemoveTab}>
-              Delete tab
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <Dialog open={isRemoveDialogOpen} onOpenChange={handleRemoveDialogOpenChange}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Remove tab</DialogTitle>
+                <DialogDescription>
+                  {tabPendingRemoval
+                    ? `Are you sure you want to delete "${tabPendingRemoval.name}"? This cannot be undone.`
+                    : 'Are you sure you want to delete this tab? This cannot be undone.'}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => handleRemoveDialogOpenChange(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="button" variant="destructive" onClick={confirmRemoveTab}>
+                  Delete tab
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
+      ) : null}
     </div>
   );
 };
