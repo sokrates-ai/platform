@@ -1138,6 +1138,7 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
   const course = useCourse() as any;
   const course_structure = course ? course.courseStructure : {};
   const course_uuid = course ? course.courseStructure.course_uuid : '';
+  const isSaving = Boolean(course?.isSaving);
   const dispatchCourse = useCourseDispatch() as any;
   const tabChapters = useMemo(() => tabContent?.chapters ?? [], [tabContent?.chapters]);
 
@@ -1562,8 +1563,9 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
                 <Button
                   variant="secondary"
                   onClick={() => setIsImportModalOpen(true)}
-                  className="hover:bg-emerald-100 font-medium rounded px-4 py-2 text-xs shadow transition-all flex items-center gap-2"
+                  className={`hover:bg-emerald-100 font-medium rounded px-4 py-2 text-xs shadow transition-all flex items-center gap-2${isSaving ? ' opacity-60 cursor-not-allowed' : ''}`}
                   title="Import course content"
+                  disabled={isSaving}
                 >
                   <Download strokeWidth={2} size={14} />
                   Import
@@ -1572,7 +1574,8 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
                 <Button
                   variant={"secondary"}
                   onClick={() => setNewChapterModal(true)}
-                  className="hover:bg-cyan-100 font-medium rounded px-4 py-2 text-xs shadow transition-all flex items-center gap-2"
+                  className={`hover:bg-cyan-100 font-medium rounded px-4 py-2 text-xs shadow transition-all flex items-center gap-2${isSaving ? ' opacity-60 cursor-not-allowed' : ''}`}
+                  disabled={isSaving}
                 >
                   <Hexagon strokeWidth={2} size={14} className="" />
                   Add Chapter

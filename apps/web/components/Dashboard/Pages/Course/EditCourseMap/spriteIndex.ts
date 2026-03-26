@@ -1,5 +1,5 @@
 export const SPRITES = [
-  { scale: 1, file: 'Bahnhof v1.webp', label: 'Bahnhof v1' },
+  { scale: 3.5, file: 'Bahnhof v1.webp', label: 'Bahnhof v1' },
   { scale: 1, file: 'Bahnhof v2.webp', label: 'Bahnhof v2' },
   { scale: 1, file: 'Bank 2.webp', label: 'Bank 2' },
   { scale: 1, file: 'Bank.webp', label: 'Bank' },

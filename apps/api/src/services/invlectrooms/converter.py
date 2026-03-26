@@ -32,6 +32,8 @@ from .constants import (
     CHECKPOINT_IMAGE_PATTERNS,
     CHECKPOINT_LEVEL_KEYWORDS,
     CHECKPOINT_MARKER_ASSETS,
+    CHECKPOINT_MARKER_SCALES,
+    CONTENT_MAP_SPRITE_SCALE_FACTOR,
 )
 from .schemas import (
     InvlectRoomsApplyRequest,
@@ -123,6 +125,13 @@ def _resolve_checkpoint_asset(level: str) -> str:
     return CHECKPOINT_MARKER_ASSETS.get(level, COOL_STONE_ASSET)
 
 
+def _checkpoint_marker_scale(level: str, fallback: float) -> float:
+    sprite_scale = CHECKPOINT_MARKER_SCALES.get(level)
+    if isinstance(sprite_scale, (int, float)):
+        return sprite_scale * CONTENT_MAP_SPRITE_SCALE_FACTOR
+    return fallback
+
+
 def _hydrate_chapter_slot(
     slot: Dict[str, Any],
     chapter: ChapterRead,
@@ -172,6 +181,48 @@ def _hydrate_chapter_slot(
     else:
         slot.pop("metadata", None)
 
+
+def _apply_checkpoint_marker(
+    slot: Dict[str, Any],
+    level: str,
+    *,
+    preserve_placeholder_position: bool = False,
+) -> None:
+    if preserve_placeholder_position:
+        scale = slot.get("scale", 1)
+        x = slot.get("x")
+        y = slot.get("y")
+        if isinstance(scale, (int, float)) and isinstance(x, (int, float)) and isinstance(y, (int, float)):
+            slot["x"] = x + (PLACEHOLDER_WIDTH * scale) / 2
+            slot["y"] = y + (PLACEHOLDER_HEIGHT * scale) / 2
+
+    slot["file"] = _resolve_checkpoint_asset(level)
+    slot["label"] = CHECKPOINT_DISPLAY_NAMES.get(level, level.capitalize())
+    slot["scale"] = _checkpoint_marker_scale(level, slot.get("scale", 0.2))
+
+    slot_type = slot.get("type")
+    if isinstance(slot_type, dict):
+        slot_type = dict(slot_type)
+        slot_type["kind"] = "default"
+        slot_type["label"] = slot["label"]
+        slot_type["customChapterId"] = 0
+        slot_type["associatedChapterID"] = None
+        slot["type"] = slot_type
+    else:
+        slot["type"] = {
+            "kind": "default",
+            "label": slot["label"],
+            "customChapterId": 0,
+            "associatedChapterID": None,
+        }
+
+    metadata = slot.get("metadata")
+    if not isinstance(metadata, dict):
+        metadata = {}
+    else:
+        metadata = dict(metadata)
+    metadata["checkpointLevel"] = level
+    slot["metadata"] = metadata
 
 def _normalize_text(value: Optional[str]) -> str:
     if not value:
@@ -717,11 +768,18 @@ def _build_content_map(
     chapter_placeholder_indices: List[int] = []
     image_slot_indices: List[int] = []
     image_slot_problems: List[InvlectRoomsProblemPayload] = []
+    checkpoint_slot_indices: List[int] = []
     remaining_image_only: List[InvlectRoomsProblemPayload] = []
+    remaining_checkpoints: List[Tuple[InvlectRoomsProblemPayload, str]] = []
     extra_contexts: List[ChapterContext] = []
 
-    if ordered_placeholder_indices is not None and map_sequence:
-        total_placeholders = len(ordered_placeholder_indices)
+    if map_sequence:
+        placement_indices = (
+            ordered_placeholder_indices
+            if ordered_placeholder_indices is not None
+            else placeholder_indices
+        )
+        total_placeholders = len(placement_indices)
         total_items = len(map_sequence)
         mapped_indices: List[int] = []
         if total_placeholders and total_items:
@@ -731,21 +789,25 @@ def _build_content_map(
                 required,
             )
             mapped_indices = [
-                ordered_placeholder_indices[position]
+                placement_indices[position]
                 for position in slot_positions
             ]
-            mapped_order_keys = []
-            for mapped_index in mapped_indices:
-                order_value = _parse_placeholder_order(
-                    objects[mapped_index].get("order")
+            if ordered_placeholder_indices is not None:
+                mapped_order_keys = []
+                for mapped_index in mapped_indices:
+                    order_value = _parse_placeholder_order(
+                        objects[mapped_index].get("order")
+                    )
+                    mapped_order_keys.append(
+                        (
+                            order_value is None,
+                            order_value if order_value is not None else 0,
+                        )
+                    )
+                assert mapped_order_keys == sorted(mapped_order_keys), (
+                    "InvlectRooms placeholder order mapping wrapped: "
+                    f"{mapped_order_keys}"
                 )
-                mapped_order_keys.append(
-                    (order_value is None, order_value if order_value is not None else 0)
-                )
-            assert mapped_order_keys == sorted(mapped_order_keys), (
-                "InvlectRooms placeholder order mapping wrapped: "
-                f"{mapped_order_keys}"
-            )
 
         for sequence_index, (kind, payload) in enumerate(map_sequence):
             if sequence_index < len(mapped_indices):
@@ -779,6 +841,27 @@ def _build_content_map(
                         )
                         image_slot_indices.append(object_index)
                         image_slot_problems.append(payload)
+                elif kind == "checkpoint":
+                    if isinstance(payload, tuple) and len(payload) == 2:
+                        problem, checkpoint_level = payload
+                        if isinstance(problem, InvlectRoomsProblemPayload):
+                            slot = objects[object_index]
+                            _apply_checkpoint_marker(
+                                slot,
+                                checkpoint_level,
+                                preserve_placeholder_position=False,
+                            )
+                            used_placeholder_indices.add(object_index)
+                            checkpoint_slot_indices.append(object_index)
+                            logger.debug(
+                                "InvlectRooms: assigned checkpoint marker to placeholder",
+                                extra={
+                                    "problem_id": getattr(problem, "id", None),
+                                    "placeholder_index": object_index,
+                                    "order": slot.get("order"),
+                                    "level": checkpoint_level,
+                                },
+                            )
             else:
                 if kind == "chapter":
                     extra_contexts.append(payload)
@@ -786,6 +869,11 @@ def _build_content_map(
                     payload, InvlectRoomsProblemPayload
                 ):
                     remaining_image_only.append(payload)
+                elif kind == "checkpoint":
+                    if isinstance(payload, tuple) and len(payload) == 2:
+                        problem, checkpoint_level = payload
+                        if isinstance(problem, InvlectRoomsProblemPayload):
+                            remaining_checkpoints.append((problem, checkpoint_level))
     else:
         chapter_slots = _select_placeholder_positions(
             len(placeholder_indices),
@@ -877,6 +965,8 @@ def _build_content_map(
 
     if image_slot_indices:
         used_placeholder_indices.update(image_slot_indices)
+    if checkpoint_slot_indices:
+        used_placeholder_indices.update(checkpoint_slot_indices)
 
     for index in placeholder_indices:
         if index in used_placeholder_indices:
@@ -1078,6 +1168,55 @@ def _build_content_map(
             used_ids.add(next_id)
             next_id += 1
 
+    if remaining_checkpoints:
+        fallback_x = 0
+        fallback_y = 0
+        if chapter_positions:
+            last_slot = next(reversed(chapter_positions.values()))
+            fallback_x = last_slot.get("x", 0)
+            fallback_y = last_slot.get("y", 0)
+
+        for offset_index, (problem, checkpoint_level) in enumerate(remaining_checkpoints):
+            target_x = fallback_x + 160 * (offset_index + 1)
+            target_y = fallback_y
+            target_x = max(
+                left_boundary + boundary_margin,
+                min(right_boundary - boundary_margin, target_x),
+            )
+            target_y = max(
+                top_boundary + boundary_margin,
+                min(bottom_boundary - boundary_margin, target_y),
+            )
+
+            image_assets.append(
+                {
+                    "id": next_id,
+                    "x": target_x,
+                    "y": target_y,
+                    "scale": _checkpoint_marker_scale(checkpoint_level, 0.2),
+                    "file": _resolve_checkpoint_asset(checkpoint_level),
+                    "label": CHECKPOINT_DISPLAY_NAMES.get(
+                        checkpoint_level, checkpoint_level.capitalize()
+                    ),
+                    "metadata": {"checkpointLevel": checkpoint_level},
+                    "type": {
+                        "kind": "default",
+                        "label": CHECKPOINT_DISPLAY_NAMES.get(
+                            checkpoint_level, checkpoint_level.capitalize()
+                        ),
+                        "customChapterId": 0,
+                        "associatedChapterID": None,
+                    },
+                }
+            )
+            logger.debug(
+                "InvlectRooms: placed checkpoint marker (overflow) (problem_id=%s, level=%s)",
+                getattr(problem, "id", None),
+                checkpoint_level,
+            )
+            used_ids.add(next_id)
+            next_id += 1
+
     if image_assets:
         template["objects"].extend(image_assets)
 
@@ -1112,24 +1251,7 @@ async def convert_invlectrooms_payload_to_course(
             checkpoint_level = _detect_checkpoint(problem)
 
         if checkpoint_level:
-            chapter, activity = await _create_checkpoint_chapter(
-                level=checkpoint_level,
-                base_name=base_name,
-                problem=problem,
-                source_url=source_url,
-                payload=payload,
-                course=course,
-                xp_reward=xp_reward,
-                coin_reward=coin_reward,
-                request=request,
-                current_user=current_user,
-                db_session=db_session,
-            )
-            activities.append(activity)
-            chapter.activities = [activity]
-            chapters.append(chapter)
-            chapter_contexts.append((chapter, problem, checkpoint_level))
-            map_sequence.append(("chapter", (chapter, problem, checkpoint_level)))
+            map_sequence.append(("checkpoint", (problem, checkpoint_level)))
             continue
 
         if _is_image_only_problem(problem):

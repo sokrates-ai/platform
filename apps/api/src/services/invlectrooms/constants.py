@@ -17,3 +17,13 @@ CHECKPOINT_MARKER_ASSETS = {
     "silver": "Silber.webp",
     "gold": "Gold.webp",
 }
+
+# Matches the front-end content map sprite scaling rules.
+CONTENT_MAP_SPRITE_SCALE_FACTOR = 0.2
+
+# Matches the front-end content map sprite scaling rules.
+CHECKPOINT_MARKER_SCALES = {
+    "bronze": 1.8,
+    "silver": 1.8,
+    "gold": 1.8,
+}

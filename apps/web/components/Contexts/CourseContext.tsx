@@ -45,6 +45,7 @@ export function CourseProvider({ children, courseuuid }: any) {
     courseTabMetadata: DEFAULT_COURSE_TABS,
     activeTabId: defaultTabId,
     isSaved: true,
+    isSaving: false,
     isLoading: true,
   }), [courseuuid, defaultTabId]);
 
@@ -262,6 +263,10 @@ function courseReducer(state: any, action: any) {
       return { ...state, isSaved: true }
     case 'setIsNotSaved':
       return { ...state, isSaved: false }
+    case 'setIsSaving':
+      return { ...state, isSaving: true }
+    case 'setIsNotSaving':
+      return { ...state, isSaving: false }
     case 'setIsLoaded':
       return { ...state, isLoading: false }
     default:

@@ -129,10 +129,15 @@ function SaveState(props: { orgslug: string }) {
     dispatchCourse({ type: 'setIsSaved' })
   }
 
+  const setSavingState = React.useCallback((next: boolean) => {
+    setIsSaving(next)
+    dispatchCourse({ type: next ? 'setIsSaving' : 'setIsNotSaving' })
+  }, [dispatchCourse])
+
   const saveCourseState = React.useCallback(async () => {
     // Course  order
     if (saved || isSaving) return
-    setIsSaving(true)
+    setSavingState(true)
     try {
       await changeOrderBackend()
       mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
@@ -142,9 +147,9 @@ function SaveState(props: { orgslug: string }) {
       await revalidateTags(['courses'], props.orgslug)
       dispatchCourse({ type: 'setIsSaved' })
     } finally {
-      setIsSaving(false)
+      setSavingState(false)
     }
-  }, [changeMetadataBackend, changeOrderBackend, course?.courseStructure?.course_uuid, dispatchCourse, props.orgslug, saved, isSaving])
+  }, [changeMetadataBackend, changeOrderBackend, course?.courseStructure?.course_uuid, dispatchCourse, props.orgslug, saved, isSaving, setSavingState])
 
   const handleCourseOrder = React.useCallback((course_structure: any) => {
     const chapters = course_structure.chapters

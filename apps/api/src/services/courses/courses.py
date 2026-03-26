@@ -68,6 +68,12 @@ DEFAULT_TABS: List[Dict[str, str]] = [
 ]
 
 
+def _normalize_course_tab_uuid(tab_uuid: str, course_uuid: str) -> str:
+    if tab_uuid.endswith(course_uuid):
+        return tab_uuid
+    return f"{tab_uuid}{course_uuid}"
+
+
 def sanitize_tab_map_store(raw_store: Any) -> Dict[str, Dict[str, Any]]:
     sanitized: Dict[str, Dict[str, Any]] = {}
     if not isinstance(raw_store, dict):
@@ -101,7 +107,7 @@ def ensure_default_tabs(course: Course, db_session: Session) -> List[CourseTab]:
     created_tabs: List[CourseTab] = []
     for index, spec in enumerate(DEFAULT_TABS):
         tab = CourseTab(
-            tab_uuid=spec["tab_uuid"],
+            tab_uuid=_normalize_course_tab_uuid(spec["tab_uuid"], course.course_uuid),
             course_id=course.id,
             course_uuid=course.course_uuid,
             name=spec["name"],
@@ -518,7 +524,8 @@ async def create_course(
     course.update_date = str(datetime.now())
     course.map_state = default_map_state()
     course.tab_store = {
-        spec["tab_uuid"]: default_map_state() for spec in DEFAULT_TABS
+        _normalize_course_tab_uuid(spec["tab_uuid"], course.course_uuid): default_map_state()
+        for spec in DEFAULT_TABS
     }
 
     # Upload thumbnail
@@ -542,7 +549,7 @@ async def create_course(
     created_tabs: List[CourseTab] = []
     for index, spec in enumerate(DEFAULT_TABS):
         tab = CourseTab(
-            tab_uuid=spec["tab_uuid"] + course.course_uuid,
+            tab_uuid=_normalize_course_tab_uuid(spec["tab_uuid"], course.course_uuid),
             course_id=course.id,
             course_uuid=course.course_uuid,
             name=spec["name"],
@@ -687,6 +694,41 @@ async def update_course(
         if course_object.tab_store is not None
         else None
     )
+
+    if course_object.tabs is not None:
+        existing_tabs = fetch_course_tabs(course.id, db_session)
+        existing_ids = {tab.tab_uuid for tab in existing_tabs}
+        used_ids = set(existing_ids)
+        remap: Dict[str, str] = {}
+        normalized_tabs: List[CourseTabUpsert] = []
+
+        for tab in course_object.tabs:
+            tab_uuid = tab.tab_uuid
+            if tab_uuid in existing_ids:
+                normalized_tabs.append(tab)
+                used_ids.add(tab_uuid)
+                continue
+
+            normalized_uuid = _normalize_course_tab_uuid(tab_uuid, course.course_uuid)
+            if normalized_uuid in used_ids:
+                normalized_uuid = f"{normalized_uuid}-{uuid4()}"
+            used_ids.add(normalized_uuid)
+
+            if normalized_uuid != tab_uuid:
+                remap[tab_uuid] = normalized_uuid
+                payload = tab.model_dump()
+                payload["tab_uuid"] = normalized_uuid
+                normalized_tabs.append(CourseTabUpsert(**payload))
+            else:
+                normalized_tabs.append(tab)
+
+        course_object.tabs = normalized_tabs
+
+        if new_tab_store is not None and remap:
+            remapped_store: Dict[str, Any] = {}
+            for key, value in new_tab_store.items():
+                remapped_store[remap.get(key, key)] = value
+            new_tab_store = remapped_store
 
     if course_object.map_state is not None:
         course.map_state = sanitize_map_state(course_object.map_state)
