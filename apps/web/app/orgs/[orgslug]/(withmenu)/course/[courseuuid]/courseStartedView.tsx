@@ -667,15 +667,16 @@ const CourseStartedView = ({
             setSelectedImage(null)
           }
         }}
-        customWidth="w-[85vw] max-w-[64rem] p-0 gap-0"
-        customHeight="h-[75vh] max-h-[75vh] p-0"
+        customWidth="w-[95vw] max-w-[62.4375rem] p-0 gap-0 overflow-hidden"
+        customHeight="h-[60vh] max-h-[35rem] p-0"
         dialogContent={
           selectedImage ? (
-            <div className="flex h-full w-full items-center justify-center">
+            <div className="h-full w-full">
               <img
                 src={selectedImage.src}
                 alt={selectedImage.label || 'Custom asset'}
-                className="max-h-full w-auto max-w-full object-contain"
+                className="h-full w-full"
+                style={{ objectFit: 'contain' }}
               />
             </div>
           ) : null

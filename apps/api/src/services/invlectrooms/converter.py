@@ -7,10 +7,12 @@ from copy import deepcopy
 import logging
 from functools import lru_cache
 from importlib import resources
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import unquote, urlsplit
 
 from bs4 import BeautifulSoup
+from PIL import Image
 from sqlmodel import Session
 from starlette.requests import Request
 
@@ -36,6 +38,12 @@ from .schemas import (
     InvlectRoomsApplyResponse,
     InvlectRoomsProblemPayload,
 )
+from .scraper import (
+    DEFAULT_USER_AGENT,
+    InvlectRoomsScrapeError,
+    _ensure_image_cached,
+    _get_content_directory,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +65,9 @@ PLACEHOLDER_HIDE_FILE = "placeholder.png"
 PLACEHOLDER_WIDTH = 738
 PLACEHOLDER_HEIGHT = 475
 TEMPLATE_MAP_FILENAME = "template_map.json"
+DEFAULT_IMAGE_SCALE = 0.18
+IMAGE_REFERENCE_MAX_DIM = 800
+CACHE_POPULATE_TIMEOUT = 5.0
 
 CHECKPOINT_DISPLAY_NAMES = {
     "bronze": "Bronze",
@@ -233,10 +244,10 @@ def _is_image_only_problem(problem: InvlectRoomsProblemPayload) -> bool:
 
 def _extract_image_urls(
     problem: Optional[InvlectRoomsProblemPayload],
-) -> Tuple[Optional[str], Optional[str]]:
+) -> Tuple[Optional[str], Optional[str], Optional[str]]:
     if problem is None:
         logger.debug("InvlectRooms: _extract_image_urls called with None problem")
-        return None, None
+        return None, None, None
     image_payload = problem.image
     if isinstance(image_payload, dict):
         original_url = image_payload.get("original")
@@ -247,6 +258,9 @@ def _extract_image_urls(
     else:
         original_url = None
         local_url = None
+    resolved_url = original_url or local_url
+    if not local_url and isinstance(resolved_url, str) and resolved_url.startswith("/content/"):
+        local_url = resolved_url
     # logger.debug(
     #     "InvlectRooms: extracted image urls (problem_id=%s, original=%s, local=%s, original_file=%s, local_file=%s)",
     #     getattr(problem, "id", None),
@@ -255,7 +269,177 @@ def _extract_image_urls(
     #     _filename_from_url(original_url),
     #     _filename_from_url(local_url),
     # )
-    return original_url or local_url, original_url
+    return resolved_url, original_url, local_url
+
+
+def _host_matches(a: Optional[str], b: Optional[str]) -> bool:
+    if not a or not b:
+        return False
+    if a == b:
+        return True
+    if a.endswith(f".{b}") or b.endswith(f".{a}"):
+        return True
+    return False
+
+
+def _should_cache_image_url(original_url: Optional[str], source_host: Optional[str]) -> bool:
+    if not original_url:
+        return False
+    parsed = urlsplit(original_url)
+    if parsed.scheme not in {"http", "https"}:
+        return False
+    host = parsed.hostname
+    if not host:
+        return False
+    if host in {"localhost", "127.0.0.1"}:
+        return True
+    return _host_matches(host, source_host)
+
+
+@lru_cache(maxsize=256)
+def _cache_remote_image(
+    original_url: str,
+    source_host: Optional[str],
+) -> Optional[str]:
+    if not _should_cache_image_url(original_url, source_host):
+        logger.debug(
+            "InvlectRooms: skipping image cache for %s (host mismatch or unsupported)",
+            original_url,
+        )
+        return None
+    try:
+        cached = _ensure_image_cached(
+            original_url,
+            timeout=CACHE_POPULATE_TIMEOUT,
+            user_agent=DEFAULT_USER_AGENT,
+        )
+        logger.info(
+            "InvlectRooms: cached image %s -> %s",
+            original_url,
+            cached,
+        )
+        return cached
+    except InvlectRoomsScrapeError:
+        logger.warning("InvlectRooms: failed to cache image %s", original_url)
+        return None
+
+
+def _resolve_local_image_path(local_url: Optional[str]) -> Optional[Path]:
+    if not local_url or not isinstance(local_url, str):
+        return None
+    if local_url.startswith(("http://", "https://")):
+        return None
+    normalized = local_url.lstrip("/")
+    if not normalized.startswith("content/"):
+        return None
+    relative = normalized[len("content/") :]
+    try:
+        content_dir = _get_content_directory()
+    except Exception:
+        return None
+    return content_dir / relative
+
+
+@lru_cache(maxsize=256)
+def _get_image_dimensions(local_url: Optional[str]) -> Optional[Tuple[int, int]]:
+    path = _resolve_local_image_path(local_url)
+    if not path or not path.exists():
+        logger.debug(
+            "InvlectRooms: image path not found for %s (resolved=%s)",
+            local_url,
+            path,
+        )
+        return None
+    try:
+        with Image.open(path) as img:
+            size = img.size
+            logger.debug(
+                "InvlectRooms: image dimensions for %s: %sx%s",
+                local_url,
+                size[0],
+                size[1],
+            )
+            return size
+    except Exception:
+        logger.debug("InvlectRooms: failed to read image size for %s", local_url)
+        return None
+
+
+def _normalized_image_scale(local_url: Optional[str]) -> float:
+    dimensions = _get_image_dimensions(local_url)
+    if not dimensions:
+        logger.debug(
+            "InvlectRooms: using default image scale %.3f for %s",
+            DEFAULT_IMAGE_SCALE,
+            local_url,
+        )
+        return DEFAULT_IMAGE_SCALE
+    width, height = dimensions
+    max_dim = max(width or 0, height or 0)
+    if max_dim <= 0 or max_dim <= IMAGE_REFERENCE_MAX_DIM:
+        logger.debug(
+            "InvlectRooms: image scale unchanged %.3f for %s (max_dim=%s)",
+            DEFAULT_IMAGE_SCALE,
+            local_url,
+            max_dim,
+        )
+        return DEFAULT_IMAGE_SCALE
+    normalized = DEFAULT_IMAGE_SCALE * (IMAGE_REFERENCE_MAX_DIM / max_dim)
+    logger.debug(
+        "InvlectRooms: normalized image scale %.3f for %s (max_dim=%s ref=%s)",
+        normalized,
+        local_url,
+        max_dim,
+        IMAGE_REFERENCE_MAX_DIM,
+    )
+    return normalized
+
+
+def _populate_problem_image_cache(
+    problem: InvlectRoomsProblemPayload,
+    source_host: Optional[str],
+) -> None:
+    problem_id = getattr(problem, "id", None)
+    image_payload = problem.image
+    if not image_payload:
+        logger.debug("InvlectRooms: problem %s has no image payload", problem_id)
+        return
+    if isinstance(image_payload, str):
+        original_url = image_payload
+        local_url = None
+        payload_dict: Dict[str, Optional[str]] = {"original": original_url}
+        problem.image = payload_dict
+    elif isinstance(image_payload, dict):
+        payload_dict = image_payload
+        original_url = payload_dict.get("original") or payload_dict.get("local")
+        local_url = payload_dict.get("local")
+    else:
+        return
+
+    if local_url:
+        local_path = _resolve_local_image_path(local_url)
+        if local_path and local_path.exists():
+            logger.debug(
+                "InvlectRooms: image cache hit for problem %s (%s)",
+                problem_id,
+                local_url,
+            )
+            return
+
+    if not original_url:
+        logger.debug("InvlectRooms: problem %s missing original image url", problem_id)
+        return
+
+    logger.info(
+        "InvlectRooms: caching image for problem %s (%s)",
+        problem_id,
+        original_url,
+    )
+    cached_local = _cache_remote_image(original_url, source_host)
+    if cached_local:
+        payload_dict["local"] = cached_local
+        if "original" not in payload_dict:
+            payload_dict["original"] = original_url
 
 
 def _extract_paragraphs(
@@ -736,9 +920,10 @@ def _build_content_map(
         chapter_obj = chapter_positions.get(int(chapter_id))
         if not chapter_obj:
             continue
-        image_url, original_url = _extract_image_urls(problem)
+        image_url, original_url, local_url = _extract_image_urls(problem)
         if not image_url:
             continue
+        image_scale = _normalized_image_scale(local_url)
 
         offset_x = 140 if index % 2 == 0 else -140
         offset_y = -140
@@ -758,7 +943,7 @@ def _build_content_map(
                 "id": next_id,
                 "x": target_x,
                 "y": target_y,
-                "scale": 0.18,
+                "scale": image_scale,
                 "file": image_url,
                 "label": (problem.title or "").strip() or f"Image {chapter_id}",
                 "sourceUrl": original_url or image_url,
@@ -783,7 +968,7 @@ def _build_content_map(
 
         for slot_index, problem in zip(image_slot_indices, image_slot_problems):
             slot = objects[slot_index]
-            image_url, original_url = _extract_image_urls(problem)
+            image_url, original_url, local_url = _extract_image_urls(problem)
             if not image_url:
                 logger.warning(
                     "InvlectRooms: image-only problem missing image url",
@@ -818,7 +1003,7 @@ def _build_content_map(
 
             slot["x"] = target_x
             slot["y"] = target_y
-            slot["scale"] = 0.18
+            slot["scale"] = _normalized_image_scale(local_url)
             slot["file"] = image_url
             slot["label"] = (problem.title or "").strip() or f"Image {slot.get('id')}"
             slot["sourceUrl"] = original_url or image_url
@@ -828,7 +1013,7 @@ def _build_content_map(
                 "customChapterId": 0,
                 "associatedChapterID": None,
             }
-            logger.info(
+            logger.debug(
                 "InvlectRooms: placed image-only asset (problem_id=%s, placeholder_index=%s, image_url=%s, image_file=%s, source_url=%s, source_file=%s, order=%s)",
                 problem.id,
                 slot_index,
@@ -840,13 +1025,14 @@ def _build_content_map(
             )
 
         for offset_index, problem in enumerate(remaining_image_only):
-            image_url, original_url = _extract_image_urls(problem)
+            image_url, original_url, local_url = _extract_image_urls(problem)
             if not image_url:
                 logger.warning(
                     "InvlectRooms: remaining image-only problem missing image url",
                     extra={"problem_id": problem.id},
                 )
                 continue
+            image_scale = _normalized_image_scale(local_url)
             target_x = fallback_x + 160 * (offset_index + 1)
             target_y = fallback_y
             target_x = max(
@@ -862,7 +1048,7 @@ def _build_content_map(
                     "id": next_id,
                     "x": target_x,
                     "y": target_y,
-                    "scale": 0.18,
+                    "scale": image_scale,
                     "file": image_url,
                     "label": (problem.title or "").strip() or f"Image {next_id}",
                     "sourceUrl": original_url or image_url,
@@ -874,7 +1060,7 @@ def _build_content_map(
                     },
                 }
             )
-            logger.info(
+            logger.debug(
                 "InvlectRooms: placed image-only asset (overflow) (problem_id=%s, image_url=%s, image_file=%s, source_url=%s, source_file=%s)",
                 problem.id,
                 image_url,
@@ -903,11 +1089,15 @@ async def convert_invlectrooms_payload_to_course(
     chapters: List[ChapterRead] = []
     activities: List[ActivityRead] = []
     source_url = str(payload.url)
+    source_host = urlsplit(source_url).hostname
     chapter_contexts: List[ChapterContext] = []
     image_only_problems: List[InvlectRoomsProblemPayload] = []
     map_sequence: List[MapSequenceItem] = []
     xp_reward = payload.xp_reward or 0
     coin_reward = payload.coin_reward or 0
+
+    for problem in payload.problems:
+        _populate_problem_image_cache(problem, source_host)
 
     for index, problem in enumerate(payload.problems):
         checkpoint_level = _normalize_checkpoint_level(problem.checkpoint_level)

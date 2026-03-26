@@ -7,7 +7,7 @@ import {
   useCourseDispatch,
 } from '@components/Contexts/CourseContext'
 import { DEFAULT_COURSE_TABS } from '@components/Objects/Modals/Course/Create/CourseTabSelector'
-import { Check, SaveAllIcon, Timer } from 'lucide-react'
+import { Check, Loader2, SaveAllIcon, Timer } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import React, { useEffect } from 'react'
 import { mutate } from 'swr'
@@ -20,6 +20,7 @@ function SaveState(props: { orgslug: string }) {
   const saved = course ? course.isSaved : true
   const dispatchCourse = useCourseDispatch() as any
   const course_structure = course.courseStructure
+  const [isSaving, setIsSaving] = React.useState(false)
   const fallbackMapState = {
     objects: [],
     boundaries: {
@@ -130,15 +131,20 @@ function SaveState(props: { orgslug: string }) {
 
   const saveCourseState = React.useCallback(async () => {
     // Course  order
-    if (saved) return
-    await changeOrderBackend()
-    mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
-    // Course metadata
-    await changeMetadataBackend()
-    mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
-    await revalidateTags(['courses'], props.orgslug)
-    dispatchCourse({ type: 'setIsSaved' })
-  }, [changeMetadataBackend, changeOrderBackend, course?.courseStructure?.course_uuid, dispatchCourse, props.orgslug, saved])
+    if (saved || isSaving) return
+    setIsSaving(true)
+    try {
+      await changeOrderBackend()
+      mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
+      // Course metadata
+      await changeMetadataBackend()
+      mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
+      await revalidateTags(['courses'], props.orgslug)
+      dispatchCourse({ type: 'setIsSaved' })
+    } finally {
+      setIsSaving(false)
+    }
+  }, [changeMetadataBackend, changeOrderBackend, course?.courseStructure?.course_uuid, dispatchCourse, props.orgslug, saved, isSaving])
 
   const handleCourseOrder = React.useCallback((course_structure: any) => {
     const chapters = course_structure.chapters
@@ -211,11 +217,18 @@ function SaveState(props: { orgslug: string }) {
           `px-4 py-2 rounded-lg drop-shadow-md cursor-pointer flex space-x-2 items-center font-bold antialiased transition-all ease-linear ` +
           (saved
             ? 'bg-gray-600 text-white'
-            : 'bg-black text-white border hover:bg-gray-900 ')
+            : 'bg-black text-white border hover:bg-gray-900 ') +
+          (isSaving ? ' opacity-80 cursor-not-allowed' : '')
         }
-        onClick={saveCourseState}
+        onClick={isSaving ? undefined : saveCourseState}
       >
-        {saved ? <Check size={20} /> : <SaveAllIcon size={20} />}
+        {isSaving ? (
+          <Loader2 size={20} className="animate-spin" />
+        ) : saved ? (
+          <Check size={20} />
+        ) : (
+          <SaveAllIcon size={20} />
+        )}
         {saved ? <div className="">Saved</div> : <div className="">Save</div>}
       </div>
     </div>
