@@ -2,7 +2,7 @@
 import { getAPIUrl } from '@services/config/config'
 import Canva from '@components/Objects/Activities/DynamicCanva/DynamicCanva'
 import VideoActivity from '@components/Objects/Activities/Video/Video'
-import { BookOpenCheck, Check, CheckCircle, UserRoundPen } from 'lucide-react'
+import { BookOpenCheck, Check, CheckCircle, Loader2, UserRoundPen } from 'lucide-react'
 import { markActivityAsComplete } from '@services/courses/activity'
 import DocumentPdfActivity from '@components/Objects/Activities/DocumentPdf/DocumentPdf'
 import { useRouter } from 'next/navigation'
@@ -27,6 +27,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import useSWR from 'swr'
 import { swrFetcher } from '@services/utils/ts/requests'
+import { isActivityDone } from '@components/Pages/Courses/utils'
 
 
 
@@ -237,33 +238,45 @@ export function MarkStatus(props: {
     accessToken ? `${getAPIUrl()}trail` : null,
     (url: string) => swrFetcher(url, accessToken)
   )
+  const [isMarking, setIsMarking] = React.useState(false)
+  const [completedOverride, setCompletedOverride] = React.useState<boolean | null>(null)
+
+  const courseForProgress = React.useMemo(() => {
+    if (!trail) {
+      return props.course
+    }
+    return { ...props.course, trail }
+  }, [props.course, trail])
+  const isCompleted =
+    completedOverride ??
+    isActivityDone(
+      courseForProgress,
+      props.activity?.activity_uuid ?? props.activityid ?? props.activity?.id
+    )
 
   // TODO: hit this route from the workspace!
   async function markActivityAsCompleteFront() {
-    const trail = await markActivityAsComplete(
-      props.orgslug,
-      props.course.course_uuid,
-      'activity_' + props.activityid,
-      accessToken
-    )
-    if (mutateTrail) {
-      mutateTrail()
+    if (isMarking || isCompleted) {
+      return
     }
-    router.refresh()
+    setIsMarking(true)
+    try {
+      await markActivityAsComplete(
+        props.orgslug,
+        props.course.course_uuid,
+        'activity_' + props.activityid,
+        accessToken
+      )
+      setCompletedOverride(true)
+      if (mutateTrail) {
+        await mutateTrail()
+      }
+      router.refresh()
+    } finally {
+      setIsMarking(false)
+    }
   }
 
-  const isActivityCompleted = () => {
-    const trailSource = trail ?? props.course?.trail
-    const run = trailSource?.runs?.find(
-      (run: any) => run.course_id == props.course.id
-    )
-    if (run) {
-      return run.steps.find(
-        (step: any) => (step.activity_id == props.activity.id) && (step.complete == true)
-      )
-    }
-  }
-  const isCompleted = Boolean(isActivityCompleted())
   const isDynamicPage =
     props.activity?.activity_type === 'TYPE_DYNAMIC' ||
     props.activity?.activity_sub_type === 'SUBTYPE_DYNAMIC_PAGE'
@@ -281,16 +294,20 @@ export function MarkStatus(props: {
         <button
           type="button"
           onClick={markActivityAsCompleteFront}
-          disabled={isCompleted}
+          disabled={isCompleted || isMarking}
           className={cn(
             'rounded-full px-5 py-2 text-xs font-bold shadow-sm transition flex items-center gap-2',
             isCompleted
               ? 'bg-emerald-600 text-white cursor-not-allowed'
-              : 'bg-gray-800 text-white hover:bg-gray-700'
+              : isMarking
+                ? 'bg-gray-700 text-white cursor-not-allowed'
+                : 'bg-gray-800 text-white hover:bg-gray-700'
           )}
         >
-          <Check size={17}></Check>
-          {!isMobile && <span>{isCompleted ? 'Done' : 'Mark as complete'}</span>}
+          {isMarking ? <Loader2 size={17} className="animate-spin" /> : <Check size={17}></Check>}
+          {!isMobile && (
+            <span>{isCompleted ? 'Completed' : isMarking ? 'Marking...' : 'Mark as complete'}</span>
+          )}
         </button>
       </div>
     )
@@ -299,23 +316,35 @@ export function MarkStatus(props: {
   return (
     <>
       {isCompleted ? (
-        <div className="bg-teal-600 rounded-full px-5 drop-shadow-md flex items-center space-x-2  p-2.5  text-white hover:cursor-pointer transition delay-150 duration-300 ease-in-out">
+        <div className="bg-emerald-600 rounded-full px-5 drop-shadow-md flex items-center space-x-2 p-2.5 text-white cursor-not-allowed transition delay-150 duration-300 ease-in-out">
           <i>
             <Check size={17}></Check>
           </i>{' '}
-          <i className="not-italic text-xs font-bold">Complete</i>
+          <i className="not-italic text-xs font-bold">Completed</i>
         </div>
       ) : (
-        <div
-          className="bg-gray-800 rounded-full px-5 drop-shadow-md flex  items-center space-x-2 p-2.5  text-white hover:cursor-pointer transition delay-150 duration-300 ease-in-out"
-          onClick={markActivityAsCompleteFront}
+        <button
+          type="button"
+          className={cn(
+            'bg-gray-800 rounded-full px-5 drop-shadow-md flex items-center space-x-2 p-2.5 text-white transition delay-150 duration-300 ease-in-out',
+            isMarking ? 'opacity-80 cursor-not-allowed' : 'hover:cursor-pointer'
+          )}
+          onClick={isMarking ? undefined : markActivityAsCompleteFront}
+          disabled={isMarking}
         >
-          {' '}
           <i>
-            <Check size={17}></Check>
+            {isMarking ? (
+              <Loader2 size={17} className="animate-spin" />
+            ) : (
+              <Check size={17}></Check>
+            )}
           </i>{' '}
-          {!isMobile && <i className="not-italic text-xs font-bold">Mark as complete</i>}
-        </div>
+          {!isMobile && (
+            <i className="not-italic text-xs font-bold">
+              {isMarking ? 'Marking...' : 'Mark as complete'}
+            </i>
+          )}
+        </button>
       )}
     </>
   )
