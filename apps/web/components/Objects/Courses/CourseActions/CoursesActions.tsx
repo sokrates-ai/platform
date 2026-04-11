@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import UserAvatar from '../../UserAvatar'
 import { getUserAvatarMediaDirectory } from '@services/media/media'
 import { removeCourse, startCourse } from '@services/courses/activity'
@@ -7,11 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useMediaQuery } from 'usehooks-ts'
 import { getUriWithOrg } from '@services/config/config'
-import { getProductsByCourse } from '@services/payments/products'
-import { LogIn, LogOut, ShoppingCart, AlertCircle } from 'lucide-react'
-import Modal from '@components/Objects/StyledElements/Modal/Modal'
-import CoursePaidOptions from './CoursePaidOptions'
-import { checkPaidAccess } from '@services/payments/payments'
+import { LogIn, LogOut } from 'lucide-react'
 import { Button } from "@/components/ui/button";
 
 interface Author {
@@ -81,51 +77,7 @@ export function courseIsStarted(course: any): boolean {
 const Actions = ({ courseuuid, orgslug, course }: CourseActionsProps) => {
   const router = useRouter()
   const session = useSokratesSession() as any;
-  const [linkedProducts, setLinkedProducts] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [hasAccess, setHasAccess] = useState<boolean | null>(null)
-
   const isStarted = courseIsStarted(course)
-
-  useEffect(() => {
-    const fetchLinkedProducts = async () => {
-      try {
-        const response = await getProductsByCourse(
-          course.org_id,
-          course.id,
-          session.data?.tokens?.access_token
-        )
-        setLinkedProducts(response.data || [])
-      } catch (error) {
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchLinkedProducts()
-  }, [course.id, course.org_id, session.data?.tokens?.access_token])
-
-  useEffect(() => {
-    const checkAccess = async () => {
-      if (!session.data?.user) return
-      try {
-        const response = await checkPaidAccess(
-          parseInt(course.id),
-          course.org_id,
-          session.data?.tokens?.access_token
-        )
-        setHasAccess(response.has_access)
-        
-      } catch (error) {
-        setHasAccess(false)
-      }
-    }
-
-    if (linkedProducts.length > 0) {
-      checkAccess()
-    }
-  }, [course.id, course.org_id, linkedProducts, session.data?.tokens?.access_token, session.data?.user])
 
   const handleCourseAction = async () => {
     if (!session.data?.user) {
@@ -136,76 +88,6 @@ const Actions = ({ courseuuid, orgslug, course }: CourseActionsProps) => {
     await action('course_' + courseuuid, orgslug, session.data?.tokens?.access_token)
     await revalidateTags(['courses'], orgslug)
     router.refresh()
-  }
-
-  if (isLoading) {
-    return <div className="animate-pulse h-20 bg-gray-100 rounded-lg nice-shadow" />
-  }
-
-  if (linkedProducts.length > 0) {
-    return (
-      <div className="space-y-4">
-        {hasAccess ? (
-          <>
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg nice-shadow">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <h3 className="text-green-800 font-semibold">You Own This Course</h3>
-              </div>
-              <p className="text-green-700 text-sm mt-1">
-                You have purchased this course and have full access to all content.
-              </p>
-            </div>
-            <Button
-              variant={ isStarted? "destructive": "default"}
-              onClick={handleCourseAction}
-            >
-              {isStarted ? (
-                <>
-                  <LogOut className="w-5 h-5" />
-                  Leave Course
-                </>
-              ) : (
-                <>
-                  <LogIn className="w-5 h-5" />
-                  Start Course
-                </>
-              )}
-            </Button>
-          </>
-        ) : (
-          <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg nice-shadow">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-800" />
-              <h3 className="text-amber-800 font-semibold">Paid Course</h3>
-            </div>
-            <p className="text-amber-700 text-sm mt-1">
-              This course requires purchase to access its content.
-            </p>
-          </div>
-        )}
-        
-        {!hasAccess && (
-          <>
-            <Modal
-              isDialogOpen={isModalOpen}
-              onOpenChange={setIsModalOpen}
-              dialogContent={<CoursePaidOptions course={course} />}
-              dialogTitle="Purchase Course"
-              dialogDescription="Select a payment option to access this course"
-              minWidth="sm"
-            />
-            <button
-              className="w-full bg-neutral-900 text-white py-3 rounded-lg nice-shadow font-semibold hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2"
-              onClick={() => setIsModalOpen(true)}
-            >
-              <ShoppingCart className="w-5 h-5" />
-              Purchase Course
-            </button>
-          </>
-        )}
-      </div>
-    )
   }
 
   return (

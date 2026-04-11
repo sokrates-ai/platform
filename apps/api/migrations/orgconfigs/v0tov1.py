@@ -55,7 +55,6 @@ def migrate_v0_to_v1(v0_config):
                 "model": 'gpt-4o-mini',
             },
             "assignments": {"enabled": True, "limit": 5},
-            "payments": {"enabled": False, "stripe_key": ""},
             "discussions": {"enabled": False, "limit": 10},
             "analytics": {"enabled": False, "limit": 10},
             "collaboration": {

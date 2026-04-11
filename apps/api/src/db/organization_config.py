@@ -38,10 +38,6 @@ class AssignmentOrgConfig(BaseModel):
     limit: int = 10
 
 
-class PaymentOrgConfig(BaseModel):
-    enabled: bool = True
-
-
 class DiscussionOrgConfig(BaseModel):
     enabled: bool = True
     limit: int = 10
@@ -69,7 +65,6 @@ class OrgFeatureConfig(BaseModel):
     storage: StorageOrgConfig = StorageOrgConfig()
     ai: AIOrgConfig = AIOrgConfig()
     assignments: AssignmentOrgConfig = AssignmentOrgConfig()
-    payments: PaymentOrgConfig = PaymentOrgConfig()
     discussions: DiscussionOrgConfig = DiscussionOrgConfig()
     analytics: AnalyticsOrgConfig = AnalyticsOrgConfig()
     collaboration: CollaborationOrgConfig = CollaborationOrgConfig()

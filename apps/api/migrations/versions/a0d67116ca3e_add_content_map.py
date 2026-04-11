@@ -1,7 +1,7 @@
 """Add Content Map
 
 Revision ID: a0d67116ca3e
-Revises: 0314ec7791e1
+Revises: 040ccb1d456e
 Create Date: 2024-12-30 13:12:07.149478
 
 """
@@ -13,7 +13,7 @@ import sqlmodel # noqa: F401
 
 # revision identifiers, used by Alembic.
 revision: str = 'a0d67116ca3e'
-down_revision: Union[str, None] = '0314ec7791e1'
+down_revision: Union[str, None] = '040ccb1d456e'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

@@ -18,7 +18,6 @@ from src.db.organization_config import (
     OrgGeneralConfig,
     OrganizationConfig,
     OrganizationConfigBase,
-    PaymentOrgConfig,
     StorageOrgConfig,
     UserGroupOrgConfig,
 )
@@ -174,7 +173,6 @@ async def create_org(
             storage=StorageOrgConfig(enabled=True, limit=0),
             ai=AIOrgConfig(enabled=True, limit=0, model="gpt-4o-mini"),
             assignments=AssignmentOrgConfig(enabled=True, limit=0),
-            payments=PaymentOrgConfig(enabled=True, stripe_key=""),
             discussions=DiscussionOrgConfig(enabled=True, limit=0),
             analytics=AnalyticsOrgConfig(enabled=True, limit=0),
             collaboration=CollaborationOrgConfig(enabled=True, limit=0),

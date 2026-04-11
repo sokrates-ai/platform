@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo } from 'react'
 import styled from 'styled-components'
 import Link from 'next/link'
-import { Package2, Settings } from 'lucide-react'
+import { Settings } from 'lucide-react'
 import UserAvatar from '@components/Objects/UserAvatar'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
@@ -64,17 +64,7 @@ export const HeaderProfileBox = () => {
             </div>
 
             <div className="flex items-center space-x-2">
-              <Tooltip 
-                content={"Your Owned Courses"}
-                sideOffset={15}
-                side="bottom"
-              >
-                <Link className="text-gray-600" href={'/dash/user-account/owned'}>
-                  <Package2 size={14} />
-                </Link>
-              </Tooltip>
-              
-              <Tooltip 
+              <Tooltip
                 content={"Your Settings"}
                 sideOffset={15}
                 side="bottom"

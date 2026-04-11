@@ -14,7 +14,6 @@ FeatureSet: TypeAlias = Literal[
     "courses",
     "discussions",
     "members",
-    "payments",
     "storage",
     "usergroups",
 ]

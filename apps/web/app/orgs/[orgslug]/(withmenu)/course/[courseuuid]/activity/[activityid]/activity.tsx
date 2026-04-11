@@ -20,7 +20,6 @@ import toast from 'react-hot-toast'
 import { mutate } from 'swr'
 import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationModal/ConfirmationModal'
 import { useMediaQuery } from 'usehooks-ts'
-import PaidCourseActivityDisclaimer from '@components/Objects/Courses/CourseActions/PaidCourseActivityDisclaimer'
 import WorkspaceActivity from '@components/Objects/Activities/Workspace/WorkspaceActivity'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -127,7 +126,7 @@ function ActivityClient(props: ActivityClientProps) {
                   </h1>
                 </div>
 
-                {activity && activity.published === true && activity.content.paid_access !== false && (
+                {activity && activity.published === true && (
                   <AuthenticatedClientElement checkMethod="authentication">
                     <div className="flex items-center gap-2">
                       {activity.activity_type !== 'TYPE_ASSIGNMENT' && (
@@ -168,36 +167,33 @@ function ActivityClient(props: ActivityClientProps) {
                 <>
                   {activity && activity.published === true && (
                     <>
-                      {activity.content.paid_access === false ? (
-                        <PaidCourseActivityDisclaimer course={course} />
-                      ) : (
-                        <div className="rounded-lg bg-card p-6">
-                          {activity.activity_type === 'TYPE_DYNAMIC' && (
-                            <Canva content={activity.content} activity={activity} />
-                          )}
-                          {activity.activity_type === 'TYPE_VIDEO' && (
-                            <VideoActivity course={course} activity={activity} />
-                          )}
-                          {activity.activity_type === 'TYPE_DOCUMENT' && (
-                            <DocumentPdfActivity
-                              course={course}
-                              activity={activity}
-                            />
-                          )}
-                          {activity.activity_type === 'TYPE_WORKSPACE' && (
-                            <WorkspaceActivity
-                              course={course}
-                              activity={activity}
-                              access_token={access_token}
-                              backlink={props.backlink}
-                            />
-                          )}
-                          {activity.activity_type === 'TYPE_ASSIGNMENT' && (
-                            <>
-                              {assignment ? (
-                                <AssignmentProvider assignment_uuid={assignment?.assignment_uuid}>
-                                  <AssignmentsTaskProvider>
-                                    <AssignmentSubmissionProvider assignment_uuid={assignment?.assignment_uuid}>
+                      <div className="rounded-lg bg-card p-6">
+                        {activity.activity_type === 'TYPE_DYNAMIC' && (
+                          <Canva content={activity.content} activity={activity} />
+                        )}
+                        {activity.activity_type === 'TYPE_VIDEO' && (
+                          <VideoActivity course={course} activity={activity} />
+                        )}
+                        {activity.activity_type === 'TYPE_DOCUMENT' && (
+                          <DocumentPdfActivity
+                            course={course}
+                            activity={activity}
+                          />
+                        )}
+                        {activity.activity_type === 'TYPE_WORKSPACE' && (
+                          <WorkspaceActivity
+                            course={course}
+                            activity={activity}
+                            access_token={access_token}
+                            backlink={props.backlink}
+                          />
+                        )}
+                        {activity.activity_type === 'TYPE_ASSIGNMENT' && (
+                          <>
+                            {assignment ? (
+                              <AssignmentProvider assignment_uuid={assignment?.assignment_uuid}>
+                                <AssignmentsTaskProvider>
+                                  <AssignmentSubmissionProvider assignment_uuid={assignment?.assignment_uuid}>
                                       <AssignmentStudentActivity />
                                     </AssignmentSubmissionProvider>
                                   </AssignmentsTaskProvider>
