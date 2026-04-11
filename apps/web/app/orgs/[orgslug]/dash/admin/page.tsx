@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import AdminTabs from './AdminTabs'
 
 type AdminPageProps = {
   params: {
@@ -14,6 +15,18 @@ type VersionInfo = {
 
 const formatValue = (value?: string | null) =>
   value && value.trim().length > 0 ? value : 'unknown'
+
+const formatTimestamp = (value?: string | null) => {
+  const normalized = value?.trim()
+  if (!normalized) return 'unknown'
+  const date = new Date(normalized)
+  if (Number.isNaN(date.getTime())) return normalized
+  return `${new Intl.DateTimeFormat('en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone: 'UTC',
+  }).format(date)} UTC`
+}
 
 const versionCandidates = (cwd: string) => [
   { label: 'apps/web/package.json', filePath: path.join(cwd, 'apps', 'web', 'package.json') },
@@ -49,6 +62,7 @@ export default async function AdminPage({ params }: AdminPageProps) {
   const debugItems = [
     { label: 'Product version', value: productVersion.version },
     { label: 'Version source', value: productVersion.source },
+    { label: 'Build time', value: formatTimestamp(process.env.NEXT_PUBLIC_BUILD_TIME ?? process.env.BUILD_TIME) },
     { label: 'Org slug', value: params.orgslug },
     { label: 'Node environment', value: formatValue(process.env.NODE_ENV) },
     { label: 'Node.js version', value: formatValue(process.version) },
@@ -68,35 +82,14 @@ export default async function AdminPage({ params }: AdminPageProps) {
               Admin
             </div>
             <div className="flex font-medium text-SokratesGrayBorder2 text-md">
-              Debug information for this instance
+              Manage hosting details and organization users
             </div>
           </div>
         </div>
       </div>
       <div className="h-6"></div>
       <div className="px-10 pb-10">
-        <div className="bg-white nice-shadow rounded-xl overflow-hidden">
-          <table className="w-full text-left">
-            <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-400">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Key</th>
-                <th className="px-4 py-3 font-semibold">Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {debugItems.map((item) => (
-                <tr key={item.label} className="border-t border-gray-100">
-                  <td className="px-4 py-3 text-sm font-semibold text-gray-700">
-                    {item.label}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-800 break-all">
-                    {item.value}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <AdminTabs debugItems={debugItems} />
       </div>
     </div>
   )

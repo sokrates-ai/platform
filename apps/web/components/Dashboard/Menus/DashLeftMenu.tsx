@@ -10,6 +10,8 @@ import logo_black from '@public/dark_logo.svg'
 import Image from 'next/image'
 import MenuLinks from '@components/Objects/Menus/OrgMenuLinks'
 import useAdminStatus from '@components/Hooks/useAdminStatus'
+import { usePathname } from 'next/navigation'
+import { Shield } from 'lucide-react'
 
 
 
@@ -20,6 +22,8 @@ export const DashLeftMenu = (props: any) => {
   const org = useOrg() as any
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
   const isUserAdmin = useAdminStatus() as any
+  const pathname = usePathname()
+  const isAdminRegion = pathname?.includes('/dash/admin')
 
 
   return (
@@ -46,12 +50,22 @@ export const DashLeftMenu = (props: any) => {
             </div>
 
             <NavigationMenu className="hidden md:flex">
-                <NavigationMenuList>
-                  <NavigationMenuItem>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  {isAdminRegion ? (
+                    <Link
+                      href={getUriWithOrg(orgslug, '/dash/admin')}
+                      className="flex items-center space-x-2 text-[#909192] font-medium"
+                    >
+                      <Shield size={18} />
+                      <span>Admin</span>
+                    </Link>
+                  ) : (
                     <MenuLinks orgslug={orgslug} />
-                  </NavigationMenuItem>
-                </NavigationMenuList>
-              </NavigationMenu>
+                  )}
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
 
           </div>
 

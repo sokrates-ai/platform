@@ -178,6 +178,7 @@ dfail() {
 docker-build() {
     OWNER="$1"
     TAG="$2"
+    BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
     DOMAIN="ERROR"
     if [ "${TAG}" = "prod" ]; then
@@ -193,8 +194,8 @@ docker-build() {
     echo "Using DOMAIN: <${DOMAIN}> for build..."
     echo "======================================"
 
-    docker build --build-arg DOMAIN="${DOMAIN}" --progress=plain -t "ghcr.io/${OWNER}/sk-platform-frontend:${TAG}" -f Dockerfile.web . || dfail
-    docker build --progress=plain -t "ghcr.io/${OWNER}/sk-platform-backend:${TAG}" -f Dockerfile.api . || dfail
+    docker build --build-arg DOMAIN="${DOMAIN}" --build-arg BUILD_TIME="${BUILD_TIME}" --progress=plain -t "ghcr.io/${OWNER}/sk-platform-frontend:${TAG}" -f Dockerfile.web . || dfail
+    docker build --build-arg BUILD_TIME="${BUILD_TIME}" --progress=plain -t "ghcr.io/${OWNER}/sk-platform-backend:${TAG}" -f Dockerfile.api . || dfail
 
     docker push "ghcr.io/${OWNER}/sk-platform-frontend:${TAG}" || dfail
     docker push "ghcr.io/${OWNER}/sk-platform-backend:${TAG}" || dfail

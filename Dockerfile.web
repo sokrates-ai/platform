@@ -12,6 +12,7 @@ RUN addgroup --system --gid 1001 system \
 FROM build AS deps
 
 ARG DOMAIN
+ARG BUILD_TIME
 
 ENV NEXT_PUBLIC_LEARNHOUSE_API_URL=https://${DOMAIN}/api/v1/
 ENV NEXT_PUBLIC_LEARNHOUSE_BASE_URL=https://${DOMAIN}
@@ -19,6 +20,7 @@ ENV NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL=http://${DOMAIN}
 ENV NEXT_PUBLIC_LEARNHOUSE_DOMAIN=https://${DOMAIN}
 ENV NEXT_PUBLIC_LEARNHOUSE_MEDIA_URL=https://${DOMAIN}/
 ENV NEXT_PUBLIC_LEARNHOUSE_HTTPS=true
+ENV NEXT_PUBLIC_BUILD_TIME=${BUILD_TIME}
 
 COPY ./apps/web/ /app/web
 WORKDIR /app/web
@@ -46,6 +48,8 @@ COPY --from=deps /app/web/public ./public
 COPY --from=deps --chown=app:system /app/web/.next/standalone ./
 COPY --from=deps --chown=app:system /app/web/.next/static ./.next/static
 ARG DOMAIN
+ARG BUILD_TIME
 ENV NEXT_PUBLIC_LEARNHOUSE_DOMAIN=https://${DOMAIN}
+ENV NEXT_PUBLIC_BUILD_TIME=${BUILD_TIME}
 COPY ./extra/start.sh start.sh
 CMD ["sh", "start.sh"]
