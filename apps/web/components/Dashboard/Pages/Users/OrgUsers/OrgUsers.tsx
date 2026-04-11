@@ -8,7 +8,9 @@ import Toast from '@components/Objects/StyledElements/Toast/Toast'
 import { getAPIUrl } from '@services/config/config'
 import { removeUserFromOrg } from '@services/organizations/orgs'
 import { swrFetcher } from '@services/utils/ts/requests'
-import { KeyRound, LogOut } from 'lucide-react'
+import { KeyRound, LogOut, ScanEye } from 'lucide-react'
+import { signIn } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import React, { useEffect } from 'react'
 import toast from 'react-hot-toast'
 import useSWR, { mutate } from 'swr'
@@ -16,6 +18,7 @@ import useSWR, { mutate } from 'swr'
 function OrgUsers() {
   const org = useOrg() as any
   const session = useSokratesSession() as any;
+  const router = useRouter()
   const access_token = session?.data?.tokens?.access_token;
   const { data: orgUsers } = useSWR(
     org ? `${getAPIUrl()}orgs/${org?.id}/users` : null,
@@ -24,6 +27,7 @@ function OrgUsers() {
   const [rolesModal, setRolesModal] = React.useState(false)
   const [selectedUser, setSelectedUser] = React.useState(null) as any
   const [isLoading, setIsLoading] = React.useState(true)
+  const [impersonatingUserId, setImpersonatingUserId] = React.useState<number | null>(null)
 
   const handleRolesModal = (user_uuid: any) => {
     setSelectedUser(user_uuid)
@@ -37,6 +41,30 @@ function OrgUsers() {
     } else {
       toast.error('Error ' + res.status + ': ' + res.data.detail)
     }
+  }
+
+  const handleImpersonateUser = async (user_id: number) => {
+    if (!access_token || !org?.id) {
+      toast.error('Unable to impersonate: missing session or organization.')
+      return
+    }
+
+    setImpersonatingUserId(user_id)
+    const res = await signIn('credentials', {
+      redirect: false,
+      impersonate_user_id: user_id,
+      org_id: org.id,
+      admin_access_token: access_token,
+      callbackUrl: '/redirect_from_auth',
+    })
+
+    if (res?.error) {
+      toast.error('Impersonation failed. Please try again.')
+      setImpersonatingUserId(null)
+      return
+    }
+
+    router.push('/redirect_from_auth')
   }
 
   useEffect(() => {
@@ -88,6 +116,19 @@ function OrgUsers() {
                       </td>
                       <td className="py-3 px-4">{user.role.name}</td>
                       <td className="py-3 px-4 flex space-x-2 items-end">
+                        <button
+                          type="button"
+                          className="flex space-x-2 hover:cursor-pointer p-1 px-3 bg-blue-700 rounded-md font-bold items-center text-sm text-blue-100 disabled:opacity-60 disabled:cursor-not-allowed"
+                          onClick={() => handleImpersonateUser(user.user.id)}
+                          disabled={impersonatingUserId === user.user.id}
+                        >
+                          <ScanEye className="w-4 h-4" />
+                          <span>
+                            {impersonatingUserId === user.user.id
+                              ? 'Impersonating...'
+                              : 'Impersonate'}
+                          </span>
+                        </button>
                         <Modal
                           isDialogOpen={
                             rolesModal && selectedUser === user.user.user_uuid

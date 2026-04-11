@@ -3,8 +3,10 @@ from typing import Literal, Optional
 from fastapi import Depends, APIRouter, HTTPException, Response, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr
-from sqlmodel import Session
-from src.db.users import AnonymousUser, UserRead
+from sqlmodel import Session, select
+from src.db.users import AnonymousUser, PublicUser, User, UserRead
+from src.db.roles import Role
+from src.db.user_organizations import UserOrganization
 from src.core.events.database import get_db_session
 from config.config import get_learnhouse_config
 from src.security.auth import AuthJWT, authenticate_user, get_current_user
@@ -83,6 +85,12 @@ class ThirdPartyLogin(BaseModel):
     access_token: str
 
 
+class ImpersonateRequest(BaseModel):
+    org_id: int
+    user_id: Optional[int] = None
+    user_uuid: Optional[str] = None
+
+
 @router.post("/oauth")
 async def third_party_login(
     request: Request,
@@ -127,6 +135,90 @@ async def third_party_login(
         "tokens": {"access_token": access_token, "refresh_token": refresh_token},
     }
     return result
+
+
+@router.post("/impersonate")
+async def impersonate_user(
+    request: Request,
+    response: Response,
+    body: ImpersonateRequest,
+    Authorize: AuthJWT = Depends(),
+    db_session: Session = Depends(get_db_session),
+    current_user: PublicUser = Depends(get_current_user),
+):
+    Authorize.jwt_required()
+
+    if isinstance(current_user, AnonymousUser):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+
+    admin_org_statement = select(UserOrganization).where(
+        UserOrganization.user_id == current_user.id,
+        UserOrganization.org_id == body.org_id,
+    )
+    admin_org = db_session.exec(admin_org_statement).first()
+
+    if not admin_org:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized for this organization",
+        )
+
+    role_statement = select(Role).where(Role.id == admin_org.role_id)
+    role = db_session.exec(role_statement).first()
+
+    if not role or (role.id != 1 and role.role_uuid != "role_global_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to impersonate users",
+        )
+
+    target_user = None
+    if body.user_id is not None:
+        target_user = db_session.exec(select(User).where(User.id == body.user_id)).first()
+    elif body.user_uuid:
+        target_user = db_session.exec(
+            select(User).where(User.user_uuid == body.user_uuid)
+        ).first()
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="user_id or user_uuid is required",
+        )
+
+    if not target_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
+
+    target_org = db_session.exec(
+        select(UserOrganization).where(
+            UserOrganization.user_id == target_user.id,
+            UserOrganization.org_id == body.org_id,
+        )
+    ).first()
+
+    if not target_org:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User is not in this organization",
+        )
+
+    access_token = Authorize.create_access_token(subject=target_user.email)
+    refresh_token = Authorize.create_refresh_token(subject=target_user.email)
+    Authorize.set_refresh_cookies(refresh_token)
+
+    response.set_cookie(
+        key="access_token_cookie",
+        value=access_token,
+        httponly=False,
+        domain=get_learnhouse_config().hosting_config.cookie_config.domain,
+        expires=int(timedelta(hours=8).total_seconds()),
+    )
+
+    target_user_read = UserRead.model_validate(target_user)
+
+    return {
+        "user": target_user_read,
+        "tokens": {"access_token": access_token, "refresh_token": refresh_token},
+    }
 
 
 @router.delete("/logout")

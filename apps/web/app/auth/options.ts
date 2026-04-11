@@ -3,6 +3,7 @@ import {
 	getUserSession,
 	loginAndGetToken,
 	loginWithOAuthToken,
+	impersonateUser,
 } from '@services/auth/auth'
 import { LEARNHOUSE_TOP_DOMAIN, getUriWithOrg } from '@services/config/config'
 import { getResponseMetadata } from '@services/utils/ts/requests'
@@ -32,6 +33,31 @@ export const nextAuthOptions = {
 				password: { label: 'Password', type: 'password' },
 			},
 			async authorize(credentials, req) {
+				const isImpersonationRequest =
+					Boolean(credentials?.impersonate_user_id) &&
+					Boolean(credentials?.admin_access_token)
+
+				if (isImpersonationRequest) {
+					const orgId = Number(credentials?.org_id)
+					const userId = Number(credentials?.impersonate_user_id)
+
+					if (!Number.isFinite(orgId) || !Number.isFinite(userId)) {
+						return null
+					}
+
+					let unsanitized_req = await impersonateUser(
+						credentials?.admin_access_token,
+						orgId,
+						userId
+					)
+					let res = await getResponseMetadata(unsanitized_req)
+					if (res.success) {
+						return res.data
+					} else {
+						return null
+					}
+				}
+
 				// logic to verify if user exists
 				let unsanitized_req = await loginAndGetToken(
 					credentials?.email,

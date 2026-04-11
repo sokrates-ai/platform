@@ -69,6 +69,33 @@ export async function loginWithOAuthToken(
   return response
 }
 
+export async function impersonateUser(
+  adminAccessToken: string,
+  orgId: number,
+  userId?: number,
+  userUuid?: string
+): Promise<any> {
+  const HeadersConfig = new Headers({
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${adminAccessToken}`,
+  })
+  const body = {
+    org_id: orgId,
+    user_id: userId,
+    user_uuid: userUuid,
+  }
+
+  const requestOptions: any = {
+    method: 'POST',
+    headers: HeadersConfig,
+    body: JSON.stringify(body),
+    redirect: 'follow',
+    credentials: 'include',
+  }
+
+  return fetch(`${getAPIUrl()}auth/impersonate`, requestOptions)
+}
+
 export async function sendResetLink(email: string, org_id: number) {
   const result = await fetch(
     `${getAPIUrl()}users/reset_password/send_reset_code/${email}?org_id=${org_id}`,
