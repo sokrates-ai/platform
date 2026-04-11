@@ -101,79 +101,83 @@ function OrgUsers() {
               </thead>
               <>
                 <tbody className="mt-5 bg-white rounded-md">
-                  {orgUsers?.map((user: any) => (
-                    <tr
-                      key={user.user.id}
-                      className="border-b border-gray-200 border-dashed"
-                    >
-                      <td className="py-3 px-4 flex space-x-2 items-center">
-                        <span>
-                          {user.user.first_name + ' ' + user.user.last_name}
-                        </span>
-                        <span className="text-xs bg-neutral-100 p-1 px-2 rounded-full text-neutral-400 font-semibold">
-                          @{user.user.username}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">{user.role.name}</td>
-                      <td className="py-3 px-4 flex space-x-2 items-end">
-                        <button
-                          type="button"
-                          className="flex space-x-2 hover:cursor-pointer p-1 px-3 bg-blue-700 rounded-md font-bold items-center text-sm text-blue-100 disabled:opacity-60 disabled:cursor-not-allowed"
-                          onClick={() => handleImpersonateUser(user.user.id)}
-                          disabled={impersonatingUserId === user.user.id}
-                        >
-                          <ScanEye className="w-4 h-4" />
-                          <span>
-                            {impersonatingUserId === user.user.id
-                              ? 'Impersonating...'
-                              : 'Impersonate'}
+                  {orgUsers?.map((user: any) => {
+                    const firstName = user?.user?.first_name?.trim?.() ?? ''
+                    const lastName = user?.user?.last_name?.trim?.() ?? ''
+                    const fullName = `${firstName} ${lastName}`.trim()
+                    const displayName = fullName.length > 0 ? fullName : user?.user?.username
+                    return (
+                      <tr
+                        key={user.user.id}
+                        className="border-b border-gray-200 border-dashed"
+                      >
+                        <td className="py-3 px-4 flex space-x-2 items-center">
+                          <span>{displayName}</span>
+                          <span className="text-xs bg-neutral-100 p-1 px-2 rounded-full text-neutral-400 font-semibold">
+                            @{user.user.username}
                           </span>
-                        </button>
-                        <Modal
-                          isDialogOpen={
-                            rolesModal && selectedUser === user.user.user_uuid
-                          }
-                          onOpenChange={() =>
-                            handleRolesModal(user.user.user_uuid)
-                          }
-                          minHeight="no-min"
-                          dialogContent={
-                            <RolesUpdate
-                              alreadyAssignedRole={user.role.role_uuid}
-                              setRolesModal={setRolesModal}
-                              user={user}
-                            />
-                          }
-                          dialogTitle="Update Role"
-                          dialogDescription={
-                            'Update @' + user.user.username + "'s role"
-                          }
-                          dialogTrigger={
-                            <button className="flex space-x-2 hover:cursor-pointer p-1 px-3 bg-yellow-700 rounded-md font-bold items-center text-sm text-yellow-100">
-                              <KeyRound className="w-4 h-4" />
-                              <span> Edit Role</span>
-                            </button>
-                          }
-                        />
+                        </td>
+                        <td className="py-3 px-4">{user.role.name}</td>
+                        <td className="py-3 px-4 flex space-x-2 items-end">
+                          <button
+                            type="button"
+                            className="flex space-x-2 hover:cursor-pointer p-1 px-3 bg-blue-700 rounded-md font-bold items-center text-sm text-blue-100 disabled:opacity-60 disabled:cursor-not-allowed"
+                            onClick={() => handleImpersonateUser(user.user.id)}
+                            disabled={impersonatingUserId === user.user.id}
+                          >
+                            <ScanEye className="w-4 h-4" />
+                            <span>
+                              {impersonatingUserId === user.user.id
+                                ? 'Impersonating...'
+                                : 'Impersonate'}
+                            </span>
+                          </button>
+                          <Modal
+                            isDialogOpen={
+                              rolesModal && selectedUser === user.user.user_uuid
+                            }
+                            onOpenChange={() =>
+                              handleRolesModal(user.user.user_uuid)
+                            }
+                            minHeight="no-min"
+                            dialogContent={
+                              <RolesUpdate
+                                alreadyAssignedRole={user.role.role_uuid}
+                                setRolesModal={setRolesModal}
+                                user={user}
+                              />
+                            }
+                            dialogTitle="Update Role"
+                            dialogDescription={
+                              'Update @' + user.user.username + "'s role"
+                            }
+                            dialogTrigger={
+                              <button className="flex space-x-2 hover:cursor-pointer p-1 px-3 bg-yellow-700 rounded-md font-bold items-center text-sm text-yellow-100">
+                                <KeyRound className="w-4 h-4" />
+                                <span> Edit Role</span>
+                              </button>
+                            }
+                          />
 
-                        <ConfirmationModal
-                          confirmationButtonText="Remove User"
-                          confirmationMessage="Are you sure you want remove this user from the organization?"
-                          dialogTitle={'Delete ' + user.user.username + ' ?'}
-                          dialogTrigger={
-                            <button className="mr-2 flex space-x-2 hover:cursor-pointer p-1 px-3 bg-rose-700 rounded-md font-bold items-center text-sm text-rose-100">
-                              <LogOut className="w-4 h-4" />
-                              <span> Remove from organization</span>
-                            </button>
-                          }
-                          functionToExecute={() => {
-                            handleRemoveUser(user.user.id)
-                          }}
-                          status="warning"
-                        ></ConfirmationModal>
-                      </td>
-                    </tr>
-                  ))}
+                          <ConfirmationModal
+                            confirmationButtonText="Remove User"
+                            confirmationMessage="Are you sure you want remove this user from the organization?"
+                            dialogTitle={'Delete ' + user.user.username + ' ?'}
+                            dialogTrigger={
+                              <button className="mr-2 flex space-x-2 hover:cursor-pointer p-1 px-3 bg-rose-700 rounded-md font-bold items-center text-sm text-rose-100">
+                                <LogOut className="w-4 h-4" />
+                                <span> Remove from organization</span>
+                              </button>
+                            }
+                            functionToExecute={() => {
+                              handleRemoveUser(user.user.id)
+                            }}
+                            status="warning"
+                          ></ConfirmationModal>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </>
             </table>
