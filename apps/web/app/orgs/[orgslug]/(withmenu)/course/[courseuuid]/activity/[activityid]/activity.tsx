@@ -204,7 +204,6 @@ function ActivityClient(props: ActivityClientProps) {
                             </>
                           )}
                         </div>
-                      )}
                     </>
                   )}
                 </>
