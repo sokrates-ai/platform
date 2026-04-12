@@ -31,6 +31,10 @@ export const nextAuthOptions = {
 			credentials: {
 				email: { label: 'Email', type: 'text', placeholder: 'jsmith' },
 				password: { label: 'Password', type: 'password' },
+				// Used for admin impersonation flows; not shown on default sign-in UI.
+				impersonate_user_id: { type: 'hidden' },
+				admin_access_token: { type: 'hidden' },
+				org_id: { type: 'hidden' },
 			},
 			async authorize(credentials, req) {
 				const isImpersonationRequest =
@@ -38,15 +42,16 @@ export const nextAuthOptions = {
 					Boolean(credentials?.admin_access_token)
 
 				if (isImpersonationRequest) {
+					const adminAccessToken = credentials?.admin_access_token
 					const orgId = Number(credentials?.org_id)
 					const userId = Number(credentials?.impersonate_user_id)
 
-					if (!Number.isFinite(orgId) || !Number.isFinite(userId)) {
+					if (!adminAccessToken || !Number.isFinite(orgId) || !Number.isFinite(userId)) {
 						return null
 					}
 
 					let unsanitized_req = await impersonateUser(
-						credentials?.admin_access_token,
+						adminAccessToken,
 						orgId,
 						userId
 					)

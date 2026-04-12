@@ -1,4 +1,3 @@
-import { useSokratesSession } from "@components/Contexts/SokratesSessionContext";
 import { getUriWithOrg } from "@services/config/config";
 import { getUserAvatarMediaDirectory } from "@services/media/media";
 
