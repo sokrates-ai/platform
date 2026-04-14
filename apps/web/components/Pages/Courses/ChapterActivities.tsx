@@ -268,6 +268,32 @@ export default function ChapterActivities({
 			: 'available'
 	}
 
+	useEffect(() => {
+		if (activities.length !== 1) return
+		const activity = activities[0]
+		if (!isDynamicActivity(activity)) return
+		if (stateOf(0) === 'locked') return
+		if (
+			selectedId === activity.id &&
+			(dynamicActivity || isLoadingDynamic || dynamicError)
+		) {
+			return
+		}
+		handleActivityStart(activity)
+	}, [
+		activities,
+		dynamicActivity,
+		dynamicError,
+		isLoadingDynamic,
+		selectedId,
+		handleActivityStart,
+		stateOf,
+		effectiveTabId,
+		activityTabIndex,
+		fallbackTabId,
+		course,
+	])
+
 	return (
 		<div className="space-y-4 mt-4 sm:mt-12 mx-0 sm:mx-16">
 			<div className="relative">
@@ -315,7 +341,17 @@ export default function ChapterActivities({
 						<div
 							key={activity.activity_uuid ?? activity.id ?? idx}
 							className="relative flex gap-4 cursor-pointer"
-							onClick={() => setSelectedId(activity.id)}
+							onClick={() => {
+								if (isDynamicActivity(activity)) {
+									if (state !== 'locked') {
+										handleActivityStart(activity)
+									} else {
+										setSelectedId(activity.id)
+									}
+								} else {
+									setSelectedId(activity.id)
+								}
+							}}
 						>
 							<ChapterActivity
 								activity={activity}

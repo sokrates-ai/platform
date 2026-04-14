@@ -36,14 +36,15 @@ type DialogContentProps = React.ComponentPropsWithoutRef<
 > & {
   /** Enable subtle repeating background pattern behind the dialog's body */
   pattern?: boolean
+  overlayClassName?: string
 }
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ pattern = false, className, children, ...props }, ref) => (
+>(({ pattern = false, overlayClassName, className, children, ...props }, ref) => (
   <DialogPortal>
-    <DialogOverlay aria-hidden="true" />
+    <DialogOverlay aria-hidden="true" className={overlayClassName} />
 
     {/* A flex wrapper keeps the content centred & adds adaptive gutter */}
     <div className="fixed inset-0 z-50 flex items-center justify-center">

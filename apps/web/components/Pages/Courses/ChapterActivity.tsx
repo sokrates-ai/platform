@@ -49,6 +49,9 @@ export default function ChapterActivity({
   const isFreeSelect =
     activity.activity_type === 'TYPE_WORKSPACE' &&
     activity.content?.task_ids?.length > 1
+  const isDynamicActivity =
+    activity?.activity_type === 'TYPE_DYNAMIC' ||
+    activity?.activity_sub_type === 'SUBTYPE_DYNAMIC_PAGE'
 
   const courseUuid = course.course_uuid.replace('course_', '')
   const activityUuid = activity.activity_uuid.replace('activity_', '')
@@ -281,7 +284,7 @@ export default function ChapterActivity({
         </p>
       </div>
 
-      {state !== 'locked' && (
+      {state !== 'locked' && !isDynamicActivity && (
         <Link
           href={activityUrl}
           prefetch={false}

@@ -648,8 +648,9 @@ const CourseStartedView = ({
       <Modal
         isDialogOpen={chapterDialogOpen}
         onOpenChange={setChapterDialogOpen}
-        customWidth="w-[95vw] max-w-[62.4375rem]"
-        customHeight="h-[60vh] max-h-[35rem]" 
+        customWidth="w-[80vw] max-w-[80vw]"
+        customHeight="h-[80vh] max-h-[80vh]"
+        overlayClassName="backdrop-blur-sm"
         dialogContent={<CourseChapter
           course={course}
           courseId={courseIdWithoutPrefix}
@@ -667,8 +668,9 @@ const CourseStartedView = ({
             setSelectedImage(null)
           }
         }}
-        customWidth="w-[95vw] max-w-[62.4375rem] p-0 gap-0 overflow-hidden"
-        customHeight="h-[60vh] max-h-[35rem] p-0"
+        customWidth="w-[80vw] max-w-[80vw] p-0 gap-0 overflow-hidden"
+        customHeight="h-[80vh] max-h-[80vh] p-0"
+        overlayClassName="backdrop-blur-sm"
         dialogContent={
           selectedImage ? (
             <div className="h-full w-full">

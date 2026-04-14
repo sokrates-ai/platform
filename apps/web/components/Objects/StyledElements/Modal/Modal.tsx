@@ -18,6 +18,7 @@ type ModalParams = {
   minWidth?: 'sm' | 'md' | 'lg' | 'xl' | 'no-min'
   customHeight?: string
   customWidth?: string
+  overlayClassName?: string
 }
 
 const Modal = (params: ModalParams) => {
@@ -58,7 +59,7 @@ const Modal = (params: ModalParams) => {
       {params.dialogTrigger && (
         <DialogTrigger asChild>{params.dialogTrigger}</DialogTrigger>
       )}
-      <DialogContent pattern={false} className={cn(
+      <DialogContent pattern={false} overlayClassName={params.overlayClassName} className={cn(
         "overflow-auto",
         getMinHeight(),
         getMinWidth(),
