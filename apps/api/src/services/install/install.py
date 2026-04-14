@@ -295,11 +295,11 @@ def install_default_elements(db_session: Session):
         update_date=str(datetime.now()),
     )
 
-    role_global_user = Role(
-        name="User",
-        description="Standard User Role",
+    role_global_student = Role(
+        name="Student",
+        description="Standard Student Role",
         role_type=RoleTypeEnum.TYPE_GLOBAL,
-        role_uuid="role_global_user",
+        role_uuid="role_global_student",
         id=3,
         rights=Rights(
             courses=Permission(
@@ -353,13 +353,13 @@ def install_default_elements(db_session: Session):
     role_global_admin.rights = role_global_admin.rights.dict()  # type: ignore
     role_global_maintainer.rights = role_global_maintainer.rights.dict()  # type: ignore
     role_global_tutor.rights = role_global_tutor.rights.dict()  # type: ignore
-    role_global_user.rights = role_global_user.rights.dict()  # type: ignore
+    role_global_student.rights = role_global_student.rights.dict()  # type: ignore
 
     # Insert roles in DB
     db_session.add(role_global_admin)
     db_session.add(role_global_maintainer)
     db_session.add(role_global_tutor)
-    db_session.add(role_global_user)
+    db_session.add(role_global_student)
 
     # commit changes
     db_session.commit()

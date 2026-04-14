@@ -74,15 +74,6 @@ export const AvatarDropdownMenu = ({
             )}
 
             {isUserAdmin?.isAdmin && (
-              <Link href={"/dash/users/settings/users"}>
-                <DropdownMenuItem>
-                  <Users size={14} className="mr-2" />
-                  Users
-                </DropdownMenuItem>
-              </Link>
-            )}
-
-            {isUserAdmin?.isAdmin && (
               <Link href={"/dash/admin"}>
                 <DropdownMenuItem>
                   <Shield size={14} className="mr-2" />

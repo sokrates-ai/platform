@@ -4,6 +4,13 @@ from sqlmodel import Session
 from src.db.users import PublicUser
 from src.core.events.database import get_db_session
 from src.db.courses.course_canvas import CourseCanvasUpdate
+from src.db.courses.course_rooms import (
+    CourseRoomCreate,
+    CourseRoomMemberRead,
+    CourseRoomRead,
+    CourseRoomUpdate,
+    RoomRoleEnum,
+)
 from src.db.courses.course_updates import (
     CourseUpdateCreate,
     CourseUpdateRead,
@@ -19,6 +26,15 @@ from src.db.courses.chapters import ChapterRead
 from src.security.auth import get_current_user
 from src.services.courses.course_canvas import get_canvas, put_update
 from src.services.courses.students import list_course_students, CourseStudent
+from src.services.courses.rooms import (
+    add_course_room_members,
+    create_course_room,
+    delete_course_room,
+    list_course_room_members,
+    list_course_rooms,
+    remove_course_room_members,
+    update_course_room,
+)
 from src.services.courses.courses import (
     create_course,
     get_course,
@@ -306,4 +322,119 @@ async def api_list_course_students(
     """
     return await list_course_students(
         request, course_uuid, current_user, db_session
+    )
+
+
+@router.get('/{course_uuid}/rooms')
+async def api_list_course_rooms(
+    request: Request,
+    course_uuid: str,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+) -> List[CourseRoomRead]:
+    """
+    List rooms for a course.
+    """
+    return await list_course_rooms(
+        request, course_uuid, current_user, db_session
+    )
+
+
+@router.post('/{course_uuid}/rooms')
+async def api_create_course_room(
+    request: Request,
+    course_uuid: str,
+    room_object: CourseRoomCreate,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+) -> CourseRoomRead:
+    """
+    Create a new room for a course.
+    """
+    return await create_course_room(
+        request, course_uuid, room_object, current_user, db_session
+    )
+
+
+@router.put('/{course_uuid}/rooms/{room_id}')
+async def api_update_course_room(
+    request: Request,
+    course_uuid: str,
+    room_id: int,
+    room_object: CourseRoomUpdate,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+) -> CourseRoomRead:
+    """
+    Update a course room.
+    """
+    return await update_course_room(
+        request, course_uuid, room_id, room_object, current_user, db_session
+    )
+
+
+@router.delete('/{course_uuid}/rooms/{room_id}')
+async def api_delete_course_room(
+    request: Request,
+    course_uuid: str,
+    room_id: int,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+):
+    """
+    Delete a course room.
+    """
+    return await delete_course_room(
+        request, course_uuid, room_id, current_user, db_session
+    )
+
+
+@router.get('/{course_uuid}/rooms/{room_id}/members')
+async def api_list_course_room_members(
+    request: Request,
+    course_uuid: str,
+    room_id: int,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+) -> List[CourseRoomMemberRead]:
+    """
+    List members of a course room.
+    """
+    return await list_course_room_members(
+        request, course_uuid, room_id, current_user, db_session
+    )
+
+
+@router.post('/{course_uuid}/rooms/{room_id}/members/add')
+async def api_add_course_room_members(
+    request: Request,
+    course_uuid: str,
+    room_id: int,
+    user_ids: str,
+    role: RoomRoleEnum,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+):
+    """
+    Add users to a course room.
+    """
+    return await add_course_room_members(
+        request, course_uuid, room_id, user_ids, role, current_user, db_session
+    )
+
+
+@router.delete('/{course_uuid}/rooms/{room_id}/members/remove')
+async def api_remove_course_room_members(
+    request: Request,
+    course_uuid: str,
+    room_id: int,
+    user_ids: str,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+):
+    """
+    Remove users from a course room.
+    """
+    return await remove_course_room_members(
+        request, course_uuid, room_id, user_ids, current_user, db_session
     )

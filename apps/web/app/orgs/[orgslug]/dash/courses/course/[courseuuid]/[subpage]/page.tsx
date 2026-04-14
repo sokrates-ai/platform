@@ -10,12 +10,13 @@ import {
 import Link from 'next/link'
 import { CourseOverviewTop } from '@components/Dashboard/Misc/CourseOverviewTop'
 import { motion } from 'framer-motion'
-import { GalleryVerticalEnd, Map, Info, UserRoundCog, Users } from 'lucide-react'
+import { GalleryVerticalEnd, Map, Info, LayoutGrid, UserRoundCog, Users } from 'lucide-react'
 import EditCourseStructure from '@components/Dashboard/Pages/Course/EditCourseStructure/EditCourseStructure'
 import EditCourseGeneral from '@components/Dashboard/Pages/Course/EditCourseGeneral/EditCourseGeneral'
 import EditCourseAccess from '@components/Dashboard/Pages/Course/EditCourseAccess/EditCourseAccess'
 import EditCourseMap from '@components/Dashboard/Pages/Course/EditCourseMap/EditCourseMap'
 import ManageCourseMembers from '@components/Dashboard/Pages/Course/ManageCourseMembers/ManageCourseMembers'
+import ManageCourseRooms from '@components/Dashboard/Pages/Course/ManageCourseRooms/ManageCourseRooms'
 import {
   CourseTab,
   DEFAULT_COURSE_TABS,
@@ -399,6 +400,12 @@ function CourseOverviewLayout({ params }: { params: CourseOverviewParams }) {
             icon={<Users size={16} />}
             label="Students"
           />
+          <NavigationLink
+            href={`${getUriWithOrg(params.orgslug, '')}/dash/courses/course/${params.courseuuid}/rooms`}
+            active={params.subpage.toString() === 'rooms'}
+            icon={<LayoutGrid size={16} />}
+            label="Rooms"
+          />
         </div>
       </div>
       <motion.div
@@ -439,6 +446,7 @@ function CourseOverviewLayout({ params }: { params: CourseOverviewParams }) {
         {params.subpage === 'students' ? (
           <ManageCourseMembers orgslug={params.orgslug} />
         ) : null}
+        {params.subpage === 'rooms' ? <ManageCourseRooms /> : null}
       </motion.div>
     </>
   )
