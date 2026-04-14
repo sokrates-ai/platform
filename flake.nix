@@ -28,6 +28,7 @@
             pkgs.stdenv.cc.cc.lib
             pkgs.pnpm
             pkgs.pm2
+            pkgs.python3Packages.requests
         ];
 
         LD_LIBRARY_PATH = "${pkgs.stdenv.cc.cc.lib}/lib";

@@ -169,7 +169,9 @@ function ActivityClient(props: ActivityClientProps) {
                     <>
                       <div className="rounded-lg bg-card p-6">
                         {activity.activity_type === 'TYPE_DYNAMIC' && (
-                          <Canva content={activity.content} activity={activity} />
+                          <div className="text-lg sm:text-[1.15rem] lg:text-[1.25rem] leading-relaxed text-slate-900">
+                            <Canva content={activity.content} activity={activity} />
+                          </div>
                         )}
                         {activity.activity_type === 'TYPE_VIDEO' && (
                           <VideoActivity course={course} activity={activity} />

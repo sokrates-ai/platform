@@ -29,7 +29,7 @@ function CourseChapter(props: Props) {
     <div className="flex flex-col h-full">
 
       {!chapterLocked ? (
-        <div className="z-10 flex justify-between items-center px-8 sm:px-16 py-4 sm:py-6 border-b-[#707070] border-b-4 bg-[#EBEBEB]">
+        <div className="z-10 flex justify-between items-center px-5 sm:px-8 lg:px-10 xl:px-16 py-4 sm:py-6 border-b-[#707070] border-b-4 bg-[#EBEBEB]">
           <div>
             <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-[#3C3C3C]">
               {chapter.name}

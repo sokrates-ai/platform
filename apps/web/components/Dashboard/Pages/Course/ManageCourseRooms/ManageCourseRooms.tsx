@@ -27,6 +27,7 @@ import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationMo
 import { Button } from '@components/ui/button'
 import { useFormik } from 'formik'
 import { DragDropContext, Draggable, Droppable, type DropResult } from 'react-beautiful-dnd'
+import TabSwitch from '@components/Objects/StyledElements/TabSwitch/TabSwitch'
 
 const validateRoom = (values: any) => {
   const errors: any = {}
@@ -541,28 +542,14 @@ function RoomMembersManager({
           </p>
         </div>
         <div className="flex justify-center">
-          <div className="flex items-center gap-2 rounded-full border-2 border-SokratesGrayBorder bg-SokratesLightGray/60 p-1 shadow-[0_2px_0_0_var(--color-SokratesBlackBoxShadow)]">
-            <button
-              className={`rounded-full px-5 py-1 text-sm font-semibold transition ${
-                activeRole === 'student'
-                  ? 'bg-orange-500 text-white shadow-[0_2px_0_0_rgba(0,0,0,0.2)]'
-                  : 'text-SokratesGrayText hover:text-SokratesBlack'
-              }`}
-              onClick={() => setActiveRole('student')}
-            >
-              Students
-            </button>
-            <button
-              className={`rounded-full px-5 py-1 text-sm font-semibold transition ${
-                activeRole === 'tutor'
-                  ? 'bg-orange-500 text-white shadow-[0_2px_0_0_rgba(0,0,0,0.2)]'
-                  : 'text-SokratesGrayText hover:text-SokratesBlack'
-              }`}
-              onClick={() => setActiveRole('tutor')}
-            >
-              Tutors
-            </button>
-          </div>
+          <TabSwitch
+            value={activeRole}
+            onValueChange={(value) => setActiveRole(value as 'student' | 'tutor')}
+            options={[
+              { value: 'student', label: 'Students' },
+              { value: 'tutor', label: 'Tutors' },
+            ]}
+          />
         </div>
       </div>
       <div className="flex-1 min-h-0">

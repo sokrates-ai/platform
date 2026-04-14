@@ -148,6 +148,9 @@ const CanvaWrapper = styled.div`
   // disable chrome outline
 
   .ProseMirror {
+    color: #1f1f1f;
+    line-height: 1.6;
+
     // Workaround to disable editor from being edited by the user.
     caret-color: transparent;
 

@@ -295,7 +295,7 @@ export default function ChapterActivities({
 	])
 
 	return (
-		<div className="space-y-4 mt-4 sm:mt-12 mx-0 sm:mx-16">
+		<div className="space-y-4 mt-4 sm:mt-12 mx-0 sm:mx-6 lg:mx-8 xl:mx-16">
 			<div className="relative">
 				{activities.map((activity: any, idx: number) => {
 					const state = stateOf(idx)
@@ -384,7 +384,7 @@ export default function ChapterActivities({
 			</div>
 
 			{shouldShowDynamicPreview && (
-				<div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-4">
+				<div className="rounded-2xl border-2 border-gray-300 bg-white shadow-sm p-4">
 					<div className="mb-4">
 						<h3 className="text-lg font-semibold text-gray-900">
 							{selectedActivity?.name ?? 'Dynamic Page'}
@@ -395,7 +395,7 @@ export default function ChapterActivities({
 							</p>
 						)}
 					</div>
-					<div className="max-h-[420px] overflow-y-auto rounded-xl border border-gray-100 bg-gray-50">
+					<div className="max-h-[420px] overflow-y-auto rounded-xl border border-gray-200 bg-gray-50">
 						{isLoadingDynamic && (
 							<div className="flex items-center justify-center py-16 text-sm text-muted-foreground">
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -406,10 +406,12 @@ export default function ChapterActivities({
 							<div className="p-4 text-sm text-red-600">{dynamicError}</div>
 						)}
 						{!isLoadingDynamic && !dynamicError && dynamicActivity && (
-							<Canva
-								activity={dynamicActivity}
-								content={dynamicActivity.content}
-							/>
+							<div className="text-lg sm:text-[1.15rem] lg:text-[1.25rem] leading-relaxed text-slate-900">
+								<Canva
+									activity={dynamicActivity}
+									content={dynamicActivity.content}
+								/>
+							</div>
 						)}
 					</div>
 				</div>

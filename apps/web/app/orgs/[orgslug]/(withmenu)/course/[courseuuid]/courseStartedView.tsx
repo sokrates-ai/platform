@@ -511,6 +511,14 @@ const CourseStartedView = ({
       if (Number.isFinite(parsed)) {
         targetScale = clampScale(parsed)
       }
+    } else if (typeof window !== 'undefined') {
+      const isTablet =
+        window.matchMedia('(min-width: 768px) and (max-width: 1180px)')
+          .matches
+      const isMobile = window.matchMedia('(max-width: 767px)').matches
+      if (isTablet || isMobile) {
+        targetScale = clampScale(0.3)
+      }
     }
 
     initialZoomRef.current = targetScale
@@ -648,8 +656,8 @@ const CourseStartedView = ({
       <Modal
         isDialogOpen={chapterDialogOpen}
         onOpenChange={setChapterDialogOpen}
-        customWidth="w-[80vw] max-w-[80vw]"
-        customHeight="h-[80vh] max-h-[80vh]"
+        customWidth="w-screen max-w-screen rounded-none border-0 sm:w-[80vw] sm:max-w-[80vw] sm:rounded-[0.875rem] sm:border-4 md:w-[90vw] md:max-w-[90vw] lg:w-[90vw] lg:max-w-[90vw] xl:w-[60vw] xl:max-w-[60vw]"
+        customHeight="h-[100dvh] max-h-[100dvh] sm:h-[75vh] sm:max-h-[75vh] md:h-[90vh] md:max-h-[90vh] lg:h-[90vh] lg:max-h-[90vh] xl:h-[60vh] xl:max-h-[60vh]"
         overlayClassName="backdrop-blur-sm"
         dialogContent={<CourseChapter
           course={course}
@@ -668,8 +676,8 @@ const CourseStartedView = ({
             setSelectedImage(null)
           }
         }}
-        customWidth="w-[80vw] max-w-[80vw] p-0 gap-0 overflow-hidden"
-        customHeight="h-[80vh] max-h-[80vh] p-0"
+        customWidth="w-screen max-w-screen rounded-none border-0 p-0 gap-0 overflow-hidden sm:w-[80vw] sm:max-w-[80vw] sm:rounded-[0.875rem] sm:border-4 lg:w-[60vw] lg:max-w-[60vw]"
+        customHeight="h-[100dvh] max-h-[100dvh] sm:h-[75vh] sm:max-h-[75vh] lg:h-[60vh] lg:max-h-[60vh] p-0"
         overlayClassName="backdrop-blur-sm"
         dialogContent={
           selectedImage ? (
