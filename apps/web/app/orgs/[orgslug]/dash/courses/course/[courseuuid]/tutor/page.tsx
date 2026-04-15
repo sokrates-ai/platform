@@ -824,7 +824,7 @@ function SelectedRoomPanel({
     : null
 
   return (
-    <div className="min-h-[calc(100vh-200px)] rounded-2xl bg-white p-8 shadow-[0_18px_45px_rgba(15,23,42,0.12)] flex flex-col">
+    <div className="relative flex min-h-[calc(100vh-200px)] flex-col rounded-2xl bg-white p-8 shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="text-2xl font-semibold text-gray-900">{room.name}</div>
         <div className="flex flex-wrap gap-2 text-xs font-semibold">
@@ -864,7 +864,7 @@ function SelectedRoomPanel({
       <div className="mt-4 flex-1">
         {!selectedStudent ? (
           <div className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200">
-            <div className="flex-1 overflow-auto bg-white">
+          <div className="flex-1 overflow-auto bg-white pb-24">
               {isLoading ? (
                 <div className="px-4 py-6 text-sm text-gray-500">
                   Loading students...
@@ -910,9 +910,10 @@ function SelectedRoomPanel({
                         </div>
                         <div className="w-full overflow-x-auto">
                           <div
-                            className="grid items-center"
+                            className="grid w-full items-center"
                             style={{
-                              gridTemplateColumns: `repeat(${states.length}, 52px)`,
+                              gridTemplateColumns: `repeat(${states.length}, minmax(52px, 1fr))`,
+                              minWidth: `${states.length * 52}px`,
                             }}
                           >
                             {states.map((state, index) => (
@@ -966,7 +967,7 @@ function SelectedRoomPanel({
                   : `${activities.length} activities`}
               </div>
             </div>
-            <div className="flex-1 overflow-auto p-6">
+            <div className="flex-1 overflow-auto p-6 pb-24">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="text-lg font-semibold text-gray-900">
                   {`${selectedStudent.user.first_name ?? ''} ${
@@ -1077,6 +1078,29 @@ function SelectedRoomPanel({
             </div>
           </div>
         )}
+      </div>
+      <div className="pointer-events-none absolute bottom-6 right-6">
+        <div className="pointer-events-auto flex flex-col gap-2 rounded-xl border border-gray-200 bg-white/95 px-4 py-3 text-xs text-gray-600 shadow-sm backdrop-blur">
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+            Legend
+          </div>
+          <div className="flex items-center gap-2">
+            <ActivityDot status="not_started" selected={false} />
+            <span>Not started</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ActivityDot status="locked" selected={false} />
+            <span>Locked</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ActivityDot status="in_progress" selected={false} />
+            <span>In progress</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ActivityDot status="done" selected={false} />
+            <span>Done</span>
+          </div>
+        </div>
       </div>
     </div>
   )
