@@ -84,11 +84,17 @@ export async function getTutorRoomSelection(
 export async function setTutorRoomSelection(
   course_uuid: string,
   room_id: number,
-  access_token: string
+  access_token: string,
+  selected_tab_id?: string | null
 ) {
   const result: any = await fetch(
     `${getAPIUrl()}courses/${course_uuid}/tutor-room-selection`,
-    RequestBodyWithAuthHeader('PUT', { room_id }, null, access_token)
+    RequestBodyWithAuthHeader(
+      'PUT',
+      { room_id, selected_tab_id },
+      null,
+      access_token
+    )
   )
   return await getResponseMetadata(result)
 }

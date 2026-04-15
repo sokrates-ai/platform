@@ -123,7 +123,7 @@ const AdminEditOptions: React.FC<{
             )}
             className="flex items-center px-2 py-1"
           >
-            <FilePenLine className="mr-2 h-4 w-4" /> Edit Content
+            <FilePenLine className="mr-2 h-4 w-4" /> Manage Course
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>

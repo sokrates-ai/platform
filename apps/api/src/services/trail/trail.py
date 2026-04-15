@@ -2,16 +2,22 @@ from datetime import datetime
 from typing import List
 from uuid import uuid4
 from src.db.courses.chapter_activities import ChapterActivity
+from src.db.courses.course_rooms import CourseRoom, CourseRoomMember, RoomRoleEnum
 from fastapi import HTTPException, Request, status
 from sqlmodel import Session, select
 from src.services.users.users import release_user_coin_reward, release_user_xp_reward
 from src.services.courses.activities.activities import get_activity_by_id_and_course
+from src.services.courses.rooms import get_user_course_role_flags
 from src.db.courses.activities import Activity
 from src.db.courses.courses import Course
 from src.db.trail_runs import TrailRun, TrailRunRead
-from src.db.trail_steps import Assignment_Task_Complete, TrailStep
+from src.db.trail_steps import (
+    Assignment_Task_Complete,
+    TrailStep,
+    TrailStepVerificationEnum,
+)
 from src.db.trails import Trail, TrailCreate, TrailRead
-from src.db.users import AnonymousUser, PublicUser
+from src.db.users import AnonymousUser, PublicUser, User
 from src.db.courses.chapters import Chapter
 
 
@@ -303,7 +309,8 @@ async def add_activity_to_trail(
             trail_id=trail.id if trail.id is not None else 0,
             org_id=course.org_id,
             complete=complete,
-            teacher_verified=False,
+            tutor_verified=TrailStepVerificationEnum.NONE,
+            ai_verified=TrailStepVerificationEnum.NONE,
             grade="",
             user_id=user.id,
             creation_date=str(datetime.now()),
@@ -621,3 +628,90 @@ async def mark_activity_task_complete(
 
     db_session.add(marker)
     db_session.commit()
+
+
+async def verify_trail_step_by_tutor(
+    request: Request,
+    activity_uuid: str,
+    student_uuid: str,
+    status: TrailStepVerificationEnum,
+    current_user: PublicUser,
+    db_session: Session,
+) -> dict:
+    if current_user.id == 0:
+        raise HTTPException(status_code=403, detail="Authentication required")
+
+    student = db_session.exec(
+        select(User).where(User.user_uuid == student_uuid)
+    ).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    trailstep = db_session.exec(
+        select(TrailStep).where(
+            (TrailStep.activity_uuid == activity_uuid)
+            & (TrailStep.user_id == student.id)
+        )
+    ).first()
+    if not trailstep:
+        raise HTTPException(status_code=404, detail="Trail step not found")
+
+    course = db_session.exec(
+        select(Course).where(Course.id == trailstep.course_id)
+    ).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    role_flags = get_user_course_role_flags(current_user.id, course, db_session)
+    is_admin_or_maintainer = role_flags["is_admin"] or role_flags["is_maintainer"]
+
+    if not (is_admin_or_maintainer or role_flags["is_tutor"]):
+        raise HTTPException(
+            status_code=403,
+            detail="User does not have permission to verify trail steps",
+        )
+
+    if not is_admin_or_maintainer:
+        tutor_room_ids = db_session.exec(
+            select(CourseRoomMember.room_id)
+            .join(CourseRoom, CourseRoom.id == CourseRoomMember.room_id)
+            .where(
+                CourseRoom.course_id == course.id,
+                CourseRoomMember.user_id == current_user.id,
+                CourseRoomMember.role == RoomRoleEnum.tutor,
+            )
+        ).all()
+
+        student_room_ids = db_session.exec(
+            select(CourseRoomMember.room_id)
+            .join(CourseRoom, CourseRoom.id == CourseRoomMember.room_id)
+            .where(
+                CourseRoom.course_id == course.id,
+                CourseRoomMember.user_id == student.id,
+                CourseRoomMember.role == RoomRoleEnum.student,
+            )
+        ).all()
+
+        if not tutor_room_ids or not student_room_ids:
+            raise HTTPException(
+                status_code=403,
+                detail="Tutor and student must share a room",
+            )
+
+        if set(tutor_room_ids).isdisjoint(student_room_ids):
+            raise HTTPException(
+                status_code=403,
+                detail="Tutor and student must share a room",
+            )
+
+    trailstep.tutor_verified = status
+    trailstep.update_date = str(datetime.now())
+    db_session.add(trailstep)
+    db_session.commit()
+    db_session.refresh(trailstep)
+
+    return {
+        "detail": "Trail step verification updated",
+        "trail_step_id": trailstep.id,
+        "tutor_verified": trailstep.tutor_verified,
+    }

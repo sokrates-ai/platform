@@ -82,7 +82,7 @@ export default async function middleware(req: NextRequest) {
     : (default_org as string)
 
   // Out of orgslug paths & rewrite
-  const standard_paths = ['/home']
+  const standard_paths = ['/home', '/terms', '/privacy']
   const auth_paths = ['/login', '/signup', '/reset', '/forgot']
   if (standard_paths.includes(pathname)) {
     // Redirect to the same pathname with the original search params

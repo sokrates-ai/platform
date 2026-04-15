@@ -6,7 +6,7 @@ import FormLayout, {
   Input,
 } from '@components/Objects/StyledElements/Form/Form'
 import * as Form from '@radix-ui/react-form'
-import { useCourse } from '@components/Contexts/CourseContext'
+import { useCourse, useCourseDispatch } from '@components/Contexts/CourseContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { getAPIUrl } from '@services/config/config'
@@ -422,6 +422,52 @@ function RoomMembersManager({
     (url: string) => swrFetcher(url, access_token)
   )
 
+  const roomsListKey = courseUuid
+    ? `${getAPIUrl()}courses/${courseUuid}/rooms`
+    : null
+  const { data: courseRooms } = useSWR(
+    roomsListKey,
+    (url: string) => swrFetcher(url, access_token)
+  )
+
+  const otherRoomsKey =
+    courseRooms && access_token && room?.id
+      ? `course-room-members:${courseUuid}:${courseRooms
+          .map((entry: any) => entry.id)
+          .join(',')}`
+      : null
+  const { data: otherRoomByUserId } = useSWR(
+    otherRoomsKey,
+    async () => {
+      if (!courseRooms || !access_token) return {}
+      const otherRooms = courseRooms.filter((entry: any) => entry.id !== room?.id)
+      if (!otherRooms.length) return {}
+      const results = await Promise.all(
+        otherRooms.map(async (entry: any) => {
+          try {
+            const members = await swrFetcher(
+              `${getAPIUrl()}courses/${courseUuid}/rooms/${entry.id}/members`,
+              access_token
+            )
+            return { room: entry, members }
+          } catch (error) {
+            return { room: entry, members: [] }
+          }
+        })
+      )
+      const map: Record<number, string> = {}
+      results.forEach(({ room, members }) => {
+        members?.forEach((member: any) => {
+          const userId = member?.user?.id
+          if (userId && !map[userId]) {
+            map[userId] = room?.name ?? ''
+          }
+        })
+      })
+      return map
+    }
+  )
+
   const membersData = membersOverride ?? members ?? []
   const userById = React.useMemo(() => {
     const map = new Map<number, any>()
@@ -529,6 +575,7 @@ function RoomMembersManager({
   const filteredStudentsInRoom = filterUsers(studentsInRoom, studentSearch)
   const filteredTutorsAvailable = filterUsers(tutorsAvailable, tutorSearch)
   const filteredTutorsInRoom = filterUsers(tutorsInRoom, tutorSearch)
+  const roomOverlapMap = otherRoomByUserId ?? {}
 
   return (
     <div className="flex h-full flex-col gap-3 overflow-hidden">
@@ -557,6 +604,7 @@ function RoomMembersManager({
             role="student"
             availableUsers={filteredStudentsAvailable}
             roomUsers={filteredStudentsInRoom}
+            otherRoomByUserId={roomOverlapMap}
             searchValue={studentSearch}
             onSearchChange={setStudentSearch}
             onAdd={handleAdd}
@@ -569,6 +617,7 @@ function RoomMembersManager({
             role="tutor"
             availableUsers={filteredTutorsAvailable}
             roomUsers={filteredTutorsInRoom}
+            otherRoomByUserId={roomOverlapMap}
             searchValue={tutorSearch}
             onSearchChange={setTutorSearch}
             onAdd={handleAdd}
@@ -586,6 +635,7 @@ function RoleDragBoard({
   role,
   availableUsers,
   roomUsers,
+  otherRoomByUserId,
   searchValue,
   onSearchChange,
   onAdd,
@@ -596,6 +646,7 @@ function RoleDragBoard({
   role: 'student' | 'tutor'
   availableUsers: any[]
   roomUsers: any[]
+  otherRoomByUserId: Record<number, string>
   searchValue: string
   onSearchChange: (value: string) => void
   onAdd: (userId: number, role: 'student' | 'tutor') => void
@@ -662,6 +713,8 @@ function RoleDragBoard({
             role={role}
             emptyText={`No ${title.toLowerCase()} available`}
             isLoading={isLoading}
+            otherRoomByUserId={otherRoomByUserId}
+            showOtherRoomLabels
           />
           <UserDropColumn
             title="In room"
@@ -670,6 +723,7 @@ function RoleDragBoard({
             role={role}
             emptyText={`Drag ${title.toLowerCase()} here`}
             isLoading={isLoading}
+            otherRoomByUserId={otherRoomByUserId}
           />
         </div>
       </DragDropContext>
@@ -684,6 +738,8 @@ function UserDropColumn({
   role,
   emptyText,
   isLoading,
+  otherRoomByUserId,
+  showOtherRoomLabels = false,
 }: {
   title: string
   droppableId: string
@@ -691,7 +747,19 @@ function UserDropColumn({
   role: 'student' | 'tutor'
   emptyText: string
   isLoading: boolean
+  otherRoomByUserId: Record<number, string>
+  showOtherRoomLabels?: boolean
 }) {
+  const sortedItems = React.useMemo(() => {
+    if (!showOtherRoomLabels) return items
+    return [...items].sort((left: any, right: any) => {
+      const leftDimmed = Boolean(otherRoomByUserId?.[left?.user?.id])
+      const rightDimmed = Boolean(otherRoomByUserId?.[right?.user?.id])
+      if (leftDimmed === rightDimmed) return 0
+      return leftDimmed ? 1 : -1
+    })
+  }, [items, otherRoomByUserId, showOtherRoomLabels])
+
   return (
     <Droppable droppableId={droppableId}>
       {(provided, snapshot) => (
@@ -713,15 +781,23 @@ function UserDropColumn({
           <div className="flex-1 space-y-2 overflow-auto pr-1">
             {isLoading ? (
               <div className="text-xs text-gray-400 italic">Loading...</div>
-            ) : items.length ? (
-              items.map((entry: any, index: number) => (
-                <UserCard
-                  key={`${role}-${entry.user.id}`}
-                  user={entry.user}
-                  role={role}
-                  index={index}
-                />
-              ))
+            ) : sortedItems.length ? (
+              sortedItems.map((entry: any, index: number) => {
+                const otherRoomName =
+                  showOtherRoomLabels && entry?.user?.id
+                    ? otherRoomByUserId?.[entry.user.id]
+                    : undefined
+                return (
+                  <UserCard
+                    key={`${role}-${entry.user.id}`}
+                    user={entry.user}
+                    role={role}
+                    index={index}
+                    otherRoomName={otherRoomName}
+                    isDimmed={Boolean(otherRoomName)}
+                  />
+                )
+              })
             ) : (
               <div className="text-xs text-gray-400 italic">{emptyText}</div>
             )}
@@ -737,10 +813,14 @@ function UserCard({
   user,
   role,
   index,
+  otherRoomName,
+  isDimmed = false,
 }: {
   user: any
   role: 'student' | 'tutor'
   index: number
+  otherRoomName?: string
+  isDimmed?: boolean
 }) {
   const displayName =
     [user.first_name, user.last_name].filter(Boolean).join(' ') ||
@@ -759,28 +839,30 @@ function UserCard({
             snapshot.isDragging
               ? 'border-sky-300 shadow-md cursor-grabbing'
               : 'border-gray-200 hover:border-gray-300 hover:bg-white cursor-grab'
-          }`}
+          } ${isDimmed ? 'opacity-60' : ''}`}
         >
           <div className="flex items-center gap-2">
             <span className="text-gray-400">
               <GripVertical className="h-4 w-4" />
             </span>
-            <div>
-              <div className="font-medium text-gray-900">{displayName}</div>
-              {user.username && (
-                <div className="text-xs text-gray-400">@{user.username}</div>
-              )}
-            </div>
+            <div className="font-medium text-gray-900">{displayName}</div>
           </div>
-          <span
-            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
-              role === 'student'
-                ? 'bg-blue-100 text-blue-700'
-                : 'bg-amber-100 text-amber-700'
-            }`}
-          >
-            {role}
-          </span>
+          <div className="flex items-center gap-2">
+            {otherRoomName ? (
+              <span className="max-w-[140px] truncate rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold text-gray-900">
+                {otherRoomName}
+              </span>
+            ) : null}
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                role === 'student'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'bg-amber-100 text-amber-700'
+              }`}
+            >
+              {role}
+            </span>
+          </div>
         </div>
       )}
     </Draggable>

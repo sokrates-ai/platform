@@ -1,4 +1,4 @@
-import { RequestBodyWithAuthHeader, errorHandling } from '@services/utils/ts/requests'
+import { RequestBodyWithAuthHeader, errorHandling, getResponseMetadata } from '@services/utils/ts/requests'
 import { getAPIUrl } from '@services/config/config'
 
 /*
@@ -36,4 +36,22 @@ export async function markActivityAsComplete(
   )
   const res = await errorHandling(result)
   return res
+}
+
+export async function verifyTrailStep(
+  activity_uuid: string,
+  student_uuid: string,
+  status: 'NONE' | 'CORRECT' | 'INCORRECT',
+  access_token: any,
+) {
+  const result: any = await fetch(
+    `${getAPIUrl()}trail/verify_step`,
+    RequestBodyWithAuthHeader(
+      'POST',
+      { activity_uuid, student_uuid, status },
+      null,
+      access_token
+    )
+  )
+  return await getResponseMetadata(result)
 }

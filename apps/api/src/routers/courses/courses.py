@@ -1,5 +1,6 @@
 from typing import List
 from fastapi import APIRouter, Depends, UploadFile, Form, Request
+from pydantic import BaseModel
 from sqlmodel import Session
 from src.db.users import PublicUser
 from src.core.events.database import get_db_session
@@ -27,6 +28,7 @@ from src.db.courses.courses import (
     FullCourseReadWithTrail,
 )
 from src.db.courses.chapters import ChapterRead
+from src.db.trail_steps import TrailStepVerificationEnum
 from src.security.auth import get_current_user
 from src.services.courses.course_canvas import get_canvas, put_update
 from src.services.courses.students import list_course_students, CourseStudent
@@ -43,6 +45,7 @@ from src.services.courses.rooms import (
 from src.services.courses.tutor_room_selection import (
     clear_tutor_room_selection,
     get_tutor_room_selection,
+    list_room_activity_status,
     set_tutor_room_selection,
 )
 from src.services.courses.courses import (
@@ -65,6 +68,17 @@ from src.services.courses.updates import (
 
 
 router = APIRouter()
+
+
+class RoomActivityStatusStep(BaseModel):
+    user_id: int
+    activity_uuid: str
+    complete: bool
+    tutor_verified: TrailStepVerificationEnum
+
+
+class RoomActivityStatusRead(BaseModel):
+    steps: List[RoomActivityStatusStep]
 
 
 @router.post('/')
@@ -428,6 +442,24 @@ async def api_list_course_room_members(
     return await list_course_room_members(
         request, course_uuid, room_id, current_user, db_session
     )
+
+
+@router.get('/{course_uuid}/rooms/{room_id}/activity-status')
+async def api_list_course_room_activity_status(
+    request: Request,
+    course_uuid: str,
+    room_id: int,
+    activity_uuids: str = "",
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+) -> RoomActivityStatusRead:
+    """
+    List activity status for students in a course room.
+    """
+    steps = await list_room_activity_status(
+        request, course_uuid, room_id, activity_uuids, current_user, db_session
+    )
+    return RoomActivityStatusRead(steps=steps)
 
 
 @router.post('/{course_uuid}/rooms/{room_id}/members/add')

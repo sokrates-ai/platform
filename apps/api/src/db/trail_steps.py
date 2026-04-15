@@ -9,6 +9,12 @@ class TrailStepTypeEnum(str, Enum):
     STEP_TYPE_ASSIGNMENT_ACTIVITY = "STEP_TYPE_ASSIGNMENT_ACTIVITY"
     STEP_TYPE_CUSTOM_ACTIVITY = "STEP_TYPE_CUSTOM_ACTIVITY"
 
+
+class TrailStepVerificationEnum(str, Enum):
+    NONE = "NONE"
+    CORRECT = "CORRECT"
+    INCORRECT = "INCORRECT"
+
 #
 # TODO: make trailstep more atomic!
 #
@@ -17,7 +23,12 @@ class TrailStepTypeEnum(str, Enum):
 class TrailStep(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     complete: bool
-    teacher_verified: bool
+    tutor_verified: TrailStepVerificationEnum = Field(
+        default=TrailStepVerificationEnum.NONE, sa_column=Column(String)
+    )
+    ai_verified: TrailStepVerificationEnum = Field(
+        default=TrailStepVerificationEnum.NONE, sa_column=Column(String)
+    )
     grade: str
     data: dict = Field(default={}, sa_column=Column(JSON))
     # foreign keys

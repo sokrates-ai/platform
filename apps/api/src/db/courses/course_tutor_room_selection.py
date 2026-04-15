@@ -1,7 +1,7 @@
 from typing import Optional
 
 from pydantic import BaseModel
-from sqlalchemy import Column, ForeignKey, Integer, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, Integer, String, UniqueConstraint
 from sqlmodel import Field, SQLModel
 
 
@@ -24,13 +24,19 @@ class CourseTutorRoomSelection(SQLModel, table=True):
         default=None,
         sa_column=Column(Integer, ForeignKey("course_room.id", ondelete="SET NULL")),
     )
+    selected_tab_id: Optional[str] = Field(
+        default=None,
+        sa_column=Column(String, nullable=True),
+    )
     creation_date: str = ""
     update_date: str = ""
 
 
 class CourseTutorRoomSelectionUpdate(SQLModel):
     room_id: int
+    selected_tab_id: Optional[str] = None
 
 
 class CourseTutorRoomSelectionRead(BaseModel):
     room_id: Optional[int] = None
+    selected_tab_id: Optional[str] = None

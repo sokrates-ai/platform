@@ -13,6 +13,7 @@ from src.db.courses.course_tutor_room_selection import (
 from src.db.roles import Role
 from src.db.user_organizations import UserOrganization
 from src.db.users import AnonymousUser, PublicUser
+from src.db.trail_steps import TrailStep
 
 
 def get_course_and_role_flags(
@@ -113,7 +114,8 @@ async def get_tutor_room_selection(
     ).first()
 
     return CourseTutorRoomSelectionRead(
-        room_id=selection.room_id if selection else None
+        room_id=selection.room_id if selection else None,
+        selected_tab_id=selection.selected_tab_id if selection else None,
     )
 
 
@@ -142,12 +144,15 @@ async def set_tutor_room_selection(
     now = str(datetime.now())
     if selection:
         selection.room_id = room.id
+        if selection_update.selected_tab_id is not None:
+            selection.selected_tab_id = selection_update.selected_tab_id
         selection.update_date = now
     else:
         selection = CourseTutorRoomSelection(
             course_id=course.id,
             user_id=current_user.id,
             room_id=room.id,
+            selected_tab_id=selection_update.selected_tab_id,
             creation_date=now,
             update_date=now,
         )
@@ -156,7 +161,10 @@ async def set_tutor_room_selection(
     db_session.commit()
     db_session.refresh(selection)
 
-    return CourseTutorRoomSelectionRead(room_id=selection.room_id)
+    return CourseTutorRoomSelectionRead(
+        room_id=selection.room_id,
+        selected_tab_id=selection.selected_tab_id,
+    )
 
 
 async def clear_tutor_room_selection(
@@ -178,4 +186,75 @@ async def clear_tutor_room_selection(
         db_session.delete(selection)
         db_session.commit()
 
-    return CourseTutorRoomSelectionRead(room_id=None)
+    return CourseTutorRoomSelectionRead(room_id=None, selected_tab_id=None)
+
+
+def _normalize_activity_uuid(activity_uuid: str) -> str:
+    if activity_uuid.startswith("activity_"):
+        return activity_uuid
+    return f"activity_{activity_uuid}"
+
+
+def _parse_activity_uuids(activity_uuids: str) -> list[str]:
+    if not activity_uuids:
+        return []
+    parsed: list[str] = []
+    seen: set[str] = set()
+    for raw in activity_uuids.split(","):
+        trimmed = raw.strip()
+        if not trimmed:
+            continue
+        normalized = _normalize_activity_uuid(trimmed)
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        parsed.append(normalized)
+    return parsed
+
+
+async def list_room_activity_status(
+    _request: Request,
+    course_uuid: str,
+    room_id: int,
+    activity_uuids: str,
+    current_user: PublicUser | AnonymousUser,
+    db_session: Session,
+) -> list[dict]:
+    course, role_flags = get_course_and_role_flags(
+        course_uuid, current_user, db_session
+    )
+    room = ensure_user_can_manage_room(
+        room_id, course, current_user, role_flags, db_session
+    )
+
+    normalized_activity_uuids = _parse_activity_uuids(activity_uuids)
+    if not normalized_activity_uuids:
+        return []
+
+    student_ids = db_session.exec(
+        select(CourseRoomMember.user_id).where(
+            CourseRoomMember.room_id == room.id,
+            CourseRoomMember.role == RoomRoleEnum.student,
+        )
+    ).all()
+    student_ids = [student_id for student_id in student_ids if student_id]
+    if not student_ids:
+        return []
+
+    steps = db_session.exec(
+        select(TrailStep).where(
+            TrailStep.course_id == course.id,
+            TrailStep.user_id.in_(student_ids),
+            TrailStep.activity_uuid.in_(normalized_activity_uuids),
+        )
+    ).all()
+
+    return [
+        {
+            "user_id": step.user_id,
+            "activity_uuid": step.activity_uuid,
+            "complete": step.complete,
+            "tutor_verified": step.tutor_verified,
+        }
+        for step in steps
+    ]

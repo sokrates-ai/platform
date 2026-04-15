@@ -2,17 +2,20 @@
 
 import React from 'react'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import useSWR from 'swr'
-import { GraduationCap, RotateCcw } from 'lucide-react'
+import { ChevronLeft, GraduationCap, Lock, RotateCcw } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-import { CourseProvider } from '@components/Contexts/CourseContext'
+import { CourseProvider, useCourse } from '@components/Contexts/CourseContext'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import useCourseStaffStatus from '@components/Hooks/useCourseStaffStatus'
 import PageLoading from '@components/Objects/Loaders/PageLoading'
 import { CourseOverviewTop } from '@components/Dashboard/Misc/CourseOverviewTop'
+import TabSwitch from '@components/Objects/StyledElements/TabSwitch/TabSwitch'
 import { Button } from '@components/ui/button'
 import { getAPIUrl, getUriWithOrg } from '@services/config/config'
+import { verifyTrailStep } from '@services/courses/activity'
 import {
   clearTutorRoomSelection,
   setTutorRoomSelection,
@@ -37,6 +40,7 @@ type Room = {
 type RoomMember = {
   user: {
     id: number
+    user_uuid: string
     username: string
     first_name?: string
     last_name?: string
@@ -47,6 +51,60 @@ type RoomMember = {
 
 type TutorRoomSelection = {
   room_id: number | null
+  selected_tab_id?: string | null
+}
+
+type TabOption = {
+  value: string
+  label: string
+}
+
+type ActivityItem = {
+  activity_uuid: string
+  name: string
+  chapter_name?: string
+}
+
+type ActivityStatusStep = {
+  user_id: number
+  activity_uuid: string
+  complete: boolean
+  tutor_verified: 'NONE' | 'CORRECT' | 'INCORRECT'
+}
+
+type ActivityStatusResponse = {
+  steps: ActivityStatusStep[]
+}
+
+type ActivityState = {
+  activity_uuid: string
+  status: 'locked' | 'not_started' | 'in_progress' | 'done'
+  step?: ActivityStatusStep
+}
+
+const normalizeActivityUuid = (value: unknown): string | null => {
+  if (value === null || value === undefined) return null
+  if (typeof value === 'string' || typeof value === 'number') {
+    const raw = String(value)
+    if (!raw) return null
+    return raw.startsWith('activity_') ? raw : `activity_${raw}`
+  }
+  return null
+}
+
+const extractActivityUuid = (activity: any): string | null => {
+  if (activity === null || activity === undefined) return null
+  if (typeof activity === 'string' || typeof activity === 'number') {
+    return normalizeActivityUuid(activity)
+  }
+  if (typeof activity !== 'object') return null
+  return normalizeActivityUuid(
+    activity.activity_uuid ??
+      activity.activityUuid ??
+      activity.activityUUID ??
+      activity.uuid ??
+      activity.id
+  )
 }
 
 function TutorCoursePage({ params }: TutorCoursePageProps) {
@@ -70,6 +128,7 @@ function TutorCourseLayout({
   params: TutorCoursePageProps['params']
   courseUuid: string
 }) {
+  const course = useCourse() as any
   const session = useSokratesSession() as any
   const { isCourseStaff, loading: courseStaffLoading } =
     useCourseStaffStatus() as any
@@ -105,8 +164,87 @@ function TutorCourseLayout({
   const isAuthorized = isAuthenticated && isCourseStaff
 
   const selectionRoomId = (selection as TutorRoomSelection | undefined)?.room_id
+  const selectionTabId = (selection as TutorRoomSelection | undefined)?.selected_tab_id
   const selectedRoom = rooms?.find((room: Room) => room.id === selectionRoomId)
   const hasSelection = Boolean(selectionRoomId && selectedRoom)
+
+  const courseTabs = React.useMemo(() => {
+    const rawTabs =
+      course?.courseTabMetadata ?? course?.courseStructure?.tabMetadata ?? []
+    if (!Array.isArray(rawTabs)) return []
+    return [...rawTabs].sort(
+      (a: any, b: any) => (a?.position ?? 0) - (b?.position ?? 0)
+    )
+  }, [course?.courseStructure?.tabMetadata, course?.courseTabMetadata])
+
+  const tabOptions = React.useMemo<TabOption[]>(() => {
+    if (!courseTabs.length) return []
+    return courseTabs.map((tab: any, index: number) => ({
+      value: tab?.id ?? tab?.tab_uuid ?? `tab-${index + 1}`,
+      label: tab?.name ?? `Tab ${index + 1}`,
+    }))
+  }, [courseTabs])
+
+  const defaultTabId = tabOptions[0]?.value ?? ''
+  const [activeTabId, setActiveTabId] = React.useState<string>(defaultTabId)
+  const [isUpdatingTab, setIsUpdatingTab] = React.useState(false)
+  const lastSyncedTabRef = React.useRef<string | null>(null)
+
+  React.useEffect(() => {
+    lastSyncedTabRef.current = null
+  }, [selectionRoomId])
+
+  React.useEffect(() => {
+    if (!tabOptions.length) return
+    const resolvedTabId =
+      tabOptions.find((tab) => tab.value === selectionTabId)?.value ??
+      tabOptions[0]?.value
+    if (resolvedTabId) {
+      setActiveTabId((prev) => (prev === resolvedTabId ? prev : resolvedTabId))
+    }
+
+    if (
+      hasSelection &&
+      accessToken &&
+      selectedRoom &&
+      resolvedTabId &&
+      selectionTabId !== resolvedTabId &&
+      lastSyncedTabRef.current !== resolvedTabId
+    ) {
+      lastSyncedTabRef.current = resolvedTabId
+      setTutorRoomSelection(
+        courseUuid,
+        selectedRoom.id,
+        accessToken,
+        resolvedTabId
+      )
+        .then((response) => {
+          if (response.success) {
+            mutateSelection(
+              { room_id: selectedRoom.id, selected_tab_id: resolvedTabId },
+              false
+            )
+          } else {
+            setActionError(
+              response.HTTPmessage || 'Unable to update the selected tab.'
+            )
+          }
+        })
+        .catch((error: any) => {
+          setActionError(
+            error?.message || 'Unable to update the selected tab.'
+          )
+        })
+    }
+  }, [
+    accessToken,
+    courseUuid,
+    hasSelection,
+    mutateSelection,
+    selectedRoom,
+    selectionTabId,
+    tabOptions,
+  ])
 
   const membersKey =
     hasSelection && accessToken && selectedRoom
@@ -117,6 +255,75 @@ function TutorCourseLayout({
     error: roomMembersError,
     isLoading: roomMembersLoading,
   } = useSWR(membersKey, (url: string) => swrFetcher(url, accessToken))
+
+  const resolvedTabId = activeTabId || defaultTabId
+  const activeTabChapters = React.useMemo(() => {
+    const store =
+      course?.courseTabsStore ??
+      course?.courseStructure?.tabStore ??
+      course?.courseStructure?.tab_store ??
+      {}
+    const chapters = store?.[resolvedTabId]?.content?.chapters
+    return Array.isArray(chapters) ? chapters : []
+  }, [
+    course?.courseTabsStore,
+    course?.courseStructure?.tabStore,
+    course?.courseStructure?.tab_store,
+    resolvedTabId,
+  ])
+
+  const activities = React.useMemo<ActivityItem[]>(() => {
+    const items: ActivityItem[] = []
+    const seen = new Set<string>()
+    activeTabChapters.forEach((chapter: any) => {
+      const chapterName = chapter?.name ?? ''
+      const chapterActivities = Array.isArray(chapter?.activities)
+        ? chapter.activities
+        : []
+      chapterActivities.forEach((activity: any, index: number) => {
+        const uuid = extractActivityUuid(activity)
+        if (!uuid || seen.has(uuid)) return
+        seen.add(uuid)
+        items.push({
+          activity_uuid: uuid,
+          name: activity?.name ?? `Activity ${index + 1}`,
+          chapter_name: chapterName,
+        })
+      })
+    })
+    return items
+  }, [activeTabChapters])
+
+  const activityUuids = React.useMemo(
+    () => activities.map((activity) => activity.activity_uuid),
+    [activities]
+  )
+
+  const activityStatusKey =
+    hasSelection &&
+    accessToken &&
+    selectedRoom &&
+    activityUuids.length > 0
+      ? `${getAPIUrl()}courses/${courseUuid}/rooms/${
+          selectedRoom.id
+        }/activity-status?activity_uuids=${encodeURIComponent(
+          activityUuids.join(',')
+        )}`
+      : null
+
+  const {
+    data: activityStatusData,
+    error: activityStatusError,
+    isLoading: activityStatusLoading,
+    mutate: mutateActivityStatus,
+  } = useSWR(
+    activityStatusKey,
+    (url: string) => swrFetcher(url, accessToken)
+  )
+
+  const [verifyingCells, setVerifyingCells] = React.useState<
+    Record<string, boolean>
+  >({})
 
   React.useEffect(() => {
     if (hasSelection) {
@@ -137,7 +344,7 @@ function TutorCourseLayout({
     clearTutorRoomSelection(courseUuid, accessToken)
       .then((response) => {
         if (response.success) {
-          mutateSelection({ room_id: null }, false)
+          mutateSelection({ room_id: null, selected_tab_id: null }, false)
         } else {
           setActionError(
             response.HTTPmessage || 'Unable to clear the invalid selection.'
@@ -170,10 +377,14 @@ function TutorCourseLayout({
       const response = await setTutorRoomSelection(
         courseUuid,
         roomId,
-        accessToken
+        accessToken,
+        activeTabId || defaultTabId || null
       )
       if (response.success) {
-        mutateSelection({ room_id: roomId }, false)
+        mutateSelection(
+          { room_id: roomId, selected_tab_id: activeTabId || defaultTabId || null },
+          false
+        )
       } else {
         setActionError(response.HTTPmessage || 'Unable to select room.')
       }
@@ -191,7 +402,7 @@ function TutorCourseLayout({
     try {
       const response = await clearTutorRoomSelection(courseUuid, accessToken)
       if (response.success) {
-        mutateSelection({ room_id: null }, false)
+        mutateSelection({ room_id: null, selected_tab_id: null }, false)
       } else {
         setActionError(response.HTTPmessage || 'Unable to switch rooms.')
       }
@@ -199,6 +410,90 @@ function TutorCourseLayout({
       setActionError(error?.message || 'Unable to switch rooms.')
     } finally {
       setIsSwitching(false)
+    }
+  }
+
+  const handleTabChange = async (tabId: string) => {
+    if (tabId === activeTabId) return
+    setActiveTabId(tabId)
+    if (!accessToken || !selectedRoom) return
+    setIsUpdatingTab(true)
+    try {
+      const response = await setTutorRoomSelection(
+        courseUuid,
+        selectedRoom.id,
+        accessToken,
+        tabId
+      )
+      if (response.success) {
+        mutateSelection(
+          { room_id: selectedRoom.id, selected_tab_id: tabId },
+          false
+        )
+      } else {
+        setActionError(response.HTTPmessage || 'Unable to update selected tab.')
+      }
+    } catch (error: any) {
+      setActionError(error?.message || 'Unable to update selected tab.')
+    } finally {
+      setIsUpdatingTab(false)
+    }
+  }
+
+  const handleVerifyStep = async (
+    student: RoomMember['user'],
+    activityUuid: string,
+    nextStatus: ActivityStatusStep['tutor_verified']
+  ) => {
+    if (!accessToken) return
+    const normalizedUuid = normalizeActivityUuid(activityUuid)
+    if (!normalizedUuid) return
+    if (!student.user_uuid) {
+      setActionError('Unable to verify activity for this student.')
+      return
+    }
+    const cellKey = `${student.id}:${normalizedUuid}`
+    setActionError(null)
+    setVerifyingCells((prev) => ({ ...prev, [cellKey]: true }))
+    try {
+      const response = await verifyTrailStep(
+        normalizedUuid,
+        student.user_uuid,
+        nextStatus,
+        accessToken
+      )
+      if (response.success) {
+        let updated = false
+        mutateActivityStatus((current) => {
+          if (!current) return current
+          const steps = Array.isArray(current.steps) ? current.steps : []
+          const nextSteps = steps.map((step) => {
+            const stepUuid = normalizeActivityUuid(step.activity_uuid)
+            if (
+              step.user_id === student.id &&
+              stepUuid === normalizedUuid
+            ) {
+              updated = true
+              return { ...step, tutor_verified: nextStatus }
+            }
+            return step
+          })
+          return { ...current, steps: nextSteps }
+        }, false)
+        if (!updated) {
+          mutateActivityStatus()
+        }
+      } else {
+        setActionError(response.HTTPmessage || 'Unable to verify activity.')
+      }
+    } catch (error: any) {
+      setActionError(error?.message || 'Unable to verify activity.')
+    } finally {
+      setVerifyingCells((prev) => {
+        const next = { ...prev }
+        delete next[cellKey]
+        return next
+      })
     }
   }
 
@@ -225,6 +520,7 @@ function TutorCourseLayout({
     courseuuid: params.courseuuid,
     subpage: 'tutor',
   }
+  const tutorBasePath = `${getUriWithOrg(params.orgslug, '')}/dash/courses/course/${params.courseuuid}/tutor`
 
   const switchRoomAction = hasSelection ? (
     <Button
@@ -244,7 +540,7 @@ function TutorCourseLayout({
         <CourseOverviewTop params={overviewParams} actions={switchRoomAction} />
         <div className="flex space-x-3 font-black text-sm">
           <NavigationLink
-            href={`${getUriWithOrg(params.orgslug, '')}/dash/courses/course/${params.courseuuid}/tutor`}
+            href={tutorBasePath}
             active
             icon={<GraduationCap size={16} />}
             label="Overview"
@@ -295,6 +591,20 @@ function TutorCourseLayout({
               members={(roomMembers as RoomMember[] | undefined) ?? []}
               isLoading={roomMembersLoading}
               hasError={Boolean(roomMembersError)}
+              tabs={tabOptions}
+              activeTabId={activeTabId}
+              isUpdatingTab={isUpdatingTab}
+              onTabChange={handleTabChange}
+              activities={activities}
+              activityStatus={
+                (activityStatusData as ActivityStatusResponse | undefined) ??
+                undefined
+              }
+              activityStatusLoading={activityStatusLoading}
+              activityStatusError={Boolean(activityStatusError)}
+              onVerifyStep={handleVerifyStep}
+              verifyingCells={verifyingCells}
+              basePath={tutorBasePath}
             />
           ) : null}
 
@@ -328,14 +638,6 @@ function RoomSelectionGrid({
 }) {
   return (
     <div className="flex w-full flex-col items-center">
-      <div className="mb-6 flex w-full max-w-5xl flex-col gap-2">
-        <div className="text-2xl font-semibold text-gray-900">
-          Choose the room you want to manage
-        </div>
-        <div className="text-sm text-gray-500">
-          You can switch rooms at any time from the top bar.
-        </div>
-      </div>
       <div className="grid w-full max-w-5xl justify-center gap-6 md:grid-cols-2 xl:grid-cols-3">
         {rooms.map((room) => (
           <RoomSelectionCard
@@ -405,16 +707,121 @@ function SelectedRoomPanel({
   members,
   isLoading,
   hasError,
+  tabs,
+  activeTabId,
+  isUpdatingTab,
+  onTabChange,
+  activities,
+  activityStatus,
+  activityStatusLoading,
+  activityStatusError,
+  onVerifyStep,
+  verifyingCells,
+  basePath,
 }: {
   room: Room
   members: RoomMember[]
   isLoading: boolean
   hasError: boolean
+  tabs: TabOption[]
+  activeTabId: string
+  isUpdatingTab: boolean
+  onTabChange: (tabId: string) => void
+  activities: ActivityItem[]
+  activityStatus?: ActivityStatusResponse
+  activityStatusLoading: boolean
+  activityStatusError: boolean
+  onVerifyStep: (
+    student: RoomMember['user'],
+    activityUuid: string,
+    status: ActivityStatusStep['tutor_verified']
+  ) => void
+  verifyingCells: Record<string, boolean>
+  basePath: string
 }) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const students = React.useMemo(
     () => members.filter((member) => member.role === 'student'),
     [members]
   )
+  const activityStatusMap = React.useMemo(() => {
+    const steps = activityStatus?.steps ?? []
+    const map = new Map<string, ActivityStatusStep>()
+    steps.forEach((step) => {
+      const normalized = normalizeActivityUuid(step.activity_uuid)
+      if (!normalized) return
+      map.set(`${step.user_id}:${normalized}`, {
+        ...step,
+        activity_uuid: normalized,
+      })
+    })
+    return map
+  }, [activityStatus?.steps])
+
+  const selectedStudentUuid = searchParams?.get('student') ?? null
+  const selectedActivityUuid = normalizeActivityUuid(
+    searchParams?.get('activity')
+  )
+  const selectedStudent = students.find(
+    (student) => student.user.user_uuid === selectedStudentUuid
+  )
+
+  const buildUrl = (studentUuid?: string | null, activityUuid?: string | null) => {
+    const params = new URLSearchParams()
+    if (studentUuid) params.set('student', studentUuid)
+    if (activityUuid) params.set('activity', activityUuid)
+    const query = params.toString()
+    return query ? `${basePath}?${query}` : basePath
+  }
+
+  const buildActivityStates = React.useCallback(
+    (studentId: number): ActivityState[] => {
+      let hasIncomplete = false
+      return activities.map((activity) => {
+        const key = `${studentId}:${activity.activity_uuid}`
+        const step = activityStatusMap.get(key)
+        if (step) {
+          if (!step.complete) {
+            hasIncomplete = true
+          }
+          return {
+            activity_uuid: activity.activity_uuid,
+            status: step.complete ? 'done' : 'in_progress',
+            step,
+          }
+        }
+        const status = hasIncomplete ? 'locked' : 'not_started'
+        if (!hasIncomplete) {
+          hasIncomplete = true
+        }
+        return {
+          activity_uuid: activity.activity_uuid,
+          status,
+        }
+      })
+    },
+    [activities, activityStatusMap]
+  )
+
+  const activityMetaByUuid = React.useMemo(() => {
+    const map = new Map<string, ActivityItem>()
+    activities.forEach((activity) => {
+      map.set(activity.activity_uuid, activity)
+    })
+    return map
+  }, [activities])
+  const selectedStates = React.useMemo(() => {
+    if (!selectedStudent) return []
+      return buildActivityStates(selectedStudent.user.id)
+    }, [buildActivityStates, selectedStudent])
+
+  const selectedActivityIndex = selectedStates.findIndex(
+    (state) => state.activity_uuid === selectedActivityUuid
+  )
+  const selectedMeta = selectedActivityUuid
+    ? activityMetaByUuid.get(selectedActivityUuid)
+    : null
 
   return (
     <div className="min-h-[calc(100vh-200px)] rounded-2xl bg-white p-8 shadow-[0_18px_45px_rgba(15,23,42,0.12)] flex flex-col">
@@ -429,54 +836,247 @@ function SelectedRoomPanel({
           </span>
         </div>
       </div>
-      <div className="mt-6 flex-1">
-        <div className="overflow-hidden rounded-xl border border-gray-200">
-          <div className="grid grid-cols-[2fr_2fr_3fr] gap-0 bg-gray-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-            <div>Name</div>
-            <div>Username</div>
-            <div>Email</div>
+      {tabs.length ? (
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+          <TabSwitch
+            value={activeTabId}
+            onValueChange={onTabChange}
+            options={tabs}
+            className="flex-wrap"
+          />
+          {isUpdatingTab ? (
+            <div className="text-xs text-gray-500">Saving tab…</div>
+          ) : null}
+        </div>
+      ) : null}
+      <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
+        {activityStatusLoading ? (
+          <div>Loading activity status...</div>
+        ) : (
+          <div />
+        )}
+        {activityStatusError ? (
+          <div className="text-rose-600">
+            Unable to load activity status for this room.
           </div>
-          <div className="divide-y divide-gray-100 bg-white text-sm text-gray-700">
-            {isLoading ? (
-              <div className="px-4 py-6 text-sm text-gray-500">
-                Loading students...
+        ) : null}
+      </div>
+      <div className="mt-4 flex-1">
+        {!selectedStudent ? (
+          <div className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200">
+            <div className="flex-1 overflow-auto bg-white">
+              {isLoading ? (
+                <div className="px-4 py-6 text-sm text-gray-500">
+                  Loading students...
+                </div>
+              ) : null}
+              {hasError ? (
+                <div className="px-4 py-6 text-sm text-rose-600">
+                  Unable to load students for this room.
+                </div>
+              ) : null}
+              {!isLoading && !hasError && students.length === 0 ? (
+                <div className="px-4 py-6 text-sm text-gray-500">
+                  No students are assigned to this room yet.
+                </div>
+              ) : null}
+              {!isLoading && !hasError && students.length > 0 ? (
+                <div className="divide-y divide-gray-100">
+                  {students.map((member) => {
+                    const name = `${member.user.first_name ?? ''} ${
+                      member.user.last_name ?? ''
+                    }`.trim()
+                    const states = buildActivityStates(member.user.id)
+                    return (
+                      <button
+                        key={member.user.id}
+                        type="button"
+                        onClick={() => {
+                          router.push(
+                            buildUrl(member.user.user_uuid, null),
+                            { scroll: false }
+                          )
+                        }}
+                        className="group grid w-full grid-cols-[240px_1fr] items-center gap-4 bg-white px-4 py-3 text-left transition hover:bg-gray-50"
+                      >
+                        <div className="grid grid-cols-[1fr_auto_16px] items-center gap-3">
+                          <span className="truncate font-medium text-gray-900">
+                            {name || member.user.username}
+                          </span>
+                          <span className="rounded-full border border-gray-300 bg-gray-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                            Offline
+                          </span>
+                          <span className="inline-flex h-2.5 w-2.5 rounded-full border border-gray-300 bg-gray-300" />
+                        </div>
+                        <div className="w-full overflow-x-auto">
+                          <div
+                            className="grid items-center"
+                            style={{
+                              gridTemplateColumns: `repeat(${states.length}, 52px)`,
+                            }}
+                          >
+                            {states.map((state, index) => (
+                              <div
+                                key={`${member.user.id}:${state.activity_uuid}`}
+                                className={`flex items-center justify-center py-3 ${
+                                  index === 0 ? '' : 'border-l border-gray-100'
+                                }`}
+                              >
+                                <ActivityDot
+                                  status={state.status}
+                                  selected={false}
+                                  onClick={(event) => {
+                                    event.stopPropagation()
+                                    router.push(
+                                      buildUrl(
+                                        member.user.user_uuid,
+                                        state.activity_uuid
+                                      ),
+                                      { scroll: false }
+                                    )
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : (
+          <div className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-4 py-3">
+              <button
+                type="button"
+                onClick={() => {
+                  router.push(basePath, { scroll: false })
+                }}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-gray-500 transition hover:text-gray-800"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Back
+              </button>
+              <div className="text-xs text-gray-500">
+                {selectedActivityIndex >= 0
+                  ? `Activity ${selectedActivityIndex + 1} of ${activities.length}`
+                  : `${activities.length} activities`}
               </div>
-            ) : null}
-            {hasError ? (
-              <div className="px-4 py-6 text-sm text-rose-600">
-                Unable to load students for this room.
+            </div>
+            <div className="flex-1 overflow-auto p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="text-lg font-semibold text-gray-900">
+                  {`${selectedStudent.user.first_name ?? ''} ${
+                    selectedStudent.user.last_name ?? ''
+                  }`.trim() || selectedStudent.user.username}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {selectedMeta
+                    ? `${selectedMeta.chapter_name ?? 'Chapter'} · ${selectedMeta.name}`
+                    : 'Click an activity dot to focus.'}
+                </div>
               </div>
-            ) : null}
-            {!isLoading && !hasError && students.length === 0 ? (
-              <div className="px-4 py-6 text-sm text-gray-500">
-                No students are assigned to this room yet.
-              </div>
-            ) : null}
-            {!isLoading && !hasError
-              ? students.map((member) => {
-                  const name = `${member.user.first_name ?? ''} ${
-                    member.user.last_name ?? ''
-                  }`.trim()
+              <div className="mt-6 space-y-3">
+                {selectedStates.map((state, index) => {
+                  const isSelected =
+                    selectedActivityUuid === state.activity_uuid
+                  const meta = activityMetaByUuid.get(state.activity_uuid)
+                  const chapterLabel = meta?.chapter_name ?? 'Chapter'
+                  const activityLabel = meta?.name ?? `Activity ${index + 1}`
+                  const statusLabel =
+                    state.status === 'done'
+                      ? 'Done'
+                      : state.status === 'in_progress'
+                      ? 'In progress'
+                      : state.status === 'locked'
+                      ? 'Locked'
+                      : 'Not started'
+                  const isVerifying = Boolean(
+                    verifyingCells[
+                      `${selectedStudent.user.id}:${state.activity_uuid}`
+                    ]
+                  )
                   return (
                     <div
-                      key={member.user.id}
-                      className="grid grid-cols-[2fr_2fr_3fr] gap-0 px-4 py-3"
+                      key={state.activity_uuid}
+                      className={`rounded-xl border px-4 py-3 ${
+                        isSelected
+                          ? 'border-gray-900/20 bg-gray-50'
+                          : 'border-gray-200 bg-white'
+                      }`}
                     >
-                      <div className="font-medium text-gray-900">
-                        {name || member.user.username}
-                      </div>
-                      <div className="text-gray-600">
-                        {member.user.username}
-                      </div>
-                      <div className="text-gray-600">
-                        {member.user.email || '—'}
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          router.push(
+                            buildUrl(
+                              selectedStudent.user.user_uuid,
+                              state.activity_uuid
+                            ),
+                            { scroll: false }
+                          )
+                        }
+                        className="flex w-full items-center justify-between gap-4 text-left"
+                      >
+                        <div className="flex items-center gap-3">
+                          <ActivityDot
+                            status={state.status}
+                            selected={isSelected}
+                          />
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                              {chapterLabel}
+                            </span>
+                            <span className="text-sm font-medium text-gray-800">
+                              {activityLabel}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-xs font-semibold text-gray-500">
+                          {statusLabel}
+                        </span>
+                      </button>
+                      {isSelected ? (
+                        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                          <span>Verification</span>
+                          <select
+                            className="h-7 rounded-md border border-gray-200 bg-white px-2 text-[11px] font-medium text-gray-700 disabled:cursor-not-allowed disabled:bg-gray-100/60"
+                            value={state.step?.tutor_verified ?? 'NONE'}
+                            onChange={(event) =>
+                              onVerifyStep(
+                                selectedStudent.user,
+                                state.activity_uuid,
+                                event.target
+                                  .value as ActivityStatusStep['tutor_verified']
+                              )
+                            }
+                            disabled={
+                              !state.step ||
+                              isVerifying ||
+                              state.status === 'locked'
+                            }
+                          >
+                            <option value="NONE">Unverified</option>
+                            <option value="CORRECT">Correct</option>
+                            <option value="INCORRECT">Incorrect</option>
+                          </select>
+                          {isVerifying ? (
+                            <span className="text-[10px] text-gray-400">
+                              Saving...
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
                   )
-                })
-              : null}
+                })}
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
@@ -506,5 +1106,58 @@ function NavigationLink({
         </div>
       </div>
     </Link>
+  )
+}
+
+function ActivityDot({
+  status,
+  selected,
+  onClick,
+}: {
+  status: ActivityState['status']
+  selected: boolean
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void
+}) {
+  const borderClass =
+    status === 'done'
+      ? 'border-emerald-600'
+      : status === 'in_progress'
+      ? 'border-amber-500'
+      : status === 'locked'
+      ? 'border-gray-400'
+      : 'border-gray-300'
+  const ringClass =
+    status === 'done'
+      ? 'ring-emerald-200/80'
+      : status === 'in_progress'
+      ? 'ring-amber-200/80'
+      : status === 'locked'
+      ? 'ring-gray-200/70'
+      : 'ring-gray-200/60'
+  const content =
+    status === 'locked' ? <Lock className="h-3.5 w-3.5 text-gray-500" /> : null
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={`flex h-7 w-7 items-center justify-center rounded-full border-[3px] bg-white transition ${borderClass} ring-2 ${ringClass} ${
+          selected ? 'ring-4 ring-gray-900/20' : ''
+        }`}
+      >
+        {content}
+      </button>
+    )
+  }
+
+  return (
+    <span
+      className={`flex h-7 w-7 items-center justify-center rounded-full border-[3px] bg-white ${borderClass} ring-2 ${ringClass} ${
+        selected ? 'ring-4 ring-gray-900/20' : ''
+      }`}
+    >
+      {content}
+    </span>
   )
 }

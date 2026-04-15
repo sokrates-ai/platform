@@ -8,6 +8,7 @@ from src.db.trails import TrailCreate, TrailRead
 from src.services.users.users import release_user_coin_reward, release_user_xp_reward
 from src.services.courses.activities.workspaces import get_task
 from src.security.auth import get_current_user
+from src.db.trail_steps import TrailStepVerificationEnum
 from pydantic import BaseModel
 from src.services.trail.trail import (
     Trail,
@@ -19,6 +20,7 @@ from src.services.trail.trail import (
     get_user_trail_with_orgid,
     mark_activity_task_complete,
     remove_course_from_trail,
+    verify_trail_step_by_tutor,
 )
 
 
@@ -97,6 +99,12 @@ class TrailActivityResponse(BaseModel):
     was_initial: bool
 
 
+class TrailStepTutorVerificationRequest(BaseModel):
+    activity_uuid: str
+    student_uuid: str
+    status: TrailStepVerificationEnum
+
+
 @router.post('/add_activity/{activity_uuid}')
 async def api_add_activity_to_trail(
     request: Request,
@@ -111,6 +119,26 @@ async def api_add_activity_to_trail(
         request, user, activity_uuid, db_session
     )
     return TrailActivityResponse(was_initial=bool(was_initial))
+
+
+@router.post('/verify_step')
+async def api_verify_trail_step(
+    request: Request,
+    body: TrailStepTutorVerificationRequest,
+    user=Depends(get_current_user),
+    db_session=Depends(get_db_session),
+) -> dict:
+    """
+    Verify a student's trail step.
+    """
+    return await verify_trail_step_by_tutor(
+        request,
+        body.activity_uuid,
+        body.student_uuid,
+        body.status,
+        user,
+        db_session,
+    )
 
 
 class WSRecordSolution(BaseModel):

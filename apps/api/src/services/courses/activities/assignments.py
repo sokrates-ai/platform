@@ -26,7 +26,7 @@ from src.db.courses.assignments import (
 from src.db.courses.courses import Course
 from src.db.organizations import Organization
 from src.db.trail_runs import TrailRun
-from src.db.trail_steps import TrailStep
+from src.db.trail_steps import TrailStep, TrailStepVerificationEnum
 from src.db.users import AnonymousUser, PublicUser, User
 from src.security.features_utils.usage import (
     check_limits_with_usage,
@@ -1177,7 +1177,8 @@ async def create_assignment_submission(
             trail_id=trail.id if trail.id is not None else 0,
             org_id=course.org_id,
             complete=True,
-            teacher_verified=False,
+            tutor_verified=TrailStepVerificationEnum.NONE,
+            ai_verified=TrailStepVerificationEnum.NONE,
             grade="",
             user_id=user.id, # type: ignore
             creation_date=str(datetime.now()),
