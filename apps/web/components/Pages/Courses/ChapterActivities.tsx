@@ -183,10 +183,6 @@ export default function ChapterActivities({
 		latestDynamicRequest.current = null
 	}, [chapterID])
 
-	if (!chapter) {
-		return null
-	}
-
 	const handleActivityStart = async (
 		activity: any,
 		event?: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>,
@@ -293,6 +289,10 @@ export default function ChapterActivities({
 		fallbackTabId,
 		course,
 	])
+
+	if (!chapter) {
+		return null
+	}
 
 	return (
 		<div className="space-y-4 mt-4 sm:mt-12 mx-0 sm:mx-6 lg:mx-8 xl:mx-16">
