@@ -69,3 +69,37 @@ export async function removeCourseRoomMembers(
   )
   return await getResponseMetadata(result)
 }
+
+export async function getTutorRoomSelection(
+  course_uuid: string,
+  access_token: string
+) {
+  const result: any = await fetch(
+    `${getAPIUrl()}courses/${course_uuid}/tutor-room-selection`,
+    RequestBodyWithAuthHeader('GET', null, null, access_token)
+  )
+  return await getResponseMetadata(result)
+}
+
+export async function setTutorRoomSelection(
+  course_uuid: string,
+  room_id: number,
+  access_token: string
+) {
+  const result: any = await fetch(
+    `${getAPIUrl()}courses/${course_uuid}/tutor-room-selection`,
+    RequestBodyWithAuthHeader('PUT', { room_id }, null, access_token)
+  )
+  return await getResponseMetadata(result)
+}
+
+export async function clearTutorRoomSelection(
+  course_uuid: string,
+  access_token: string
+) {
+  const result: any = await fetch(
+    `${getAPIUrl()}courses/${course_uuid}/tutor-room-selection`,
+    RequestBodyWithAuthHeader('DELETE', null, null, access_token)
+  )
+  return await getResponseMetadata(result)
+}

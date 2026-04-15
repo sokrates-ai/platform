@@ -16,6 +16,10 @@ from src.db.courses.course_updates import (
     CourseUpdateRead,
     CourseUpdateUpdate,
 )
+from src.db.courses.course_tutor_room_selection import (
+    CourseTutorRoomSelectionRead,
+    CourseTutorRoomSelectionUpdate,
+)
 from src.db.courses.courses import (
     CourseCreate,
     CourseRead,
@@ -32,8 +36,14 @@ from src.services.courses.rooms import (
     delete_course_room,
     list_course_room_members,
     list_course_rooms,
+    list_manageable_course_rooms,
     remove_course_room_members,
     update_course_room,
+)
+from src.services.courses.tutor_room_selection import (
+    clear_tutor_room_selection,
+    get_tutor_room_selection,
+    set_tutor_room_selection,
 )
 from src.services.courses.courses import (
     create_course,
@@ -340,6 +350,21 @@ async def api_list_course_rooms(
     )
 
 
+@router.get('/{course_uuid}/rooms/manageable')
+async def api_list_manageable_course_rooms(
+    request: Request,
+    course_uuid: str,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+) -> List[CourseRoomRead]:
+    """
+    List rooms the current tutor can manage for a course.
+    """
+    return await list_manageable_course_rooms(
+        request, course_uuid, current_user, db_session
+    )
+
+
 @router.post('/{course_uuid}/rooms')
 async def api_create_course_room(
     request: Request,
@@ -437,4 +462,50 @@ async def api_remove_course_room_members(
     """
     return await remove_course_room_members(
         request, course_uuid, room_id, user_ids, current_user, db_session
+    )
+
+
+@router.get('/{course_uuid}/tutor-room-selection')
+async def api_get_tutor_room_selection(
+    request: Request,
+    course_uuid: str,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+) -> CourseTutorRoomSelectionRead:
+    """
+    Get the current tutor room selection for this course.
+    """
+    return await get_tutor_room_selection(
+        request, course_uuid, current_user, db_session
+    )
+
+
+@router.put('/{course_uuid}/tutor-room-selection')
+async def api_set_tutor_room_selection(
+    request: Request,
+    course_uuid: str,
+    selection_update: CourseTutorRoomSelectionUpdate,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+) -> CourseTutorRoomSelectionRead:
+    """
+    Set the tutor room selection for this course.
+    """
+    return await set_tutor_room_selection(
+        request, course_uuid, selection_update, current_user, db_session
+    )
+
+
+@router.delete('/{course_uuid}/tutor-room-selection')
+async def api_clear_tutor_room_selection(
+    request: Request,
+    course_uuid: str,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+) -> CourseTutorRoomSelectionRead:
+    """
+    Clear the tutor room selection for this course.
+    """
+    return await clear_tutor_room_selection(
+        request, course_uuid, current_user, db_session
     )

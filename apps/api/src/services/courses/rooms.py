@@ -295,6 +295,102 @@ def ensure_user_role_for_room(
         )
 
 
+def get_user_course_role_flags(
+    user_id: int,
+    course: Course,
+    db_session: Session,
+) -> dict[str, bool]:
+    statement = (
+        select(Role)
+        .join(UserOrganization, Role.id == UserOrganization.role_id)
+        .where(
+            UserOrganization.user_id == user_id,
+            UserOrganization.org_id == course.org_id,
+        )
+    )
+    roles = db_session.exec(statement).all()
+
+    is_admin = any(
+        role.id == 1 or role.role_uuid == "role_global_admin" for role in roles
+    )
+    is_maintainer = any(
+        role.id == 2 or role.role_uuid == "role_global_maintainer" for role in roles
+    )
+    is_tutor = any(
+        role.id == 4 or role.role_uuid == "role_global_tutor" for role in roles
+    )
+
+    return {
+        "is_admin": is_admin,
+        "is_maintainer": is_maintainer,
+        "is_tutor": is_tutor,
+    }
+
+
+async def list_manageable_course_rooms(
+    request: Request,
+    course_uuid: str,
+    current_user: PublicUser | AnonymousUser,
+    db_session: Session,
+) -> List[CourseRoomRead]:
+    course = await get_course_by_uuid(
+        request, course_uuid, current_user, db_session, "read"
+    )
+
+    if current_user.id == 0:
+        raise HTTPException(status_code=403, detail="Authentication required")
+
+    role_flags = get_user_course_role_flags(current_user.id, course, db_session)
+    is_admin_or_maintainer = role_flags["is_admin"] or role_flags["is_maintainer"]
+
+    if not (is_admin_or_maintainer or role_flags["is_tutor"]):
+        raise HTTPException(
+            status_code=403,
+            detail="User does not have permission to manage course rooms",
+        )
+
+    if is_admin_or_maintainer:
+        rooms = db_session.exec(
+            select(CourseRoom).where(CourseRoom.course_id == course.id)
+        ).all()
+    else:
+        rooms = db_session.exec(
+            select(CourseRoom)
+            .join(CourseRoomMember, CourseRoomMember.room_id == CourseRoom.id)
+            .where(
+                CourseRoom.course_id == course.id,
+                CourseRoomMember.user_id == current_user.id,
+                CourseRoomMember.role == RoomRoleEnum.tutor,
+            )
+        ).all()
+
+    room_ids = [room.id for room in rooms if room.id is not None]
+    member_counts: dict[int, dict[str, int]] = {
+        room_id: {"student": 0, "tutor": 0} for room_id in room_ids
+    }
+
+    if room_ids:
+        members = db_session.exec(
+            select(CourseRoomMember).where(CourseRoomMember.room_id.in_(room_ids))
+        ).all()
+        for member in members:
+            if member.room_id not in member_counts:
+                member_counts[member.room_id] = {"student": 0, "tutor": 0}
+            if member.role == RoomRoleEnum.tutor:
+                member_counts[member.room_id]["tutor"] += 1
+            else:
+                member_counts[member.room_id]["student"] += 1
+
+    return [
+        to_room_read(
+            room,
+            member_counts.get(room.id or 0, {}).get("student", 0),
+            member_counts.get(room.id or 0, {}).get("tutor", 0),
+        )
+        for room in rooms
+    ]
+
+
 async def add_course_room_members(
     request: Request,
     course_uuid: str,

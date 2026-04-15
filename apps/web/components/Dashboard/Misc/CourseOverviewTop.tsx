@@ -2,6 +2,7 @@
 
 import { useCourse } from '@components/Contexts/CourseContext'
 import { useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import SaveState from './SaveState'
 import { CourseOverviewParams } from 'app/orgs/[orgslug]/dash/courses/course/[courseuuid]/[subpage]/page'
@@ -14,8 +15,10 @@ import EmptyThumbnailImage from '../../../public/empty_thumbnail.webp'
 
 export function CourseOverviewTop({
   params,
+  actions,
 }: {
   params: CourseOverviewParams
+  actions?: ReactNode
 }) {
   const course = useCourse() as any
   const org = useOrg() as any
@@ -64,12 +67,14 @@ export function CourseOverviewTop({
             </div>
           </div>
         </div>
-        <div className="flex shrink-0 items-center justify-end">
+        <div className="flex shrink-0 items-center justify-end gap-3">
+          {actions}
           <SaveState orgslug={params.orgslug} />
         </div>
       </div>
     ),
     [
+      actions,
       course?.courseStructure?.name,
       course?.courseStructure?.thumbnail_image,
       org?.org_uuid,
