@@ -13,6 +13,7 @@ import React, { useEffect } from 'react'
 import { mutate } from 'swr'
 import { updateCourse } from '@services/courses/courses'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
+import { addCourseRoomMembers, removeCourseRoomMembers } from '@services/courses/rooms'
 
 function SaveState(props: { orgslug: string }) {
   const course = useCourse() as any
@@ -129,6 +130,47 @@ function SaveState(props: { orgslug: string }) {
     dispatchCourse({ type: 'setIsSaved' })
   }
 
+  const changeRoomsBackend = React.useCallback(async () => {
+    const drafts = course?.roomMembershipDrafts ?? {}
+    const draftEntries = Object.entries(drafts).filter(([, draft]) => {
+      if (!draft) return false
+      const adds = draft.adds ?? {}
+      const removes = draft.removes ?? []
+      return Object.keys(adds).length > 0 || removes.length > 0
+    })
+    if (!draftEntries.length) return
+
+    const courseUuid = course?.courseStructure?.course_uuid
+    const token = session.data?.tokens?.access_token
+    if (!courseUuid || !token) return
+
+    for (const [roomIdRaw, draft] of draftEntries) {
+      const roomId = Number(roomIdRaw)
+      if (!roomId) continue
+      const adds = draft.adds ?? {}
+      const removes = draft.removes ?? []
+      const addsByRole = { student: [] as number[], tutor: [] as number[] }
+      Object.entries(adds).forEach(([userIdRaw, role]) => {
+        const userId = Number(userIdRaw)
+        if (!userId) return
+        if (role === 'tutor') {
+          addsByRole.tutor.push(userId)
+        } else {
+          addsByRole.student.push(userId)
+        }
+      })
+      if (addsByRole.student.length) {
+        await addCourseRoomMembers(courseUuid, roomId, addsByRole.student, 'student', token)
+      }
+      if (addsByRole.tutor.length) {
+        await addCourseRoomMembers(courseUuid, roomId, addsByRole.tutor, 'tutor', token)
+      }
+      if (removes.length) {
+        await removeCourseRoomMembers(courseUuid, roomId, removes, token)
+      }
+    }
+  }, [course?.courseStructure?.course_uuid, course?.roomMembershipDrafts, session.data?.tokens?.access_token])
+
   const setSavingState = React.useCallback((next: boolean) => {
     setIsSaving(next)
     dispatchCourse({ type: next ? 'setIsSaving' : 'setIsNotSaving' })
@@ -144,12 +186,15 @@ function SaveState(props: { orgslug: string }) {
       // Course metadata
       await changeMetadataBackend()
       mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
+      await changeRoomsBackend()
+      await mutate((key: string) => typeof key === 'string' && key.includes('/rooms'))
+      dispatchCourse({ type: 'clearRoomMembershipDrafts' })
       await revalidateTags(['courses'], props.orgslug)
       dispatchCourse({ type: 'setIsSaved' })
     } finally {
       setSavingState(false)
     }
-  }, [changeMetadataBackend, changeOrderBackend, course?.courseStructure?.course_uuid, dispatchCourse, props.orgslug, saved, isSaving, setSavingState])
+  }, [changeMetadataBackend, changeOrderBackend, changeRoomsBackend, course?.courseStructure?.course_uuid, dispatchCourse, props.orgslug, saved, isSaving, setSavingState])
 
   const handleCourseOrder = React.useCallback((course_structure: any) => {
     const chapters = course_structure.chapters
@@ -229,7 +274,7 @@ function SaveState(props: { orgslug: string }) {
       )}
       <div
         className={
-          `px-4 py-2 rounded-lg drop-shadow-md cursor-pointer flex space-x-2 items-center font-bold antialiased transition-all ease-linear ` +
+          `px-3 py-1.5 rounded-lg drop-shadow-md cursor-pointer flex space-x-2 items-center font-bold antialiased transition-all ease-linear ` +
           (saved
             ? 'bg-gray-600 text-white'
             : 'bg-black text-white border hover:bg-gray-900 ') +

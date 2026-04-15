@@ -11,7 +11,7 @@ import { getCourseThumbnailMediaDirectory } from "@services/media/media"
 import { getUriWithOrg } from "@services/config/config"
 import { deleteCourseFromBackend } from "@services/courses/courses"
 import { revalidateTags } from "@services/utils/ts/requests"
-import { BookMinus, FilePenLine, Settings2, EllipsisVertical } from "lucide-react"
+import { BookMinus, FilePenLine, Settings2, EllipsisVertical, GraduationCap } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -124,6 +124,18 @@ const AdminEditOptions: React.FC<{
             className="flex items-center px-2 py-1"
           >
             <FilePenLine className="mr-2 h-4 w-4" /> Edit Content
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link
+            prefetch
+            href={getUriWithOrg(
+              orgSlug,
+              `/dash/courses/course/${course.course_uuid.replace("course_", "")}/tutor`
+            )}
+            className="flex items-center px-2 py-1"
+          >
+            <GraduationCap className="mr-2 h-4 w-4" /> Tutor View
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>

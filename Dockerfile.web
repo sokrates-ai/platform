@@ -1,5 +1,5 @@
 # Base image
-FROM node:20-alpine as build
+FROM node:20-bullseye-slim AS build
 
 RUN npm install -g corepack
 
@@ -21,6 +21,8 @@ ENV NEXT_PUBLIC_LEARNHOUSE_DOMAIN=https://${DOMAIN}
 ENV NEXT_PUBLIC_LEARNHOUSE_MEDIA_URL=https://${DOMAIN}/
 ENV NEXT_PUBLIC_LEARNHOUSE_HTTPS=true
 ENV NEXT_PUBLIC_BUILD_TIME=${BUILD_TIME}
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS=--max-old-space-size=4096
 
 COPY ./apps/web/ /app/web
 WORKDIR /app/web
@@ -39,7 +41,7 @@ RUN pnpm i --frozen-lockfile
 RUN pnpm run build;
 
 # Final image
-FROM node:20-alpine AS runner
+FROM node:20-bullseye-slim AS runner
 RUN addgroup --system --gid 1001 system \
     && adduser --system --uid 1001 app
 WORKDIR /app/web

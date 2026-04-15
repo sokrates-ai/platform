@@ -1,6 +1,8 @@
+'use client'
+
 import { useCourse } from '@components/Contexts/CourseContext'
-import { useEffect } from 'react'
-import BreadCrumbs from './BreadCrumbs'
+import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import SaveState from './SaveState'
 import { CourseOverviewParams } from 'app/orgs/[orgslug]/dash/courses/course/[courseuuid]/[subpage]/page'
 import { getUriWithOrg } from '@services/config/config'
@@ -17,23 +19,25 @@ export function CourseOverviewTop({
 }) {
   const course = useCourse() as any
   const org = useOrg() as any
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
 
-  useEffect(() => {}, [course, org])
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const target = document.getElementById('dash-topbar-slot')
+    setPortalTarget(target)
+  }, [])
 
-  return (
-    <>
-      <BreadCrumbs
-        type="courses"
-        last_breadcrumb={course.courseStructure.name}
-      ></BreadCrumbs>
-      <div className="flex">
-        <div className="flex py-3 grow items-center">
+  const headerContent = useMemo(
+    () => (
+      <div className="flex min-w-0 flex-1 items-center justify-between gap-6">
+        <div className="flex min-w-0 items-center gap-4">
           <Link
             href={getUriWithOrg(org?.slug, '') + `/course/${params.courseuuid}`}
+            className="shrink-0"
           >
             {course?.courseStructure?.thumbnail_image ? (
               <img
-                className="w-[100px] h-[57px] rounded-md drop-shadow-md"
+                className="h-[34px] w-[60px] rounded-md object-cover shadow-sm"
                 src={`${getCourseThumbnailMediaDirectory(
                   org?.org_uuid,
                   'course_' + params.courseuuid,
@@ -43,24 +47,41 @@ export function CourseOverviewTop({
               />
             ) : (
               <Image
-                width={100}
-                className="h-[57px] rounded-md drop-shadow-md"
+                width={60}
+                height={34}
+                className="h-[34px] w-[60px] rounded-md object-cover shadow-sm"
                 src={EmptyThumbnailImage}
                 alt=""
               />
             )}
           </Link>
-          <div className="flex flex-col course_metadata justify-center pl-5">
-            <div className="text-gray-400 font-semibold text-sm">Course</div>
-            <div className="text-black font-bold text-xl -mt-1 first-letter:uppercase">
-              {course.courseStructure.name}
+          <div className="min-w-0">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+              Course
+            </div>
+            <div className="truncate text-sm font-semibold text-gray-900">
+              {course?.courseStructure?.name ?? 'Course'}
             </div>
           </div>
         </div>
-        <div className="flex items-center">
+        <div className="flex shrink-0 items-center justify-end">
           <SaveState orgslug={params.orgslug} />
         </div>
       </div>
-    </>
+    ),
+    [
+      course?.courseStructure?.name,
+      course?.courseStructure?.thumbnail_image,
+      org?.org_uuid,
+      org?.slug,
+      params.courseuuid,
+      params.orgslug,
+    ],
   )
+
+  if (portalTarget) {
+    return createPortal(headerContent, portalTarget)
+  }
+
+  return <div className="flex w-full items-center">{headerContent}</div>
 }

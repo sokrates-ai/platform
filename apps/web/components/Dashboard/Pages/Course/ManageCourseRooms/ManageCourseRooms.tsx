@@ -11,10 +11,8 @@ import { useOrg } from '@components/Contexts/OrgContext'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { getAPIUrl } from '@services/config/config'
 import {
-  addCourseRoomMembers,
   createCourseRoom,
   deleteCourseRoom,
-  removeCourseRoomMembers,
   updateCourseRoom,
 } from '@services/courses/rooms'
 import { swrFetcher } from '@services/utils/ts/requests'
@@ -25,14 +23,19 @@ import useSWR, { mutate } from 'swr'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationModal/ConfirmationModal'
 import { Button } from '@components/ui/button'
-import { useFormik } from 'formik'
+import { type FormikErrors, useFormik } from 'formik'
 import { DragDropContext, Draggable, Droppable, type DropResult } from 'react-beautiful-dnd'
 import TabSwitch from '@components/Objects/StyledElements/TabSwitch/TabSwitch'
 
-const validateRoom = (values: any) => {
-  const errors: any = {}
+type RoomFormValues = {
+  name: string
+  description: string
+}
+
+const validateRoom = (values: RoomFormValues) => {
+  const errors: FormikErrors<RoomFormValues> = {}
   if (!values.name) {
-    errors.name = 'Name is Required'
+    errors.name = 'Name is required'
   }
   return errors
 }
@@ -116,7 +119,6 @@ function ManageCourseRooms() {
                           <RoomMembersManager
                             room={room}
                             courseUuid={courseStructure.course_uuid}
-                            roomsKey={roomsKey}
                           />
                         }
                         dialogTrigger={
@@ -261,7 +263,7 @@ function AddRoomForm({
   const access_token = session?.data?.tokens?.access_token
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
-  const formik = useFormik({
+  const formik = useFormik<RoomFormValues>({
     initialValues: {
       name: '',
       description: '',
@@ -332,7 +334,7 @@ function EditRoomForm({
   const access_token = session?.data?.tokens?.access_token
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
-  const formik = useFormik({
+  const formik = useFormik<RoomFormValues>({
     initialValues: {
       name: room?.name ?? '',
       description: room?.description ?? '',
@@ -392,12 +394,12 @@ function EditRoomForm({
 function RoomMembersManager({
   room,
   courseUuid,
-  roomsKey,
 }: {
   room: any
   courseUuid: string
-  roomsKey: string | null
 }) {
+  const course = useCourse() as any
+  const dispatchCourse = useCourseDispatch() as any
   const org = useOrg() as any
   const session = useSokratesSession() as any
   const access_token = session?.data?.tokens?.access_token
@@ -430,6 +432,21 @@ function RoomMembersManager({
     })
     return map
   }, [orgUsers])
+
+  const roomDraft = React.useMemo(() => {
+    const drafts = course?.roomMembershipDrafts ?? {}
+    return drafts?.[room?.id] ?? { adds: {}, removes: [] }
+  }, [course?.roomMembershipDrafts, room?.id])
+
+  React.useEffect(() => {
+    const drafts = course?.roomMembershipDrafts ?? {}
+    if (!drafts?.[room?.id] && membersOverride) {
+      setMembersOverride(null)
+      if (membersKey) {
+        mutate(membersKey)
+      }
+    }
+  }, [course?.roomMembershipDrafts, membersKey, membersOverride, room?.id])
 
   const memberRoleMap = React.useMemo(() => {
     const map = new Map<number, 'student' | 'tutor'>()
@@ -465,65 +482,46 @@ function RoomMembersManager({
     [memberRoleMap, orgUsers]
   )
 
-  const handleAdd = async (userId: number, role: 'student' | 'tutor') => {
+  const setRoomDraft = React.useCallback(
+    (nextDraft: { adds: Record<number, 'student' | 'tutor'>; removes: number[] }) => {
+      if (!room?.id) return
+      dispatchCourse({
+        type: 'updateRoomMembershipDraft',
+        payload: { roomId: room.id, draft: nextDraft },
+      })
+      dispatchCourse({ type: 'setIsNotSaved' })
+    },
+    [dispatchCourse, room?.id],
+  )
+
+  const handleAdd = (userId: number, role: 'student' | 'tutor') => {
     const user = userById.get(userId)
-    if (!user) {
-      toast.error('User not available')
-      return
-    }
+    if (!user) return
     const baseMembers = membersOverride ?? members ?? []
     const nextMembers = [
       ...baseMembers.filter((member: any) => member.user.id !== userId),
       { user, role },
     ]
     setMembersOverride(nextMembers)
-    const res = await addCourseRoomMembers(
-      courseUuid,
-      room.id,
-      userId,
-      role,
-      access_token
-    )
-    if (res.status === 200) {
-      toast.success('User added to room')
-      if (membersKey) {
-        await mutate(membersKey)
-      }
-      if (roomsKey) {
-        mutate(roomsKey)
-      }
-      setMembersOverride(null)
-    } else {
-      toast.error(`Error ${res.status}: ${res.data.detail}`)
-      setMembersOverride(null)
-    }
+    const nextRemoves = roomDraft.removes.filter((id: number) => id !== userId)
+    const nextAdds = { ...roomDraft.adds, [userId]: role }
+    setRoomDraft({ adds: nextAdds, removes: nextRemoves })
   }
 
-  const handleRemove = async (userId: number) => {
+  const handleRemove = (userId: number) => {
     const baseMembers = membersOverride ?? members ?? []
     const nextMembers = baseMembers.filter(
       (member: any) => member.user.id !== userId
     )
     setMembersOverride(nextMembers)
-    const res = await removeCourseRoomMembers(
-      courseUuid,
-      room.id,
-      userId,
-      access_token
-    )
-    if (res.status === 200) {
-      toast.success('User removed from room')
-      if (membersKey) {
-        await mutate(membersKey)
-      }
-      if (roomsKey) {
-        mutate(roomsKey)
-      }
-      setMembersOverride(null)
-    } else {
-      toast.error(`Error ${res.status}: ${res.data.detail}`)
-      setMembersOverride(null)
+    const nextAdds = { ...roomDraft.adds }
+    let nextRemoves = [...roomDraft.removes]
+    if (nextAdds[userId]) {
+      delete nextAdds[userId]
+    } else if (!nextRemoves.includes(userId)) {
+      nextRemoves.push(userId)
     }
+    setRoomDraft({ adds: nextAdds, removes: nextRemoves })
   }
 
   const isLoading = !orgUsers || (!members && !membersOverride)
