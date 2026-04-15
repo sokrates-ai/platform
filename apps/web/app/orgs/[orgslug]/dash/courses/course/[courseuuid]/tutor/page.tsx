@@ -13,6 +13,7 @@ import useCourseStaffStatus from '@components/Hooks/useCourseStaffStatus'
 import PageLoading from '@components/Objects/Loaders/PageLoading'
 import { CourseOverviewTop } from '@components/Dashboard/Misc/CourseOverviewTop'
 import TabSwitch from '@components/Objects/StyledElements/TabSwitch/TabSwitch'
+import ToolTip from '@components/Objects/StyledElements/Tooltip/Tooltip'
 import { Button } from '@components/ui/button'
 import { getAPIUrl, getUriWithOrg } from '@services/config/config'
 import { verifyTrailStep } from '@services/courses/activity'
@@ -822,6 +823,31 @@ function SelectedRoomPanel({
   const selectedMeta = selectedActivityUuid
     ? activityMetaByUuid.get(selectedActivityUuid)
     : null
+  const getStatusLabel = React.useCallback(
+    (status: ActivityState['status']) => {
+      if (status === 'done') return 'Done'
+      if (status === 'in_progress') return 'In progress'
+      if (status === 'locked') return 'Locked'
+      return 'Not started'
+    },
+    []
+  )
+  const buildTooltipContent = React.useCallback(
+    (meta: ActivityItem | undefined, status: ActivityState['status']) => (
+      <div className="flex max-w-[220px] flex-col gap-1">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+          {meta?.chapter_name ?? 'Chapter'}
+        </span>
+        <span className="text-xs font-semibold text-gray-900">
+          {meta?.name ?? 'Activity'}
+        </span>
+        <span className="text-[10px] text-gray-600">
+          {getStatusLabel(status)}
+        </span>
+      </div>
+    ),
+    [getStatusLabel]
+  )
 
   return (
     <div className="relative flex min-h-[calc(100vh-200px)] flex-col rounded-2xl bg-white p-8 shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
@@ -926,6 +952,10 @@ function SelectedRoomPanel({
                                 <ActivityDot
                                   status={state.status}
                                   selected={false}
+                                  tooltip={buildTooltipContent(
+                                    activityMetaByUuid.get(state.activity_uuid),
+                                    state.status
+                                  )}
                                   onClick={(event) => {
                                     event.stopPropagation()
                                     router.push(
@@ -987,14 +1017,7 @@ function SelectedRoomPanel({
                   const meta = activityMetaByUuid.get(state.activity_uuid)
                   const chapterLabel = meta?.chapter_name ?? 'Chapter'
                   const activityLabel = meta?.name ?? `Activity ${index + 1}`
-                  const statusLabel =
-                    state.status === 'done'
-                      ? 'Done'
-                      : state.status === 'in_progress'
-                      ? 'In progress'
-                      : state.status === 'locked'
-                      ? 'Locked'
-                      : 'Not started'
+                  const statusLabel = getStatusLabel(state.status)
                   const isVerifying = Boolean(
                     verifyingCells[
                       `${selectedStudent.user.id}:${state.activity_uuid}`
@@ -1026,6 +1049,7 @@ function SelectedRoomPanel({
                           <ActivityDot
                             status={state.status}
                             selected={isSelected}
+                            tooltip={buildTooltipContent(meta, state.status)}
                           />
                           <div className="flex flex-col">
                             <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
@@ -1137,10 +1161,12 @@ function ActivityDot({
   status,
   selected,
   onClick,
+  tooltip,
 }: {
   status: ActivityState['status']
   selected: boolean
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void
+  tooltip?: React.ReactNode
 }) {
   const borderClass =
     status === 'done'
@@ -1161,21 +1187,17 @@ function ActivityDot({
   const content =
     status === 'locked' ? <Lock className="h-3.5 w-3.5 text-gray-500" /> : null
 
-  if (onClick) {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        className={`flex h-7 w-7 items-center justify-center rounded-full border-[3px] bg-white transition ${borderClass} ring-2 ${ringClass} ${
-          selected ? 'ring-4 ring-gray-900/20' : ''
-        }`}
-      >
-        {content}
-      </button>
-    )
-  }
-
-  return (
+  const dot = onClick ? (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex h-7 w-7 items-center justify-center rounded-full border-[3px] bg-white transition ${borderClass} ring-2 ${ringClass} hover:scale-110 hover:shadow-[0_6px_14px_rgba(15,23,42,0.18)] active:scale-95 ${
+        selected ? 'ring-4 ring-gray-900/20' : ''
+      }`}
+    >
+      {content}
+    </button>
+  ) : (
     <span
       className={`flex h-7 w-7 items-center justify-center rounded-full border-[3px] bg-white ${borderClass} ring-2 ${ringClass} ${
         selected ? 'ring-4 ring-gray-900/20' : ''
@@ -1184,4 +1206,14 @@ function ActivityDot({
       {content}
     </span>
   )
+
+  if (tooltip) {
+    return (
+      <ToolTip content={tooltip} side="top" sideOffset={6}>
+        {dot}
+      </ToolTip>
+    )
+  }
+
+  return dot
 }
