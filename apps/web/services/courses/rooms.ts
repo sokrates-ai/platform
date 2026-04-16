@@ -1,6 +1,8 @@
 import { getAPIUrl } from '@services/config/config'
 import { RequestBodyWithAuthHeader, getResponseMetadata } from '@services/utils/ts/requests'
 
+type RoomMemberIds = number | string | Array<number | string>
+
 export async function getCourseRooms(course_uuid: string, access_token: string) {
   const result: any = await fetch(
     `${getAPIUrl()}courses/${course_uuid}/rooms`,
@@ -44,7 +46,7 @@ export async function getCourseRoomMembers(course_uuid: string, room_id: number,
 export async function addCourseRoomMembers(
   course_uuid: string,
   room_id: number,
-  user_ids: number | string,
+  user_ids: RoomMemberIds,
   role: 'student' | 'tutor',
   access_token: string
 ) {
@@ -59,7 +61,7 @@ export async function addCourseRoomMembers(
 export async function removeCourseRoomMembers(
   course_uuid: string,
   room_id: number,
-  user_ids: number | string,
+  user_ids: RoomMemberIds,
   access_token: string
 ) {
   const userIdsParam = Array.isArray(user_ids) ? user_ids.join(',') : user_ids

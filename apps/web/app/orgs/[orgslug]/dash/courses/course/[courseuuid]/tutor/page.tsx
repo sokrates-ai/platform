@@ -322,7 +322,7 @@ function TutorCourseLayout({
     error: activityStatusError,
     isLoading: activityStatusLoading,
     mutate: mutateActivityStatus,
-  } = useSWR(
+  } = useSWR<ActivityStatusResponse>(
     activityStatusKey,
     (url: string) => swrFetcher(url, accessToken)
   )
@@ -744,10 +744,7 @@ function TutorCourseLayout({
               isUpdatingTab={isUpdatingTab}
               onTabChange={handleTabChange}
               activities={activities}
-              activityStatus={
-                (activityStatusData as ActivityStatusResponse | undefined) ??
-                undefined
-              }
+              activityStatus={activityStatusData ?? undefined}
               activityStatusLoading={activityStatusLoading}
               activityStatusError={Boolean(activityStatusError)}
               onVerifyStep={handleVerifyStep}

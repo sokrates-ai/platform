@@ -15,6 +15,11 @@ import { updateCourse } from '@services/courses/courses'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { addCourseRoomMembers, removeCourseRoomMembers } from '@services/courses/rooms'
 
+type RoomMembershipDraft = {
+  adds?: Record<string, 'student' | 'tutor'>
+  removes?: number[]
+}
+
 function SaveState(props: { orgslug: string }) {
   const course = useCourse() as any
   const session = useSokratesSession() as any;  const router = useRouter()
@@ -131,7 +136,8 @@ function SaveState(props: { orgslug: string }) {
   }
 
   const changeRoomsBackend = React.useCallback(async () => {
-    const drafts = course?.roomMembershipDrafts ?? {}
+    const drafts: Record<string, RoomMembershipDraft> =
+      course?.roomMembershipDrafts ?? {}
     const draftEntries = Object.entries(drafts).filter(([, draft]) => {
       if (!draft) return false
       const adds = draft.adds ?? {}
