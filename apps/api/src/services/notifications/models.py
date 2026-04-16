@@ -11,6 +11,7 @@ NotificationLevel = Literal["info", "success", "warning", "error"]
 
 class Notification(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
+    topic: str = "broadcast"
     title: str
     body: str
     level: NotificationLevel = "info"
@@ -36,12 +37,19 @@ class SystemEnvelope(BaseModel):
 
 def build_notification(
     *,
+    topic: str = "broadcast",
     title: str,
     body: str,
     level: NotificationLevel = "info",
     data: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    notification = Notification(title=title, body=body, level=level, data=data)
+    notification = Notification(
+        topic=topic,
+        title=title,
+        body=body,
+        level=level,
+        data=data,
+    )
     return NotificationEnvelope(notification=notification).dict()
 
 

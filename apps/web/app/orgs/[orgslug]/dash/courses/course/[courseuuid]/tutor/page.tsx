@@ -15,7 +15,8 @@ import { CourseOverviewTop } from '@components/Dashboard/Misc/CourseOverviewTop'
 import TabSwitch from '@components/Objects/StyledElements/TabSwitch/TabSwitch'
 import ToolTip from '@components/Objects/StyledElements/Tooltip/Tooltip'
 import { Button } from '@components/ui/button'
-import { getAPIUrl, getUriWithOrg } from '@services/config/config'
+import { useToast } from '@/hooks/use-toast'
+import { getAPIUrl, getUriWithOrg, getWebSocketUrl } from '@services/config/config'
 import { verifyTrailStep } from '@services/courses/activity'
 import {
   clearTutorRoomSelection,
@@ -134,6 +135,7 @@ function TutorCourseLayout({
   const { isCourseStaff, loading: courseStaffLoading } =
     useCourseStaffStatus() as any
   const accessToken = session?.data?.tokens?.access_token
+  const { toast } = useToast()
 
   const roomsKey = accessToken
     ? `${getAPIUrl()}courses/${courseUuid}/rooms/manageable`
@@ -325,6 +327,141 @@ function TutorCourseLayout({
   const [verifyingCells, setVerifyingCells] = React.useState<
     Record<string, boolean>
   >({})
+
+  const notificationSocketRef = React.useRef<WebSocket | null>(null)
+  const notificationReconnectRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  )
+  const notificationRetryRef = React.useRef(0)
+
+  const tutorUserId =
+    typeof session?.data?.user?.id === 'number' ? session.data.user.id : null
+  const activityNotificationTopics = React.useMemo(() => {
+    if (!tutorUserId) return []
+    const base = `user/${tutorUserId}/courses/${courseUuid}/students/+`
+    return [`${base}/activity-completed`, `${base}/activity-started`]
+  }, [courseUuid, tutorUserId])
+
+  React.useEffect(() => {
+    if (!hasSelection || !accessToken || activityNotificationTopics.length === 0) {
+      if (notificationReconnectRef.current) {
+        clearTimeout(notificationReconnectRef.current)
+        notificationReconnectRef.current = null
+      }
+      if (notificationSocketRef.current) {
+        notificationSocketRef.current.close()
+        notificationSocketRef.current = null
+      }
+      return
+    }
+
+    const baseUrl = getWebSocketUrl()
+    if (!baseUrl) {
+      return
+    }
+
+    let active = true
+
+    const cleanup = () => {
+      if (notificationReconnectRef.current) {
+        clearTimeout(notificationReconnectRef.current)
+        notificationReconnectRef.current = null
+      }
+      if (notificationSocketRef.current) {
+        notificationSocketRef.current.onopen = null
+        notificationSocketRef.current.onmessage = null
+        notificationSocketRef.current.onclose = null
+        notificationSocketRef.current.onerror = null
+        notificationSocketRef.current.close()
+        notificationSocketRef.current = null
+      }
+    }
+
+    const scheduleReconnect = () => {
+      if (!active) return
+      const delay = Math.min(1000 * 2 ** notificationRetryRef.current, 30000)
+      const jitter = Math.floor(Math.random() * 300)
+      notificationRetryRef.current += 1
+      notificationReconnectRef.current = setTimeout(() => {
+        connect()
+      }, delay + jitter)
+    }
+
+    const connect = () => {
+      cleanup()
+      const normalized = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
+      const url = new URL(`${normalized}notifications/ws`)
+      url.searchParams.set('topics', activityNotificationTopics.join(','))
+      url.searchParams.set('token', accessToken)
+      const socket = new WebSocket(url.toString())
+      notificationSocketRef.current = socket
+
+      socket.onopen = () => {
+        notificationRetryRef.current = 0
+        socket.send(
+          JSON.stringify({
+            type: 'set_subscriptions',
+            topics: activityNotificationTopics,
+          })
+        )
+      }
+
+      socket.onmessage = (event) => {
+        let payload: any = null
+        try {
+          payload = JSON.parse(event.data)
+        } catch {
+          return
+        }
+        if (!payload || payload.type !== 'notification') return
+        const notification = payload.notification || {}
+        const topic = notification?.topic ?? ''
+        const isCompleted = topic.endsWith('activity-completed')
+        const isStarted = topic.endsWith('activity-started')
+        if (!isCompleted && !isStarted) return
+        const data = notification.data || {}
+        if (data.course_uuid && data.course_uuid !== courseUuid) return
+        if (data.activity_uuid && activityUuids.length > 0) {
+          const normalized = normalizeActivityUuid(data.activity_uuid)
+          if (normalized && !activityUuids.includes(normalized)) {
+            return
+          }
+        }
+        if (isCompleted) {
+          toast({
+            title: notification.title || 'Student completed activity',
+            description: notification.body || '',
+          })
+        }
+        if (typeof mutateActivityStatus === 'function') {
+          mutateActivityStatus()
+        }
+      }
+
+      socket.onerror = () => {
+        socket.close()
+      }
+
+      socket.onclose = () => {
+        scheduleReconnect()
+      }
+    }
+
+    connect()
+
+    return () => {
+      active = false
+      cleanup()
+    }
+  }, [
+    accessToken,
+    activityNotificationTopics,
+    activityUuids,
+    courseUuid,
+    hasSelection,
+    mutateActivityStatus,
+    toast,
+  ])
 
   React.useEffect(() => {
     if (hasSelection) {
@@ -761,12 +898,32 @@ function SelectedRoomPanel({
   }, [activityStatus?.steps])
 
   const selectedStudentUuid = searchParams?.get('student') ?? null
-  const selectedActivityUuid = normalizeActivityUuid(
-    searchParams?.get('activity')
-  )
+  const activityParamUuid = normalizeActivityUuid(searchParams?.get('activity'))
+  const [optimisticActivityUuid, setOptimisticActivityUuid] = React.useState<
+    string | null
+  >(null)
+  const selectedActivityUuid = optimisticActivityUuid ?? activityParamUuid
+  const [, startActivityTransition] = React.useTransition()
   const selectedStudent = students.find(
     (student) => student.user.user_uuid === selectedStudentUuid
   )
+
+  React.useEffect(() => {
+    setOptimisticActivityUuid(null)
+  }, [selectedStudentUuid])
+
+  React.useEffect(() => {
+    if (!activityParamUuid) {
+      if (optimisticActivityUuid) {
+        setOptimisticActivityUuid(null)
+      }
+      return
+    }
+    if (optimisticActivityUuid && optimisticActivityUuid === activityParamUuid) {
+      setOptimisticActivityUuid(null)
+    }
+  }, [activityParamUuid, optimisticActivityUuid])
+  const isDrilldown = Boolean(selectedStudent)
 
   const buildUrl = (studentUuid?: string | null, activityUuid?: string | null) => {
     const params = new URLSearchParams()
@@ -817,12 +974,6 @@ function SelectedRoomPanel({
       return buildActivityStates(selectedStudent.user.id)
     }, [buildActivityStates, selectedStudent])
 
-  const selectedActivityIndex = selectedStates.findIndex(
-    (state) => state.activity_uuid === selectedActivityUuid
-  )
-  const selectedMeta = selectedActivityUuid
-    ? activityMetaByUuid.get(selectedActivityUuid)
-    : null
   const getStatusLabel = React.useCallback(
     (status: ActivityState['status']) => {
       if (status === 'done') return 'Done'
@@ -852,17 +1003,39 @@ function SelectedRoomPanel({
   return (
     <div className="relative flex min-h-[calc(100vh-200px)] flex-col rounded-2xl bg-white p-8 shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="text-2xl font-semibold text-gray-900">{room.name}</div>
-        <div className="flex flex-wrap gap-2 text-xs font-semibold">
-          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700">
-            {room.student_count ?? 0} Students
-          </span>
-          <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700">
-            {room.tutor_count ?? 0} Tutors
-          </span>
-        </div>
+        {isDrilldown ? (
+          <div className="flex w-full items-center justify-between text-sm text-gray-500">
+            <button
+              type="button"
+              onClick={() => router.push(basePath, { scroll: false })}
+              className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-600 transition hover:text-gray-900"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+              Back
+            </button>
+            <nav className="flex flex-wrap items-center justify-end gap-2 text-sm text-gray-500">
+              <span className="font-semibold text-gray-400">{room.name}</span>
+              <span className="text-gray-300">/</span>
+              <span className="font-semibold text-gray-800">
+                {`${selectedStudent?.user.first_name ?? ''} ${
+                  selectedStudent?.user.last_name ?? ''
+                }`.trim() || selectedStudent?.user.username}
+              </span>
+            </nav>
+          </div>
+        ) : null}
+        {!isDrilldown ? (
+          <div className="flex flex-wrap gap-2 text-xs font-semibold">
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700">
+              {room.student_count ?? 0} Students
+            </span>
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700">
+              {room.tutor_count ?? 0} Tutors
+            </span>
+          </div>
+        ) : null}
       </div>
-      {tabs.length ? (
+      {!isDrilldown && tabs.length ? (
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
           <TabSwitch
             value={activeTabId}
@@ -923,7 +1096,7 @@ function SelectedRoomPanel({
                             { scroll: false }
                           )
                         }}
-                        className="group grid w-full grid-cols-[240px_1fr] items-center gap-4 bg-white px-4 py-3 text-left transition hover:bg-gray-50"
+                        className="group grid min-h-[64px] w-full grid-cols-[240px_1fr] items-center gap-4 bg-white px-4 py-3 text-left transition hover:bg-gray-50"
                       >
                         <div className="grid grid-cols-[1fr_auto_16px] items-center gap-3">
                           <span className="truncate font-medium text-gray-900">
@@ -980,37 +1153,14 @@ function SelectedRoomPanel({
           </div>
         ) : (
           <div className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-4 py-3">
-              <button
-                type="button"
-                onClick={() => {
-                  router.push(basePath, { scroll: false })
-                }}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-gray-500 transition hover:text-gray-800"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Back
-              </button>
-              <div className="text-xs text-gray-500">
-                {selectedActivityIndex >= 0
-                  ? `Activity ${selectedActivityIndex + 1} of ${activities.length}`
-                  : `${activities.length} activities`}
-              </div>
-            </div>
-            <div className="flex-1 overflow-auto p-6 pb-24">
+            <div className="flex flex-wrap items-center justify-end gap-3 px-4 py-2" />
+            <div className="flex-1 overflow-auto p-4 pb-20">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="text-lg font-semibold text-gray-900">
-                  {`${selectedStudent.user.first_name ?? ''} ${
-                    selectedStudent.user.last_name ?? ''
-                  }`.trim() || selectedStudent.user.username}
-                </div>
                 <div className="text-xs text-gray-500">
-                  {selectedMeta
-                    ? `${selectedMeta.chapter_name ?? 'Chapter'} · ${selectedMeta.name}`
-                    : 'Click an activity dot to focus.'}
+                  Click an activity dot to focus.
                 </div>
               </div>
-              <div className="mt-6 space-y-3">
+              <div className="mt-4 space-y-2">
                 {selectedStates.map((state, index) => {
                   const isSelected =
                     selectedActivityUuid === state.activity_uuid
@@ -1026,22 +1176,25 @@ function SelectedRoomPanel({
                   return (
                     <div
                       key={state.activity_uuid}
-                      className={`rounded-xl border px-4 py-3 ${
+                      className={`rounded-xl border-2 px-3 py-2 transition ${
                         isSelected
-                          ? 'border-gray-900/20 bg-gray-50'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-SokratesOrange bg-white shadow-[0_8px_18px_rgba(233,116,0,0.18)]'
+                          : 'border-gray-200 bg-white shadow-[0_10px_22px_rgba(15,23,42,0.08)]'
                       }`}
                     >
                       <button
                         type="button"
                         onClick={() =>
-                          router.push(
-                            buildUrl(
+                          (() => {
+                            const nextUrl = buildUrl(
                               selectedStudent.user.user_uuid,
                               state.activity_uuid
-                            ),
-                            { scroll: false }
-                          )
+                            )
+                            setOptimisticActivityUuid(state.activity_uuid)
+                            startActivityTransition(() => {
+                              router.replace(nextUrl, { scroll: false })
+                            })
+                          })()
                         }
                         className="flex w-full items-center justify-between gap-4 text-left"
                       >

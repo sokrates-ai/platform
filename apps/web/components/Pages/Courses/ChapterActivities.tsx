@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ChapterActivity, { ACTIVITY_STATE } from './ChapterActivity'
 import {
 	buildActivityTabIndex,
@@ -10,7 +10,7 @@ import {
 import { getActivity } from '@services/courses/activities'
 import Canva from '@components/Objects/Activities/DynamicCanva/DynamicCanva'
 import { Loader2 } from 'lucide-react'
-import { markActivityAsComplete } from '@services/courses/activity'
+import { markActivityAsComplete, startActivity } from '@services/courses/activity'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 
@@ -37,6 +37,8 @@ export default function ChapterActivities({
 	const [dynamicError, setDynamicError] = useState<string | null>(null)
 	const [isLoadingDynamic, setIsLoadingDynamic] = useState(false)
 	const latestDynamicRequest = useRef<string | null>(null)
+	const startedActivityKeysRef = useRef<Set<string>>(new Set())
+	const startingActivityKeysRef = useRef<Set<string>>(new Set())
 	const [markingCompleteKey, setMarkingCompleteKey] = useState<string | null>(null)
 	const [optimisticCompleted, setOptimisticCompleted] = useState<Set<string>>(
 		() => new Set(),
@@ -68,7 +70,7 @@ export default function ChapterActivities({
 		[activities, selectedId],
 	)
 
-	const getActivityKey = (activity: any): string | null => {
+	const getActivityKey = useCallback((activity: any): string | null => {
 		const raw =
 			activity?.activity_uuid ??
 			activity?.activityUuid ??
@@ -79,14 +81,14 @@ export default function ChapterActivities({
 		const value = String(raw)
 		if (!value.length) return null
 		return value.startsWith('activity_') ? value : `activity_${value}`
-	}
+	}, [])
 
-	const isOptimisticallyCompleted = (activity: any) => {
+	const isOptimisticallyCompleted = useCallback((activity: any) => {
 		const key = getActivityKey(activity)
 		return key ? optimisticCompleted.has(key) : false
-	}
+	}, [getActivityKey, optimisticCompleted])
 
-	const isActivityMarkedDone = (
+	const isActivityMarkedDone = useCallback((
 		activity: any,
 		options: {
 			activeTabId?: string | null
@@ -99,11 +101,46 @@ export default function ChapterActivities({
 		return key
 			? isActivityDone(course, key, options)
 			: false
-	}
+	}, [course, getActivityKey, isOptimisticallyCompleted])
 
 	const isDynamicActivity = (activity: any) =>
 		activity?.activity_type === 'TYPE_DYNAMIC' ||
 		activity?.activity_sub_type === 'SUBTYPE_DYNAMIC_PAGE'
+
+	const hasTrailStep = useCallback((activity: any) => {
+		const activityKey = getActivityKey(activity)
+		if (!activityKey) return false
+		if (startedActivityKeysRef.current.has(activityKey)) {
+			return true
+		}
+
+		const run = course?.trail?.runs?.find(
+			(candidate: any) => candidate?.course_id == course?.id,
+		)
+		const steps = Array.isArray(run?.steps) ? run.steps : []
+		return steps.some((step: any) => getActivityKey(step) === activityKey)
+	}, [course, getActivityKey])
+
+	const maybeStartActivity = useCallback(async (activity: any) => {
+		const activityKey = getActivityKey(activity)
+		if (!activityKey) return
+		if (hasTrailStep(activity)) {
+			startedActivityKeysRef.current.add(activityKey)
+			return
+		}
+		if (startingActivityKeysRef.current.has(activityKey)) {
+			return
+		}
+
+		startingActivityKeysRef.current.add(activityKey)
+		try {
+			await startActivity(activity.activity_uuid, access_token)
+			startedActivityKeysRef.current.add(activityKey)
+		} catch {
+		} finally {
+			startingActivityKeysRef.current.delete(activityKey)
+		}
+	}, [access_token, getActivityKey, hasTrailStep])
 
 	const selectedIsDynamic = isDynamicActivity(selectedActivity)
 
@@ -111,20 +148,16 @@ export default function ChapterActivities({
 		selectedIsDynamic &&
 		(isLoadingDynamic || dynamicError || dynamicActivity)
 
-	const selectedCourseTrail = course?.trail
 	const isSelectedActivityCompleted = () => {
 		if (!selectedActivity) return false
 		if (isOptimisticallyCompleted(selectedActivity)) return true
-		const activityId = selectedActivity.id
-		const run = selectedCourseTrail?.runs?.find(
-			(run: any) => run.course_id === course?.id,
-		)
-		if (!run) return false
-		return Boolean(
-			run.steps?.find(
-				(step: any) => step.activity_id === activityId && step.complete,
-			),
-		)
+		const activityKey = getActivityKey(selectedActivity)
+		if (!activityKey) return false
+		return isActivityDone(course, activityKey, {
+			activeTabId: effectiveTabId,
+			activityTabIndex,
+			fallbackTabId,
+		})
 	}
 
 	const handleMarkComplete = async () => {
@@ -183,7 +216,7 @@ export default function ChapterActivities({
 		latestDynamicRequest.current = null
 	}, [chapterID])
 
-	const handleActivityStart = async (
+	const handleActivityStart = useCallback(async (
 		activity: any,
 		event?: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>,
 		skipPreview?: boolean,
@@ -203,6 +236,7 @@ export default function ChapterActivities({
 		}
 
 		event?.preventDefault()
+		void maybeStartActivity(activity)
 
 		// prevent duplicate fetches when reselecting the same activity
 		if (dynamicActivity?.activity_uuid === activity.activity_uuid) {
@@ -243,9 +277,9 @@ export default function ChapterActivities({
 				setIsLoadingDynamic(false)
 			}
 		}
-	}
+	}, [access_token, dynamicActivity?.activity_uuid, maybeStartActivity])
 
-	const stateOf = (idx: number): ACTIVITY_STATE => {
+	const stateOf = useCallback((idx: number): ACTIVITY_STATE => {
 		const a = activities[idx]
 		const isLocked =
 			idx > 0 &&
@@ -262,7 +296,13 @@ export default function ChapterActivities({
 		})
 			? 'done'
 			: 'available'
-	}
+	}, [
+		activities,
+		activityTabIndex,
+		effectiveTabId,
+		fallbackTabId,
+		isActivityMarkedDone,
+	])
 
 	useEffect(() => {
 		if (activities.length !== 1) return

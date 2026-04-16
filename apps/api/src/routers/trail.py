@@ -121,6 +121,26 @@ async def api_add_activity_to_trail(
     return TrailActivityResponse(was_initial=bool(was_initial))
 
 
+@router.post('/start_activity/{activity_uuid}')
+async def api_start_activity_in_trail(
+    request: Request,
+    activity_uuid: str,
+    user=Depends(get_current_user),
+    db_session=Depends(get_db_session),
+) -> TrailActivityResponse:
+    """
+    Insert a trail step for an activity without marking it complete.
+    """
+    was_initial = await add_activity_to_trail(
+        request,
+        user,
+        activity_uuid,
+        db_session,
+        complete=False,
+    )
+    return TrailActivityResponse(was_initial=bool(was_initial))
+
+
 @router.post('/verify_step')
 async def api_verify_trail_step(
     request: Request,

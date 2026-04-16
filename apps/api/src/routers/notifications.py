@@ -4,15 +4,20 @@ import json
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi_jwt_auth import AuthJWT
 from jose import JWTError, jwt
 from sqlmodel import Session, select
 
-from src.core.events.database import engine
+from src.core.events.database import engine, get_db_session
+from src.db.user_organizations import UserOrganization
 from src.db.users import User
+from src.db.users import PublicUser
+from src.security.auth import get_current_user
 from src.security.security import ALGORITHM, SECRET_KEY
-from src.services.notifications.models import build_system_event
-from src.services.notifications.service import manager
+from src.services.notifications.models import NotificationLevel, build_notification, build_system_event
+from src.services.notifications.service import manager, notify_all
+from pydantic import BaseModel
 
 
 router = APIRouter()
@@ -53,6 +58,46 @@ def _get_user_from_token(token: str) -> Optional[User]:
     return user
 
 
+def _parse_topics(value: Optional[str]) -> list[str]:
+    if not value:
+        return []
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+class NotificationBroadcastRequest(BaseModel):
+    topic: str = "broadcast"
+    title: str
+    body: str
+    level: NotificationLevel = "info"
+    data: Optional[dict] = None
+
+
+@router.post("/broadcast")
+async def broadcast_notification(
+    body: NotificationBroadcastRequest,
+    Authorize: AuthJWT = Depends(),
+    db_session: Session = Depends(get_db_session),
+    current_user: PublicUser = Depends(get_current_user),
+):
+    Authorize.jwt_required()
+
+    roles = db_session.exec(
+        select(UserOrganization.role_id).where(UserOrganization.user_id == current_user.id)
+    ).all()
+    if not any(role_id == 1 for role_id in roles):
+        raise HTTPException(status_code=403, detail="Admin privileges required.")
+
+    message = build_notification(
+        topic=body.topic.strip() or "broadcast",
+        title=body.title,
+        body=body.body,
+        level=body.level,
+        data=body.data,
+    )
+    await notify_all(message)
+    return {"status": "sent"}
+
+
 @router.websocket("/ws")
 async def websocket_notifications(websocket: WebSocket):
     token = _extract_token(websocket)
@@ -65,12 +110,18 @@ async def websocket_notifications(websocket: WebSocket):
         await websocket.close(code=4401)
         return
 
-    await manager.connect(user.id, websocket)
+    topics = _parse_topics(websocket.query_params.get("topics"))
+    initial_topics = topics or ["broadcast"]
+    await manager.connect(user.id, websocket, topics=initial_topics)
     await manager.send_direct(
         websocket,
         build_system_event(
             event="connected",
-            data={"user_id": user.id, "user_uuid": user.user_uuid},
+            data={
+                "user_id": user.id,
+                "user_uuid": user.user_uuid,
+                "topics": initial_topics,
+            },
         ),
     )
 
@@ -90,6 +141,15 @@ async def websocket_notifications(websocket: WebSocket):
                         "timestamp": f"{datetime.utcnow().isoformat()}Z",
                     },
                 )
+            elif payload.get("type") == "subscribe":
+                topics = payload.get("topics") if isinstance(payload.get("topics"), list) else []
+                await manager.add_subscriptions(websocket, topics)
+            elif payload.get("type") == "unsubscribe":
+                topics = payload.get("topics") if isinstance(payload.get("topics"), list) else []
+                await manager.remove_subscriptions(websocket, topics)
+            elif payload.get("type") == "set_subscriptions":
+                topics = payload.get("topics") if isinstance(payload.get("topics"), list) else []
+                await manager.set_subscriptions(websocket, topics)
     except WebSocketDisconnect:
         await manager.disconnect(user.id, websocket)
     except Exception:

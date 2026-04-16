@@ -33,4 +33,4 @@
 - Never commit real credentials or production secrets.
 
 ## Warnings
-- TrailStep verification fields were renamed: `teacher_verified` is removed; `tutor_verified` and `ai_verified` now use enum values `NONE`/`CORRECT`/`INCORRECT`. No migration was added, so DB schema and any clients expecting the old boolean field may need updates.
+- TrailStep verification uses `tutor_verified` and `ai_verified` enum fields with values `NONE`/`CORRECT`/`INCORRECT`. No migration was added, so DB schema and any clients expecting the legacy boolean verification field may need updates.

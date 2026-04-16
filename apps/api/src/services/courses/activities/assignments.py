@@ -25,9 +25,7 @@ from src.db.courses.assignments import (
 )
 from src.db.courses.courses import Course
 from src.db.organizations import Organization
-from src.db.trail_runs import TrailRun
-from src.db.trail_steps import TrailStep, TrailStepVerificationEnum
-from src.db.users import AnonymousUser, PublicUser, User
+from src.db.users import AnonymousUser, PublicUser
 from src.security.features_utils.usage import (
     check_limits_with_usage,
     decrease_feature_usage,
@@ -42,7 +40,6 @@ from src.services.courses.activities.uploads.sub_file import upload_submission_f
 from src.services.courses.activities.uploads.tasks_ref_files import (
     upload_reference_file,
 )
-from src.services.trail.trail import check_trail_presence
 
 ## > Assignments CRUD
 
@@ -1048,148 +1045,15 @@ async def create_assignment_submission(
     current_user: PublicUser | AnonymousUser,
     db_session: Session,
 ):
-    # Check if assignment exists
-    statement = select(Assignment).where(Assignment.assignment_uuid == assignment_uuid)
-    assignment = db_session.exec(statement).first()
-
-    if not assignment:
-        raise HTTPException(
-            status_code=404,
-            detail="Assignment not found",
-        )
-
-    # Check if the submission has already been made
-    statement = select(AssignmentUserSubmission).where(
-        AssignmentUserSubmission.assignment_id == assignment.id,
-        AssignmentUserSubmission.user_id == current_user.id,
+    # TODO: Re-enable assignment submissions after migrating this flow to the
+    # activity_uuid-based TrailStep model.
+    raise HTTPException(
+        status_code=501,
+        detail=(
+            "Assignment submissions are temporarily disabled until trail step "
+            "assignment integration is migrated to activity_uuid"
+        ),
     )
-
-    assignment_user_submission = db_session.exec(statement).first()
-
-    if assignment_user_submission:
-        raise HTTPException(
-            status_code=400,
-            detail="Assignment User Submission already exists",
-        )
-
-    # Check if course exists
-    statement = select(Course).where(Course.id == assignment.course_id)
-    course = db_session.exec(statement).first()
-
-    if not course:
-        raise HTTPException(
-            status_code=404,
-            detail="Course not found",
-        )
-
-    # Check if User already submitted the assignment
-    statement = select(AssignmentUserSubmission).where(
-        AssignmentUserSubmission.assignment_id == assignment.id,
-        AssignmentUserSubmission.user_id == current_user.id,
-    )
-    assignment_user_submission = db_session.exec(statement).first()
-
-    if assignment_user_submission:
-        raise HTTPException(
-            status_code=400,
-            detail="Assignment User Submission already exists",
-        )
-
-    # RBAC check
-    await rbac_check(request, course.course_uuid, current_user, "update", db_session)
-
-    # Create Assignment User Submission
-    assignment_user_submission = AssignmentUserSubmission(
-        user_id=current_user.id,
-        assignment_id=assignment.id,  # type: ignore
-        grade=0,
-        assignmentusersubmission_uuid=str(f"assignmentusersubmission_{uuid4()}"),
-        submission_status=AssignmentUserSubmissionStatus.SUBMITTED,
-        creation_date=str(datetime.now()),
-        update_date=str(datetime.now()),
-    )
-
-    # Insert Assignment User Submission in DB
-    db_session.add(assignment_user_submission)
-    db_session.commit()
-
-    # User
-    statement = select(User).where(User.id == current_user.id)
-    user = db_session.exec(statement).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found",
-        )
-
-    # Activity
-    statement = select(Activity).where(Activity.id == assignment.activity_id)
-    activity = db_session.exec(statement).first()
-
-    if not activity:
-        raise HTTPException(
-            status_code=404,
-            detail="Activity not found",
-        )
-
-    # Add TrailStep
-    trail = await check_trail_presence(
-        org_id=course.org_id,
-        user_id=user.id,  # type: ignore
-        request=request,
-        user=user,  # type: ignore
-        db_session=db_session,
-    )
-
-    statement = select(TrailRun).where(
-        TrailRun.trail_id == trail.id,
-        TrailRun.course_id == course.id,
-        TrailRun.user_id == user.id,
-    )
-    trailrun = db_session.exec(statement).first()
-
-    if not trailrun:
-        trailrun = TrailRun(
-            trail_id=trail.id if trail.id is not None else 0,
-            course_id=course.id if course.id is not None else 0,
-            org_id=course.org_id,
-            user_id=user.id,  # type: ignore
-            creation_date=str(datetime.now()),
-            update_date=str(datetime.now()),
-        )
-        db_session.add(trailrun)
-        db_session.commit()
-        db_session.refresh(trailrun)
-
-    statement = select(TrailStep).where(
-        TrailStep.trailrun_id == trailrun.id,
-        TrailStep.activity_id == activity.id,
-        TrailStep.user_id == user.id,
-    )
-    trailstep = db_session.exec(statement).first()
-
-    if not trailstep:
-        trailstep = TrailStep(
-            trailrun_id=trailrun.id if trailrun.id is not None else 0,
-            activity_id=activity.id if activity.id is not None else 0,
-            course_id=course.id if course.id is not None else 0,
-            trail_id=trail.id if trail.id is not None else 0,
-            org_id=course.org_id,
-            complete=True,
-            tutor_verified=TrailStepVerificationEnum.NONE,
-            ai_verified=TrailStepVerificationEnum.NONE,
-            grade="",
-            user_id=user.id, # type: ignore
-            creation_date=str(datetime.now()),
-            update_date=str(datetime.now()),
-        )
-        db_session.add(trailstep)
-        db_session.commit()
-        db_session.refresh(trailstep)
-
-    # return assignment user submission read
-    return AssignmentUserSubmissionRead.model_validate(assignment_user_submission)
 
 
 async def read_assignment_submissions(
@@ -1546,71 +1410,15 @@ async def mark_activity_as_done_for_user(
     current_user: PublicUser | AnonymousUser,
     db_session: Session,
 ):
-    # Get Assignment
-    statement = select(Assignment).where(Assignment.assignment_uuid == assignment_uuid)
-    assignment = db_session.exec(statement).first()
-
-    if not assignment:
-        raise HTTPException(
-            status_code=404,
-            detail="Assignment not found",
-        )
-
-    # Check if activity exists
-    statement = select(Activity).where(Activity.id == assignment.activity_id)
-    activity = db_session.exec(statement).first()
-
-    statement = select(Course).where(Course.id == assignment.course_id)
-    course = db_session.exec(statement).first()
-
-    if not course:
-        raise HTTPException(
-            status_code=404,
-            detail="Course not found",
-        )
-
-    await rbac_check(request, course.course_uuid, current_user, "update", db_session)
-
-    if not activity:
-        raise HTTPException(
-            status_code=404,
-            detail="Activity not found",
-        )
-
-    # Check if user exists
-    statement = select(User).where(User.id == user_id)
-    user = db_session.exec(statement).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found",
-        )
-
-    # Check if user is enrolled in the course
-    trailsteps = select(TrailStep).where(
-        TrailStep.activity_id == activity.id,
-        TrailStep.user_id == user_id,
+    # TODO: Re-enable assignment completion after migrating this flow to the
+    # activity_uuid-based TrailStep model.
+    raise HTTPException(
+        status_code=501,
+        detail=(
+            "Assignment completion is temporarily disabled until trail step "
+            "assignment integration is migrated to activity_uuid"
+        ),
     )
-    trailstep = db_session.exec(trailsteps).first()
-
-    if not trailstep:
-        raise HTTPException(
-            status_code=404,
-            detail="User not enrolled in the course",
-        )
-
-    # Mark activity as done
-    trailstep.complete = True
-    trailstep.update_date = str(datetime.now())
-
-    # Insert TrailStep in DB
-    db_session.add(trailstep)
-    db_session.commit()
-    db_session.refresh(trailstep)
-
-    # return OK
-    return {"message": "Activity marked as done for user"}
 
 
 async def get_assignments_from_course(

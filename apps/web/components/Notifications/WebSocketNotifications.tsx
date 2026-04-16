@@ -8,6 +8,7 @@ import { getWebSocketUrl } from '@services/config/config'
 
 type NotificationPayload = {
   id?: string
+  topic?: string
   title?: string
   body?: string
   level?: 'info' | 'success' | 'warning' | 'error'
@@ -39,6 +40,15 @@ const MAX_RETRY_DELAY_MS = 30000
 export default function WebSocketNotifications() {
   const { data: session, status } = useSession()
   const { toast } = useToast()
+
+  const topics = React.useMemo(() => {
+    const base = ['broadcast']
+    const userId = session?.user?.id
+    if (typeof userId === 'number') {
+      base.push(`user/${userId}`)
+    }
+    return base
+  }, [session?.user?.id])
 
   const wsRef = React.useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -82,6 +92,7 @@ export default function WebSocketNotifications() {
           title: notification.title || 'Notification',
           description: notification.body || '',
           variant,
+          duration: 5000,
         })
         return
       }
@@ -128,6 +139,9 @@ export default function WebSocketNotifications() {
 
     const normalized = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
     const url = new URL(`${normalized}notifications/ws`)
+    if (topics.length > 0) {
+      url.searchParams.set('topics', topics.join(','))
+    }
 
     const accessToken = session?.tokens?.access_token
     if (accessToken) {
@@ -139,6 +153,14 @@ export default function WebSocketNotifications() {
 
     socket.onopen = () => {
       retryCountRef.current = 0
+      if (topics.length > 0) {
+        socket.send(
+          JSON.stringify({
+            type: 'set_subscriptions',
+            topics,
+          })
+        )
+      }
     }
 
     socket.onmessage = handleMessage
@@ -150,7 +172,7 @@ export default function WebSocketNotifications() {
     socket.onclose = () => {
       scheduleReconnect()
     }
-  }, [cleanup, handleMessage, scheduleReconnect, session?.tokens?.access_token, status])
+  }, [cleanup, handleMessage, scheduleReconnect, session?.tokens?.access_token, status, topics])
 
   React.useEffect(() => {
     connectRef.current = connect

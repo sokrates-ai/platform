@@ -107,6 +107,15 @@ a {
   transition: opacity 300ms, transform 300ms;
 }
 
+@keyframes toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

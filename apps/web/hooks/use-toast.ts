@@ -9,13 +9,15 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_REMOVE_DELAY = 1000
+const TOAST_DEFAULT_DURATION = 5000
 
 type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  duration?: number
 }
 
 const actionTypes = {
@@ -57,6 +59,7 @@ interface State {
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+const toastDismissTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
@@ -72,6 +75,19 @@ const addToRemoveQueue = (toastId: string) => {
   }, TOAST_REMOVE_DELAY)
 
   toastTimeouts.set(toastId, timeout)
+}
+
+const clearDismissTimeout = (toastId?: string) => {
+  if (!toastId) {
+    toastDismissTimeouts.forEach((timeout) => clearTimeout(timeout))
+    toastDismissTimeouts.clear()
+    return
+  }
+  const timeout = toastDismissTimeouts.get(toastId)
+  if (timeout) {
+    clearTimeout(timeout)
+    toastDismissTimeouts.delete(toastId)
+  }
 }
 
 export const reducer = (state: State, action: Action): State => {
@@ -145,12 +161,18 @@ type Toast = Omit<ToasterToast, "id">
 function toast({ ...props }: Toast) {
   const id = genId()
 
+  const duration =
+    typeof props.duration === "number" ? props.duration : TOAST_DEFAULT_DURATION
+
   const update = (props: ToasterToast) =>
     dispatch({
       type: "UPDATE_TOAST",
       toast: { ...props, id },
     })
-  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
+  const dismiss = () => {
+    clearDismissTimeout(id)
+    dispatch({ type: "DISMISS_TOAST", toastId: id })
+  }
 
   dispatch({
     type: "ADD_TOAST",
@@ -163,6 +185,11 @@ function toast({ ...props }: Toast) {
       },
     },
   })
+
+  if (duration > 0) {
+    const timeout = setTimeout(() => dismiss(), duration)
+    toastDismissTimeouts.set(id, timeout)
+  }
 
   return {
     id: id,
@@ -187,7 +214,10 @@ function useToast() {
   return {
     ...state,
     toast,
-    dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
+    dismiss: (toastId?: string) => {
+      clearDismissTimeout(toastId)
+      dispatch({ type: "DISMISS_TOAST", toastId })
+    },
   }
 }
 

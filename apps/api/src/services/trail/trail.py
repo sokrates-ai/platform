@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from typing import List
 from uuid import uuid4
@@ -5,6 +6,10 @@ from src.db.courses.chapter_activities import ChapterActivity
 from src.db.courses.course_rooms import CourseRoom, CourseRoomMember, RoomRoleEnum
 from fastapi import HTTPException, Request, status
 from sqlmodel import Session, select
+from src.services.notifications.service import (
+    notify_tutors_student_activity_started,
+    notify_tutors_student_activity_completed,
+)
 from src.services.users.users import release_user_coin_reward, release_user_xp_reward
 from src.services.courses.activities.activities import get_activity_by_id_and_course
 from src.services.courses.rooms import get_user_course_role_flags
@@ -19,6 +24,9 @@ from src.db.trail_steps import (
 from src.db.trails import Trail, TrailCreate, TrailRead
 from src.db.users import AnonymousUser, PublicUser, User
 from src.db.courses.chapters import Chapter
+
+
+logger = logging.getLogger(__name__)
 
 
 async def get_chapter_slim(
@@ -319,8 +327,7 @@ async def add_activity_to_trail(
         db_session.add(trailstep)
         db_session.commit()
         db_session.refresh(trailstep)
-        if complete:
-            was_initial = True
+        was_initial = True
     else:
         print(
             f"TrailStep already exists for activity {activity_uuid} and user {user.id}, got UPDATED."
@@ -338,6 +345,44 @@ async def add_activity_to_trail(
         db_session.add(trailstep)
         db_session.commit()
         db_session.refresh(trailstep)
+
+    if was_initial:
+        notification_targets = (
+            get_tutor_notification_targets_for_student_course_activity_notifications(
+                course_id=course.id,
+                student_id=user.id,
+                db_session=db_session,
+            )
+        )
+        if notification_targets:
+            try:
+                if complete:
+                    await notify_tutors_student_activity_completed(
+                        notification_targets=notification_targets,
+                        student=user,
+                        activity=activity,
+                        course=course,
+                    )
+                else:
+                    await notify_tutors_student_activity_started(
+                        notification_targets=notification_targets,
+                        student=user,
+                        activity=activity,
+                        course=course,
+                    )
+            except Exception as exc:
+                event_name = (
+                    "completed" if complete else "started"
+                )
+                logger.warning(
+                    f"Failed to notify tutors about {event_name} activity",
+                    extra={
+                        "course_id": course.id,
+                        "activity_uuid": activity.activity_uuid,
+                        "student_id": user.id,
+                        "error": str(exc),
+                    },
+                )
 
     # After recording this activity, check if the containing chapter is now complete
     # 1) Find the chapter for this activity within this course
@@ -359,8 +404,10 @@ async def add_activity_to_trail(
 
         chapter_activity_uuids = []
         for id in chapter_activity_ids:
-            activity = await get_activity_by_id_and_course(request, id, course.id, db_session)
-            chapter_activity_uuids.append(activity.activity_uuid)
+            chapter_activity = await get_activity_by_id_and_course(
+                request, id, course.id, db_session
+            )
+            chapter_activity_uuids.append(chapter_activity.activity_uuid)
 
         print(f"chapter_activity_uuids: {chapter_activity_uuids}")
 
@@ -417,6 +464,57 @@ async def add_activity_to_trail(
     if not complete:
         return False
     return was_initial
+
+
+def build_course_room_notification_uuid(room_id: int) -> str:
+    # TODO: FAT FOLLOW-UP
+    # `course_room` still has no real UUID column. This synthetic value is only
+    # here so room-scoped notifications can carry stable room context for now.
+    # Replace this with a persisted room UUID once the schema supports it.
+    return f"course_room_{room_id}"
+
+
+def get_tutor_notification_targets_for_student_course_activity_notifications(
+    *,
+    course_id: int,
+    student_id: int,
+    db_session: Session,
+) -> list[dict[str, int | str]]:
+    student_room_ids = db_session.exec(
+        select(CourseRoomMember.room_id)
+        .join(CourseRoom, CourseRoom.id == CourseRoomMember.room_id)
+        .where(
+            CourseRoom.course_id == course_id,
+            CourseRoomMember.user_id == student_id,
+            CourseRoomMember.role == RoomRoleEnum.student,
+        )
+    ).all()
+
+    room_ids = [room_id for room_id in student_room_ids if room_id is not None]
+    if not room_ids:
+        return []
+
+    tutor_memberships = db_session.exec(
+        select(CourseRoomMember.room_id, CourseRoomMember.user_id)
+        .join(CourseRoom, CourseRoom.id == CourseRoomMember.room_id)
+        .where(
+            CourseRoom.course_id == course_id,
+            CourseRoomMember.room_id.in_(room_ids),
+            CourseRoomMember.role == RoomRoleEnum.tutor,
+        )
+    ).all()
+
+    return [
+        {
+            "tutor_user_id": tutor_user_id,
+            "room_id": room_id,
+            "room_uuid": build_course_room_notification_uuid(room_id),
+        }
+        for room_id, tutor_user_id in tutor_memberships
+        if room_id is not None
+        and tutor_user_id is not None
+        and tutor_user_id != student_id
+    ]
 
 
 async def add_course_to_trail(
@@ -655,6 +753,11 @@ async def verify_trail_step_by_tutor(
     ).first()
     if not trailstep:
         raise HTTPException(status_code=404, detail="Trail step not found")
+    if not trailstep.complete:
+        raise HTTPException(
+            status_code=400,
+            detail="Only completed trail steps can be verified",
+        )
 
     course = db_session.exec(
         select(Course).where(Course.id == trailstep.course_id)

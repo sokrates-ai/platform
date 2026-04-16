@@ -38,6 +38,18 @@ export async function markActivityAsComplete(
   return res
 }
 
+export async function startActivity(
+  activity_uuid: string,
+  access_token: any,
+) {
+  const result: any = await fetch(
+    `${getAPIUrl()}trail/start_activity/${activity_uuid}`,
+    RequestBodyWithAuthHeader('POST', null, null, access_token)
+  )
+  const res = await errorHandling(result)
+  return res
+}
+
 export async function verifyTrailStep(
   activity_uuid: string,
   student_uuid: string,
