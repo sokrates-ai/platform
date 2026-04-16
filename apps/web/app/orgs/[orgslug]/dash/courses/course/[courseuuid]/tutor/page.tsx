@@ -94,6 +94,9 @@ const normalizeActivityUuid = (value: unknown): string | null => {
   return null
 }
 
+const buildCourseRoomNotificationUuid = (roomId: number): string =>
+  `course_room_${roomId}`
+
 const extractActivityUuid = (activity: any): string | null => {
   if (activity === null || activity === undefined) return null
   if (typeof activity === 'string' || typeof activity === 'number') {
@@ -337,10 +340,11 @@ function TutorCourseLayout({
   const tutorUserId =
     typeof session?.data?.user?.id === 'number' ? session.data.user.id : null
   const activityNotificationTopics = React.useMemo(() => {
-    if (!tutorUserId) return []
-    const base = `user/${tutorUserId}/courses/${courseUuid}/students/+`
+    if (!tutorUserId || !selectedRoom) return []
+    const roomUuid = buildCourseRoomNotificationUuid(selectedRoom.id)
+    const base = `user/${tutorUserId}/courses/${courseUuid}/students/+/rooms/${roomUuid}`
     return [`${base}/activity-completed`, `${base}/activity-started`]
-  }, [courseUuid, tutorUserId])
+  }, [courseUuid, selectedRoom, tutorUserId])
 
   React.useEffect(() => {
     if (!hasSelection || !accessToken || activityNotificationTopics.length === 0) {
@@ -421,6 +425,11 @@ function TutorCourseLayout({
         if (!isCompleted && !isStarted) return
         const data = notification.data || {}
         if (data.course_uuid && data.course_uuid !== courseUuid) return
+        if (selectedRoom) {
+          const expectedRoomUuid = buildCourseRoomNotificationUuid(selectedRoom.id)
+          if (data.room_uuid && data.room_uuid !== expectedRoomUuid) return
+          if (data.room_id && data.room_id !== selectedRoom.id) return
+        }
         if (data.activity_uuid && activityUuids.length > 0) {
           const normalized = normalizeActivityUuid(data.activity_uuid)
           if (normalized && !activityUuids.includes(normalized)) {
@@ -460,6 +469,7 @@ function TutorCourseLayout({
     courseUuid,
     hasSelection,
     mutateActivityStatus,
+    selectedRoom,
     toast,
   ])
 
