@@ -67,6 +67,20 @@ export const getAPIUrl = () => {
     return url
 }
 
+export const getWebSocketUrl = () => {
+    const apiUrl = getAPIUrl()
+    if (!apiUrl) {
+        return apiUrl
+    }
+    if (apiUrl.startsWith('https://')) {
+        return apiUrl.replace('https://', 'wss://')
+    }
+    if (apiUrl.startsWith('http://')) {
+        return apiUrl.replace('http://', 'ws://')
+    }
+    return apiUrl
+}
+
 export const getBackendUrl = () => LEARNHOUSE_BACKEND_URL
 
 // Multi Organization Mode

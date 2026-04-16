@@ -9,6 +9,8 @@ import { SessionProvider } from 'next-auth/react'
 import { PostHogProvider } from '@components/Posthog/PosthogProvider'
 import StyledComponentsRegistry from '../components/Utils/libs/styled-registry'
 import SokratesSessionProvider from '@components/Contexts/SokratesSessionContext'
+import WebSocketNotifications from '@components/Notifications/WebSocketNotifications'
+import { Toaster } from '@/components/ui/toaster'
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -21,7 +23,11 @@ function AppProviders({ children }: { children: ReactNode }) {
     <SessionProvider>
       <SokratesSessionProvider>
         <PostHogProvider>
-          <StyledComponentsRegistry>{children}</StyledComponentsRegistry>
+          <StyledComponentsRegistry>
+            <Toaster />
+            <WebSocketNotifications />
+            {children}
+          </StyledComponentsRegistry>
         </PostHogProvider>
       </SokratesSessionProvider>
     </SessionProvider>
