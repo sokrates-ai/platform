@@ -81,7 +81,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, orgslug }) => {
         <h2 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold line-clamp-2 text-[#3C3C3C]">
           {course.name}
         </h2>
-        <AdminEditOptions
+        <CourseCardActions
           course={course}
           orgSlug={orgslug}
           deleteCourse={deleteCourse}
@@ -92,6 +92,73 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, orgslug }) => {
 }
 
 export default CourseCard
+
+const CourseCardActions: React.FC<{
+  course: any
+  orgSlug: string
+  deleteCourse: () => Promise<void>
+}> = ({ course, orgSlug, deleteCourse }) => {
+  const session = useSokratesSession() as any
+  const org = useOrg() as any
+  const roles = Array.isArray(session?.data?.roles) ? session.data.roles : []
+  const orgUuid = org?.org_uuid
+
+  const isRoleForOrg = (role: any) =>
+    orgUuid && role?.org?.org_uuid === orgUuid
+
+  const canUpdateCourse = roles.some(
+    (role: any) =>
+      isRoleForOrg(role) &&
+      role?.role?.rights?.courses?.action_update === true
+  )
+
+  if (canUpdateCourse) {
+    return (
+      <AdminEditOptions
+        course={course}
+        orgSlug={orgSlug}
+        deleteCourse={deleteCourse}
+      />
+    )
+  }
+
+  const hasTutorRole = roles.some(
+    (role: any) =>
+      isRoleForOrg(role) &&
+      (role?.role?.role_uuid === "role_global_tutor" || role?.role?.id === 4)
+  )
+
+  if (!hasTutorRole) {
+    return null
+  }
+
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <button className="p-1 bg-white rounded-md transition-colors group">
+          <EllipsisVertical
+            size={20}
+            className="text-[#939393] transition-colors group-hover:text-gray-700"
+          />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuItem asChild>
+          <Link
+            prefetch
+            href={getUriWithOrg(
+              orgSlug,
+              `/dash/courses/course/${course.course_uuid.replace("course_", "")}/tutor`
+            )}
+            className="flex items-center px-2 py-1"
+          >
+            <GraduationCap className="mr-2 h-4 w-4" /> Tutor View
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 const AdminEditOptions: React.FC<{
   course: any
