@@ -56,6 +56,13 @@ export function resolveChapterTabId(
   return fallback
 }
 
+export function isDynamicActivity(activity: any): boolean {
+  return (
+    activity?.activity_type === 'TYPE_DYNAMIC' ||
+    activity?.activity_sub_type === 'SUBTYPE_DYNAMIC_PAGE'
+  )
+}
+
 function normalizeActivityUuid(raw: any): string | null {
   if (raw === null || raw === undefined) {
     return null

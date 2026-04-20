@@ -209,8 +209,8 @@ async def notify_tutors_student_activity_completed(
                 student_uuid=student.user_uuid,
                 room_uuid=target["room_uuid"],
             ),
-            title="Student completed activity",
-            body=f'{student_name} completed "{activity.name}" in {course.name}.',
+            title=f"{student_name} completed {activity.name}",
+            body=f'{student_name} completed activity in {course.name}.',
             level="success",
             data={
                 "kind": "student_activity_completed",

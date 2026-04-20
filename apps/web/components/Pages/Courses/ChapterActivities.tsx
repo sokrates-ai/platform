@@ -6,6 +6,7 @@ import {
 	buildActivityTabIndex,
 	getCourseFallbackTabId,
 	isActivityDone,
+	isDynamicActivity,
 } from './utils'
 import { getActivity } from '@services/courses/activities'
 import Canva from '@components/Objects/Activities/DynamicCanva/DynamicCanva'
@@ -102,10 +103,6 @@ export default function ChapterActivities({
 			? isActivityDone(course, key, options)
 			: false
 	}, [course, getActivityKey, isOptimisticallyCompleted])
-
-	const isDynamicActivity = (activity: any) =>
-		activity?.activity_type === 'TYPE_DYNAMIC' ||
-		activity?.activity_sub_type === 'SUBTYPE_DYNAMIC_PAGE'
 
 	const hasTrailStep = useCallback((activity: any) => {
 		const activityKey = getActivityKey(activity)

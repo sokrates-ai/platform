@@ -4,8 +4,20 @@ import React from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import useSWR from 'swr'
-import { ChevronLeft, GraduationCap, Lock, RotateCcw } from 'lucide-react'
+import {
+  ChevronLeft,
+  Check,
+  DoorOpen,
+  GraduationCap,
+  Loader2,
+  Lock,
+  RotateCcw,
+  Users,
+  X,
+} from 'lucide-react'
 import { motion } from 'framer-motion'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
 
 import { CourseProvider, useCourse } from '@components/Contexts/CourseContext'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
@@ -14,15 +26,21 @@ import PageLoading from '@components/Objects/Loaders/PageLoading'
 import { CourseOverviewTop } from '@components/Dashboard/Misc/CourseOverviewTop'
 import TabSwitch from '@components/Objects/StyledElements/TabSwitch/TabSwitch'
 import ToolTip from '@components/Objects/StyledElements/Tooltip/Tooltip'
+import Modal from '@components/Objects/StyledElements/Modal/Modal'
+import Canva from '@components/Objects/Activities/DynamicCanva/DynamicCanva'
 import { Button } from '@components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { getAPIUrl, getUriWithOrg, getWebSocketUrl } from '@services/config/config'
+import { getActivity } from '@services/courses/activities'
 import { verifyTrailStep } from '@services/courses/activity'
 import {
   clearTutorRoomSelection,
   setTutorRoomSelection,
 } from '@services/courses/rooms'
 import { swrFetcher } from '@services/utils/ts/requests'
+import { isDynamicActivity } from '@components/Pages/Courses/utils'
+
+dayjs.extend(relativeTime)
 
 type TutorCoursePageProps = {
   params: {
@@ -65,6 +83,8 @@ type ActivityItem = {
   activity_uuid: string
   name: string
   chapter_name?: string
+  activity_type?: string | null
+  activity_sub_type?: string | null
 }
 
 type ActivityStatusStep = {
@@ -72,6 +92,8 @@ type ActivityStatusStep = {
   activity_uuid: string
   complete: boolean
   tutor_verified: 'NONE' | 'CORRECT' | 'INCORRECT'
+  creation_date?: string | null
+  update_date?: string | null
 }
 
 type ActivityStatusResponse = {
@@ -84,6 +106,11 @@ type ActivityState = {
   step?: ActivityStatusStep
 }
 
+type VerificationTarget = {
+  activityUuid: string
+  currentStatus: ActivityStatusStep['tutor_verified']
+}
+
 const normalizeActivityUuid = (value: unknown): string | null => {
   if (value === null || value === undefined) return null
   if (typeof value === 'string' || typeof value === 'number') {
@@ -93,6 +120,9 @@ const normalizeActivityUuid = (value: unknown): string | null => {
   }
   return null
 }
+
+const stripActivityUuidPrefix = (value: string): string =>
+  value.startsWith('activity_') ? value.slice('activity_'.length) : value
 
 const buildCourseRoomNotificationUuid = (roomId: number): string =>
   `course_room_${roomId}`
@@ -110,6 +140,50 @@ const extractActivityUuid = (activity: any): string | null => {
       activity.uuid ??
       activity.id
   )
+}
+
+const buildActivityHref = (
+  orgslug: string,
+  courseuuid: string,
+  activityUuid?: string | null
+): string | null => {
+  const normalized = normalizeActivityUuid(activityUuid)
+  if (!normalized) return null
+  const courseSegment = courseuuid.startsWith('course_')
+    ? courseuuid.slice('course_'.length)
+    : courseuuid
+  return `${getUriWithOrg(orgslug, '')}/course/${courseSegment}/activity/${stripActivityUuidPrefix(normalized)}`
+}
+
+const RELATIVE_TIMESTAMP_THRESHOLD_HOURS = 3
+const ABSOLUTE_TIMESTAMP_FORMAT = 'MMM D, YYYY h:mm A'
+
+type ActivityTimestampInfo = {
+  label: string
+  absolute: string
+  isRelative: boolean
+}
+
+const getActivityTimestampInfo = (
+  timestamp?: string | null
+): ActivityTimestampInfo | null => {
+  if (!timestamp) return null
+  const parsed = dayjs(timestamp)
+  if (!parsed.isValid()) return null
+  const absolute = parsed.format(ABSOLUTE_TIMESTAMP_FORMAT)
+  const diffHours = Math.abs(dayjs().diff(parsed, 'hour', true))
+  if (diffHours < RELATIVE_TIMESTAMP_THRESHOLD_HOURS) {
+    return {
+      label: parsed.fromNow(),
+      absolute,
+      isRelative: true,
+    }
+  }
+  return {
+    label: absolute,
+    absolute,
+    isRelative: false,
+  }
 }
 
 function TutorCoursePage({ params }: TutorCoursePageProps) {
@@ -133,6 +207,7 @@ function TutorCourseLayout({
   params: TutorCoursePageProps['params']
   courseUuid: string
 }) {
+  const router = useRouter()
   const course = useCourse() as any
   const session = useSokratesSession() as any
   const { isCourseStaff, loading: courseStaffLoading } =
@@ -294,6 +369,8 @@ function TutorCourseLayout({
           activity_uuid: uuid,
           name: activity?.name ?? `Activity ${index + 1}`,
           chapter_name: chapterName,
+          activity_type: activity?.activity_type ?? null,
+          activity_sub_type: activity?.activity_sub_type ?? null,
         })
       })
     })
@@ -561,6 +638,10 @@ function TutorCourseLayout({
     }
   }
 
+  const handleExitCourse = async () => {
+    router.push(getUriWithOrg(params.orgslug, '/dash'))
+  }
+
   const handleTabChange = async (tabId: string) => {
     if (tabId === activeTabId) return
     setActiveTabId(tabId)
@@ -749,16 +830,26 @@ function TutorCourseLayout({
               activityStatusError={Boolean(activityStatusError)}
               onVerifyStep={handleVerifyStep}
               verifyingCells={verifyingCells}
+              onExitRoom={handleExitCourse}
+              isExitingRoom={isSwitching}
               basePath={tutorBasePath}
+              orgslug={params.orgslug}
+              courseuuid={params.courseuuid}
+              accessToken={accessToken}
             />
           ) : null}
 
           {!roomsLoading && !selectionLoading && rooms && !hasSelection && rooms.length > 0 ? (
-            <RoomSelectionGrid
-              rooms={rooms}
-              pendingRoomId={pendingRoomId}
-              onSelectRoom={handleSelectRoom}
-            />
+            <div className="flex w-full flex-col items-center">
+              <div className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">
+                Choose your room
+              </div>
+              <RoomSelectionGrid
+                rooms={rooms}
+                pendingRoomId={pendingRoomId}
+                onSelectRoom={handleSelectRoom}
+              />
+            </div>
           ) : null}
 
           {!roomsLoading && !selectionLoading && rooms && rooms.length === 0 ? (
@@ -783,7 +874,7 @@ function RoomSelectionGrid({
 }) {
   return (
     <div className="flex w-full flex-col items-center">
-      <div className="grid w-full max-w-5xl justify-center gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div className="flex w-full max-w-5xl flex-wrap justify-center gap-6">
         {rooms.map((room) => (
           <RoomSelectionCard
             key={room.id}
@@ -811,38 +902,24 @@ function RoomSelectionCard({
       type="button"
       onClick={onSelect}
       disabled={isPending}
-      className="group relative flex min-h-[200px] flex-col justify-between rounded-2xl border border-gray-400 bg-white p-6 text-left shadow-[0_26px_60px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-SokratesOrange/40"
+      className={`group relative flex h-56 w-56 flex-col items-center justify-center gap-3 rounded-2xl border bg-white text-center shadow-[0_26px_60px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-SokratesOrange/40 active:translate-y-[2px] active:shadow-[0_12px_30px_rgba(15,23,42,0.18)] active:border-SokratesOrange active:ring-2 active:ring-SokratesOrange/40 md:h-64 md:w-64 ${
+        isPending ? 'border-SokratesOrange ring-2 ring-SokratesOrange/30' : 'border-gray-400'
+      }`}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-gray-400">
-            Room
-          </div>
-          <div className="mt-2 text-lg font-semibold text-gray-900">
-            {room.name}
-          </div>
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-gray-300 bg-gray-50">
+        <Users className="h-10 w-10 text-gray-500" />
+      </div>
+      <div className="text-sm font-semibold text-gray-900">
+        {room.name}
+      </div>
+      <div className="text-xs text-gray-500">
+        {room.student_count ?? 0} students • {room.tutor_count ?? 0} tutors
+      </div>
+      {isPending ? (
+        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gray-400">
+          Selecting...
         </div>
-        <div className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
-          {room.tutor_count ?? 0} Tutors
-        </div>
-      </div>
-      <div className="mt-4 flex-1 text-sm text-gray-500">
-        {room.description ? room.description : 'No description yet.'}
-      </div>
-      <div className="mt-6 flex flex-wrap gap-2 text-xs font-semibold">
-        <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">
-          {room.student_count ?? 0} Students
-        </span>
-        <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">
-          {room.tutor_count ?? 0} Tutors
-        </span>
-        {isPending ? (
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-600">
-            Selecting...
-          </span>
-        ) : null}
-      </div>
-      <div className="absolute right-6 top-6 h-2 w-2 rounded-full bg-SokratesOrange opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+      ) : null}
     </button>
   )
 }
@@ -862,7 +939,12 @@ function SelectedRoomPanel({
   activityStatusError,
   onVerifyStep,
   verifyingCells,
+  onExitRoom,
+  isExitingRoom,
   basePath,
+  orgslug,
+  courseuuid,
+  accessToken,
 }: {
   room: Room
   members: RoomMember[]
@@ -882,7 +964,12 @@ function SelectedRoomPanel({
     status: ActivityStatusStep['tutor_verified']
   ) => void
   verifyingCells: Record<string, boolean>
+  onExitRoom: () => void
+  isExitingRoom: boolean
   basePath: string
+  orgslug: string
+  courseuuid: string
+  accessToken?: string
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -903,6 +990,20 @@ function SelectedRoomPanel({
     })
     return map
   }, [activityStatus?.steps])
+
+  const [activityModalOpen, setActivityModalOpen] = React.useState(false)
+  const [dynamicActivityMeta, setDynamicActivityMeta] =
+    React.useState<ActivityItem | null>(null)
+  const [dynamicActivity, setDynamicActivity] = React.useState<any | null>(null)
+  const [dynamicActivityError, setDynamicActivityError] =
+    React.useState<string | null>(null)
+  const [isDynamicActivityLoading, setIsDynamicActivityLoading] =
+    React.useState(false)
+  const latestDynamicRequestRef = React.useRef<string | null>(null)
+  const [verificationModalOpen, setVerificationModalOpen] =
+    React.useState(false)
+  const [verificationTarget, setVerificationTarget] =
+    React.useState<VerificationTarget | null>(null)
 
   const selectedStudentUuid = searchParams?.get('student') ?? null
   const activityParamUuid = normalizeActivityUuid(searchParams?.get('activity'))
@@ -939,6 +1040,111 @@ function SelectedRoomPanel({
     const query = params.toString()
     return query ? `${basePath}?${query}` : basePath
   }
+
+  const handleActivityModalChange = React.useCallback((open: boolean) => {
+    setActivityModalOpen(open)
+    if (!open) {
+      latestDynamicRequestRef.current = null
+      setDynamicActivityMeta(null)
+      setDynamicActivity(null)
+      setDynamicActivityError(null)
+      setIsDynamicActivityLoading(false)
+    }
+  }, [])
+
+  const handleVerificationModalChange = React.useCallback((open: boolean) => {
+    setVerificationModalOpen(open)
+    if (!open) {
+      setVerificationTarget(null)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    if (!selectedStudent && verificationModalOpen) {
+      setVerificationModalOpen(false)
+      setVerificationTarget(null)
+    }
+  }, [selectedStudent, verificationModalOpen])
+
+  const handleOpenDynamicActivity = React.useCallback(
+    async (activity: ActivityItem) => {
+      const normalized = normalizeActivityUuid(activity.activity_uuid)
+      if (!normalized) return
+      setActivityModalOpen(true)
+      setDynamicActivityMeta(activity)
+      setDynamicActivityError(null)
+
+      if (dynamicActivity?.activity_uuid !== normalized) {
+        setDynamicActivity(null)
+      }
+
+      if (!accessToken) {
+        setDynamicActivityError('Unable to load activity content.')
+        setIsDynamicActivityLoading(false)
+        return
+      }
+
+      if (dynamicActivity?.activity_uuid === normalized) {
+        setIsDynamicActivityLoading(false)
+        return
+      }
+
+      latestDynamicRequestRef.current = normalized
+      setIsDynamicActivityLoading(true)
+
+      try {
+        const detailedActivity = await getActivity(
+          normalized,
+          null,
+          accessToken
+        )
+        if ('detail' in (detailedActivity ?? {})) {
+          throw new Error(
+            typeof detailedActivity.detail === 'string'
+              ? detailedActivity.detail
+              : 'Unable to load activity content.'
+          )
+        }
+        if (latestDynamicRequestRef.current === normalized) {
+          setDynamicActivity(detailedActivity)
+        }
+      } catch (error: any) {
+        if (latestDynamicRequestRef.current === normalized) {
+          setDynamicActivity(null)
+          setDynamicActivityError(
+            error?.message ?? 'Unable to load activity content.'
+          )
+        }
+      } finally {
+        if (latestDynamicRequestRef.current === normalized) {
+          setIsDynamicActivityLoading(false)
+        }
+      }
+    },
+    [accessToken, dynamicActivity?.activity_uuid]
+  )
+
+  const handleOpenVerification = React.useCallback(
+    (state: ActivityState) => {
+      if (!selectedStudent) return
+      setVerificationTarget({
+        activityUuid: state.activity_uuid,
+        currentStatus: state.step?.tutor_verified ?? 'NONE',
+      })
+      setVerificationModalOpen(true)
+    },
+    [selectedStudent]
+  )
+
+  const handleVerificationSelect = React.useCallback(
+    async (status: ActivityStatusStep['tutor_verified']) => {
+      if (!selectedStudent || !verificationTarget) return
+      await onVerifyStep(selectedStudent.user, verificationTarget.activityUuid, status)
+      setVerificationModalOpen(false)
+      setVerificationTarget(null)
+    },
+    [onVerifyStep, selectedStudent, verificationTarget]
+  )
 
   const buildActivityStates = React.useCallback(
     (studentId: number): ActivityState[] => {
@@ -978,8 +1184,8 @@ function SelectedRoomPanel({
   }, [activities])
   const selectedStates = React.useMemo(() => {
     if (!selectedStudent) return []
-      return buildActivityStates(selectedStudent.user.id)
-    }, [buildActivityStates, selectedStudent])
+    return buildActivityStates(selectedStudent.user.id)
+  }, [buildActivityStates, selectedStudent])
 
   const getStatusLabel = React.useCallback(
     (status: ActivityState['status']) => {
@@ -1006,6 +1212,23 @@ function SelectedRoomPanel({
     ),
     [getStatusLabel]
   )
+
+  const dynamicActivityHref = dynamicActivityMeta
+    ? buildActivityHref(orgslug, courseuuid, dynamicActivityMeta.activity_uuid)
+    : null
+  const verificationKey =
+    selectedStudent && verificationTarget
+      ? `${selectedStudent.user.id}:${verificationTarget.activityUuid}`
+      : null
+  const isVerificationSaving = Boolean(
+    verificationKey && verifyingCells[verificationKey]
+  )
+  const verificationLabel =
+    verificationTarget?.currentStatus === 'CORRECT'
+      ? 'Pass'
+      : verificationTarget?.currentStatus === 'INCORRECT'
+      ? 'Fail'
+      : 'Unverified'
 
   return (
     <div className="relative flex min-h-[calc(100vh-200px)] flex-col rounded-2xl bg-white p-8 shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
@@ -1070,7 +1293,7 @@ function SelectedRoomPanel({
       <div className="mt-4 flex-1">
         {!selectedStudent ? (
           <div className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200">
-          <div className="flex-1 overflow-auto bg-white pb-24">
+            <div className="flex-1 overflow-auto bg-white pb-24">
               {isLoading ? (
                 <div className="px-4 py-6 text-sm text-gray-500">
                   Loading students...
@@ -1175,6 +1398,32 @@ function SelectedRoomPanel({
                   const chapterLabel = meta?.chapter_name ?? 'Chapter'
                   const activityLabel = meta?.name ?? `Activity ${index + 1}`
                   const statusLabel = getStatusLabel(state.status)
+                  const timestampInfo = getActivityTimestampInfo(
+                    state.step?.update_date ?? state.step?.creation_date
+                  )
+                  const activityHref = buildActivityHref(
+                    orgslug,
+                    courseuuid,
+                    state.activity_uuid
+                  )
+                  const isDynamic = meta ? isDynamicActivity(meta) : false
+                  const openActivityAction =
+                    isDynamic && meta ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenDynamicActivity(meta)}
+                      >
+                        Open activity
+                      </Button>
+                    ) : activityHref ? (
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={activityHref} prefetch={false}>
+                          Open activity
+                        </Link>
+                      </Button>
+                    ) : null
                   const isVerifying = Boolean(
                     verifyingCells[
                       `${selectedStudent.user.id}:${state.activity_uuid}`
@@ -1220,38 +1469,64 @@ function SelectedRoomPanel({
                             </span>
                           </div>
                         </div>
-                        <span className="text-xs font-semibold text-gray-500">
-                          {statusLabel}
-                        </span>
+                        <div className="flex flex-col items-end gap-1 text-right">
+                          <span className="text-xs font-semibold text-gray-500">
+                            {statusLabel}
+                          </span>
+                          {timestampInfo ? (
+                            timestampInfo.isRelative ? (
+                              <ToolTip
+                                content={timestampInfo.absolute}
+                                side="top"
+                                sideOffset={6}
+                              >
+                                <span className="text-[10px] text-gray-400">
+                                  {timestampInfo.label}
+                                </span>
+                              </ToolTip>
+                            ) : (
+                              <span className="text-[10px] text-gray-400">
+                                {timestampInfo.label}
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-[10px] text-gray-300">
+                              No activity yet
+                            </span>
+                          )}
+                        </div>
                       </button>
                       {isSelected ? (
-                        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-500">
-                          <span>Verification</span>
-                          <select
-                            className="h-7 rounded-md border border-gray-200 bg-white px-2 text-[11px] font-medium text-gray-700 disabled:cursor-not-allowed disabled:bg-gray-100/60"
-                            value={state.step?.tutor_verified ?? 'NONE'}
-                            onChange={(event) =>
-                              onVerifyStep(
-                                selectedStudent.user,
-                                state.activity_uuid,
-                                event.target
-                                  .value as ActivityStatusStep['tutor_verified']
-                              )
-                            }
-                            disabled={
-                              !state.step ||
-                              isVerifying ||
-                              state.status === 'locked'
-                            }
-                          >
-                            <option value="NONE">Unverified</option>
-                            <option value="CORRECT">Correct</option>
-                            <option value="INCORRECT">Incorrect</option>
-                          </select>
-                          {isVerifying ? (
-                            <span className="text-[10px] text-gray-400">
-                              Saving...
-                            </span>
+                        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-500">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <span>Verification</span>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenVerification(state)}
+                              disabled={
+                                !state.step ||
+                                isVerifying ||
+                                state.status !== 'done'
+                              }
+                            >
+                              {state.step?.tutor_verified === 'CORRECT'
+                                ? 'Verified: Pass'
+                                : state.step?.tutor_verified === 'INCORRECT'
+                                ? 'Verified: Fail'
+                                : 'Verify'}
+                            </Button>
+                            {isVerifying ? (
+                              <span className="text-[10px] text-gray-400">
+                                Saving...
+                              </span>
+                            ) : null}
+                          </div>
+                          {openActivityAction ? (
+                            <div className="flex items-center">
+                              {openActivityAction}
+                            </div>
                           ) : null}
                         </div>
                       ) : null}
@@ -1263,6 +1538,122 @@ function SelectedRoomPanel({
           </div>
         )}
       </div>
+      <Modal
+        isDialogOpen={activityModalOpen}
+        onOpenChange={handleActivityModalChange}
+        customWidth="w-screen max-w-screen rounded-none border-0 sm:w-[85vw] sm:max-w-[85vw] lg:w-[70vw] lg:max-w-[70vw]"
+        customHeight="h-[100dvh] max-h-[100dvh] sm:h-[80vh] sm:max-h-[80vh] lg:h-[75vh] lg:max-h-[75vh]"
+        overlayClassName="backdrop-blur-sm"
+        dialogContent={
+          <div className="flex h-full flex-col gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                  Dynamic activity preview
+                </div>
+                <div className="text-lg font-semibold text-gray-900">
+                  {dynamicActivityMeta?.name ?? 'Activity'}
+                </div>
+              </div>
+              {dynamicActivityHref ? (
+                <Button asChild variant="outline" size="sm">
+                  <Link href={dynamicActivityHref} prefetch={false}>
+                    Open full activity
+                  </Link>
+                </Button>
+              ) : null}
+            </div>
+            <div className="flex-1 overflow-auto rounded-xl border border-gray-200 bg-gray-50 p-4">
+              {isDynamicActivityLoading ? (
+                <div className="flex items-center justify-center py-16 text-sm text-gray-500">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading activity…
+                </div>
+              ) : null}
+              {!isDynamicActivityLoading && dynamicActivityError ? (
+                <div className="p-4 text-sm text-rose-600">
+                  {dynamicActivityError}
+                </div>
+              ) : null}
+              {!isDynamicActivityLoading &&
+              !dynamicActivityError &&
+              dynamicActivity ? (
+                <div className="text-lg sm:text-[1.05rem] leading-relaxed text-slate-900">
+                  <Canva
+                    activity={dynamicActivity}
+                    content={dynamicActivity.content}
+                  />
+                </div>
+              ) : null}
+              {!isDynamicActivityLoading &&
+              !dynamicActivityError &&
+              !dynamicActivity ? (
+                <div className="p-4 text-sm text-gray-500">
+                  No preview available.
+                </div>
+              ) : null}
+            </div>
+          </div>
+        }
+      />
+      <Modal
+        isDialogOpen={verificationModalOpen}
+        onOpenChange={handleVerificationModalChange}
+        customWidth="w-screen max-w-screen rounded-none border-0 sm:w-[70vw] sm:max-w-[70vw] md:w-[480px] md:max-w-[480px]"
+        customHeight="h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[70vh]"
+        overlayClassName="backdrop-blur-sm"
+        dialogContent={
+          <div className="flex flex-col gap-6">
+            <div className="text-center">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                Verification
+              </div>
+              <div className="text-lg font-semibold text-gray-900">
+                {verificationTarget
+                  ? activityMetaByUuid.get(verificationTarget.activityUuid)?.name ??
+                    'Activity'
+                  : 'Activity'}
+              </div>
+              <div className="mt-1 text-xs text-gray-500">
+                Current status: {verificationLabel}
+              </div>
+            </div>
+            <div className="flex items-center justify-center gap-4">
+              <button
+                type="button"
+                className="flex h-28 w-28 flex-col items-center justify-center gap-2 rounded-xl border-2 border-emerald-400 bg-emerald-50 text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100"
+                onClick={() => handleVerificationSelect('CORRECT')}
+                disabled={isVerificationSaving}
+              >
+                <Check className="h-6 w-6" />
+                <span className="text-xs font-semibold uppercase tracking-wide">
+                  Pass
+                </span>
+              </button>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-gray-300">
+                Or
+              </span>
+              <button
+                type="button"
+                className="flex h-28 w-28 flex-col items-center justify-center gap-2 rounded-xl border-2 border-rose-400 bg-rose-50 text-rose-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-rose-100"
+                onClick={() => handleVerificationSelect('INCORRECT')}
+                disabled={isVerificationSaving}
+              >
+                <X className="h-6 w-6" />
+                <span className="text-xs font-semibold uppercase tracking-wide">
+                  Fail
+                </span>
+              </button>
+            </div>
+            {isVerificationSaving ? (
+              <div className="flex items-center justify-center text-xs text-gray-500">
+                <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                Saving...
+              </div>
+            ) : null}
+          </div>
+        }
+      />
       <div className="pointer-events-none absolute bottom-6 right-6">
         <div className="pointer-events-auto flex flex-col gap-2 rounded-xl border border-gray-200 bg-white/95 px-4 py-3 text-xs text-gray-600 shadow-sm backdrop-blur">
           <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
@@ -1285,6 +1676,21 @@ function SelectedRoomPanel({
             <span>Done</span>
           </div>
         </div>
+      </div>
+      <div className="absolute bottom-6 left-6">
+        <ToolTip content="(exit course)" side="top" sideOffset={6}>
+          <Button
+            type="button"
+            variant="secondary"
+            size="default"
+            onClick={onExitRoom}
+            disabled={isExitingRoom}
+            className="h-10 w-18"
+            aria-label="exit course"
+          >
+            <DoorOpen className="size-6" style={{ color: '#454545' }} />
+          </Button>
+        </ToolTip>
       </div>
     </div>
   )

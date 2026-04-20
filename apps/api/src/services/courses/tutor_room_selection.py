@@ -255,6 +255,8 @@ async def list_room_activity_status(
             "activity_uuid": step.activity_uuid,
             "complete": step.complete,
             "tutor_verified": step.tutor_verified,
+            "creation_date": step.creation_date,
+            "update_date": step.update_date,
         }
         for step in steps
     ]

@@ -19,25 +19,27 @@ export function Toaster() {
         const toastDuration =
           typeof duration === 'number' ? duration : 5000
         const progressClass =
-          props.variant === 'destructive' ? 'bg-destructive' : 'bg-foreground'
+          props.variant === 'destructive'
+            ? 'bg-gradient-to-r from-destructive/90 via-destructive to-destructive/70'
+            : 'bg-gradient-to-r from-foreground/80 via-foreground to-foreground/60'
         return (
           <Toast key={id} {...props}>
-            <div className="grid gap-1">
-              {title && <ToastTitle>{title}</ToastTitle>}
-              {description && (
-                <ToastDescription>{description}</ToastDescription>
-              )}
-            </div>
             {toastDuration > 0 && (
-              <div className="mt-3 h-1 w-full overflow-hidden rounded bg-muted">
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-border/70">
                 <div
-                  className={`h-full w-full origin-left ${progressClass}`}
+                  className={`h-full w-full origin-left rounded-t-md ${progressClass}`}
                   style={{
                     animation: `toast-progress ${toastDuration}ms linear forwards`,
                   }}
                 />
               </div>
             )}
+            <div className="grid gap-1">
+              {title && <ToastTitle>{title}</ToastTitle>}
+              {description && (
+                <ToastDescription>{description}</ToastDescription>
+              )}
+            </div>
             {action}
             <ToastClose />
           </Toast>

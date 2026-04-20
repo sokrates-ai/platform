@@ -75,6 +75,8 @@ class RoomActivityStatusStep(BaseModel):
     activity_uuid: str
     complete: bool
     tutor_verified: TrailStepVerificationEnum
+    creation_date: str | None = None
+    update_date: str | None = None
 
 
 class RoomActivityStatusRead(BaseModel):

@@ -28,6 +28,36 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, orgslug }) => {
   const org = useOrg() as any
   const router = useRouter()
   const session = useSokratesSession() as any
+  const roles = Array.isArray(session?.data?.roles) ? session.data.roles : []
+  const orgUuid = org?.org_uuid
+  const orgId = org?.id
+
+  const isRoleForOrg = (role: any) => {
+    if (orgId && role?.org?.id) {
+      return role.org.id === orgId
+    }
+    if (orgUuid && role?.org?.org_uuid) {
+      return role.org.org_uuid === orgUuid
+    }
+    return false
+  }
+
+  const hasTutorRole = roles.some(
+    (role: any) =>
+      isRoleForOrg(role) &&
+      (role?.role?.role_uuid === "role_global_tutor" || role?.role?.id === 4)
+  )
+
+  const hasCourseStaffRole = roles.some(
+    (role: any) =>
+      isRoleForOrg(role) &&
+      (role?.role?.id === 1 ||
+        role?.role?.id === 2 ||
+        role?.role?.id === 4 ||
+        role?.role?.role_uuid === "role_global_admin" ||
+        role?.role?.role_uuid === "role_global_maintainer" ||
+        role?.role?.role_uuid === "role_global_tutor")
+  )
 
   const deleteCourse = async () => {
     const toastId = toast.loading("Deleting course...")
@@ -52,6 +82,15 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, orgslug }) => {
         course.thumbnail_image
       )
     : "/empty_thumbnail.webp"
+  const courseHref = hasCourseStaffRole
+    ? getUriWithOrg(
+        orgslug,
+        `/dash/courses/course/${removeCoursePrefix(course.course_uuid)}`
+      )
+    : getUriWithOrg(
+        orgslug,
+        `/course/${removeCoursePrefix(course.course_uuid)}`
+      )
 
   return (
     <div>
@@ -61,7 +100,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, orgslug }) => {
       >
         <Link
           prefetch
-          href={getUriWithOrg(orgslug, `/course/${removeCoursePrefix(course.course_uuid)}`)}
+          href={courseHref}
           aria-label={`Open course ${course.name}`}
           className="
             block w-full relative h-0 pb-[61%]

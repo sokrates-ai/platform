@@ -90,7 +90,7 @@ const Onboarding: React.FC = () => {
             </div>
           </div>
         </DialogTrigger>
-        <DialogContent className="w-[700px] h-[600px] max-w-full max-h-[90vh] overflow-hidden">
+        <DialogContent className="w-full sm:w-[700px] max-w-[95vw] sm:max-w-full h-auto sm:h-[600px] max-h-[85vh] sm:max-h-[90vh] overflow-y-auto overflow-x-hidden">
           <DialogHeader>
             <DialogTitle>Onboarding</DialogTitle>
           </DialogHeader>
@@ -132,12 +132,12 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
   const [showActionMenu, setShowActionMenu] = useState(false);
 
   return (
-    <div className='flex flex-col h-full'>
+    <div className='flex flex-col sm:h-full'>
       <div className='onboarding_screens flex-col px-3 sm:px-6 pt-3 sm:pt-4 pb-2'>
         <div className='flex-grow rounded-xl'>
           <Image
             unoptimized
-            className='mx-auto shadow-md shadow-gray-200 rounded-lg object-fill w-full h-64'
+            className='mx-auto shadow-md shadow-gray-200 rounded-lg object-fill w-full h-40 sm:h-64'
             alt=''
             priority
             quality={100}
