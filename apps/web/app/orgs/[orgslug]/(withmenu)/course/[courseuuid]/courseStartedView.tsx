@@ -491,7 +491,12 @@ const CourseStartedView = ({
     return Array.from(urls)
   }, [layout.layout])
 
-  const assetsReady = usePrefetchPixiAssets(prefetchUrls, !!activeCourse)
+  const {
+    ready: assetsReady,
+    progress: assetsProgress,
+    loaded: assetsLoaded,
+    total: assetsTotal,
+  } = usePrefetchPixiAssets(prefetchUrls, !!activeCourse)
 
   const [viewport, setViewport] = useState<Viewport | null>(null)
   const [zoomPercent, setZoomPercent] = useState<number | null>(null)
@@ -648,6 +653,11 @@ const CourseStartedView = ({
     src: string
     label?: string
   } | null>(null)
+
+  const assetsProgressPercent = Math.min(
+    100,
+    Math.max(0, Math.round(assetsProgress * 100)),
+  )
 
   const session = useSokratesSession() as any
   const access_token: string | undefined = session?.data?.tokens?.access_token
@@ -902,6 +912,26 @@ const CourseStartedView = ({
             className="absolute inset-0 z-50 bg-white"
           >
             <PageLoading />
+            {assetsTotal > 0 ? (
+              <div className="absolute bottom-10 left-1/2 w-[18rem] max-w-[80vw] -translate-x-1/2">
+                <div
+                  className="mb-2 text-center text-sm font-medium text-gray-600"
+                  role="status"
+                  aria-live="polite"
+                >
+                  Loading assets {assetsProgressPercent}%
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                  <div
+                    className="h-full bg-[#FF6934] transition-[width] duration-200 ease-out"
+                    style={{ width: `${assetsProgressPercent}%` }}
+                  />
+                </div>
+                <div className="mt-1 text-center text-xs text-gray-400">
+                  {assetsLoaded}/{assetsTotal}
+                </div>
+              </div>
+            ) : null}
           </motion.div>
         )}
       </AnimatePresence>
