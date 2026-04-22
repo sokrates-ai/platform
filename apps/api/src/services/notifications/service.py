@@ -246,6 +246,25 @@ async def notify_tutors_student_activity_completed(
         return
 
 
+async def notify_user_reward_update(
+    *,
+    user_id: int,
+    data: Dict[str, Any] | None = None,
+) -> None:
+    payload = {"kind": "reward_update"}
+    if data:
+        payload.update(data)
+
+    await send_notification(
+        topic=f"user/{user_id}",
+        title="Rewards updated",
+        body="",
+        level="info",
+        data=payload,
+        user_id=user_id,
+    )
+
+
 async def notify_student_activity_verified(
     *,
     student: PublicUser | User,
@@ -306,6 +325,7 @@ __all__ = [
     "build_tutor_student_activity_started_topic",
     "build_system_event",
     "notify_all",
+    "notify_user_reward_update",
     "notify_student_activity_verified",
     "notify_tutors_student_activity_started",
     "notify_tutors_student_activity_completed",

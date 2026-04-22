@@ -25,6 +25,7 @@ type ChapterElementProps = {
   chapterIndex: number
   orgslug: string
   course_uuid: string
+  onRewardsChange?: (chapterId: number, xpReward: number, coinReward: number) => void
 }
 
 interface ModifiedChapterInterface {
@@ -35,6 +36,7 @@ interface ModifiedChapterInterface {
 function ChapterElement(props: ChapterElementProps) {
   const activities = props.chapter.activities || []
   const session = useSokratesSession() as any;  const access_token = session?.data?.tokens?.access_token;
+  const { onRewardsChange } = props
   const [modifiedChapter, setModifiedChapter] = React.useState<
     ModifiedChapterInterface | undefined
   >(undefined)
@@ -50,18 +52,18 @@ function ChapterElement(props: ChapterElementProps) {
     setCoinReward(props.chapter?.coin_reward ?? 0)
   }, [props.chapter?.xp_reward, props.chapter?.coin_reward])
 
+  const handleRewardsChange = React.useCallback(
+    (nextXp: number, nextCoin: number) => {
+      if (!onRewardsChange) return
+      onRewardsChange(props.chapter.id, nextXp, nextCoin)
+    },
+    [onRewardsChange, props.chapter.id]
+  )
+
   const router = useRouter()
 
   const deleteChapterUI = async () => {
     await deleteChapter(props.chapter.id, access_token)
-    mutate(`${getAPIUrl()}courses/${props.course_uuid}/meta`)
-    await revalidateTags(['courses'], props.orgslug)
-    router.refresh()
-  }
-
-  async function persistRewards(chapterId: string, xp: number, coins: number) {
-    const data: any = { xp_reward: xp, coin_reward: coins }
-    await updateChapter(chapterId, data, access_token)
     mutate(`${getAPIUrl()}courses/${props.course_uuid}/meta`)
     await revalidateTags(['courses'], props.orgslug)
     router.refresh()
@@ -139,8 +141,11 @@ function ChapterElement(props: ChapterElementProps) {
                   min={0}
                   max={50}
                   value={xpReward}
-                  onChange={(e) => setXpReward(Number(e.target.value))}
-                  onBlur={() => persistRewards(props.chapter.id, xpReward, coinReward)}
+                  onChange={(e) => {
+                    const nextXp = Number(e.target.value)
+                    setXpReward(nextXp)
+                    handleRewardsChange(nextXp, coinReward)
+                  }}
                 />
               </div>
               <div className="flex flex-col items-start space-y-1 bg-neutral-50 rounded-md px-2 py-1">
@@ -152,8 +157,11 @@ function ChapterElement(props: ChapterElementProps) {
                   min={0}
                   max={10}
                   value={coinReward}
-                  onChange={(e) => setCoinReward(Number(e.target.value))}
-                  onBlur={() => persistRewards(props.chapter.id, xpReward, coinReward)}
+                  onChange={(e) => {
+                    const nextCoin = Number(e.target.value)
+                    setCoinReward(nextCoin)
+                    handleRewardsChange(xpReward, nextCoin)
+                  }}
                 />
               </div>
             </div>

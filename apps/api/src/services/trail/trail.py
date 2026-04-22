@@ -10,6 +10,7 @@ from src.services.notifications.service import (
     notify_tutors_student_activity_started,
     notify_tutors_student_activity_completed,
     notify_student_activity_verified,
+    notify_user_reward_update,
 )
 from src.services.users.users import release_user_coin_reward, release_user_xp_reward
 from src.services.courses.activities.activities import get_activity_by_id_and_course
@@ -64,8 +65,38 @@ async def chapter_completed(
         f"Rewarding user {user.user_uuid} {chapter.xp_reward} XP | {chapter.coin_reward} coints | [chapter_completed] chapter={chapter_id}"
     )
 
-    await release_user_xp_reward(request, db_session, user.user_uuid, chapter.xp_reward)
-    await release_user_coin_reward(request, db_session, user.user_uuid, chapter.coin_reward)
+    await release_user_xp_reward(
+        request, db_session, user.user_uuid, chapter.xp_reward
+    )
+    updated_user = await release_user_coin_reward(
+        request, db_session, user.user_uuid, chapter.coin_reward
+    )
+
+    if chapter.xp_reward or chapter.coin_reward:
+        try:
+            await notify_user_reward_update(
+                user_id=updated_user.id,
+                data={
+                    "coins": updated_user.coins,
+                    "level": updated_user.level,
+                    "level_progress": updated_user.level_progress,
+                    "delta_coins": chapter.coin_reward,
+                    "delta_xp": chapter.xp_reward,
+                    "source": "chapter_verified",
+                    "chapter_id": chapter.id,
+                    "chapter_uuid": chapter.chapter_uuid,
+                },
+            )
+        except Exception as exc:
+            logger.warning(
+                "Failed to notify chapter reward update",
+                extra={
+                    "chapter_id": chapter.id,
+                    "chapter_uuid": chapter.chapter_uuid,
+                    "user_id": user.id,
+                    "error": str(exc),
+                },
+            )
 
 
 async def create_user_trail(
@@ -843,13 +874,14 @@ async def verify_trail_step_by_tutor(
                         )
                         if task:
                             try:
+                                updated_user = None
                                 await release_user_xp_reward(
                                     request,
                                     db_session,
                                     student.user_uuid,
                                     task.xp_reward,
                                 )
-                                await release_user_coin_reward(
+                                updated_user = await release_user_coin_reward(
                                     request,
                                     db_session,
                                     student.user_uuid,
@@ -866,6 +898,34 @@ async def verify_trail_step_by_tutor(
                                         "error": str(exc),
                                     },
                                 )
+                            if updated_user and (task.xp_reward or task.coin_reward):
+                                try:
+                                    await notify_user_reward_update(
+                                        user_id=updated_user.id,
+                                        data={
+                                            "coins": updated_user.coins,
+                                            "level": updated_user.level,
+                                            "level_progress": updated_user.level_progress,
+                                            "delta_coins": task.coin_reward,
+                                            "delta_xp": task.xp_reward,
+                                            "source": "activity_verified",
+                                            "course_id": course.id,
+                                            "course_uuid": course.course_uuid,
+                                            "activity_id": activity.id,
+                                            "activity_uuid": activity_uuid,
+                                        },
+                                    )
+                                except Exception as exc:
+                                    logger.warning(
+                                        "Failed to notify activity reward update",
+                                        extra={
+                                            "course_id": course.id,
+                                            "activity_uuid": activity_uuid,
+                                            "student_id": student.id,
+                                            "task_id": reward_task_id_int,
+                                            "error": str(exc),
+                                        },
+                                    )
                         else:
                             logger.warning(
                                 "Skipping activity reward; task missing",

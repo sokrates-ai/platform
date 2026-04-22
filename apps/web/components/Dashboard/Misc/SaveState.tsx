@@ -1,6 +1,6 @@
 'use client'
 import { getAPIUrl } from '@services/config/config'
-import { updateCourseOrderStructure } from '@services/courses/chapters'
+import { updateChapter, updateCourseOrderStructure } from '@services/courses/chapters'
 import { revalidateTags } from '@services/utils/ts/requests'
 import {
   useCourse,
@@ -18,6 +18,11 @@ import { addCourseRoomMembers, removeCourseRoomMembers } from '@services/courses
 type RoomMembershipDraft = {
   adds?: Record<string, 'student' | 'tutor'>
   removes?: number[]
+}
+
+type ChapterRewardsDraft = {
+  xp_reward?: number
+  coin_reward?: number
 }
 
 function SaveState(props: { orgslug: string }) {
@@ -177,6 +182,25 @@ function SaveState(props: { orgslug: string }) {
     }
   }, [course?.courseStructure?.course_uuid, course?.roomMembershipDrafts, session.data?.tokens?.access_token])
 
+  const changeChapterRewardsBackend = React.useCallback(async () => {
+    const drafts: Record<string, ChapterRewardsDraft> =
+      course?.chapterRewardsDrafts ?? {}
+    const draftEntries = Object.entries(drafts).filter(([, draft]) => {
+      if (!draft) return false
+      return typeof draft.xp_reward === 'number' || typeof draft.coin_reward === 'number'
+    })
+    if (!draftEntries.length) return
+
+    const token = session.data?.tokens?.access_token
+    if (!token) return
+
+    for (const [chapterIdRaw, draft] of draftEntries) {
+      const chapterId = Number(chapterIdRaw)
+      if (!chapterId) continue
+      await updateChapter(chapterId, draft, token)
+    }
+  }, [course?.chapterRewardsDrafts, session.data?.tokens?.access_token])
+
   const setSavingState = React.useCallback((next: boolean) => {
     setIsSaving(next)
     dispatchCourse({ type: next ? 'setIsSaving' : 'setIsNotSaving' })
@@ -192,9 +216,11 @@ function SaveState(props: { orgslug: string }) {
       // Course metadata
       await changeMetadataBackend()
       mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
+      await changeChapterRewardsBackend()
       await changeRoomsBackend()
       await mutate((key: string) => typeof key === 'string' && key.includes('/rooms'))
       dispatchCourse({ type: 'clearRoomMembershipDrafts' })
+      dispatchCourse({ type: 'clearChapterRewardsDrafts' })
       await revalidateTags(['courses'], props.orgslug)
       dispatchCourse({ type: 'setIsSaved' })
     } finally {

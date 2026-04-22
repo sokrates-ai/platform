@@ -1141,6 +1141,32 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
   const isSaving = Boolean(course?.isSaving);
   const dispatchCourse = useCourseDispatch() as any;
   const tabChapters = useMemo(() => tabContent?.chapters ?? [], [tabContent?.chapters]);
+  const handleChapterRewardsChange = useCallback(
+    (chapterId: number, xpReward: number, coinReward: number) => {
+      const nextChapters = tabChapters.map((chapter: any) => {
+        if (chapter.id !== chapterId) {
+          return chapter;
+        }
+        return {
+          ...chapter,
+          xp_reward: xpReward,
+          coin_reward: coinReward,
+        };
+      });
+      onTabContentChange(selectedTabId, nextChapters);
+      dispatchCourse({
+        type: 'updateChapterRewardsDraft',
+        payload: {
+          chapterId,
+          rewards: {
+            xp_reward: xpReward,
+            coin_reward: coinReward,
+          },
+        },
+      });
+    },
+    [dispatchCourse, onTabContentChange, selectedTabId, tabChapters]
+  );
 
   const handleImportApplied = useCallback(async () => {
     try {
@@ -1610,6 +1636,7 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
                       orgslug={props.orgslug}
                       course_uuid={course_uuid}
                       chapter={currentChapter}
+                      onRewardsChange={handleChapterRewardsChange}
                     />
                   </DragDropContext>
                 </div>

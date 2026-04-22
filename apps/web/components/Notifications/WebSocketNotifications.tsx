@@ -87,6 +87,36 @@ export default function WebSocketNotifications() {
 
       if (parsed.type === 'notification') {
         const notification = parsed.notification || {}
+        const data = notification.data || {}
+        if (data.kind === 'reward_update') {
+          if (typeof window !== 'undefined') {
+            const detail: Record<string, number> = {}
+            if (typeof data.coins === 'number') {
+              detail.coins = data.coins
+            }
+            if (typeof data.level === 'number') {
+              detail.level = data.level
+            }
+            if (typeof data.level_progress === 'number') {
+              detail.level_progress = data.level_progress
+            }
+            window.dispatchEvent(
+              new CustomEvent('reward_update', {
+                detail,
+              })
+            )
+          }
+          const deltaCoins =
+            typeof data.delta_coins === 'number' ? data.delta_coins : 0
+          if (
+            deltaCoins > 0 &&
+            typeof navigator !== 'undefined' &&
+            'vibrate' in navigator
+          ) {
+            navigator.vibrate(50)
+          }
+          return
+        }
         const variant = notification.level === 'error' ? 'destructive' : 'default'
         toast({
           title: notification.title || 'Notification',

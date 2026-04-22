@@ -45,6 +45,7 @@ export function CourseProvider({ children, courseuuid }: any) {
     courseTabMetadata: DEFAULT_COURSE_TABS,
     activeTabId: defaultTabId,
     roomMembershipDrafts: {},
+    chapterRewardsDrafts: {},
     isSaved: true,
     isSaving: false,
     isLoading: true,
@@ -281,6 +282,19 @@ function courseReducer(state: any, action: any) {
     }
     case 'clearRoomMembershipDrafts':
       return { ...state, roomMembershipDrafts: {} }
+    case 'updateChapterRewardsDraft': {
+      const { chapterId, rewards } = action.payload || {}
+      if (!chapterId) return state
+      return {
+        ...state,
+        chapterRewardsDrafts: {
+          ...state.chapterRewardsDrafts,
+          [chapterId]: rewards,
+        },
+      }
+    }
+    case 'clearChapterRewardsDrafts':
+      return { ...state, chapterRewardsDrafts: {} }
     case 'setIsLoaded':
       return { ...state, isLoading: false }
     default:
