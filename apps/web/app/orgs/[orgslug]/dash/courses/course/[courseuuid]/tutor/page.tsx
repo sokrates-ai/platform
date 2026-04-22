@@ -1359,6 +1359,7 @@ function SelectedRoomPanel({
                                     activityMetaByUuid.get(state.activity_uuid),
                                     state.status
                                   )}
+                                  verification={state.step?.tutor_verified}
                                   onClick={(event) => {
                                     event.stopPropagation()
                                     router.push(
@@ -1459,6 +1460,7 @@ function SelectedRoomPanel({
                             status={state.status}
                             selected={isSelected}
                             tooltip={buildTooltipContent(meta, state.status)}
+                            verification={state.step?.tutor_verified}
                           />
                           <div className="flex flex-col">
                             <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
@@ -1675,6 +1677,18 @@ function SelectedRoomPanel({
             <ActivityDot status="done" selected={false} />
             <span>Done</span>
           </div>
+          <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full border-[3px] border-emerald-500 bg-white ring-2 ring-emerald-200/80">
+              <Check className="h-3.5 w-3.5 text-emerald-600" />
+            </span>
+            <span>Verified correct</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full border-[3px] border-red-500 bg-white ring-2 ring-red-200/80">
+              <X className="h-3.5 w-3.5 text-red-600" />
+            </span>
+            <span>Verified incorrect</span>
+          </div>
         </div>
       </div>
       <div className="absolute bottom-6 left-6">
@@ -1728,46 +1742,70 @@ function ActivityDot({
   selected,
   onClick,
   tooltip,
+  verification,
 }: {
   status: ActivityState['status']
   selected: boolean
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void
   tooltip?: React.ReactNode
+  verification?: ActivityStatusStep['tutor_verified']
 }) {
+  const showVerification =
+    status === 'done' && verification && verification !== 'NONE'
   const borderClass =
-    status === 'done'
-      ? 'border-emerald-600'
-      : status === 'in_progress'
+    showVerification
+      ? verification === 'CORRECT'
+        ? 'border-emerald-600'
+        : 'border-red-600'
+      : status === 'done'
       ? 'border-amber-500'
+      : status === 'in_progress'
+      ? 'border-blue-600'
       : status === 'locked'
       ? 'border-gray-400'
       : 'border-gray-300'
   const ringClass =
-    status === 'done'
-      ? 'ring-emerald-200/80'
-      : status === 'in_progress'
+    showVerification
+      ? verification === 'CORRECT'
+        ? 'ring-emerald-200/80'
+        : 'ring-red-200/80'
+      : status === 'done'
       ? 'ring-amber-200/80'
+      : status === 'in_progress'
+      ? 'ring-blue-200/80'
       : status === 'locked'
       ? 'ring-gray-200/70'
       : 'ring-gray-200/60'
   const content =
-    status === 'locked' ? <Lock className="h-3.5 w-3.5 text-gray-500" /> : null
+    status === 'locked' ? (
+      <Lock className="h-3.5 w-3.5 text-gray-500" />
+    ) : showVerification ? (
+      verification === 'CORRECT' ? (
+        <Check className="h-3.5 w-3.5 text-emerald-600" />
+      ) : (
+        <X className="h-3.5 w-3.5 text-red-600" />
+      )
+    ) : null
+
+  const selectedRingClass = selected
+    ? showVerification
+      ? verification === 'CORRECT'
+        ? 'ring-4 ring-emerald-500/30'
+        : 'ring-4 ring-red-500/30'
+      : 'ring-4 ring-gray-900/20'
+    : ''
 
   const dot = onClick ? (
     <button
       type="button"
       onClick={onClick}
-      className={`flex h-7 w-7 items-center justify-center rounded-full border-[3px] bg-white transition ${borderClass} ring-2 ${ringClass} hover:scale-110 hover:shadow-[0_6px_14px_rgba(15,23,42,0.18)] active:scale-95 ${
-        selected ? 'ring-4 ring-gray-900/20' : ''
-      }`}
+      className={`flex h-7 w-7 items-center justify-center rounded-full border-[3px] bg-white transition ${borderClass} ring-2 ${ringClass} hover:scale-110 hover:shadow-[0_6px_14px_rgba(15,23,42,0.18)] active:scale-95 ${selectedRingClass}`}
     >
       {content}
     </button>
   ) : (
     <span
-      className={`flex h-7 w-7 items-center justify-center rounded-full border-[3px] bg-white ${borderClass} ring-2 ${ringClass} ${
-        selected ? 'ring-4 ring-gray-900/20' : ''
-      }`}
+      className={`flex h-7 w-7 items-center justify-center rounded-full border-[3px] bg-white ${borderClass} ring-2 ${ringClass} ${selectedRingClass}`}
     >
       {content}
     </span>

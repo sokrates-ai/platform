@@ -7,6 +7,7 @@ from fastapi import FastAPI
 
 from src.db.courses.activities import Activity
 from src.db.courses.courses import Course
+from src.db.trail_steps import TrailStepVerificationEnum
 from src.db.users import PublicUser, User
 from src.services.notifications.broker import RedisNotificationBroker
 from src.services.notifications.manager import NotificationManager
@@ -115,6 +116,18 @@ def build_tutor_student_activity_started_topic(
     return (
         f"user/{tutor_user_id}/courses/{course_uuid}/students/"
         f"{student_uuid}/rooms/{room_uuid}/activity-started"
+    )
+
+
+def build_student_activity_verified_topic(
+    *,
+    student_user_id: int,
+    course_uuid: str,
+    activity_uuid: str,
+) -> str:
+    return (
+        f"user/{student_user_id}/courses/{course_uuid}/activities/"
+        f"{activity_uuid}/tutor-verified"
     )
 
 
@@ -233,12 +246,67 @@ async def notify_tutors_student_activity_completed(
         return
 
 
+async def notify_student_activity_verified(
+    *,
+    student: PublicUser | User,
+    tutor: PublicUser | User,
+    activity: Activity,
+    course: Course,
+    status: TrailStepVerificationEnum,
+) -> None:
+    tutor_name = _display_name(tutor)
+    student_name = _display_name(student)
+
+    if status == TrailStepVerificationEnum.CORRECT:
+        title = "Tutor approved submission" # TODO: use something else 
+        body = f'{tutor_name} reviewed "{activity.name}"'
+        level: NotificationLevel = "success"
+    elif status == TrailStepVerificationEnum.INCORRECT:
+        title = "Tutor rejected submission"
+        body = f'{tutor_name} reviewed "{activity.name}"'
+        level = "warning"
+    else:
+        title = "Tutor reviewed activity"
+        body = f'{tutor_name} reviewed "{activity.name}" in {course.name}.'
+        level = "info"
+
+    await send_notification(
+        topic=build_student_activity_verified_topic(
+            student_user_id=student.id,
+            course_uuid=course.course_uuid,
+            activity_uuid=activity.activity_uuid,
+        ),
+        title=title,
+        body=body,
+        level=level,
+        data={
+            "kind": "tutor_activity_verified",
+            "course_id": course.id,
+            "course_uuid": course.course_uuid,
+            "course_name": course.name,
+            "activity_id": activity.id,
+            "activity_uuid": activity.activity_uuid,
+            "activity_name": activity.name,
+            "student_id": student.id,
+            "student_uuid": student.user_uuid,
+            "student_name": student_name,
+            "tutor_id": tutor.id,
+            "tutor_uuid": tutor.user_uuid,
+            "tutor_name": tutor_name,
+            "verification_status": status.value,
+        },
+        user_id=student.id,
+    )
+
+
 __all__ = [
     "build_notification",
+    "build_student_activity_verified_topic",
     "build_tutor_student_activity_completed_topic",
     "build_tutor_student_activity_started_topic",
     "build_system_event",
     "notify_all",
+    "notify_student_activity_verified",
     "notify_tutors_student_activity_started",
     "notify_tutors_student_activity_completed",
     "notify_user",

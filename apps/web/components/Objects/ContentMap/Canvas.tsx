@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AssetData } from "./Asset/assetTypes";
+import type { AssetData, ChapterState } from "./Asset/assetTypes";
 import { SPRITE_SCALE_FACTOR, MINOR_GRID_SIZE } from "./constants";
 import useCanvasShortcuts from "./hooks/useCanvasShortcuts";
 
@@ -38,7 +38,7 @@ export interface CanvasProps {
     showGrid?: boolean;
     snapToGrid?: boolean;
     gridGranularity?: number;
-    chapterStates?: Record<number, 'locked' | 'unlocked' | 'finished'>;
+    chapterStates?: Record<number, ChapterState>;
     undoRedo?: {
         undo: () => void;
         redo: () => void;

@@ -23,6 +23,10 @@ interface Props {
 	current_activity?: any
 	access_token: string
 	selectedTabId: string | null
+	onDynamicPreviewStateChange?: (state: {
+		isOpen: boolean
+		activityUuid?: string | null
+	}) => void
 }
 
 export default function ChapterActivities({
@@ -31,6 +35,7 @@ export default function ChapterActivities({
 	orgslug,
 	access_token,
 	selectedTabId,
+	onDynamicPreviewStateChange,
 }: Props) {
 	const router = useRouter()
 	const [selectedId, setSelectedId] = useState<number | null>(null)
@@ -144,6 +149,10 @@ export default function ChapterActivities({
 	const shouldShowDynamicPreview =
 		selectedIsDynamic &&
 		(isLoadingDynamic || dynamicError || dynamicActivity)
+	const previewActivityUuid = useMemo(() => {
+		if (!shouldShowDynamicPreview || !selectedActivity) return null
+		return getActivityKey(selectedActivity)
+	}, [getActivityKey, selectedActivity, shouldShowDynamicPreview])
 
 	const isSelectedActivityCompleted = () => {
 		if (!selectedActivity) return false
@@ -206,11 +215,19 @@ export default function ChapterActivities({
 	}
 
 	useEffect(() => {
+		onDynamicPreviewStateChange?.({
+			isOpen: shouldShowDynamicPreview,
+			activityUuid: previewActivityUuid,
+		})
+	}, [onDynamicPreviewStateChange, previewActivityUuid, shouldShowDynamicPreview])
+
+	useEffect(() => {
 		setSelectedId(null)
 		setDynamicActivity(null)
 		setDynamicError(null)
 		setIsLoadingDynamic(false)
 		latestDynamicRequest.current = null
+		onDynamicPreviewStateChange?.({ isOpen: false, activityUuid: null })
 	}, [chapterID])
 
 	const handleActivityStart = useCallback(async (

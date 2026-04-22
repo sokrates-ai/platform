@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import Canvas, { LayoutState } from '@components/Objects/ContentMap/Canvas'
 import { DoorOpen, EyeOff, Menu, X } from 'lucide-react'
-import { getUriWithOrg } from '@services/config/config'
+import { useToast } from '@/hooks/use-toast'
+import { getUriWithOrg, getWebSocketUrl } from '@services/config/config'
 import usePrefetchPixiAssets from '@components/Objects/ContentMap/hooks/usePrefetchPixiAssets'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { Viewport } from 'pixi-viewport'
@@ -19,6 +20,7 @@ import { getSpriteUrl } from '@components/Objects/ContentMap/utils/spriteUrl'
 import type { AssetData } from '@components/Objects/ContentMap/Asset/assetTypes'
 import {
   buildActivityTabIndex,
+  getActivityTutorVerification,
   getCourseFallbackTabId,
   isActivityDone,
   isChapterLocked,
@@ -26,7 +28,10 @@ import {
 } from '@components/Pages/Courses/utils'
 import PageLoading from '@components/Objects/Loaders/PageLoading'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
-import { updateCourseCanvasInteractionState } from '@services/courses/courses'
+import {
+  getCourseMetadata,
+  updateCourseCanvasInteractionState,
+} from '@services/courses/courses'
 import CourseChapter from '@components/Pages/Courses/CourseChapter'
 import { cn } from '@/lib/utils'
 import { DEFAULT_COURSE_TABS } from '@components/Objects/Modals/Course/Create/CourseTabSelector'
@@ -58,15 +63,23 @@ const CourseStartedView = ({
   const chapterParam = searchParams.get('chapter') // ✅ read from URL
   const chapterFromUrl = chapterParam ? parseInt(chapterParam, 10) : null
   const initialTabParamRef = useRef(searchParams.get('tab'))
+  const { toast } = useToast()
+  const [courseData, setCourseData] = useState(course)
+
+  useEffect(() => {
+    setCourseData(course)
+  }, [course])
+
+  const activeCourse = courseData ?? course
 
   const rawTabMetadata = useMemo(
     () =>
-      course?.tabMetadata ??
-      course?.tab_metadata ??
-      course?.courseStructure?.tabMetadata ??
-      course?.courseStructure?.tab_metadata ??
+      activeCourse?.tabMetadata ??
+      activeCourse?.tab_metadata ??
+      activeCourse?.courseStructure?.tabMetadata ??
+      activeCourse?.courseStructure?.tab_metadata ??
       [],
-    [course],
+    [activeCourse],
   )
 
   const normalizedTabs = useMemo(() => {
@@ -149,18 +162,18 @@ const CourseStartedView = ({
 
   const rawTabStore = useMemo(
     () =>
-      course?.tabStore ??
-      course?.tab_store ??
-      course?.courseStructure?.tabStore ??
-      course?.courseStructure?.tab_store ??
+      activeCourse?.tabStore ??
+      activeCourse?.tab_store ??
+      activeCourse?.courseStructure?.tabStore ??
+      activeCourse?.courseStructure?.tab_store ??
       {},
-    [course],
+    [activeCourse],
   )
 
   const tabMaps = useMemo(() => {
     const fallbackMap =
-      course?.map_state ??
-      course?.courseStructure?.map_state ?? {
+      activeCourse?.map_state ??
+      activeCourse?.courseStructure?.map_state ?? {
         objects: [],
         boundaries: { ...DEFAULT_BOUNDARIES },
       }
@@ -207,7 +220,7 @@ const CourseStartedView = ({
       },
       {},
     )
-  }, [normalizedTabs, rawTabStore, course])
+  }, [normalizedTabs, rawTabStore, activeCourse])
 
   const tabs = useMemo(() => {
     if (normalizedTabs.length) {
@@ -236,8 +249,8 @@ const CourseStartedView = ({
     if (visibleTabs.length > 0 && visibleTabs[0]?.id) {
       return visibleTabs[0].id
     }
-    return getCourseFallbackTabId(course)
-  }, [visibleTabs, course])
+    return getCourseFallbackTabId(activeCourse)
+  }, [visibleTabs, activeCourse])
 
   const initialSelectedTab = useMemo(() => {
     const initialTabParam = initialTabParamRef.current
@@ -288,29 +301,34 @@ const CourseStartedView = ({
   const courseIdWithoutPrefix = courseuuid.replace('course_', '')
 
   const chapterStates = useMemo(() => {
-    const result: Record<number, 'locked' | 'unlocked' | 'finished'> = {}
-    const chapters = Array.isArray(course?.chapters) ? course.chapters : []
+    const result: Record<
+      number,
+      'locked' | 'unlocked' | 'finished' | 'verified' | 'incorrect'
+    > = {}
+    const chapters = Array.isArray(activeCourse?.chapters)
+      ? activeCourse.chapters
+      : []
     if (!chapters.length) {
       return result
     }
 
     const activeTabId = selectedTab ?? fallbackTabId
     const activityTabIndex = buildActivityTabIndex(
-      course,
+      activeCourse,
       fallbackTabId,
     )
 
     chapters.forEach((chapter: any) => {
       const chapterTabId = resolveChapterTabId(
         chapter,
-        course,
+        activeCourse,
         fallbackTabId,
       )
       if (chapterTabId !== activeTabId) {
         return
       }
 
-      const isLocked = isChapterLocked(chapter.id, course, {
+      const isLocked = isChapterLocked(chapter.id, activeCourse, {
         activeTabId,
         activityTabIndex,
         fallbackTabId,
@@ -324,46 +342,82 @@ const CourseStartedView = ({
       const activities = Array.isArray(chapter?.activities)
         ? chapter.activities
         : []
-      const allDone =
-        activities.length > 0 &&
-        activities.every((act: any) =>
-          isActivityDone(
-            course,
-            act?.activity_uuid ??
-              act?.activityUuid ??
-              act?.activityUUID ??
-              act?.id,
-            {
-              activeTabId,
-              activityTabIndex,
-              fallbackTabId,
-            },
-          ),
+      if (activities.length === 0) {
+        result[chapter.id] = 'unlocked'
+        return
+      }
+
+      let allDone = true
+      let allVerified = true
+      let hasIncorrect = false
+
+      activities.forEach((act: any) => {
+        const activityUuid =
+          act?.activity_uuid ??
+          act?.activityUuid ??
+          act?.activityUUID ??
+          act?.id
+        const isDone = isActivityDone(activeCourse, activityUuid, {
+          activeTabId,
+          activityTabIndex,
+          fallbackTabId,
+        })
+        if (!isDone) {
+          allDone = false
+          allVerified = false
+          return
+        }
+        const verification = getActivityTutorVerification(
+          activeCourse,
+          activityUuid,
+          {
+            activeTabId,
+            activityTabIndex,
+            fallbackTabId,
+          },
         )
-      result[chapter.id] = allDone ? 'finished' : 'unlocked'
+        if (verification === 'INCORRECT') {
+          hasIncorrect = true
+          allVerified = false
+          return
+        }
+        if (verification !== 'CORRECT') {
+          allVerified = false
+        }
+      })
+
+      if (!allDone) {
+        result[chapter.id] = 'unlocked'
+        return
+      }
+      if (hasIncorrect) {
+        result[chapter.id] = 'incorrect'
+        return
+      }
+      result[chapter.id] = allVerified ? 'verified' : 'finished'
     })
 
     return result
-  }, [course, selectedTab, fallbackTabId])
+  }, [activeCourse, selectedTab, fallbackTabId])
 
   const layout: LayoutState = useMemo(() => {
     const fallback = tabMaps[selectedTab] ?? {
       objects:
-        Array.isArray(course?.map_state?.objects)
-          ? course.map_state.objects
+        Array.isArray(activeCourse?.map_state?.objects)
+          ? activeCourse.map_state.objects
           : [],
       boundaries: {
         left:
-          course?.map_state?.boundaries?.left ??
+          activeCourse?.map_state?.boundaries?.left ??
           DEFAULT_BOUNDARIES.left,
         right:
-          course?.map_state?.boundaries?.right ??
+          activeCourse?.map_state?.boundaries?.right ??
           DEFAULT_BOUNDARIES.right,
         top:
-          course?.map_state?.boundaries?.top ??
+          activeCourse?.map_state?.boundaries?.top ??
           DEFAULT_BOUNDARIES.top,
         bottom:
-          course?.map_state?.boundaries?.bottom ??
+          activeCourse?.map_state?.boundaries?.bottom ??
           DEFAULT_BOUNDARIES.bottom,
       },
     }
@@ -380,7 +434,7 @@ const CourseStartedView = ({
       },
       updateOriginator: 'initial',
     }
-  }, [tabMaps, selectedTab, course])
+  }, [tabMaps, selectedTab, activeCourse])
 
   const layeredLayout: LayoutState = useMemo(() => {
     const assets = Array.isArray(layout.layout) ? layout.layout : []
@@ -423,6 +477,12 @@ const CourseStartedView = ({
           if (skin.endsWith('.svg')) {
             addUrl(skin.replace(/\.svg$/, '-pressed.svg'))
           }
+          if (skin.endsWith('.png')) {
+            addUrl(skin.replace(/\.png$/, '-pressed.png'))
+          }
+          if (visual?.icon) {
+            addUrl(visual.icon)
+          }
         })
         addUrl(DEFAULT_CHAPTER_STONE_ICON)
       }
@@ -431,7 +491,7 @@ const CourseStartedView = ({
     return Array.from(urls)
   }, [layout.layout])
 
-  const assetsReady = usePrefetchPixiAssets(prefetchUrls, !!course)
+  const assetsReady = usePrefetchPixiAssets(prefetchUrls, !!activeCourse)
 
   const [viewport, setViewport] = useState<Viewport | null>(null)
   const [zoomPercent, setZoomPercent] = useState<number | null>(null)
@@ -591,6 +651,45 @@ const CourseStartedView = ({
 
   const session = useSokratesSession() as any
   const access_token: string | undefined = session?.data?.tokens?.access_token
+  const notificationSocketRef = useRef<WebSocket | null>(null)
+  const notificationReconnectRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  )
+  const notificationRetryRef = useRef(0)
+  const refreshInFlightRef = useRef(false)
+  const dynamicPreviewOpenRef = useRef(false)
+  const dynamicPreviewActivityRef = useRef<string | null>(null)
+  const studentUserId =
+    typeof session?.data?.user?.id === 'number' ? session.data.user.id : null
+  const courseUuidWithPrefix = useMemo(
+    () =>
+      courseuuid.startsWith('course_') ? courseuuid : `course_${courseuuid}`,
+    [courseuuid],
+  )
+  const notificationTopics = useMemo(() => {
+    if (!studentUserId) return []
+    return [`user/${studentUserId}/courses/${courseUuidWithPrefix}/#`]
+  }, [courseUuidWithPrefix, studentUserId])
+
+  const refreshCourseData = useCallback(async () => {
+    if (!access_token) return
+    if (refreshInFlightRef.current) return
+    refreshInFlightRef.current = true
+    try {
+      const updated = await getCourseMetadata(
+        courseIdWithoutPrefix,
+        null,
+        access_token,
+      )
+      if (updated) {
+        setCourseData(updated)
+      }
+    } catch {
+      // Ignore transient refresh errors.
+    } finally {
+      refreshInFlightRef.current = false
+    }
+  }, [access_token, courseIdWithoutPrefix])
 
   const isCustomImageAsset = useCallback((asset: AssetData) => {
     if (!asset || asset.type?.kind === 'chapter') {
@@ -623,6 +722,159 @@ const CourseStartedView = ({
     [isCustomImageAsset],
   )
 
+  const handleDynamicPreviewStateChange = useCallback(
+    (state: { isOpen: boolean; activityUuid?: string | null }) => {
+      dynamicPreviewOpenRef.current = state.isOpen
+      dynamicPreviewActivityRef.current = state.activityUuid ?? null
+    },
+    [],
+  )
+
+  const normalizeActivityUuid = useCallback((value: unknown) => {
+    if (value === null || value === undefined) return null
+    const raw = String(value)
+    if (!raw) return null
+    return raw.startsWith('activity_') ? raw : `activity_${raw}`
+  }, [])
+
+  useEffect(() => {
+    if (!access_token || notificationTopics.length === 0) {
+      if (notificationReconnectRef.current) {
+        clearTimeout(notificationReconnectRef.current)
+        notificationReconnectRef.current = null
+      }
+      if (notificationSocketRef.current) {
+        notificationSocketRef.current.close()
+        notificationSocketRef.current = null
+      }
+      return
+    }
+
+    const baseUrl = getWebSocketUrl()
+    if (!baseUrl) {
+      return
+    }
+
+    let active = true
+
+    const cleanup = () => {
+      if (notificationReconnectRef.current) {
+        clearTimeout(notificationReconnectRef.current)
+        notificationReconnectRef.current = null
+      }
+      if (notificationSocketRef.current) {
+        notificationSocketRef.current.onopen = null
+        notificationSocketRef.current.onmessage = null
+        notificationSocketRef.current.onclose = null
+        notificationSocketRef.current.onerror = null
+        notificationSocketRef.current.close()
+        notificationSocketRef.current = null
+      }
+    }
+
+    const scheduleReconnect = () => {
+      if (!active) return
+      const delay = Math.min(1000 * 2 ** notificationRetryRef.current, 30000)
+      const jitter = Math.floor(Math.random() * 300)
+      notificationRetryRef.current += 1
+      notificationReconnectRef.current = setTimeout(() => {
+        connect()
+      }, delay + jitter)
+    }
+
+    const connect = () => {
+      cleanup()
+      const normalized = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
+      const url = new URL(`${normalized}notifications/ws`)
+      url.searchParams.set('topics', notificationTopics.join(','))
+      url.searchParams.set('token', access_token)
+      const socket = new WebSocket(url.toString())
+      notificationSocketRef.current = socket
+
+      socket.onopen = () => {
+        notificationRetryRef.current = 0
+        socket.send(
+          JSON.stringify({
+            type: 'set_subscriptions',
+            topics: notificationTopics,
+          }),
+        )
+      }
+
+      socket.onmessage = (event) => {
+        let payload: any = null
+        try {
+          payload = JSON.parse(event.data)
+        } catch {
+          return
+        }
+        if (!payload || payload.type !== 'notification') return
+        const notification = payload.notification || {}
+        const data = notification.data || {}
+        if (data.course_uuid && data.course_uuid !== courseUuidWithPrefix) {
+          return
+        }
+        const kind = typeof data.kind === 'string' ? data.kind.toLowerCase() : ''
+        const topic = typeof notification.topic === 'string' ? notification.topic : ''
+        const hasVerificationData =
+          typeof data.tutor_verified === 'string' ||
+          typeof data.tutorVerified === 'string' ||
+          typeof data.verification === 'string' ||
+          typeof data.verification_status === 'string'
+        const isVerificationNotification =
+          kind.includes('verify') ||
+          kind.includes('verification') ||
+          topic.includes('activity-verified') ||
+          hasVerificationData
+        const variant =
+          notification.level === 'error' ? 'destructive' : 'default'
+        toast({
+          title: notification.title || 'Notification',
+          description: notification.body || '',
+          variant,
+          duration: 5000,
+        })
+        if (isVerificationNotification && dynamicPreviewOpenRef.current) {
+          const activityUuid = normalizeActivityUuid(
+            data.activity_uuid ??
+              data.activityUuid ??
+              data.activityUUID ??
+              data.activity_id ??
+              data.activityId,
+          )
+          if (
+            activityUuid &&
+            activityUuid === dynamicPreviewActivityRef.current
+          ) {
+            setChapterDialogOpen(false)
+          }
+        }
+        refreshCourseData()
+      }
+
+      socket.onerror = () => {
+        socket.close()
+      }
+
+      socket.onclose = () => {
+        scheduleReconnect()
+      }
+    }
+
+    connect()
+
+    return () => {
+      active = false
+      cleanup()
+    }
+  }, [
+    access_token,
+    courseUuidWithPrefix,
+    notificationTopics,
+    refreshCourseData,
+    toast,
+  ])
+
   useEffect(() => {
     if (!shouldPersistCanvasRef.current) {
       return
@@ -635,7 +887,7 @@ const CourseStartedView = ({
     })
   }, [selectedChapter, chapterDialogOpen, access_token, courseuuid, selectedTab])
 
-  if (!course) return <PageLoading />
+  if (!activeCourse) return <PageLoading />
 
   return (
     <div className="relative flex h-screen flex-col overflow-hidden">
@@ -655,17 +907,24 @@ const CourseStartedView = ({
       </AnimatePresence>
       <Modal
         isDialogOpen={chapterDialogOpen}
-        onOpenChange={setChapterDialogOpen}
+        onOpenChange={(open) => {
+          setChapterDialogOpen(open)
+          if (!open) {
+            dynamicPreviewOpenRef.current = false
+            dynamicPreviewActivityRef.current = null
+          }
+        }}
         customWidth="w-screen max-w-screen rounded-none border-0 sm:w-[80vw] sm:max-w-[80vw] sm:rounded-[0.875rem] sm:border-4 md:w-[90vw] md:max-w-[90vw] lg:w-[90vw] lg:max-w-[90vw] xl:w-[60vw] xl:max-w-[60vw]"
         customHeight="h-[100dvh] max-h-[100dvh] sm:h-[75vh] sm:max-h-[75vh] md:h-[90vh] md:max-h-[90vh] lg:h-[90vh] lg:max-h-[90vh] xl:h-[60vh] xl:max-h-[60vh]"
         overlayClassName="backdrop-blur-sm"
         dialogContent={<CourseChapter
-          course={course}
+          course={activeCourse}
           courseId={courseIdWithoutPrefix}
           orgslug={orgslug}
           chapterID={selectedChapter}
           access_token={access_token ?? ''}
           selectedTabId={selectedTab}
+          onDynamicPreviewStateChange={handleDynamicPreviewStateChange}
         />}
       />
       <Modal

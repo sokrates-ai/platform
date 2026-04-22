@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 
 export type AssetKind = 'default' | 'chapter';
+export type ChapterState = 'locked' | 'unlocked' | 'finished' | 'verified' | 'incorrect';
 
 export interface AssetTypeData {
     kind: AssetKind;
@@ -40,7 +41,7 @@ export interface CommonAssetProps {
 
     selected: boolean;
     /** Only relevant for chapter stones */
-    chapterState?: 'locked' | 'unlocked' | 'finished';
+    chapterState?: ChapterState;
     assetId?: number;
 }
 
@@ -48,10 +49,13 @@ export interface ChapterStoneVisual {
     skin: string;
     iconStroke: number;
     iconShadow: number;
+    icon?: string;
 }
 
 export interface ChapterStoneTheme {
     locked: ChapterStoneVisual;
     unlocked: ChapterStoneVisual;
     finished: ChapterStoneVisual;
+    verified: ChapterStoneVisual;
+    incorrect: ChapterStoneVisual;
 }

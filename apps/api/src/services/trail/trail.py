@@ -9,9 +9,11 @@ from sqlmodel import Session, select
 from src.services.notifications.service import (
     notify_tutors_student_activity_started,
     notify_tutors_student_activity_completed,
+    notify_student_activity_verified,
 )
 from src.services.users.users import release_user_coin_reward, release_user_xp_reward
 from src.services.courses.activities.activities import get_activity_by_id_and_course
+from src.services.courses.activities.workspaces import get_task
 from src.services.courses.rooms import get_user_course_role_flags
 from src.db.courses.activities import Activity
 from src.db.courses.courses import Course
@@ -384,58 +386,7 @@ async def add_activity_to_trail(
                     },
                 )
 
-    # After recording this activity, check if the containing chapter is now complete
-    # 1) Find the chapter for this activity within this course
-    ca_stmt = select(ChapterActivity).where(
-        (ChapterActivity.activity_id == activity.id)
-        & (ChapterActivity.course_id == course.id)
-    )
-    chapter_activity = db_session.exec(ca_stmt).first()
-
-    if chapter_activity:
-        chapter_id = chapter_activity.chapter_id
-        # 2) Get all activities in this chapter
-        chapter_acts_stmt = select(ChapterActivity).where(
-            (ChapterActivity.chapter_id == chapter_id)
-            & (ChapterActivity.course_id == course.id)
-        )
-        chapter_activities = db_session.exec(chapter_acts_stmt).all()
-        chapter_activity_ids = [ca.activity_id for ca in chapter_activities]
-
-        chapter_activity_uuids = []
-        for id in chapter_activity_ids:
-            chapter_activity = await get_activity_by_id_and_course(
-                request, id, course.id, db_session
-            )
-            chapter_activity_uuids.append(chapter_activity.activity_uuid)
-
-        print(f"chapter_activity_uuids: {chapter_activity_uuids}")
-
-        if chapter_activity_uuids:
-            # 3) Check if the user has trail steps for all activities in the chapter (complete=True)
-            steps_stmt = select(TrailStep).where(
-                (TrailStep.trailrun_id == trailrun.id)
-                & (TrailStep.user_id == user.id)
-            )
-            user_steps = db_session.exec(steps_stmt).all()
-            completed_uuids = set(
-                ts.activity_uuid for ts in user_steps if ts.complete is True
-            )
-
-            print(f"UUIDS: {completed_uuids}")
-
-            chapter_all_completed = all(
-                aid in completed_uuids for aid in chapter_activity_uuids
-            )
-
-            if chapter_all_completed:
-                await chapter_completed(
-                    request=request,
-                    user=user,
-                    chapter_id=chapter_id,
-                    db_session=db_session,
-                    was_initial=was_initial,
-                )
+    # Chapter rewards now trigger on first tutor verification (CORRECT).
 
     statement = select(TrailRun).where(
         TrailRun.trail_id == trail.id, TrailRun.user_id == user.id
@@ -807,11 +758,202 @@ async def verify_trail_step_by_tutor(
                 detail="Tutor and student must share a room",
             )
 
+    previous_status = trailstep.tutor_verified
     trailstep.tutor_verified = status
     trailstep.update_date = str(datetime.now())
     db_session.add(trailstep)
     db_session.commit()
     db_session.refresh(trailstep)
+
+    activity = db_session.exec(
+        select(Activity).where(
+            (Activity.activity_uuid == activity_uuid)
+            & (Activity.course_id == course.id)
+        )
+    ).first()
+
+    if (
+        status in {
+            TrailStepVerificationEnum.CORRECT,
+            TrailStepVerificationEnum.INCORRECT,
+        }
+        and previous_status != status
+        and student.id != current_user.id
+    ):
+        if activity:
+            try:
+                await notify_student_activity_verified(
+                    student=student,
+                    tutor=current_user,
+                    activity=activity,
+                    course=course,
+                    status=status,
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Failed to notify student about tutor verification",
+                    extra={
+                        "course_id": course.id,
+                        "activity_uuid": activity_uuid,
+                        "student_id": student.id,
+                        "tutor_id": current_user.id,
+                        "error": str(exc),
+                    },
+                )
+        else:
+            logger.warning(
+                "Skipping tutor verification notification because activity is missing",
+                extra={
+                    "course_id": course.id,
+                    "activity_uuid": activity_uuid,
+                    "student_id": student.id,
+                },
+            )
+
+    if status == TrailStepVerificationEnum.CORRECT and previous_status != status:
+        reward_data = dict(trailstep.data or {})
+        activity_reward_granted = reward_data.get("activity_reward_granted") is True
+        if not activity_reward_granted:
+            if activity:
+                reward_task_id = reward_data.get("reward_task_id")
+                if reward_task_id is None:
+                    task_ids = activity.content.get("task_ids", [])
+                    if task_ids:
+                        reward_task_id = task_ids[-1]
+                        reward_data["reward_task_id"] = reward_task_id
+
+                if reward_task_id is not None:
+                    reward_task_id_int = None
+                    try:
+                        reward_task_id_int = int(reward_task_id)
+                    except (TypeError, ValueError):
+                        logger.warning(
+                            "Skipping activity reward; reward task id invalid",
+                            extra={
+                                "course_id": course.id,
+                                "activity_uuid": activity_uuid,
+                                "student_id": student.id,
+                                "task_id": reward_task_id,
+                            },
+                        )
+
+                    if reward_task_id_int is not None:
+                        task = await get_task(
+                            request, db_session, reward_task_id_int
+                        )
+                        if task:
+                            try:
+                                await release_user_xp_reward(
+                                    request,
+                                    db_session,
+                                    student.user_uuid,
+                                    task.xp_reward,
+                                )
+                                await release_user_coin_reward(
+                                    request,
+                                    db_session,
+                                    student.user_uuid,
+                                    task.coin_reward,
+                                )
+                            except Exception as exc:
+                                logger.warning(
+                                    "Failed to release activity reward",
+                                    extra={
+                                        "course_id": course.id,
+                                        "activity_uuid": activity_uuid,
+                                        "student_id": student.id,
+                                        "task_id": reward_task_id_int,
+                                        "error": str(exc),
+                                    },
+                                )
+                        else:
+                            logger.warning(
+                                "Skipping activity reward; task missing",
+                                extra={
+                                    "course_id": course.id,
+                                    "activity_uuid": activity_uuid,
+                                    "student_id": student.id,
+                                    "task_id": reward_task_id_int,
+                                },
+                            )
+                else:
+                    logger.warning(
+                        "Skipping activity reward; reward task id missing",
+                        extra={
+                            "course_id": course.id,
+                            "activity_uuid": activity_uuid,
+                            "student_id": student.id,
+                        },
+                    )
+
+                reward_data["activity_reward_granted"] = True
+            else:
+                logger.warning(
+                    "Skipping activity reward because activity is missing",
+                    extra={
+                        "course_id": course.id,
+                        "activity_uuid": activity_uuid,
+                        "student_id": student.id,
+                    },
+                )
+
+        if activity and reward_data.get("chapter_reward_granted") is not True:
+            ca_stmt = select(ChapterActivity).where(
+                (ChapterActivity.activity_id == activity.id)
+                & (ChapterActivity.course_id == course.id)
+            )
+            chapter_activity = db_session.exec(ca_stmt).first()
+
+            if chapter_activity:
+                chapter_id = chapter_activity.chapter_id
+                chapter_acts_stmt = select(ChapterActivity).where(
+                    (ChapterActivity.chapter_id == chapter_id)
+                    & (ChapterActivity.course_id == course.id)
+                )
+                chapter_activities = db_session.exec(chapter_acts_stmt).all()
+                chapter_activity_ids = [
+                    ca.activity_id for ca in chapter_activities
+                ]
+
+                chapter_activity_uuids = []
+                for id in chapter_activity_ids:
+                    chapter_activity = await get_activity_by_id_and_course(
+                        request, id, course.id, db_session
+                    )
+                    chapter_activity_uuids.append(chapter_activity.activity_uuid)
+
+                if chapter_activity_uuids:
+                    steps_stmt = select(TrailStep).where(
+                        (TrailStep.trailrun_id == trailstep.trailrun_id)
+                        & (TrailStep.user_id == student.id)
+                    )
+                    user_steps = db_session.exec(steps_stmt).all()
+                    verified_uuids = set(
+                        ts.activity_uuid
+                        for ts in user_steps
+                        if ts.tutor_verified == TrailStepVerificationEnum.CORRECT
+                    )
+
+                    chapter_all_verified = all(
+                        aid in verified_uuids
+                        for aid in chapter_activity_uuids
+                    )
+
+                    if chapter_all_verified:
+                        await chapter_completed(
+                            request=request,
+                            user=student,
+                            chapter_id=chapter_id,
+                            db_session=db_session,
+                            was_initial=True,
+                        )
+                        reward_data["chapter_reward_granted"] = True
+
+        if reward_data != (trailstep.data or {}):
+            trailstep.data = reward_data
+            db_session.add(trailstep)
+            db_session.commit()
+            db_session.refresh(trailstep)
 
     return {
         "detail": "Trail step verification updated",

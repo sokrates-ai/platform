@@ -11,6 +11,10 @@ interface Props {
   courseId: string
   access_token: string
   selectedTabId: string | null
+  onDynamicPreviewStateChange?: (state: {
+    isOpen: boolean
+    activityUuid?: string | null
+  }) => void
 }
 
 function CourseChapter(props: Props) {
@@ -66,6 +70,7 @@ function CourseChapter(props: Props) {
             courseId={props.courseId}
             access_token={props.access_token}
             selectedTabId={props.selectedTabId ?? null}
+            onDynamicPreviewStateChange={props.onDynamicPreviewStateChange}
           />
         )}
       </div>

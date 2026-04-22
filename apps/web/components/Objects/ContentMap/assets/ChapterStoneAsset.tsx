@@ -30,9 +30,22 @@ export const DEFAULT_CHAPTER_STONE_THEME: ChapterStoneTheme = {
     iconShadow: 0x9e998d,
   },
   finished: {
-    skin: '/chapterStones/unlocked.svg',
-    iconStroke: 0xd3d3d3,
+    skin: '/chapterStones/unlocked.svg', // NOTE: don't use extra texture here
+    // iconStroke: 0xd3d3d3,
+    iconStroke: 0xd6d692,
     iconShadow: 0x9e998d,
+  },
+  verified: {
+    skin: '/chapterStones/correct.png',
+    iconStroke: 0x6fab6e,
+    iconShadow: 0x007330,
+    icon: '/chapterStones/verifiedIcon.png',
+  },
+  incorrect: {
+    skin: '/chapterStones/incorrect.png',
+    iconStroke: 0xc46565,
+    iconShadow: 0x810000,
+    icon: '/chapterStones/incorrectIcon.png',
   },
 };
 
@@ -75,16 +88,23 @@ const ChapterStoneAsset = React.forwardRef<Container, Props>(
     const [pressed, setPressed] = useState(false);
 
     /* base stone -------------------------------------------------------- */
-    const stoneSrc = useMemo(
-      () =>
-        pressed
-          ? visual.skin.replace(/\.svg$/, '-pressed.svg')
-          : visual.skin,
-      [visual.skin, pressed],
-    );
+    const stoneSrc = useMemo(() => {
+      if (!pressed) return visual.skin;
+      if (visual.skin.endsWith('.svg')) {
+        return visual.skin.replace(/\.svg$/, '-pressed.svg');
+      }
+      if (visual.skin.endsWith('.png')) {
+        return visual.skin.replace(/\.png$/, '-pressed.png');
+      }
+      return visual.skin;
+    }, [visual.skin, pressed]);
     const stoneTexture = usePixiTexture(stoneSrc);
     /* centre icon */
-    const iconTexture = usePixiTexture(icon);
+    const iconSrc = useMemo(
+      () => visual.icon ?? icon,
+      [icon, visual.icon],
+    );
+    const iconTexture = usePixiTexture(iconSrc);
 
     if (!stoneTexture || !iconTexture) return null;
 

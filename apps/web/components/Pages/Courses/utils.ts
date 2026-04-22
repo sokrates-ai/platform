@@ -145,6 +145,57 @@ function extractCompletionState(candidate: any): boolean | undefined {
   return undefined
 }
 
+export type ActivityVerificationStatus = 'NONE' | 'CORRECT' | 'INCORRECT'
+
+function normalizeVerificationStatus(
+  value: unknown,
+): ActivityVerificationStatus | undefined {
+  if (value === null || value === undefined) {
+    return undefined
+  }
+  if (typeof value === 'string') {
+    const upper = value.toUpperCase()
+    if (upper === 'NONE' || upper === 'CORRECT' || upper === 'INCORRECT') {
+      return upper as ActivityVerificationStatus
+    }
+  }
+  if (typeof value === 'boolean') {
+    return value ? 'CORRECT' : 'NONE'
+  }
+  return undefined
+}
+
+function extractVerificationStatus(
+  candidate: any,
+): ActivityVerificationStatus | undefined {
+  if (candidate === null || candidate === undefined) {
+    return undefined
+  }
+  const direct = normalizeVerificationStatus(candidate)
+  if (direct) {
+    return direct
+  }
+  if (typeof candidate !== 'object') {
+    return undefined
+  }
+  const keys = [
+    'tutor_verified',
+    'tutorVerified',
+    'tutor_verification',
+    'tutorVerification',
+    'verification',
+    'verified',
+  ]
+  for (const key of keys) {
+    if (!(key in candidate)) continue
+    const normalized = normalizeVerificationStatus(candidate[key])
+    if (normalized) {
+      return normalized
+    }
+  }
+  return undefined
+}
+
 function getProgressionStepsForTab(course: any, tabId?: string | null) {
   const progression = course?.progression ?? course?.progressions
   if (!progression) {
@@ -426,4 +477,77 @@ export function isActivityDone(
   }
 
   return false
+}
+
+export function getActivityTutorVerification(
+  course: any,
+  activityUUID: string,
+  options?: ActivityProgressOptions,
+): ActivityVerificationStatus | undefined {
+  const normalizedTarget = normalizeActivityUuid(activityUUID)
+  if (!normalizedTarget) {
+    return undefined
+  }
+
+  const fallbackTabId =
+    options?.fallbackTabId ?? getCourseFallbackTabId(course)
+
+  const activityTabIndex =
+    options?.activityTabIndex ??
+    buildActivityTabIndex(course, fallbackTabId)
+
+  const targetTabId = activityTabIndex[normalizedTarget] ?? fallbackTabId
+  const activeTabId =
+    options?.activeTabId ?? targetTabId ?? fallbackTabId
+
+  if (
+    options?.activeTabId &&
+    targetTabId &&
+    targetTabId !== options.activeTabId
+  ) {
+    return undefined
+  }
+
+  const progressionSteps = getProgressionStepsForTab(course, activeTabId)
+  if (Array.isArray(progressionSteps)) {
+    for (const step of progressionSteps) {
+      const stepUuid = extractActivityUuid(step)
+      const normalizedStepUuid = normalizeActivityUuid(stepUuid)
+      if (normalizedStepUuid !== normalizedTarget) {
+        continue
+      }
+      const verification = extractVerificationStatus(step)
+      if (verification !== undefined) {
+        return verification
+      }
+    }
+  }
+
+  const run = course?.trail?.runs?.find(
+    (candidate: any) => candidate?.course_id == course?.id,
+  )
+  if (!run) {
+    return undefined
+  }
+
+  const steps = Array.isArray(run?.steps) ? run.steps : []
+  for (const step of steps) {
+    const stepUuid = extractActivityUuid(step)
+    const normalizedStepUuid = normalizeActivityUuid(stepUuid)
+    if (normalizedStepUuid !== normalizedTarget) {
+      continue
+    }
+
+    const stepTabId = activityTabIndex[normalizedStepUuid] ?? fallbackTabId
+    if (activeTabId && stepTabId && stepTabId !== activeTabId) {
+      continue
+    }
+
+    const verification = extractVerificationStatus(step)
+    if (verification !== undefined) {
+      return verification
+    }
+  }
+
+  return undefined
 }

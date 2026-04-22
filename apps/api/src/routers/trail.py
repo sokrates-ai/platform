@@ -5,11 +5,10 @@ from src.services.courses.activities.workspaces import create_task_log
 from fastapi import APIRouter, Depends, Request
 from src.core.events.database import get_db_session
 from src.db.trails import TrailCreate, TrailRead
-from src.services.users.users import release_user_coin_reward, release_user_xp_reward
-from src.services.courses.activities.workspaces import get_task
 from src.security.auth import get_current_user
-from src.db.trail_steps import TrailStepVerificationEnum
+from src.db.trail_steps import TrailStep, TrailStepVerificationEnum
 from pydantic import BaseModel
+from sqlmodel import select
 from src.services.trail.trail import (
     Trail,
     add_activity_to_trail,
@@ -268,7 +267,7 @@ async def api_ws_record_solution(
     # If everything is marked, we can add the activity to the trail
     if everything_marked:
         print('!!!everything except last one marked, adding activity to trail')
-        shall_release_rewards = await add_activity_to_trail(
+        await add_activity_to_trail(
             request=request,
             user=user,
             activity_uuid=body.activity_uuid,
@@ -276,18 +275,20 @@ async def api_ws_record_solution(
             complete=True,
         )
 
-        if shall_release_rewards:
-            # TODO: check if all activities from a chapter are completed, then trigger chapter completion.
-            # TODO: this is better done in the general add activity to trail function.
-
-            # TODO: here: get the XP attached to a task and record it.
-            task = await get_task(request, db_session, task_id)
-
-            await release_user_xp_reward(request, db_session, user_uuid, task.xp_reward)
-            await release_user_coin_reward(request, db_session, user_uuid, task.coin_reward)
-
-            print(f"Rewarded user: {user_uuid} with {task.xp_reward} xp | {task.coin_reward} coins")
+        trailstep = db_session.exec(
+            select(TrailStep).where(
+                (TrailStep.activity_uuid == body.activity_uuid)
+                & (TrailStep.user_id == user.id)
+            )
+        ).first()
+        if trailstep:
+            data = dict(trailstep.data or {})
+            if data.get("reward_task_id") is None:
+                data["reward_task_id"] = body.task_id
+                trailstep.data = data
+                db_session.add(trailstep)
+                db_session.commit()
         else:
-            print(f"DID NOT rewarded user: {user_uuid}")
+            print(f"Missing trail step for reward capture: {body.activity_uuid}")
 
     return None

@@ -13,7 +13,7 @@ import {
   MINOR_GRID_SIZE,
 } from './constants'
 import Asset from './Asset'
-import type { AssetData } from './Asset/assetTypes'
+import type { AssetData, ChapterState } from './Asset/assetTypes'
 import * as PIXI from 'pixi.js'
 import { Graphics } from 'pixi.js'
 import { ZoomBlurFilter } from 'pixi-filters'
@@ -62,7 +62,7 @@ interface CanvasViewportProps {
   snapToGrid?: boolean
   gridGranularity?: number
   effectiveGridSize?: number
-  chapterStates?: Record<number, 'locked' | 'unlocked' | 'finished'>
+  chapterStates?: Record<number, ChapterState>
   clampToMap?: boolean
   minZoom?: number
   maxZoom?: number
