@@ -38,7 +38,6 @@ const CoursesClient: React.FC<CoursesClientProps> = ({
   const isCreatingCourse = !!searchParams.get('new')
   const [newCourseModal, setNewCourseModal] = React.useState(isCreatingCourse)
   const isUserAdmin = useAdminStatus() as any
-
   const closeNewCourseModal = () => setNewCourseModal(false)
 
   return (

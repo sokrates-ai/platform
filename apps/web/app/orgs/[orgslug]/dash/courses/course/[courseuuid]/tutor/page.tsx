@@ -100,6 +100,16 @@ type ActivityStatusResponse = {
   steps: ActivityStatusStep[]
 }
 
+type OnlineStatusEntry = {
+  user_id: number
+  user_uuid: string
+  online: boolean
+}
+
+type OnlineStatusResponse = {
+  users: OnlineStatusEntry[]
+}
+
 type ActivityState = {
   activity_uuid: string
   status: 'locked' | 'not_started' | 'in_progress' | 'done'
@@ -403,6 +413,21 @@ function TutorCourseLayout({
     activityStatusKey,
     (url: string) => swrFetcher(url, accessToken)
   )
+
+  const onlineStatusKey =
+    accessToken ? `${getAPIUrl()}users/online-status` : null
+  const { data: onlineStatusData } = useSWR<OnlineStatusResponse>(
+    onlineStatusKey,
+    (url: string) => swrFetcher(url, accessToken),
+    {
+      refreshInterval: 10000,
+    }
+  )
+
+  const onlineStatusMap = React.useMemo(() => {
+    const entries = onlineStatusData?.users ?? []
+    return new Map(entries.map((entry) => [entry.user_id, entry.online]))
+  }, [onlineStatusData])
 
   const [verifyingCells, setVerifyingCells] = React.useState<
     Record<string, boolean>
@@ -836,6 +861,7 @@ function TutorCourseLayout({
               orgslug={params.orgslug}
               courseuuid={params.courseuuid}
               accessToken={accessToken}
+              onlineStatusMap={onlineStatusMap}
             />
           ) : null}
 
@@ -945,6 +971,7 @@ function SelectedRoomPanel({
   orgslug,
   courseuuid,
   accessToken,
+  onlineStatusMap: onlineStatusMapProp,
 }: {
   room: Room
   members: RoomMember[]
@@ -970,7 +997,9 @@ function SelectedRoomPanel({
   orgslug: string
   courseuuid: string
   accessToken?: string
+  onlineStatusMap: Map<number, boolean>
 }) {
+  const onlineStatusMap = onlineStatusMapProp ?? new Map<number, boolean>()
   const router = useRouter()
   const searchParams = useSearchParams()
   const students = React.useMemo(
@@ -1316,6 +1345,7 @@ function SelectedRoomPanel({
                       member.user.last_name ?? ''
                     }`.trim()
                     const states = buildActivityStates(member.user.id)
+                    const isOnline = onlineStatusMap.get(member.user.id) ?? false
                     return (
                       <button
                         key={member.user.id}
@@ -1332,10 +1362,22 @@ function SelectedRoomPanel({
                           <span className="truncate font-medium text-gray-900">
                             {name || member.user.username}
                           </span>
-                          <span className="rounded-full border border-gray-300 bg-gray-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                            Offline
+                          <span
+                            className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${
+                              isOnline
+                                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                : 'border-gray-300 bg-gray-50 text-gray-500'
+                            }`}
+                          >
+                            {isOnline ? 'Online' : 'Offline'}
                           </span>
-                          <span className="inline-flex h-2.5 w-2.5 rounded-full border border-gray-300 bg-gray-300" />
+                          <span
+                            className={`inline-flex h-2.5 w-2.5 rounded-full border ${
+                              isOnline
+                                ? 'border-emerald-300 bg-emerald-400'
+                                : 'border-gray-300 bg-gray-300'
+                            }`}
+                          />
                         </div>
                         <div className="w-full overflow-x-auto">
                           <div

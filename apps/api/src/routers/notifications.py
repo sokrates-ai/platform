@@ -17,6 +17,7 @@ from src.security.auth import get_current_user
 from src.security.security import ALGORITHM, SECRET_KEY
 from src.services.notifications.models import NotificationLevel, build_notification, build_system_event
 from src.services.notifications.service import manager, notify_all
+from src.services.presence.service import mark_offline, mark_online
 from pydantic import BaseModel
 
 
@@ -113,6 +114,7 @@ async def websocket_notifications(websocket: WebSocket):
     topics = _parse_topics(websocket.query_params.get("topics"))
     initial_topics = topics or ["broadcast"]
     await manager.connect(user.id, websocket, topics=initial_topics)
+    await mark_online(user.id)
     await manager.send_direct(
         websocket,
         build_system_event(
@@ -134,6 +136,7 @@ async def websocket_notifications(websocket: WebSocket):
                 continue
 
             if payload.get("type") == "ping":
+                await mark_online(user.id)
                 await manager.send_direct(
                     websocket,
                     {
@@ -141,6 +144,8 @@ async def websocket_notifications(websocket: WebSocket):
                         "timestamp": f"{datetime.utcnow().isoformat()}Z",
                     },
                 )
+            elif payload.get("type") == "pong":
+                await mark_online(user.id)
             elif payload.get("type") == "subscribe":
                 topics = payload.get("topics") if isinstance(payload.get("topics"), list) else []
                 await manager.add_subscriptions(websocket, topics)
@@ -152,6 +157,10 @@ async def websocket_notifications(websocket: WebSocket):
                 await manager.set_subscriptions(websocket, topics)
     except WebSocketDisconnect:
         await manager.disconnect(user.id, websocket)
+        if not await manager.has_connections(user.id):
+            await mark_offline(user.id)
     except Exception:
         await manager.disconnect(user.id, websocket)
+        if not await manager.has_connections(user.id):
+            await mark_offline(user.id)
         raise

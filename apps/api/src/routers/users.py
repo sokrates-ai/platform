@@ -1,7 +1,7 @@
 from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
 from pydantic import EmailStr
-from sqlmodel import Session
+from sqlmodel import Session, select
 from src.services.users.password_reset import (
     change_password_with_reset_code,
     send_reset_password_code,
@@ -20,6 +20,9 @@ from src.db.users import (
     UserUpdate,
     UserUpdatePassword,
 )
+from src.db.roles import Role
+from src.db.user_organizations import UserOrganization
+from src.services.presence.service import get_presence_map
 from src.services.users.users import (
     authorize_user_action,
     create_user,
@@ -36,6 +39,44 @@ from src.services.users.users import (
 
 
 router = APIRouter()
+
+
+@router.get("/online-status")
+async def api_get_online_status(
+    db_session: Session = Depends(get_db_session),
+    current_user: PublicUser = Depends(get_current_user),
+):
+    """
+    Get online/offline state for all users (tutors, maintainers, admins only).
+    """
+    roles = db_session.exec(
+        select(Role)
+        .join(UserOrganization, Role.id == UserOrganization.role_id)
+        .where(UserOrganization.user_id == current_user.id)
+    ).all()
+
+    is_allowed = any(
+        role.id in {1, 2, 4}
+        or role.role_uuid in {"role_global_admin", "role_global_maintainer", "role_global_tutor"}
+        for role in roles
+    )
+    if not is_allowed:
+        raise HTTPException(status_code=403, detail="User rights: access denied")
+
+    users = db_session.exec(select(User.id, User.user_uuid)).all()
+    user_ids = [row[0] for row in users]
+    presence_map = await get_presence_map(user_ids)
+
+    return {
+        "users": [
+            {
+                "user_id": user_id,
+                "user_uuid": user_uuid,
+                "online": presence_map.get(user_id, False),
+            }
+            for user_id, user_uuid in users
+        ]
+    }
 
 
 @router.get("/progression/{user_uuid}")

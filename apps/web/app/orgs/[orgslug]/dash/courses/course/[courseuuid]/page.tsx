@@ -4,9 +4,10 @@ import React from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { BookOpen, GraduationCap } from 'lucide-react'
+import { BookOpen, GraduationCap, Pencil } from 'lucide-react'
 
 import { CourseProvider } from '@components/Contexts/CourseContext'
+import { useOrg } from '@components/Contexts/OrgContext'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import useCourseStaffStatus from '@components/Hooks/useCourseStaffStatus'
 import PageLoading from '@components/Objects/Loaders/PageLoading'
@@ -36,8 +37,25 @@ export default CourseEntryPage
 
 function CourseEntryLayout({ params }: CourseEntryPageProps) {
   const session = useSokratesSession() as any
+  const org = useOrg() as any
   const { isCourseStaff, loading } = useCourseStaffStatus()
   const router = useRouter()
+  const isAdminOrMaintainer = React.useMemo(() => {
+    const orgId = org?.id
+    const roles = session?.data?.roles ?? []
+    if (!orgId || !roles.length) return false
+    return roles.some((role: any) => {
+      if (role?.org?.id !== orgId) return false
+      const roleId = role?.role?.id
+      const roleUuid = role?.role?.role_uuid
+      return (
+        roleId === 1 ||
+        roleId === 2 ||
+        roleUuid === 'role_global_admin' ||
+        roleUuid === 'role_global_maintainer'
+      )
+    })
+  }, [org?.id, session?.data?.roles])
 
   React.useEffect(() => {
     if (loading || session?.status === 'loading') return
@@ -84,6 +102,10 @@ function CourseEntryLayout({ params }: CourseEntryPageProps) {
     params.orgslug,
     `/dash/courses/course/${params.courseuuid}/tutor`
   )
+  const editPath = getUriWithOrg(
+    params.orgslug,
+    `/dash/courses/course/${params.courseuuid}/content`
+  )
 
   return (
     <>
@@ -99,7 +121,12 @@ function CourseEntryLayout({ params }: CourseEntryPageProps) {
       >
         <div className="px-10 py-8">
           <div className="flex min-h-[calc(100vh-220px)] items-center justify-center">
-            <EntrySelectionGrid coursePath={coursePath} tutorPath={tutorPath} />
+            <EntrySelectionGrid
+              coursePath={coursePath}
+              tutorPath={tutorPath}
+              editPath={editPath}
+              showEdit={isAdminOrMaintainer}
+            />
           </div>
         </div>
       </motion.div>
@@ -110,13 +137,17 @@ function CourseEntryLayout({ params }: CourseEntryPageProps) {
 function EntrySelectionGrid({
   coursePath,
   tutorPath,
+  editPath,
+  showEdit,
 }: {
   coursePath: string
   tutorPath: string
+  editPath: string
+  showEdit: boolean
 }) {
   return (
     <div className="flex w-full flex-col items-center">
-      <div className="flex flex-col items-center gap-6 md:flex-row md:gap-10">
+      <div className="flex w-full flex-wrap items-center justify-center gap-6 md:gap-10">
         <EntrySelectionCard
           href={coursePath}
           title="View course"
@@ -130,6 +161,18 @@ function EntrySelectionGrid({
           title="Tutor view"
           icon={<GraduationCap className="h-10 w-10 text-gray-500" />}
         />
+        {showEdit ? (
+          <>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.4em] text-gray-400">
+              Or
+            </div>
+            <EntrySelectionCard
+              href={editPath}
+              title="Edit course"
+              icon={<Pencil className="h-10 w-10 text-gray-500" />}
+            />
+          </>
+        ) : null}
       </div>
     </div>
   )

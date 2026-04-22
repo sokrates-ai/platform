@@ -47,6 +47,11 @@ class NotificationManager:
             pass
         self._logger.info("WebSocket disconnected", extra={"user_id": user_id})
 
+    async def has_connections(self, user_id: int) -> bool:
+        async with self._lock:
+            sockets = self._connections.get(user_id)
+            return bool(sockets)
+
     async def send_to_user(self, user_id: int, message: Dict[str, Any]) -> None:
         sockets = await self._get_sockets(user_id)
         for socket in sockets:

@@ -23,7 +23,7 @@ export const config = {
      * 4d. /chapterStones (inside /public)
      * 5. all root files inside /public (e.g. /favicon.ico)
      */
-    '/((?!api|_next|fonts|umami|examples|contentMap|students|chapterStones|[\\w-]+\\.\\w+).*)',
+    '/((?!api|_next|fonts|umami|examples|contentMap|students|chapterStones|carousel|[\\w-]+\\.\\w+).*)',
     '/sitemap.xml',
   ],
 }

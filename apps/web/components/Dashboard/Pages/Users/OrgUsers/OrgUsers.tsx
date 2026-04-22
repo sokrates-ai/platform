@@ -30,6 +30,11 @@ function OrgUsers() {
     org ? `${getAPIUrl()}orgs/${org?.id}/users` : null,
     (url: string) => swrFetcher(url, access_token)
   )
+  const { data: onlineStatusData } = useSWR(
+    access_token ? `${getAPIUrl()}users/online-status` : null,
+    (url: string) => swrFetcher(url, access_token),
+    { refreshInterval: 10000 }
+  )
   const [rolesModal, setRolesModal] = React.useState(false)
   const [selectedUser, setSelectedUser] = React.useState(null) as any
   const [isLoading, setIsLoading] = React.useState(true)
@@ -103,6 +108,11 @@ function OrgUsers() {
     return { label: fallbackLabel, className: 'bg-gray-100 text-gray-700' }
   }
 
+  const onlineStatusMap = React.useMemo(() => {
+    const entries = onlineStatusData?.users ?? []
+    return new Map(entries.map((entry: any) => [entry.user_id, entry.online]))
+  }, [onlineStatusData])
+
   return (
     <div>
       {isLoading ? (
@@ -126,6 +136,7 @@ function OrgUsers() {
                 <tr className="font-bolder text-sm">
                   <th className="py-3 px-4">User</th>
                   <th className="py-3 px-4 text-center">Badge</th>
+                  <th className="py-3 px-4 text-center">Status</th>
                   <th className="py-3 px-4">Actions</th>
                 </tr>
               </thead>
@@ -137,6 +148,7 @@ function OrgUsers() {
                     const fullName = `${firstName} ${lastName}`.trim()
                     const displayName = fullName.length > 0 ? fullName : user?.user?.username
                     const roleBadge = getRoleBadge(user?.role)
+                    const isOnline = onlineStatusMap.get(user.user.id) ?? false
                     return (
                       <tr
                         key={user.user.id}
@@ -155,6 +167,22 @@ function OrgUsers() {
                             className={`inline-flex justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${roleBadge.className}`}
                           >
                             {roleBadge.label}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                              isOnline
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-gray-100 text-gray-500'
+                            }`}
+                          >
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${
+                                isOnline ? 'bg-emerald-500' : 'bg-gray-400'
+                              }`}
+                            />
+                            {isOnline ? 'Online' : 'Offline'}
                           </span>
                         </td>
                         <td className="py-3 px-4">
