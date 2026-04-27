@@ -11,6 +11,7 @@ import {
   GraduationCap,
   Loader2,
   Lock,
+  MoreVertical,
   RotateCcw,
   Users,
   X,
@@ -29,6 +30,12 @@ import ToolTip from '@components/Objects/StyledElements/Tooltip/Tooltip'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import Canva from '@components/Objects/Activities/DynamicCanva/DynamicCanva'
 import { Button } from '@components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@components/ui/dropdown-menu'
 import { useToast } from '@/hooks/use-toast'
 import { getAPIUrl, getUriWithOrg, getWebSocketUrl } from '@services/config/config'
 import { getActivity } from '@services/courses/activities'
@@ -1153,6 +1160,13 @@ function SelectedRoomPanel({
     [accessToken, dynamicActivity?.activity_uuid]
   )
 
+  const handleOpenActivity = React.useCallback(
+    (href: string) => {
+      router.push(href)
+    },
+    [router]
+  )
+
   const handleOpenVerification = React.useCallback(
     (state: ActivityState) => {
       if (!selectedStudent) return
@@ -1168,7 +1182,11 @@ function SelectedRoomPanel({
   const handleVerificationSelect = React.useCallback(
     async (status: ActivityStatusStep['tutor_verified']) => {
       if (!selectedStudent || !verificationTarget) return
-      await onVerifyStep(selectedStudent.user, verificationTarget.activityUuid, status)
+      await onVerifyStep(
+        selectedStudent.user,
+        verificationTarget.activityUuid,
+        status
+      )
       setVerificationModalOpen(false)
       setVerificationTarget(null)
     },
@@ -1202,6 +1220,25 @@ function SelectedRoomPanel({
       })
     },
     [activities, activityStatusMap]
+  )
+
+  const handleVerifyAllCompleted = React.useCallback(
+    async (student: RoomMember['user']) => {
+      const states = buildActivityStates(student.id)
+      for (const state of states) {
+        if (
+          state.status !== 'done' ||
+          !state.step ||
+          state.step.tutor_verified === 'CORRECT'
+        ) {
+          continue
+        }
+        // Sequentially mark each completed activity as verified (pass).
+        // This avoids spamming the API and keeps UI feedback consistent.
+        await onVerifyStep(student, state.activity_uuid, 'CORRECT')
+      }
+    },
+    [buildActivityStates, onVerifyStep]
   )
 
   const activityMetaByUuid = React.useMemo(() => {
@@ -1346,6 +1383,12 @@ function SelectedRoomPanel({
                     }`.trim()
                     const states = buildActivityStates(member.user.id)
                     const isOnline = onlineStatusMap.get(member.user.id) ?? false
+                    const canVerifyAll = states.some(
+                      (state) =>
+                        state.status === 'done' &&
+                        state.step &&
+                        state.step.tutor_verified !== 'CORRECT'
+                    )
                     return (
                       <button
                         key={member.user.id}
@@ -1356,7 +1399,7 @@ function SelectedRoomPanel({
                             { scroll: false }
                           )
                         }}
-                        className="group grid min-h-[64px] w-full grid-cols-[240px_1fr] items-center gap-4 bg-white px-4 py-3 text-left transition hover:bg-gray-50"
+                        className="group grid min-h-[64px] w-full grid-cols-[240px_1fr_auto] items-center gap-4 bg-white px-4 py-3 text-left transition hover:bg-gray-50"
                       >
                         <div className="grid grid-cols-[1fr_auto_16px] items-center gap-3">
                           <span className="truncate font-medium text-gray-900">
@@ -1417,6 +1460,32 @@ function SelectedRoomPanel({
                             ))}
                           </div>
                         </div>
+                        <div className="flex items-center justify-end pr-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+                                onClick={(event) => event.stopPropagation()}
+                                onPointerDown={(event) => event.stopPropagation()}
+                                aria-label="Student actions"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                disabled={!canVerifyAll}
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  handleVerifyAllCompleted(member.user)
+                                }}
+                              >
+                                Verify all completed activities
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </button>
                     )
                   })}
@@ -1461,10 +1530,13 @@ function SelectedRoomPanel({
                         Open activity
                       </Button>
                     ) : activityHref ? (
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={activityHref} prefetch={false}>
-                          Open activity
-                        </Link>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenActivity(activityHref)}
+                      >
+                        Open activity
                       </Button>
                     ) : null
                   const isVerifying = Boolean(
@@ -1600,10 +1672,13 @@ function SelectedRoomPanel({
                 </div>
               </div>
               {dynamicActivityHref ? (
-                <Button asChild variant="outline" size="sm">
-                  <Link href={dynamicActivityHref} prefetch={false}>
-                    Open full activity
-                  </Link>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleOpenActivity(dynamicActivityHref)}
+                >
+                  Open full activity
                 </Button>
               ) : null}
             </div>
@@ -1643,34 +1718,32 @@ function SelectedRoomPanel({
       <Modal
         isDialogOpen={verificationModalOpen}
         onOpenChange={handleVerificationModalChange}
-        customWidth="w-screen max-w-screen rounded-none border-0 sm:w-[70vw] sm:max-w-[70vw] md:w-[480px] md:max-w-[480px]"
-        customHeight="h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[70vh]"
+        customWidth="w-[360px] max-w-[90vw] border border-gray-200 rounded-2xl shadow-[0_20px_60px_rgba(15,23,42,0.18)] p-6"
+        customHeight="h-auto"
         overlayClassName="backdrop-blur-sm"
         dialogContent={
-          <div className="flex flex-col gap-6">
-            <div className="text-center">
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                Verification
-              </div>
-              <div className="text-lg font-semibold text-gray-900">
-                {verificationTarget
-                  ? activityMetaByUuid.get(verificationTarget.activityUuid)?.name ??
-                    'Activity'
-                  : 'Activity'}
-              </div>
-              <div className="mt-1 text-xs text-gray-500">
-                Current status: {verificationLabel}
-              </div>
+          <div className="flex flex-col items-center gap-5 text-center">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-gray-400">
+              Verification
             </div>
-            <div className="flex items-center justify-center gap-4">
+            <div className="text-base font-semibold text-gray-900">
+              {verificationTarget
+                ? activityMetaByUuid.get(verificationTarget.activityUuid)?.name ??
+                  'Activity'
+                : 'Activity'}
+            </div>
+            <div className="text-[11px] text-gray-500">
+              Current status: {verificationLabel}
+            </div>
+            <div className="mt-1 flex items-center justify-center gap-4">
               <button
                 type="button"
-                className="flex h-28 w-28 flex-col items-center justify-center gap-2 rounded-xl border-2 border-emerald-400 bg-emerald-50 text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100"
+                className="flex h-24 w-24 flex-col items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-700 shadow-[0_6px_16px_rgba(16,185,129,0.15)] transition hover:-translate-y-0.5 hover:border-emerald-400 hover:bg-emerald-100 disabled:opacity-60"
                 onClick={() => handleVerificationSelect('CORRECT')}
                 disabled={isVerificationSaving}
               >
-                <Check className="h-6 w-6" />
-                <span className="text-xs font-semibold uppercase tracking-wide">
+                <Check className="h-5 w-5" />
+                <span className="text-[10px] font-semibold uppercase tracking-[0.2em]">
                   Pass
                 </span>
               </button>
@@ -1679,18 +1752,18 @@ function SelectedRoomPanel({
               </span>
               <button
                 type="button"
-                className="flex h-28 w-28 flex-col items-center justify-center gap-2 rounded-xl border-2 border-rose-400 bg-rose-50 text-rose-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-rose-100"
+                className="flex h-24 w-24 flex-col items-center justify-center gap-2 rounded-xl border border-rose-300 bg-rose-50 text-rose-700 shadow-[0_6px_16px_rgba(244,63,94,0.15)] transition hover:-translate-y-0.5 hover:border-rose-400 hover:bg-rose-100 disabled:opacity-60"
                 onClick={() => handleVerificationSelect('INCORRECT')}
                 disabled={isVerificationSaving}
               >
-                <X className="h-6 w-6" />
-                <span className="text-xs font-semibold uppercase tracking-wide">
+                <X className="h-5 w-5" />
+                <span className="text-[10px] font-semibold uppercase tracking-[0.2em]">
                   Fail
                 </span>
               </button>
             </div>
             {isVerificationSaving ? (
-              <div className="flex items-center justify-center text-xs text-gray-500">
+              <div className="flex items-center justify-center text-[11px] text-gray-500">
                 <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
                 Saving...
               </div>
