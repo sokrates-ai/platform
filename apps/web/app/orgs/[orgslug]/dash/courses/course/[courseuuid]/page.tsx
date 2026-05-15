@@ -26,7 +26,10 @@ function CourseEntryPage({ params }: CourseEntryPageProps) {
 
   return (
     <div className="grid h-screen w-full grid-rows-[auto,1fr] overscroll-x-none bg-SokratesLightGray">
-      <CourseProvider courseuuid={courseUuid}>
+      <CourseProvider
+        courseuuid={courseUuid}
+        loadingFallback={<CourseEntryLoading />}
+      >
         <CourseEntryLayout params={params} />
       </CourseProvider>
     </div>
@@ -74,11 +77,7 @@ function CourseEntryLayout({ params }: CourseEntryPageProps) {
   ])
 
   if (session?.status === 'loading' || loading) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <PageLoading />
-      </div>
-    )
+    return <CourseEntryLoading />
   }
 
   if (!isCourseStaff) {
@@ -131,6 +130,14 @@ function CourseEntryLayout({ params }: CourseEntryPageProps) {
         </div>
       </motion.div>
     </>
+  )
+}
+
+function CourseEntryLoading() {
+  return (
+    <div className="flex h-full w-full items-center justify-center">
+      <PageLoading />
+    </div>
   )
 }
 

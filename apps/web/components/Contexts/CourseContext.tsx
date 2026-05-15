@@ -18,7 +18,11 @@ const EMPTY_MAP_STATE = {
     bottom: 1000,
   },
 };
-export function CourseProvider({ children, courseuuid }: any) {
+export function CourseProvider({
+  children,
+  courseuuid,
+  loadingFallback,
+}: any) {
   const session = useSokratesSession() as any;
   const access_token = session?.data?.tokens?.access_token;
 
@@ -176,7 +180,7 @@ export function CourseProvider({ children, courseuuid }: any) {
   }, [activeTabStorageKey, state?.activeTabId]);
 
   if (error) return <div>Failed to load course structure</div>;
-  if (!courseStructureData) return '';
+  if (!courseStructureData) return loadingFallback ?? null;
 
   if (courseStructureData) {
     return (
