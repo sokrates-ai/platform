@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils'
 import useSWR from 'swr'
 import { swrFetcher } from '@services/utils/ts/requests'
 import { isActivityDone } from '@components/Pages/Courses/utils'
+import CourseGroupPill from '@components/Objects/Courses/CourseGroupPill'
 
 
 
@@ -129,6 +130,7 @@ function ActivityClient(props: ActivityClientProps) {
                 {activity && activity.published === true && (
                   <AuthenticatedClientElement checkMethod="authentication">
                     <div className="flex items-center gap-2">
+                      <CourseGroupPill courseUuid={props.course.course_uuid} />
                       {activity.activity_type !== 'TYPE_ASSIGNMENT' && (
                         <>
                           <MarkStatus

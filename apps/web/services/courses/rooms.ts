@@ -3,6 +3,17 @@ import { RequestBodyWithAuthHeader, getResponseMetadata } from '@services/utils/
 
 type RoomMemberIds = number | string | Array<number | string>
 
+export type CourseRoomRead = {
+  id: number
+  course_id: number
+  name: string
+  description?: string | null
+  creation_date: string
+  update_date: string
+  student_count?: number
+  tutor_count?: number
+}
+
 export async function getCourseRooms(course_uuid: string, access_token: string) {
   const result: any = await fetch(
     `${getAPIUrl()}courses/${course_uuid}/rooms`,

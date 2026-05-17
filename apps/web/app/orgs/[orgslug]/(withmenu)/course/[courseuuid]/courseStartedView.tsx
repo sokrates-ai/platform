@@ -36,6 +36,7 @@ import CourseChapter from '@components/Pages/Courses/CourseChapter'
 import { cn } from '@/lib/utils'
 import { DEFAULT_COURSE_TABS } from '@components/Objects/Modals/Course/Create/CourseTabSelector'
 import useCourseStaffStatus from '@components/Hooks/useCourseStaffStatus'
+import CourseGroupPill from '@components/Objects/Courses/CourseGroupPill'
 
 const DEFAULT_BOUNDARIES = {
   left: -1000,
@@ -268,6 +269,7 @@ const CourseStartedView = ({
   selectedTabRef.current = selectedTab
   
   const [menuOpen, setMenuOpen] = useState(false)
+  const [groupPillOpen, setGroupPillOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const shouldPersistCanvasRef = useRef(false)
 
@@ -982,7 +984,18 @@ const CourseStartedView = ({
         }
       />
 
+      {groupPillOpen ? (
+        <div className="fixed inset-0 z-[205] bg-[radial-gradient(51.03%_51.03%_at_50%_50%,rgba(255,255,255,0)_0%,rgba(0,0,0,0.15)_100%)] backdrop-blur-sm" />
+      ) : null}
+
       {/* Hamburger Menu Button */}
+      <div className="fixed right-8 top-8 z-[220] pointer-events-auto">
+        <CourseGroupPill
+          courseUuid={courseUuidWithPrefix}
+          onOpenChange={setGroupPillOpen}
+        />
+      </div>
+
       <div ref={menuRef} className="absolute top-1/2 left-8 -translate-y-1/2 z-20">
         <button
           onClick={() => setMenuOpen(!menuOpen)}

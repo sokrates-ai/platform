@@ -1,3 +1,5 @@
+'use client'
+
 import { useOrg } from '@components/Contexts/OrgContext';
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext';
 import { useEffect, useMemo, useState } from 'react';

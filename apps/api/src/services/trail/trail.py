@@ -12,6 +12,12 @@ from src.services.notifications.service import (
     notify_student_activity_verified,
     notify_user_reward_update,
 )
+from src.services.courses.member_groups import (
+    apply_pending_group_completion_if_any,
+    can_user_receive_group_completion_now,
+    get_group_peer_user_ids,
+    queue_group_pending_completion,
+)
 from src.services.users.users import release_user_coin_reward, release_user_xp_reward
 from src.services.courses.activities.activities import get_activity_by_id_and_course
 from src.services.courses.activities.workspaces import get_task
@@ -287,6 +293,7 @@ async def add_activity_to_trail(
     activity_uuid: str,
     db_session: Session,
     complete: bool = True,
+    propagate_group_completion: bool = True,
 ) -> bool:
     was_initial = None
 
@@ -444,7 +451,47 @@ async def add_activity_to_trail(
             trail_step.data = dict(course=course)
 
     if not complete:
-        return False
+        await apply_pending_group_completion_if_any(
+            course_id=course.id,
+            user=user,
+            activity_uuid=activity_uuid,
+            request=request,
+            db_session=db_session,
+        )
+        return was_initial
+
+    if was_initial and propagate_group_completion:
+        peer_user_ids = get_group_peer_user_ids(
+            course_id=course.id,
+            user_id=user.id,
+            db_session=db_session,
+        )
+        for peer_user_id in peer_user_ids:
+            peer_user = db_session.get(User, peer_user_id)
+            if not peer_user:
+                continue
+            if can_user_receive_group_completion_now(
+                course_id=course.id,
+                user_id=peer_user_id,
+                activity_uuid=activity_uuid,
+                db_session=db_session,
+            ):
+                await add_activity_to_trail(
+                    request=request,
+                    user=peer_user,
+                    activity_uuid=activity_uuid,
+                    db_session=db_session,
+                    complete=True,
+                    propagate_group_completion=False,
+                )
+            else:
+                await queue_group_pending_completion(
+                    course_id=course.id,
+                    user_id=peer_user_id,
+                    source_user_id=user.id,
+                    activity_uuid=activity_uuid,
+                    db_session=db_session,
+                )
     return was_initial
 
 

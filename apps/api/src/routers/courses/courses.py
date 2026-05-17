@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, Depends, UploadFile, Form, Request
+from fastapi import APIRouter, Depends, UploadFile, Form, HTTPException, Request
 from pydantic import BaseModel
 from sqlmodel import Session
 from src.db.users import PublicUser
@@ -21,6 +21,13 @@ from src.db.courses.course_tutor_room_selection import (
     CourseTutorRoomSelectionRead,
     CourseTutorRoomSelectionUpdate,
 )
+from src.db.courses.course_member_groups import (
+    CourseMemberGroupBulkDeleteResult,
+    CourseMemberGroupInviteCreate,
+    CourseMemberGroupMeRead,
+    CourseMemberGroupRead,
+    CourseMemberGroupRosterStudentRead,
+)
 from src.db.courses.courses import (
     CourseCreate,
     CourseRead,
@@ -32,6 +39,17 @@ from src.db.trail_steps import TrailStepVerificationEnum
 from src.security.auth import get_current_user
 from src.services.courses.course_canvas import get_canvas, put_update
 from src.services.courses.students import list_course_students, CourseStudent
+from src.services.courses.member_groups import (
+    accept_member_group_invite,
+    bulk_delete_course_member_groups,
+    create_member_group_invites,
+    decline_member_group_invite,
+    get_member_group_roster,
+    get_my_member_group,
+    leave_member_group,
+    list_course_member_groups,
+    remove_member_from_course_group,
+)
 from src.services.courses.rooms import (
     add_course_room_members,
     create_course_room,
@@ -348,6 +366,136 @@ async def api_list_course_students(
     """
     return await list_course_students(
         request, course_uuid, current_user, db_session
+    )
+
+
+@router.get('/{course_uuid}/member-groups/me')
+async def api_get_my_member_group(
+    request: Request,
+    course_uuid: str,
+    db_session: Session = Depends(get_db_session),
+    current_user: PublicUser = Depends(get_current_user),
+) -> CourseMemberGroupMeRead:
+    return await get_my_member_group(request, course_uuid, current_user, db_session)
+
+
+@router.get('/{course_uuid}/member-groups/roster')
+async def api_get_member_group_roster(
+    request: Request,
+    course_uuid: str,
+    db_session: Session = Depends(get_db_session),
+    current_user: PublicUser = Depends(get_current_user),
+) -> List[CourseMemberGroupRosterStudentRead]:
+    return await get_member_group_roster(
+        request, course_uuid, current_user, db_session
+    )
+
+
+@router.post('/{course_uuid}/member-groups/invites')
+async def api_create_member_group_invites(
+    request: Request,
+    course_uuid: str,
+    payload: CourseMemberGroupInviteCreate,
+    db_session: Session = Depends(get_db_session),
+    current_user: PublicUser = Depends(get_current_user),
+) -> CourseMemberGroupMeRead:
+    return await create_member_group_invites(
+        request, course_uuid, payload, current_user, db_session
+    )
+
+
+@router.post('/{course_uuid}/member-groups/invites/{invite_id}/accept')
+async def api_accept_member_group_invite(
+    request: Request,
+    course_uuid: str,
+    invite_id: int,
+    db_session: Session = Depends(get_db_session),
+    current_user: PublicUser = Depends(get_current_user),
+) -> CourseMemberGroupMeRead:
+    return await accept_member_group_invite(
+        request, course_uuid, invite_id, current_user, db_session
+    )
+
+
+@router.post('/{course_uuid}/member-groups/invites/{invite_id}/decline')
+async def api_decline_member_group_invite(
+    request: Request,
+    course_uuid: str,
+    invite_id: int,
+    db_session: Session = Depends(get_db_session),
+    current_user: PublicUser = Depends(get_current_user),
+) -> CourseMemberGroupMeRead:
+    return await decline_member_group_invite(
+        request, course_uuid, invite_id, current_user, db_session
+    )
+
+
+@router.delete('/{course_uuid}/member-groups/me')
+async def api_leave_member_group(
+    request: Request,
+    course_uuid: str,
+    db_session: Session = Depends(get_db_session),
+    current_user: PublicUser = Depends(get_current_user),
+) -> CourseMemberGroupMeRead:
+    return await leave_member_group(request, course_uuid, current_user, db_session)
+
+
+@router.get('/{course_uuid}/member-groups')
+async def api_list_course_member_groups(
+    request: Request,
+    course_uuid: str,
+    db_session: Session = Depends(get_db_session),
+    current_user: PublicUser = Depends(get_current_user),
+) -> List[CourseMemberGroupRead]:
+    return await list_course_member_groups(
+        request, course_uuid, current_user, db_session
+    )
+
+
+@router.delete('/{course_uuid}/member-groups')
+async def api_bulk_delete_course_member_groups(
+    request: Request,
+    course_uuid: str,
+    mode: str,
+    room_ids: str | None = None,
+    db_session: Session = Depends(get_db_session),
+    current_user: PublicUser = Depends(get_current_user),
+) -> CourseMemberGroupBulkDeleteResult:
+    parsed_room_ids = []
+    if room_ids:
+        try:
+            parsed_room_ids = [int(room_id) for room_id in room_ids.split(',') if room_id]
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=400,
+                detail="room_ids must be comma separated integers",
+            ) from exc
+    return await bulk_delete_course_member_groups(
+        request,
+        course_uuid,
+        mode,  # type: ignore[arg-type]
+        parsed_room_ids,
+        current_user,
+        db_session,
+    )
+
+
+@router.delete('/{course_uuid}/member-groups/{group_id}/members/{user_id}')
+async def api_remove_member_from_course_group(
+    request: Request,
+    course_uuid: str,
+    group_id: int,
+    user_id: int,
+    db_session: Session = Depends(get_db_session),
+    current_user: PublicUser = Depends(get_current_user),
+) -> List[CourseMemberGroupRead]:
+    return await remove_member_from_course_group(
+        request,
+        course_uuid,
+        group_id,
+        user_id,
+        current_user,
+        db_session,
     )
 
 

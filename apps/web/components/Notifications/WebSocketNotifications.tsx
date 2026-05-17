@@ -4,6 +4,7 @@ import React from 'react'
 import { useSession } from 'next-auth/react'
 
 import { useToast } from '@/hooks/use-toast'
+import { ToastAction } from '@/components/ui/toast'
 import { getWebSocketUrl } from '@services/config/config'
 
 type NotificationPayload = {
@@ -118,11 +119,52 @@ export default function WebSocketNotifications() {
           return
         }
         const variant = notification.level === 'error' ? 'destructive' : 'default'
+        const notificationKind =
+          typeof data.kind === 'string' ? data.kind : ''
+        const courseUuid =
+          typeof data.course_uuid === 'string' ? data.course_uuid : null
+        const topic =
+          typeof notification.topic === 'string' ? notification.topic : ''
+        const canOpenGroupPill =
+          !!courseUuid &&
+          [
+            'group_invite_received',
+            'group_invite_accepted',
+            'group_invite_declined',
+            'group_member_left',
+          ].includes(notificationKind)
+
+        if (canOpenGroupPill && typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('course-group-pill:refresh', {
+              detail: {
+                courseUuid,
+                kind: notificationKind,
+                topic,
+              },
+            })
+          )
+        }
+
         toast({
           title: notification.title || 'Notification',
           description: notification.body || '',
           variant,
           duration: 5000,
+          action: canOpenGroupPill ? (
+            <ToastAction
+              altText="Open group pill"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent('course-group-pill:open', {
+                    detail: { courseUuid },
+                  })
+                )
+              }}
+            >
+              Open
+            </ToastAction>
+          ) : undefined,
         })
         return
       }

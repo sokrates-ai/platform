@@ -8,7 +8,12 @@ import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import React, { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import Content from './Content'
+import GroupsContent from './GroupsContent'
 import { ApiStudent, ApiExercise } from './shared'
+import {
+  CourseMemberGroup,
+} from '@services/courses/member-groups'
+import { CourseRoomRead } from '@services/courses/rooms'
 
 type EditCourseAccessProps = {
   orgslug: string
@@ -34,6 +39,21 @@ function ManageCourseMembers(props: EditCourseAccessProps) {
       : null,
     (url: string) => swrFetcher(url, access_token)
   )
+  const groupsUrl = courseStructure
+    ? `${getAPIUrl()}courses/${courseStructure.course_uuid}/member-groups`
+    : null
+  const roomsUrl = courseStructure
+    ? `${getAPIUrl()}courses/${courseStructure.course_uuid}/rooms`
+    : null
+  const { data: groups, mutate: mutateGroups }: { data: CourseMemberGroup[], mutate: () => Promise<CourseMemberGroup[] | undefined> } = useSWR(
+    groupsUrl,
+    (url: string) => swrFetcher(url, access_token)
+  )
+  const { data: rooms, mutate: mutateRooms }: { data: CourseRoomRead[], mutate: () => Promise<CourseRoomRead[] | undefined> } = useSWR(
+    roomsUrl,
+    (url: string) => swrFetcher(url, access_token)
+  )
+  const [activeView, setActiveView] = useState<'students' | 'groups'>('students')
 
   const [isClientPublic, setIsClientPublic] = useState<boolean | undefined>(
     undefined
@@ -64,9 +84,51 @@ function ManageCourseMembers(props: EditCourseAccessProps) {
 
   return (
     <div className="py-4 box-border overflow-hidden h-full bg-white">
-        {
-            courseStructure && students ? (<Content orgslug={props.orgslug} apiStudents={students} apiExercises={tasks}></Content>) : null
-        }
+      <div className="px-6 pb-2">
+        <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-1">
+          <button
+            type="button"
+            onClick={() => setActiveView('students')}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+              activeView === 'students'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500'
+            }`}
+          >
+            Students
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('groups')}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+              activeView === 'groups'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500'
+            }`}
+          >
+            Groups
+          </button>
+        </div>
+      </div>
+      {activeView === 'students' && courseStructure && students ? (
+        <Content
+          orgslug={props.orgslug}
+          apiStudents={students}
+          apiExercises={tasks}
+        ></Content>
+      ) : null}
+      {activeView === 'groups' && courseStructure && groups && rooms ? (
+        <GroupsContent
+          courseUuid={courseStructure.course_uuid}
+          groups={groups}
+          rooms={rooms}
+          accessToken={access_token}
+          onRefresh={async () => {
+            await mutateGroups()
+            await mutateRooms()
+          }}
+        />
+      ) : null}
     </div>
   )
 }
