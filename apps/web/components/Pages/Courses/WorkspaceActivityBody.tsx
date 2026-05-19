@@ -7,6 +7,7 @@ import clsx from 'clsx'
 
 import { RequestBodyWithAuthHeader } from '@services/utils/ts/requests'
 import { stateConfig } from './stateConfig'
+import { findTrailStepForActivity } from './utils'
 
 export type ACTIVITY_STATE = 'locked' | 'available' | 'done'
 
@@ -54,12 +55,7 @@ async function fetchTasks(
 
 export default function WorkspaceActivityBody(props: Props) {
   const { activity, course, state: parentState, access_token, baseUrl } = props
-  const stepRun = course.trail?.runs.find(
-    (run: any) => run.course_id === course.id
-  )
-  const stepData = stepRun?.steps?.find(
-    (s: any) => s.activity_id === activity.id
-  )
+  const stepData = findTrailStepForActivity(course, activity)
 
   /** IDs of the tasks that belong to this workspace activity */
   const ids: number[] = React.useMemo(

@@ -6,17 +6,29 @@ import { DragDropContext } from 'react-beautiful-dnd'
 import { mutate } from 'swr'
 import ChapterElement from './DraggableElements/ChapterElement'
 import PageLoading from '@components/Objects/Loaders/PageLoading'
-import { createChapter, updateChapterEdge } from '@services/courses/chapters'
+import {
+  createChapter,
+  deleteChapter,
+  updateChapterEdge,
+} from '@services/courses/chapters'
 import { useRouter } from 'next/navigation'
 import {
   useCourse,
   useCourseDispatch,
 } from '@components/Contexts/CourseContext'
-import { CheckCircle2, Download, Hexagon, Loader2, X } from 'lucide-react'
+import {
+  CheckCircle2,
+  Download,
+  Hexagon,
+  Loader2,
+  Trash2,
+  X,
+} from 'lucide-react'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import NewChapterModal from '@components/Objects/Modals/Chapters/NewChapter'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { AnimatePresence, motion } from 'framer-motion'
+import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationModal/ConfirmationModal'
 
 import dagre from 'dagre';
 import { Background, BackgroundVariant, Handle, MarkerType, MiniMap, NodeProps, Position, addEdge, useEdgesState, useNodesState, Node, Edge } from '@xyflow/react';
@@ -1167,6 +1179,8 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
     },
     [dispatchCourse, onTabContentChange, selectedTabId, tabChapters]
   );
+  const currentChapter = tabChapters.find((c: any) => c.id === chapterID);
+  const sidePanelOpen = winReady && currentChapter;
 
   const handleImportApplied = useCallback(async () => {
     try {
@@ -1247,6 +1261,40 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
     });
     onTabContentChange(selectedTabId, updatedChapters);
   };
+
+  const deleteSelectedChapter = useCallback(async () => {
+    if (!currentChapter) {
+      return;
+    }
+
+    await deleteChapter(currentChapter.id, access_token);
+
+    const remainingChapters = tabChapters
+      .filter((chapter: any) => chapter.id !== currentChapter.id)
+      .map((chapter: any) => ({
+        ...chapter,
+        predecessors: Array.isArray(chapter.predecessors)
+          ? chapter.predecessors.filter(
+              (predecessorId: number) => predecessorId !== currentChapter.id,
+            )
+          : [],
+      }));
+
+    onTabContentChange(selectedTabId, remainingChapters);
+    setChapterID(-1);
+    await mutate(`${getAPIUrl()}courses/${course_uuid}/meta`);
+    await revalidateTags(['courses'], props.orgslug);
+    router.refresh();
+  }, [
+    access_token,
+    course_uuid,
+    currentChapter,
+    onTabContentChange,
+    props.orgslug,
+    router,
+    selectedTabId,
+    tabChapters,
+  ]);
 
   // ---------------------------------------------------------------------------
   // LEGACY DRAG‑AND‑DROP ORDERING (kept for list view)
@@ -1503,9 +1551,6 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
 
   useEffect(() => setWinReady(true), [props.course_uuid, tabChapters, course]);
 
-  const currentChapter = tabChapters.find((c: any) => c.id === chapterID);
-  const sidePanelOpen = winReady && currentChapter;
-
   useEffect(() => {
     if (!tabChapters.some((chapter: any) => chapter.id === chapterID)) {
       setChapterID(-1);
@@ -1629,6 +1674,24 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
                   <X></X>
                 </button>
                 <div className="p-10 h-full overflow-y-auto">
+                  <div className="mb-4 flex justify-end pr-10">
+                    <ConfirmationModal
+                      confirmationButtonText="Delete Chapter"
+                      confirmationMessage="Are you sure you want to delete this chapter?"
+                      dialogTitle={`Delete ${currentChapter.name} ?`}
+                      dialogTrigger={
+                        <Button
+                          variant="destructive"
+                          className="flex items-center gap-2"
+                        >
+                          <Trash2 size={15} />
+                          Delete Chapter
+                        </Button>
+                      }
+                      functionToExecute={() => deleteSelectedChapter()}
+                      status="warning"
+                    />
+                  </div>
                   <DragDropContext onDragEnd={updateStructure}>
                     <ChapterElement
                       key={currentChapter.chapter_uuid}
@@ -1637,6 +1700,7 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
                       course_uuid={course_uuid}
                       chapter={currentChapter}
                       onRewardsChange={handleChapterRewardsChange}
+                      showDeleteAction={false}
                     />
                   </DragDropContext>
                 </div>

@@ -835,19 +835,21 @@ function UserCard({
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className={`flex items-center justify-between rounded-md border bg-white px-3 py-2 text-sm shadow-sm transition-all ${
+          className={`flex items-center gap-3 rounded-md border bg-white px-3 py-2 text-sm shadow-sm transition-all ${
             snapshot.isDragging
               ? 'border-sky-300 shadow-md cursor-grabbing'
               : 'border-gray-200 hover:border-gray-300 hover:bg-white cursor-grab'
           } ${isDimmed ? 'opacity-60' : ''}`}
         >
-          <div className="flex items-center gap-2">
-            <span className="text-gray-400">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="shrink-0 text-gray-400">
               <GripVertical className="h-4 w-4" />
             </span>
-            <div className="font-medium text-gray-900">{displayName}</div>
+            <div className="truncate font-medium text-gray-900">
+              {displayName}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             {otherRoomName ? (
               <span className="max-w-[140px] truncate rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold text-gray-900">
                 {otherRoomName}

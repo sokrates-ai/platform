@@ -156,8 +156,10 @@ function OrgUsers() {
                       >
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
-                            <span className="truncate">{displayName}</span>
-                            <span className="text-xs bg-neutral-100 p-1 px-2 rounded-full text-neutral-400 font-semibold">
+                            <span className="min-w-0 flex-1 truncate">
+                              {displayName}
+                            </span>
+                            <span className="shrink-0 rounded-full bg-neutral-100 p-1 px-2 text-xs font-semibold text-neutral-400">
                               @{user.user.username}
                             </span>
                           </div>

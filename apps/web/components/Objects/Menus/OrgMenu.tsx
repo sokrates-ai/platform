@@ -3,6 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
 import { getUriWithOrg, getUriWithoutOrg } from '@services/config/config'
@@ -24,6 +25,27 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
   const session = useSokratesSession() as any
   const org = useOrg() as any
   const isUserAdmin = useAdminStatus() as any
+  const pathname = usePathname()
+
+  const showChooseGroupButton = React.useMemo(() => {
+    if (!pathname) return false
+
+    const segments = pathname.split('/').filter(Boolean)
+
+    const isCourseRootPath =
+      segments[0] === 'course' &&
+      (segments.length === 2 ||
+        (segments.length === 4 && segments[2] === 'activity'))
+
+    const isOrgScopedCoursePath =
+      segments[0] === 'orgs' &&
+      segments[1] === orgslug &&
+      segments[2] === 'course' &&
+      (segments.length === 4 ||
+        (segments.length === 6 && segments[4] === 'activity'))
+
+    return isCourseRootPath || isOrgScopedCoursePath
+  }, [orgslug, pathname])
 
   const roleBadge = React.useMemo(() => {
     if (session?.status !== 'authenticated') return null
@@ -113,6 +135,7 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
             org={org}
             session={session}
             isUserAdmin={isUserAdmin}
+            showChooseGroupButton={showChooseGroupButton}
           />
           <Avatar
             session={session}
@@ -130,7 +153,13 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
 
 // RAIL SEGMENTS
 
-function LeftRail({ orgslug, org, session, isUserAdmin }: any) {
+function LeftRail({
+  orgslug,
+  org,
+  session,
+  isUserAdmin,
+  showChooseGroupButton,
+}: any) {
   return (
     <div
       className="relative flex h-12 sm:h-14 md:h-16 lg:h-[71px] w-full
@@ -155,6 +184,15 @@ function LeftRail({ orgslug, org, session, isUserAdmin }: any) {
 
       {/* badges */}
       <div className="flex items-center pr-1 lg:pr-5 gap-2 sm:gap-3 ml-auto">
+        {showChooseGroupButton ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="inline-flex h-8 px-2 text-xs sm:h-10 sm:px-4 sm:text-sm border-SokratesGrayBorder bg-SokratesWhite font-bold text-SokratesBlackBoxShadow shadow-none"
+          >
+            Choose Group
+          </Button>
+        ) : null}
         <Badge>
           <span className="mr-1">🪙</span>
           {session?.data?.user?.coins ?? -1}

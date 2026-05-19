@@ -26,6 +26,7 @@ type ChapterElementProps = {
   orgslug: string
   course_uuid: string
   onRewardsChange?: (chapterId: number, xpReward: number, coinReward: number) => void
+  showDeleteAction?: boolean
 }
 
 interface ModifiedChapterInterface {
@@ -165,24 +166,26 @@ function ChapterElement(props: ChapterElementProps) {
                 />
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <MoreVertical size={15} className="text-gray-300" />
-              <ConfirmationModal
-                confirmationButtonText="Delete Chapter"
-                confirmationMessage="Are you sure you want to delete this chapter?"
-                dialogTitle={'Delete ' + props.chapter.name + ' ?'}
-                dialogTrigger={
-                  <button
-                    className="hover:cursor-pointer p-1 px-2 sm:px-3 bg-red-600 rounded-md shadow flex items-center text-rose-100 text-sm"
-                    rel="noopener noreferrer"
-                  >
-                    <Trash2 size={15} className="text-rose-200" />
-                  </button>
-                }
-                functionToExecute={() => deleteChapterUI()}
-                status="warning"
-              />
-            </div>
+            {props.showDeleteAction !== false && (
+              <div className="flex items-center space-x-2">
+                <MoreVertical size={15} className="text-gray-300" />
+                <ConfirmationModal
+                  confirmationButtonText="Delete Chapter"
+                  confirmationMessage="Are you sure you want to delete this chapter?"
+                  dialogTitle={'Delete ' + props.chapter.name + ' ?'}
+                  dialogTrigger={
+                    <button
+                      className="hover:cursor-pointer p-1 px-2 sm:px-3 bg-red-600 rounded-md shadow flex items-center text-rose-100 text-sm"
+                      rel="noopener noreferrer"
+                    >
+                      <Trash2 size={15} className="text-rose-200" />
+                    </button>
+                  }
+                  functionToExecute={() => deleteChapterUI()}
+                  status="warning"
+                />
+              </div>
+            )}
           </div>
           <div className="border-t border-neutral-200/70 my-2" />
           <Droppable

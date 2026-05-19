@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import List
+from typing import Any, List
 from uuid import uuid4
 from src.db.courses.chapter_activities import ChapterActivity
 from src.db.courses.course_rooms import CourseRoom, CourseRoomMember, RoomRoleEnum
@@ -36,6 +36,89 @@ from src.db.courses.chapters import Chapter
 
 
 logger = logging.getLogger(__name__)
+
+
+def _serialize_trail_course_summary(course: Course | None) -> dict[str, Any] | None:
+    if course is None:
+        return None
+
+    return {
+        "id": course.id,
+        "course_uuid": course.course_uuid,
+        "name": course.name,
+        "description": course.description,
+        "thumbnail_image": course.thumbnail_image,
+        "org_id": course.org_id,
+        "public": course.public,
+    }
+
+
+def _get_course_total_steps(course_id: int, db_session: Session) -> int:
+    statement = select(ChapterActivity.id).where(ChapterActivity.course_id == course_id)
+    return len(db_session.exec(statement).all())
+
+
+def _build_trail_step_data(
+    trail_step: TrailStep,
+    db_session: Session,
+    *,
+    include_parts: bool,
+) -> dict[str, Any]:
+    if not include_parts:
+        return {}
+
+    statement = select(Assignment_Task_Complete).where(
+        (Assignment_Task_Complete.course_id == trail_step.course_id)
+        & (Assignment_Task_Complete.activity_uuid == trail_step.activity_uuid)
+        & (Assignment_Task_Complete.user_id == trail_step.user_id)
+    )
+    parts = db_session.exec(statement).all()
+    return {"parts": parts}
+
+
+def _build_trail_read(
+    trail: Trail,
+    db_session: Session,
+    *,
+    include_parts: bool = False,
+) -> TrailRead:
+    statement = select(TrailRun).where(TrailRun.trail_id == trail.id)
+    trail_runs = db_session.exec(statement).all()
+
+    trail_run_reads = []
+    for trail_run in trail_runs:
+        course = db_session.exec(
+            select(Course).where(Course.id == trail_run.course_id)
+        ).first()
+
+        step_statement = select(TrailStep).where(TrailStep.trailrun_id == trail_run.id)
+        trail_steps = db_session.exec(step_statement).all()
+        trail_step_reads = []
+
+        for trail_step in trail_steps:
+            trail_step_read = TrailStep(**trail_step.model_dump())
+            trail_step_read.data = _build_trail_step_data(
+                trail_step,
+                db_session,
+                include_parts=include_parts,
+            )
+            trail_step_reads.append(trail_step_read)
+
+        trail_run_reads.append(
+            TrailRunRead(
+                **trail_run.model_dump(),
+                course=_serialize_trail_course_summary(course),
+                steps=trail_step_reads,
+                course_total_steps=_get_course_total_steps(
+                    trail_run.course_id, db_session
+                ),
+            )
+        )
+
+    return TrailRead(
+        **trail.model_dump(),
+        runs=trail_run_reads,
+    )
 
 
 async def get_chapter_slim(
@@ -150,46 +233,7 @@ async def get_user_trails(
             status_code=status.HTTP_404_NOT_FOUND, detail="Trail not found"
         )
 
-    statement = select(TrailRun).where(TrailRun.trail_id == trail.id)
-    trail_runs = db_session.exec(statement).all()
-
-    trail_runs = [
-        TrailRunRead(**trail_run.__dict__, course={}, steps=[], course_total_steps=0)
-        for trail_run in trail_runs
-    ]
-
-    # Add course object and total activities in a course to trail runs
-    for trail_run in trail_runs:
-        statement = select(Course).where(Course.id == trail_run.course_id)
-        course = db_session.exec(statement).first()
-        trail_run.course = course
-
-        # Add number of activities (steps) in a course
-        statement = select(ChapterActivity).where(
-            ChapterActivity.course_id == trail_run.course_id
-        )
-        course_total_steps = db_session.exec(statement)
-        # count number of activities in a this list
-        trail_run.course_total_steps = len(course_total_steps.all())
-
-    for trail_run in trail_runs:
-        statement = select(TrailStep).where(TrailStep.trailrun_id == trail_run.id)
-        trail_steps = db_session.exec(statement).all()
-
-        trail_steps = [TrailStep(**trail_step.__dict__) for trail_step in trail_steps]
-        trail_run.steps = trail_steps
-
-        for trail_step in trail_steps:
-            statement = select(Course).where(Course.id == trail_step.course_id)
-            course = db_session.exec(statement).first()
-            trail_step.data = dict(course=course)
-
-    trail_read = TrailRead(
-        **trail.model_dump(),
-        runs=trail_runs,
-    )
-
-    return trail_read
+    return _build_trail_read(trail, db_session)
 
 
 async def check_trail_presence(
@@ -235,54 +279,7 @@ async def get_user_trail_with_orgid(
         db_session=db_session,
     )
 
-    statement = select(TrailRun).where(TrailRun.trail_id == trail.id)
-    trail_runs = db_session.exec(statement).all()
-
-    trail_runs = [
-        TrailRunRead(**trail_run.__dict__, course={}, steps=[], course_total_steps=0)
-        for trail_run in trail_runs
-    ]
-
-    # Add course object and total activities in a course to trail runs
-    for trail_run in trail_runs:
-        statement = select(Course).where(Course.id == trail_run.course_id)
-        course = db_session.exec(statement).first()
-        trail_run.course = course
-
-        # Add number of activities (steps) in a course
-        statement = select(ChapterActivity).where(
-            ChapterActivity.course_id == trail_run.course_id
-        )
-        course_total_steps = db_session.exec(statement)
-        # count number of activities in a this list
-        trail_run.course_total_steps = len(course_total_steps.all())
-
-    for trail_run in trail_runs:
-        statement = select(TrailStep).where(TrailStep.trailrun_id == trail_run.id)
-        trail_steps = db_session.exec(statement).all()
-
-        trail_steps = [TrailStep(**trail_step.__dict__) for trail_step in trail_steps]
-        trail_run.steps = trail_steps
-
-        for trail_step in trail_steps:
-            statement = select(Course).where(Course.id == trail_step.course_id)
-            course = db_session.exec(statement).first()
-
-            statement = select(Assignment_Task_Complete).where(
-                (Assignment_Task_Complete.course_id == trail_step.course_id)
-                & (Assignment_Task_Complete.activity_uuid == trail_step.activity_uuid)
-                & (Assignment_Task_Complete.user_id == trail_step.user_id)
-            )
-            parts = db_session.exec(statement).all()
-
-            trail_step.data = dict(course=course, parts=parts)
-
-    trail_read = TrailRead(
-        **trail.model_dump(),
-        runs=trail_runs,
-    )
-
-    return trail_read
+    return _build_trail_read(trail, db_session, include_parts=True)
 
 
 # Returns whether the addition was initial (meaning new)
@@ -425,30 +422,6 @@ async def add_activity_to_trail(
                 )
 
     # Chapter rewards now trigger on first tutor verification (CORRECT).
-
-    statement = select(TrailRun).where(
-        TrailRun.trail_id == trail.id, TrailRun.user_id == user.id
-    )
-    trail_runs = db_session.exec(statement).all()
-
-    trail_runs = [
-        TrailRunRead(**trail_run.__dict__, course={}, steps=[], course_total_steps=0)
-        for trail_run in trail_runs
-    ]
-
-    for trail_run in trail_runs:
-        statement = select(TrailStep).where(
-            TrailStep.trailrun_id == trail_run.id, TrailStep.user_id == user.id
-        )
-        trail_steps = db_session.exec(statement).all()
-
-        trail_steps = [TrailStep(**trail_step.__dict__) for trail_step in trail_steps]
-        trail_run.steps = trail_steps
-
-        for trail_step in trail_steps:
-            statement = select(Course).where(Course.id == trail_step.course_id)
-            course = db_session.exec(statement).first()
-            trail_step.data = dict(course=course)
 
     if not complete:
         await apply_pending_group_completion_if_any(
@@ -601,36 +574,7 @@ async def add_course_to_trail(
         db_session.commit()
         db_session.refresh(trail_run)
 
-    statement = select(TrailRun).where(
-        TrailRun.trail_id == trail.id, TrailRun.user_id == user.id
-    )
-    trail_runs = db_session.exec(statement).all()
-
-    trail_runs = [
-        TrailRunRead(**trail_run.__dict__, course={}, steps=[], course_total_steps=0)
-        for trail_run in trail_runs
-    ]
-
-    for trail_run in trail_runs:
-        statement = select(TrailStep).where(
-            TrailStep.trailrun_id == trail_run.id, TrailStep.user_id == user.id
-        )
-        trail_steps = db_session.exec(statement).all()
-
-        trail_steps = [TrailStep(**trail_step.__dict__) for trail_step in trail_steps]
-        trail_run.steps = trail_steps
-
-        for trail_step in trail_steps:
-            statement = select(Course).where(Course.id == trail_step.course_id)
-            course = db_session.exec(statement).first()
-            trail_step.data = dict(course=course)
-
-    trail_read = TrailRead(
-        **trail.model_dump(),
-        runs=trail_runs,
-    )
-
-    return trail_read
+    return _build_trail_read(trail, db_session)
 
 
 async def remove_course_from_trail(
@@ -678,36 +622,7 @@ async def remove_course_from_trail(
         db_session.delete(trail_step)
         db_session.commit()
 
-    statement = select(TrailRun).where(
-        TrailRun.trail_id == trail.id, TrailRun.user_id == user.id
-    )
-    trail_runs = db_session.exec(statement).all()
-
-    trail_runs = [
-        TrailRunRead(**trail_run.__dict__, course={}, steps=[], course_total_steps=0)
-        for trail_run in trail_runs
-    ]
-
-    for trail_run in trail_runs:
-        statement = select(TrailStep).where(
-            TrailStep.trailrun_id == trail_run.id, TrailStep.user_id == user.id
-        )
-        trail_steps = db_session.exec(statement).all()
-
-        trail_steps = [TrailStep(**trail_step.__dict__) for trail_step in trail_steps]
-        trail_run.steps = trail_steps
-
-        for trail_step in trail_steps:
-            statement = select(Course).where(Course.id == trail_step.course_id)
-            course = db_session.exec(statement).first()
-            trail_step.data = dict(course=course)
-
-    trail_read = TrailRead(
-        **trail.model_dump(),
-        runs=trail_runs,
-    )
-
-    return trail_read
+    return _build_trail_read(trail, db_session)
 
 
 #

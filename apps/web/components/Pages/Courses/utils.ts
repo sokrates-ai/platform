@@ -479,6 +479,29 @@ export function isActivityDone(
   return false
 }
 
+export function findTrailRunForCourse(course: any) {
+  const runs = Array.isArray(course?.trail?.runs) ? course.trail.runs : []
+  return runs.find((candidate: any) => candidate?.course_id == course?.id)
+}
+
+export function findTrailStepForActivity(course: any, activity: any) {
+  const normalizedTarget = normalizeActivityUuid(extractActivityUuid(activity))
+  if (!normalizedTarget) {
+    return undefined
+  }
+
+  const run = findTrailRunForCourse(course)
+  if (!run) {
+    return undefined
+  }
+
+  const steps = Array.isArray(run?.steps) ? run.steps : []
+  return steps.find((step: any) => {
+    const normalizedStepUuid = normalizeActivityUuid(extractActivityUuid(step))
+    return normalizedStepUuid === normalizedTarget
+  })
+}
+
 export function getActivityTutorVerification(
   course: any,
   activityUUID: string,
@@ -523,9 +546,7 @@ export function getActivityTutorVerification(
     }
   }
 
-  const run = course?.trail?.runs?.find(
-    (candidate: any) => candidate?.course_id == course?.id,
-  )
+  const run = findTrailRunForCourse(course)
   if (!run) {
     return undefined
   }

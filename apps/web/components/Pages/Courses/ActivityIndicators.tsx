@@ -5,6 +5,7 @@ import React from 'react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
+import { isActivityDone as isCourseActivityDone } from './utils'
 
 interface Props {
 	course: any
@@ -19,14 +20,10 @@ function ActivityIndicators(props: Props) {
 	const courseid = props.course_uuid.replace('course_', '')
 
 	function isActivityDone(activity: any) {
-		let run = props.course.trail?.runs.find(
-			(run: any) => run.course_id == props.course.id
+		return isCourseActivityDone(
+			props.course,
+			activity?.activity_uuid ?? activity?.id,
 		)
-		if (run) {
-			return run.steps.find((step: any) => step.activity_id == activity.id)
-		} else {
-			return false
-		}
 	}
 
 	function isActivityCurrent(activity: any) {

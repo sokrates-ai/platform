@@ -65,21 +65,29 @@ function ManageUsers(props: ManageUsersProps) {
         </thead>
         <>
           <tbody className="mt-5 bg-white rounded-md">
-            {OrgUsers?.map((user: any) => (
-              <tr
-                key={user.user.id}
-                className="border-b border-gray-200 border-dashed text-sm"
-              >
-                <td className="py-3 px-4 flex space-x-2 items-center">
-                  <span>
-                    {user.user.first_name + ' ' + user.user.last_name}
-                  </span>
-                  <span className="text-xs bg-neutral-100 p-1 px-2 rounded-full text-neutral-400 font-semibold">
-                    @{user.user.username}
-                  </span>
-                </td>
-                <td className="py-3 px-4">
-                  {isUserPartOfGroup(user.user.id) ?
+            {OrgUsers?.map((user: any) => {
+              const firstName = user?.user?.first_name?.trim?.() ?? ''
+              const lastName = user?.user?.last_name?.trim?.() ?? ''
+              const fullName = `${firstName} ${lastName}`.trim()
+              const displayName = fullName.length > 0 ? fullName : user?.user?.username
+
+              return (
+                <tr
+                  key={user.user.id}
+                  className="border-b border-gray-200 border-dashed text-sm"
+                >
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-2">
+                      <span className="min-w-0 flex-1 truncate">
+                        {displayName}
+                      </span>
+                      <span className="shrink-0 rounded-full bg-neutral-100 p-1 px-2 text-xs font-semibold text-neutral-400">
+                        @{user.user.username}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4">
+                    {isUserPartOfGroup(user.user.id) ?
                     <div className="space-x-1 flex w-fit px-4 py-1 bg-cyan-100 rounded-full items-center text-cyan-800">
                       <Check size={16} />
                       <span>Linked</span>
@@ -90,24 +98,25 @@ function ManageUsers(props: ManageUsersProps) {
                       <span>Not linked</span>
                     </div>
                   }
-                </td>
-                <td className="py-3 px-4 flex space-x-2 items-end">
-                  <button
-                    onClick={() => handleLinkUser(user.user.id)}
-                    className="flex space-x-2 hover:cursor-pointer p-1 px-3 bg-cyan-700 rounded-md font-bold items-center text-sm text-cyan-100">
-                    <Plus className="w-4 h-4" />
-                    <span> Link</span>
-                  </button>
-                  <button
-                    onClick={() => handleUnlinkUser(user.user.id)}
-                    className="flex space-x-2 hover:cursor-pointer p-1 px-3 bg-gray-700 rounded-md font-bold items-center text-sm text-gray-100">
-                    <X className="w-4 h-4" />
-                    <span> Unlink</span>
-                  </button>
+                  </td>
+                  <td className="py-3 px-4 flex space-x-2 items-end">
+                    <button
+                      onClick={() => handleLinkUser(user.user.id)}
+                      className="flex space-x-2 hover:cursor-pointer p-1 px-3 bg-cyan-700 rounded-md font-bold items-center text-sm text-cyan-100">
+                      <Plus className="w-4 h-4" />
+                      <span> Link</span>
+                    </button>
+                    <button
+                      onClick={() => handleUnlinkUser(user.user.id)}
+                      className="flex space-x-2 hover:cursor-pointer p-1 px-3 bg-gray-700 rounded-md font-bold items-center text-sm text-gray-100">
+                      <X className="w-4 h-4" />
+                      <span> Unlink</span>
+                    </button>
 
-                </td>
-              </tr>
-            ))}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </>
       </table>
