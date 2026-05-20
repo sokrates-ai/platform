@@ -7,6 +7,7 @@ from src.db.courses.course_rooms import CourseRoom, CourseRoomMember, RoomRoleEn
 from fastapi import HTTPException, Request, status
 from sqlmodel import Session, select
 from src.services.notifications.service import (
+    notify_group_activity_state_sync,
     notify_tutors_student_activity_started,
     notify_tutors_student_activity_completed,
     notify_student_activity_verified,
@@ -16,6 +17,7 @@ from src.services.courses.member_groups import (
     apply_pending_group_completion_if_any,
     can_user_receive_group_completion_now,
     get_group_peer_user_ids,
+    get_group_member_user_ids,
     queue_group_pending_completion,
 )
 from src.services.users.users import release_user_coin_reward, release_user_xp_reward
@@ -291,6 +293,7 @@ async def add_activity_to_trail(
     db_session: Session,
     complete: bool = True,
     propagate_group_completion: bool = True,
+    emit_group_activity_state_sync: bool = True,
 ) -> bool:
     was_initial = None
 
@@ -456,6 +459,7 @@ async def add_activity_to_trail(
                     db_session=db_session,
                     complete=True,
                     propagate_group_completion=False,
+                    emit_group_activity_state_sync=False,
                 )
             else:
                 await queue_group_pending_completion(
@@ -464,6 +468,31 @@ async def add_activity_to_trail(
                     source_user_id=user.id,
                     activity_uuid=activity_uuid,
                     db_session=db_session,
+                )
+    if was_initial and complete and emit_group_activity_state_sync:
+        group_member_user_ids = get_group_member_user_ids(
+            course_id=course.id,
+            user_id=user.id,
+            db_session=db_session,
+            include_user=True,
+        )
+        if len(group_member_user_ids) > 1:
+            try:
+                await notify_group_activity_state_sync(
+                    user_ids=group_member_user_ids,
+                    source_user=user,
+                    activity=activity,
+                    course=course,
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Failed to notify group members about activity state sync",
+                    extra={
+                        "course_id": course.id,
+                        "activity_uuid": activity.activity_uuid,
+                        "source_user_id": user.id,
+                        "error": str(exc),
+                    },
                 )
     return was_initial
 
@@ -751,13 +780,6 @@ async def verify_trail_step_by_tutor(
                 detail="Tutor and student must share a room",
             )
 
-    previous_status = trailstep.tutor_verified
-    trailstep.tutor_verified = status
-    trailstep.update_date = str(datetime.now())
-    db_session.add(trailstep)
-    db_session.commit()
-    db_session.refresh(trailstep)
-
     activity = db_session.exec(
         select(Activity).where(
             (Activity.activity_uuid == activity_uuid)
@@ -765,220 +787,263 @@ async def verify_trail_step_by_tutor(
         )
     ).first()
 
-    if (
-        status in {
-            TrailStepVerificationEnum.CORRECT,
-            TrailStepVerificationEnum.INCORRECT,
-        }
-        and previous_status != status
-        and student.id != current_user.id
-    ):
-        if activity:
-            try:
-                await notify_student_activity_verified(
-                    student=student,
-                    tutor=current_user,
-                    activity=activity,
-                    course=course,
-                    status=status,
-                )
-            except Exception as exc:
+    target_user_ids = get_group_member_user_ids(
+        course_id=course.id,
+        user_id=student.id,
+        db_session=db_session,
+        include_user=True,
+    )
+    target_users = db_session.exec(select(User).where(User.id.in_(target_user_ids))).all()
+    target_user_by_id = {target_user.id: target_user for target_user in target_users}
+    target_steps = db_session.exec(
+        select(TrailStep).where(
+            TrailStep.course_id == course.id,
+            TrailStep.activity_uuid == activity_uuid,
+            TrailStep.user_id.in_(target_user_ids),
+        )
+    ).all()
+    target_step_by_user_id = {target_step.user_id: target_step for target_step in target_steps}
+
+    previous_status_by_user_id: dict[int, TrailStepVerificationEnum] = {}
+    affected_user_ids: list[int] = []
+    for target_user_id in target_user_ids:
+        target_step = target_step_by_user_id.get(target_user_id)
+        if not target_step or not target_step.complete:
+            continue
+        previous_status_by_user_id[target_user_id] = target_step.tutor_verified
+        target_step.tutor_verified = status
+        target_step.update_date = str(datetime.now())
+        db_session.add(target_step)
+        affected_user_ids.append(target_user_id)
+    db_session.commit()
+
+    source_trailstep = target_step_by_user_id.get(student.id)
+    if not source_trailstep:
+        raise HTTPException(status_code=404, detail="Trail step not found")
+    db_session.refresh(source_trailstep)
+
+    for target_user_id in affected_user_ids:
+        target_step = target_step_by_user_id.get(target_user_id)
+        target_user = target_user_by_id.get(target_user_id)
+        previous_status = previous_status_by_user_id.get(target_user_id)
+        if not target_step or not target_user or previous_status is None:
+            continue
+
+        if (
+            status in {
+                TrailStepVerificationEnum.CORRECT,
+                TrailStepVerificationEnum.INCORRECT,
+            }
+            and previous_status != status
+            and target_user.id != current_user.id
+        ):
+            if activity:
+                try:
+                    await notify_student_activity_verified(
+                        student=target_user,
+                        tutor=current_user,
+                        activity=activity,
+                        course=course,
+                        status=status,
+                    )
+                except Exception as exc:
+                    logger.warning(
+                        "Failed to notify student about tutor verification",
+                        extra={
+                            "course_id": course.id,
+                            "activity_uuid": activity_uuid,
+                            "student_id": target_user.id,
+                            "tutor_id": current_user.id,
+                            "error": str(exc),
+                        },
+                    )
+            else:
                 logger.warning(
-                    "Failed to notify student about tutor verification",
+                    "Skipping tutor verification notification because activity is missing",
                     extra={
                         "course_id": course.id,
                         "activity_uuid": activity_uuid,
-                        "student_id": student.id,
-                        "tutor_id": current_user.id,
-                        "error": str(exc),
+                        "student_id": target_user.id,
                     },
                 )
-        else:
-            logger.warning(
-                "Skipping tutor verification notification because activity is missing",
-                extra={
-                    "course_id": course.id,
-                    "activity_uuid": activity_uuid,
-                    "student_id": student.id,
-                },
-            )
 
-    if status == TrailStepVerificationEnum.CORRECT and previous_status != status:
-        reward_data = dict(trailstep.data or {})
-        activity_reward_granted = reward_data.get("activity_reward_granted") is True
-        if not activity_reward_granted:
-            if activity:
-                reward_task_id = reward_data.get("reward_task_id")
-                if reward_task_id is None:
-                    task_ids = activity.content.get("task_ids", [])
-                    if task_ids:
-                        reward_task_id = task_ids[-1]
-                        reward_data["reward_task_id"] = reward_task_id
+        if status == TrailStepVerificationEnum.CORRECT and previous_status != status:
+            reward_data = dict(target_step.data or {})
+            activity_reward_granted = reward_data.get("activity_reward_granted") is True
+            if not activity_reward_granted:
+                if activity:
+                    reward_task_id = reward_data.get("reward_task_id")
+                    if reward_task_id is None:
+                        task_ids = activity.content.get("task_ids", [])
+                        if task_ids:
+                            reward_task_id = task_ids[-1]
+                            reward_data["reward_task_id"] = reward_task_id
 
-                if reward_task_id is not None:
-                    reward_task_id_int = None
-                    try:
-                        reward_task_id_int = int(reward_task_id)
-                    except (TypeError, ValueError):
-                        logger.warning(
-                            "Skipping activity reward; reward task id invalid",
-                            extra={
-                                "course_id": course.id,
-                                "activity_uuid": activity_uuid,
-                                "student_id": student.id,
-                                "task_id": reward_task_id,
-                            },
-                        )
+                    if reward_task_id is not None:
+                        reward_task_id_int = None
+                        try:
+                            reward_task_id_int = int(reward_task_id)
+                        except (TypeError, ValueError):
+                            logger.warning(
+                                "Skipping activity reward; reward task id invalid",
+                                extra={
+                                    "course_id": course.id,
+                                    "activity_uuid": activity_uuid,
+                                    "student_id": target_user.id,
+                                    "task_id": reward_task_id,
+                                },
+                            )
 
-                    if reward_task_id_int is not None:
-                        task = await get_task(
-                            request, db_session, reward_task_id_int
-                        )
-                        if task:
-                            try:
-                                updated_user = None
-                                await release_user_xp_reward(
-                                    request,
-                                    db_session,
-                                    student.user_uuid,
-                                    task.xp_reward,
-                                )
-                                updated_user = await release_user_coin_reward(
-                                    request,
-                                    db_session,
-                                    student.user_uuid,
-                                    task.coin_reward,
-                                )
-                            except Exception as exc:
-                                logger.warning(
-                                    "Failed to release activity reward",
-                                    extra={
-                                        "course_id": course.id,
-                                        "activity_uuid": activity_uuid,
-                                        "student_id": student.id,
-                                        "task_id": reward_task_id_int,
-                                        "error": str(exc),
-                                    },
-                                )
-                            if updated_user and (task.xp_reward or task.coin_reward):
+                        if reward_task_id_int is not None:
+                            task = await get_task(
+                                request, db_session, reward_task_id_int
+                            )
+                            if task:
                                 try:
-                                    await notify_user_reward_update(
-                                        user_id=updated_user.id,
-                                        data={
-                                            "coins": updated_user.coins,
-                                            "level": updated_user.level,
-                                            "level_progress": updated_user.level_progress,
-                                            "delta_coins": task.coin_reward,
-                                            "delta_xp": task.xp_reward,
-                                            "source": "activity_verified",
-                                            "course_id": course.id,
-                                            "course_uuid": course.course_uuid,
-                                            "activity_id": activity.id,
-                                            "activity_uuid": activity_uuid,
-                                        },
+                                    updated_user = None
+                                    await release_user_xp_reward(
+                                        request,
+                                        db_session,
+                                        target_user.user_uuid,
+                                        task.xp_reward,
+                                    )
+                                    updated_user = await release_user_coin_reward(
+                                        request,
+                                        db_session,
+                                        target_user.user_uuid,
+                                        task.coin_reward,
                                     )
                                 except Exception as exc:
                                     logger.warning(
-                                        "Failed to notify activity reward update",
+                                        "Failed to release activity reward",
                                         extra={
                                             "course_id": course.id,
                                             "activity_uuid": activity_uuid,
-                                            "student_id": student.id,
+                                            "student_id": target_user.id,
                                             "task_id": reward_task_id_int,
                                             "error": str(exc),
                                         },
                                     )
-                        else:
-                            logger.warning(
-                                "Skipping activity reward; task missing",
-                                extra={
-                                    "course_id": course.id,
-                                    "activity_uuid": activity_uuid,
-                                    "student_id": student.id,
-                                    "task_id": reward_task_id_int,
-                                },
-                            )
+                                if updated_user and (task.xp_reward or task.coin_reward):
+                                    try:
+                                        await notify_user_reward_update(
+                                            user_id=updated_user.id,
+                                            data={
+                                                "coins": updated_user.coins,
+                                                "level": updated_user.level,
+                                                "level_progress": updated_user.level_progress,
+                                                "delta_coins": task.coin_reward,
+                                                "delta_xp": task.xp_reward,
+                                                "source": "activity_verified",
+                                                "course_id": course.id,
+                                                "course_uuid": course.course_uuid,
+                                                "activity_id": activity.id,
+                                                "activity_uuid": activity_uuid,
+                                            },
+                                        )
+                                    except Exception as exc:
+                                        logger.warning(
+                                            "Failed to notify activity reward update",
+                                            extra={
+                                                "course_id": course.id,
+                                                "activity_uuid": activity_uuid,
+                                                "student_id": target_user.id,
+                                                "task_id": reward_task_id_int,
+                                                "error": str(exc),
+                                            },
+                                        )
+                            else:
+                                logger.warning(
+                                    "Skipping activity reward; task missing",
+                                    extra={
+                                        "course_id": course.id,
+                                        "activity_uuid": activity_uuid,
+                                        "student_id": target_user.id,
+                                        "task_id": reward_task_id_int,
+                                    },
+                                )
+                    else:
+                        logger.warning(
+                            "Skipping activity reward; reward task id missing",
+                            extra={
+                                "course_id": course.id,
+                                "activity_uuid": activity_uuid,
+                                "student_id": target_user.id,
+                            },
+                        )
+
+                    reward_data["activity_reward_granted"] = True
                 else:
                     logger.warning(
-                        "Skipping activity reward; reward task id missing",
+                        "Skipping activity reward because activity is missing",
                         extra={
                             "course_id": course.id,
                             "activity_uuid": activity_uuid,
-                            "student_id": student.id,
+                            "student_id": target_user.id,
                         },
                     )
 
-                reward_data["activity_reward_granted"] = True
-            else:
-                logger.warning(
-                    "Skipping activity reward because activity is missing",
-                    extra={
-                        "course_id": course.id,
-                        "activity_uuid": activity_uuid,
-                        "student_id": student.id,
-                    },
-                )
-
-        if activity and reward_data.get("chapter_reward_granted") is not True:
-            ca_stmt = select(ChapterActivity).where(
-                (ChapterActivity.activity_id == activity.id)
-                & (ChapterActivity.course_id == course.id)
-            )
-            chapter_activity = db_session.exec(ca_stmt).first()
-
-            if chapter_activity:
-                chapter_id = chapter_activity.chapter_id
-                chapter_acts_stmt = select(ChapterActivity).where(
-                    (ChapterActivity.chapter_id == chapter_id)
+            if activity and reward_data.get("chapter_reward_granted") is not True:
+                ca_stmt = select(ChapterActivity).where(
+                    (ChapterActivity.activity_id == activity.id)
                     & (ChapterActivity.course_id == course.id)
                 )
-                chapter_activities = db_session.exec(chapter_acts_stmt).all()
-                chapter_activity_ids = [
-                    ca.activity_id for ca in chapter_activities
-                ]
+                chapter_activity = db_session.exec(ca_stmt).first()
 
-                chapter_activity_uuids = []
-                for id in chapter_activity_ids:
-                    chapter_activity = await get_activity_by_id_and_course(
-                        request, id, course.id, db_session
+                if chapter_activity:
+                    chapter_id = chapter_activity.chapter_id
+                    chapter_acts_stmt = select(ChapterActivity).where(
+                        (ChapterActivity.chapter_id == chapter_id)
+                        & (ChapterActivity.course_id == course.id)
                     )
-                    chapter_activity_uuids.append(chapter_activity.activity_uuid)
+                    chapter_activities = db_session.exec(chapter_acts_stmt).all()
+                    chapter_activity_ids = [
+                        ca.activity_id for ca in chapter_activities
+                    ]
 
-                if chapter_activity_uuids:
-                    steps_stmt = select(TrailStep).where(
-                        (TrailStep.trailrun_id == trailstep.trailrun_id)
-                        & (TrailStep.user_id == student.id)
-                    )
-                    user_steps = db_session.exec(steps_stmt).all()
-                    verified_uuids = set(
-                        ts.activity_uuid
-                        for ts in user_steps
-                        if ts.tutor_verified == TrailStepVerificationEnum.CORRECT
-                    )
-
-                    chapter_all_verified = all(
-                        aid in verified_uuids
-                        for aid in chapter_activity_uuids
-                    )
-
-                    if chapter_all_verified:
-                        await chapter_completed(
-                            request=request,
-                            user=student,
-                            chapter_id=chapter_id,
-                            db_session=db_session,
-                            was_initial=True,
+                    chapter_activity_uuids = []
+                    for id in chapter_activity_ids:
+                        chapter_activity = await get_activity_by_id_and_course(
+                            request, id, course.id, db_session
                         )
-                        reward_data["chapter_reward_granted"] = True
+                        chapter_activity_uuids.append(chapter_activity.activity_uuid)
 
-        if reward_data != (trailstep.data or {}):
-            trailstep.data = reward_data
-            db_session.add(trailstep)
-            db_session.commit()
-            db_session.refresh(trailstep)
+                    if chapter_activity_uuids:
+                        steps_stmt = select(TrailStep).where(
+                            (TrailStep.trailrun_id == target_step.trailrun_id)
+                            & (TrailStep.user_id == target_user.id)
+                        )
+                        user_steps = db_session.exec(steps_stmt).all()
+                        verified_uuids = set(
+                            ts.activity_uuid
+                            for ts in user_steps
+                            if ts.tutor_verified == TrailStepVerificationEnum.CORRECT
+                        )
+
+                        chapter_all_verified = all(
+                            aid in verified_uuids
+                            for aid in chapter_activity_uuids
+                        )
+
+                        if chapter_all_verified:
+                            await chapter_completed(
+                                request=request,
+                                user=target_user,
+                                chapter_id=chapter_id,
+                                db_session=db_session,
+                                was_initial=True,
+                            )
+                            reward_data["chapter_reward_granted"] = True
+
+            if reward_data != (target_step.data or {}):
+                target_step.data = reward_data
+                db_session.add(target_step)
+                db_session.commit()
+                db_session.refresh(target_step)
 
     return {
         "detail": "Trail step verification updated",
-        "trail_step_id": trailstep.id,
-        "tutor_verified": trailstep.tutor_verified,
+        "trail_step_id": source_trailstep.id,
+        "tutor_verified": source_trailstep.tutor_verified,
+        "affected_user_ids": affected_user_ids,
     }

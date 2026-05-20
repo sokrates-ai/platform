@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import useSWR from 'swr'
 import {
   ChevronLeft,
+  ChevronDown,
   Check,
   DoorOpen,
   GraduationCap,
@@ -19,6 +20,7 @@ import {
 import { motion } from 'framer-motion'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import { cn } from '@/lib/utils'
 
 import { CourseProvider, useCourse } from '@components/Contexts/CourseContext'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
@@ -40,6 +42,7 @@ import { useToast } from '@/hooks/use-toast'
 import { getAPIUrl, getUriWithOrg, getWebSocketUrl } from '@services/config/config'
 import { getActivity } from '@services/courses/activities'
 import { verifyTrailStep } from '@services/courses/activity'
+import { CourseMemberGroup } from '@services/courses/member-groups'
 import {
   clearTutorRoomSelection,
   setTutorRoomSelection,
@@ -126,6 +129,81 @@ type ActivityState = {
 type VerificationTarget = {
   activityUuid: string
   currentStatus: ActivityStatusStep['tutor_verified']
+}
+
+type TutorGroupColor = {
+  soft: string
+  badge: string
+  dot: string
+  accentBorder: string
+}
+
+const TUTOR_GROUP_COLORS: TutorGroupColor[] = [
+  {
+    soft: 'bg-[#FFF3EB] border-[#F7C7AE]',
+    badge: 'border-[#F0A27A] bg-[#FFE0CF] text-[#A24E24]',
+    dot: 'bg-[#FF8A4C] border-[#F97316]',
+    accentBorder: 'border-l-[#F97316]',
+  },
+  {
+    soft: 'bg-[#FFF7E7] border-[#F2D39A]',
+    badge: 'border-[#E7B95E] bg-[#FCE8B4] text-[#8A5A00]',
+    dot: 'bg-[#E7B95E] border-[#C98E1B]',
+    accentBorder: 'border-l-[#E7B95E]',
+  },
+  {
+    soft: 'bg-[#EEF7F3] border-[#B8DDCF]',
+    badge: 'border-[#77B596] bg-[#D6EEE4] text-[#2E6D58]',
+    dot: 'bg-[#62AA89] border-[#3B8A67]',
+    accentBorder: 'border-l-[#62AA89]',
+  },
+  {
+    soft: 'bg-[#EEF5FA] border-[#BDD3E6]',
+    badge: 'border-[#7CA7CB] bg-[#DCEAF6] text-[#2F5F89]',
+    dot: 'bg-[#6D99BF] border-[#44759C]',
+    accentBorder: 'border-l-[#6D99BF]',
+  },
+  {
+    soft: 'bg-[#F7F0FA] border-[#D8C2E2]',
+    badge: 'border-[#B48AC7] bg-[#EADAF2] text-[#69427B]',
+    dot: 'bg-[#B48AC7] border-[#8E63A5]',
+    accentBorder: 'border-l-[#B48AC7]',
+  },
+  {
+    soft: 'bg-[#FCEFF1] border-[#E9C0C8]',
+    badge: 'border-[#D78A9A] bg-[#F4D5DC] text-[#8A4353]',
+    dot: 'bg-[#D78A9A] border-[#B86578]',
+    accentBorder: 'border-l-[#D78A9A]',
+  },
+  {
+    soft: 'bg-[#F5F4EE] border-[#D9D4C4]',
+    badge: 'border-[#B9B097] bg-[#E8E2D3] text-[#645B45]',
+    dot: 'bg-[#B9B097] border-[#958B71]',
+    accentBorder: 'border-l-[#B9B097]',
+  },
+  {
+    soft: 'bg-[#FFF1ED] border-[#F0C6BC]',
+    badge: 'border-[#DD9C8B] bg-[#F9DDD6] text-[#924F3D]',
+    dot: 'bg-[#DD9C8B] border-[#BE735F]',
+    accentBorder: 'border-l-[#DD9C8B]',
+  },
+  {
+    soft: 'bg-[#F5F8EA] border-[#D5DDB0]',
+    badge: 'border-[#AEBB69] bg-[#E4EBBE] text-[#62712A]',
+    dot: 'bg-[#AEBB69] border-[#899647]',
+    accentBorder: 'border-l-[#AEBB69]',
+  },
+  {
+    soft: 'bg-[#F2F2F2] border-[#D7D7D7]',
+    badge: 'border-[#B8B8B8] bg-[#E8E8E8] text-[#585858]',
+    dot: 'bg-[#B8B8B8] border-[#929292]',
+    accentBorder: 'border-l-[#B8B8B8]',
+  },
+]
+
+const getTutorGroupColor = (groupId: number): TutorGroupColor => {
+  const hash = Math.abs((groupId * 2654435761) % TUTOR_GROUP_COLORS.length)
+  return TUTOR_GROUP_COLORS[hash]
 }
 
 const normalizeActivityUuid = (value: unknown): string | null => {
@@ -348,11 +426,18 @@ function TutorCourseLayout({
     hasSelection && accessToken && selectedRoom
       ? `${getAPIUrl()}courses/${courseUuid}/rooms/${selectedRoom.id}/members`
       : null
+  const memberGroupsKey = accessToken
+    ? `${getAPIUrl()}courses/${courseUuid}/member-groups`
+    : null
   const {
     data: roomMembers,
     error: roomMembersError,
     isLoading: roomMembersLoading,
   } = useSWR(membersKey, (url: string) => swrFetcher(url, accessToken))
+  const { data: memberGroups } = useSWR<CourseMemberGroup[]>(
+    memberGroupsKey,
+    (url: string) => swrFetcher(url, accessToken)
+  )
 
   const resolvedTabId = activeTabId || defaultTabId
   const activeTabChapters = React.useMemo(() => {
@@ -435,6 +520,18 @@ function TutorCourseLayout({
     const entries = onlineStatusData?.users ?? []
     return new Map(entries.map((entry) => [entry.user_id, entry.online]))
   }, [onlineStatusData])
+  const groupedUserIdsByStudentId = React.useMemo(() => {
+    const map = new Map<number, number[]>()
+    ;(memberGroups ?? []).forEach((group) => {
+      const memberIds = group.members
+        .map((member) => member.user.id)
+        .filter((memberId): memberId is number => typeof memberId === 'number')
+      memberIds.forEach((memberId) => {
+        map.set(memberId, memberIds)
+      })
+    })
+    return map
+  }, [memberGroups])
 
   const [verifyingCells, setVerifyingCells] = React.useState<
     Record<string, boolean>
@@ -724,24 +821,38 @@ function TutorCourseLayout({
         accessToken
       )
       if (response.success) {
-        let updated = false
+        const responseData = response.data as
+          | { affected_user_ids?: unknown }
+          | undefined
+        const responseAffectedUserIds = Array.isArray(
+          responseData?.affected_user_ids
+        )
+          ? responseData?.affected_user_ids.filter(
+              (userId): userId is number => typeof userId === 'number'
+            )
+          : []
+        const affectedUserIds =
+          responseAffectedUserIds.length > 0
+            ? responseAffectedUserIds
+            : groupedUserIdsByStudentId.get(student.id) ?? [student.id]
+        let updatedCount = 0
         mutateActivityStatus((current) => {
           if (!current) return current
           const steps = Array.isArray(current.steps) ? current.steps : []
           const nextSteps = steps.map((step) => {
             const stepUuid = normalizeActivityUuid(step.activity_uuid)
             if (
-              step.user_id === student.id &&
+              affectedUserIds.includes(step.user_id) &&
               stepUuid === normalizedUuid
             ) {
-              updated = true
+              updatedCount += 1
               return { ...step, tutor_verified: nextStatus }
             }
             return step
           })
           return { ...current, steps: nextSteps }
         }, false)
-        if (!updated) {
+        if (updatedCount < affectedUserIds.length) {
           mutateActivityStatus()
         }
       } else {
@@ -850,6 +961,7 @@ function TutorCourseLayout({
             <SelectedRoomPanel
               room={selectedRoom}
               members={(roomMembers as RoomMember[] | undefined) ?? []}
+              memberGroups={(memberGroups as CourseMemberGroup[] | undefined) ?? []}
               isLoading={roomMembersLoading}
               hasError={Boolean(roomMembersError)}
               tabs={tabOptions}
@@ -960,6 +1072,7 @@ function RoomSelectionCard({
 function SelectedRoomPanel({
   room,
   members,
+  memberGroups,
   isLoading,
   hasError,
   tabs,
@@ -982,6 +1095,7 @@ function SelectedRoomPanel({
 }: {
   room: Room
   members: RoomMember[]
+  memberGroups: CourseMemberGroup[]
   isLoading: boolean
   hasError: boolean
   tabs: TabOption[]
@@ -1013,6 +1127,72 @@ function SelectedRoomPanel({
     () => members.filter((member) => member.role === 'student'),
     [members]
   )
+  const groupByStudentId = React.useMemo(() => {
+    const map = new Map<number, CourseMemberGroup>()
+    memberGroups.forEach((group) => {
+      group.members.forEach((member) => {
+        map.set(member.user.id, group)
+      })
+    })
+    return map
+  }, [memberGroups])
+  const studentSections = React.useMemo(() => {
+    const groupedMembers = new Map<number, RoomMember[]>()
+    const ungroupedMembers: RoomMember[] = []
+
+    students.forEach((student) => {
+      const group = groupByStudentId.get(student.user.id)
+      if (!group) {
+        ungroupedMembers.push(student)
+        return
+      }
+      const current = groupedMembers.get(group.id) ?? []
+      current.push(student)
+      groupedMembers.set(group.id, current)
+    })
+
+    const sections = Array.from(groupedMembers.entries())
+      .sort(([leftId], [rightId]) => leftId - rightId)
+      .map(([groupId, groupedStudents]) => ({
+        key: `group-${groupId}`,
+        title: `Group #${groupId}`,
+        subtitle: `${groupedStudents.length} student${
+          groupedStudents.length === 1 ? '' : 's'
+        } in this room`,
+        color: getTutorGroupColor(groupId),
+        members: groupedStudents.sort((left, right) =>
+          `${left.user.first_name ?? ''} ${left.user.last_name ?? ''} ${
+            left.user.username
+          }`.localeCompare(
+            `${right.user.first_name ?? ''} ${right.user.last_name ?? ''} ${
+              right.user.username
+            }`
+          )
+        ),
+      }))
+
+    if (ungroupedMembers.length > 0) {
+      sections.push({
+        key: 'ungrouped',
+        title: 'No Group',
+        subtitle: `${ungroupedMembers.length} student${
+          ungroupedMembers.length === 1 ? '' : 's'
+        } without a group`,
+        color: getTutorGroupColor(0),
+        members: [...ungroupedMembers].sort((left, right) =>
+          `${left.user.first_name ?? ''} ${left.user.last_name ?? ''} ${
+            left.user.username
+          }`.localeCompare(
+            `${right.user.first_name ?? ''} ${right.user.last_name ?? ''} ${
+              right.user.username
+            }`
+          )
+        ),
+      })
+    }
+
+    return sections
+  }, [groupByStudentId, students])
   const activityStatusMap = React.useMemo(() => {
     const steps = activityStatus?.steps ?? []
     const map = new Map<string, ActivityStatusStep>()
@@ -1040,6 +1220,7 @@ function SelectedRoomPanel({
     React.useState(false)
   const [verificationTarget, setVerificationTarget] =
     React.useState<VerificationTarget | null>(null)
+  const [legendExpanded, setLegendExpanded] = React.useState(false)
 
   const selectedStudentUuid = searchParams?.get('student') ?? null
   const activityParamUuid = normalizeActivityUuid(searchParams?.get('activity'))
@@ -1051,6 +1232,9 @@ function SelectedRoomPanel({
   const selectedStudent = students.find(
     (student) => student.user.user_uuid === selectedStudentUuid
   )
+  const selectedStudentGroup = selectedStudent
+    ? groupByStudentId.get(selectedStudent.user.id) ?? null
+    : null
 
   React.useEffect(() => {
     setOptimisticActivityUuid(null)
@@ -1317,6 +1501,19 @@ function SelectedRoomPanel({
                   selectedStudent?.user.last_name ?? ''
                 }`.trim() || selectedStudent?.user.username}
               </span>
+              {selectedStudentGroup ? (
+                <>
+                  <span className="text-gray-300">/</span>
+                  <span
+                    className={cn(
+                      'rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+                      getTutorGroupColor(selectedStudentGroup.id).badge
+                    )}
+                  >
+                    Group #{selectedStudentGroup.id}
+                  </span>
+                </>
+              ) : null}
             </nav>
           </div>
         ) : null}
@@ -1376,119 +1573,157 @@ function SelectedRoomPanel({
                 </div>
               ) : null}
               {!isLoading && !hasError && students.length > 0 ? (
-                <div className="divide-y divide-gray-100">
-                  {students.map((member) => {
-                    const name = `${member.user.first_name ?? ''} ${
-                      member.user.last_name ?? ''
-                    }`.trim()
-                    const states = buildActivityStates(member.user.id)
-                    const isOnline = onlineStatusMap.get(member.user.id) ?? false
-                    const canVerifyAll = states.some(
-                      (state) =>
-                        state.status === 'done' &&
-                        state.step &&
-                        state.step.tutor_verified !== 'CORRECT'
-                    )
-                    return (
-                      <button
-                        key={member.user.id}
-                        type="button"
-                        onClick={() => {
-                          router.push(
-                            buildUrl(member.user.user_uuid, null),
-                            { scroll: false }
-                          )
-                        }}
-                        className="group grid min-h-[64px] w-full grid-cols-[240px_1fr_auto] items-center gap-4 bg-white px-4 py-3 text-left transition hover:bg-gray-50"
+                <div className="space-y-4 p-4">
+                  {studentSections.map((section) => (
+                    <div
+                      key={section.key}
+                      className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.06)]"
+                    >
+                      <div
+                        className={cn(
+                          'flex items-center justify-between border-b px-4 py-3',
+                          section.color.soft
+                        )}
                       >
-                        <div className="grid grid-cols-[1fr_auto_16px] items-center gap-3">
-                          <span className="truncate font-medium text-gray-900">
-                            {name || member.user.username}
-                          </span>
+                        <div className="flex items-center gap-3">
                           <span
-                            className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${
-                              isOnline
-                                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                : 'border-gray-300 bg-gray-50 text-gray-500'
-                            }`}
+                            className={cn(
+                              'rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]',
+                              section.color.badge
+                            )}
                           >
-                            {isOnline ? 'Online' : 'Offline'}
+                            {section.title}
                           </span>
-                          <span
-                            className={`inline-flex h-2.5 w-2.5 rounded-full border ${
-                              isOnline
-                                ? 'border-emerald-300 bg-emerald-400'
-                                : 'border-gray-300 bg-gray-300'
-                            }`}
-                          />
+                          <span className="text-xs text-gray-600">
+                            {section.subtitle}
+                          </span>
                         </div>
-                        <div className="w-full overflow-x-auto">
-                          <div
-                            className="grid w-full items-center"
-                            style={{
-                              gridTemplateColumns: `repeat(${states.length}, minmax(52px, 1fr))`,
-                              minWidth: `${states.length * 52}px`,
-                            }}
-                          >
-                            {states.map((state, index) => (
-                              <div
-                                key={`${member.user.id}:${state.activity_uuid}`}
-                                className={`flex items-center justify-center py-3 ${
-                                  index === 0 ? '' : 'border-l border-gray-100'
-                                }`}
-                              >
-                                <ActivityDot
-                                  status={state.status}
-                                  selected={false}
-                                  tooltip={buildTooltipContent(
-                                    activityMetaByUuid.get(state.activity_uuid),
-                                    state.status
+                      </div>
+                      <div className="divide-y divide-gray-100">
+                        {section.members.map((member) => {
+                          const name = `${member.user.first_name ?? ''} ${
+                            member.user.last_name ?? ''
+                          }`.trim()
+                          const states = buildActivityStates(member.user.id)
+                          const isOnline = onlineStatusMap.get(member.user.id) ?? false
+                          const canVerifyAll = states.some(
+                            (state) =>
+                              state.status === 'done' &&
+                              state.step &&
+                              state.step.tutor_verified !== 'CORRECT'
+                          )
+                          return (
+                            <button
+                              key={member.user.id}
+                              type="button"
+                              onClick={() => {
+                                router.push(
+                                  buildUrl(member.user.user_uuid, null),
+                                  { scroll: false }
+                                )
+                              }}
+                              className={cn(
+                                'group grid min-h-[64px] w-full grid-cols-[240px_1fr_auto] items-center gap-4 border-l-4 bg-white px-4 py-3 text-left transition hover:bg-gray-50',
+                                section.color.accentBorder
+                              )}
+                            >
+                              <div className="grid grid-cols-[12px_1fr_auto_16px] items-center gap-3">
+                                <span
+                                  className={cn(
+                                    'inline-flex h-3 w-3 rounded-full border',
+                                    section.color.dot
                                   )}
-                                  verification={state.step?.tutor_verified}
-                                  onClick={(event) => {
-                                    event.stopPropagation()
-                                    router.push(
-                                      buildUrl(
-                                        member.user.user_uuid,
-                                        state.activity_uuid
-                                      ),
-                                      { scroll: false }
-                                    )
-                                  }}
+                                />
+                                <span className="truncate font-medium text-gray-900">
+                                  {name || member.user.username}
+                                </span>
+                                <span
+                                  className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${
+                                    isOnline
+                                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                      : 'border-gray-300 bg-gray-50 text-gray-500'
+                                  }`}
+                                >
+                                  {isOnline ? 'Online' : 'Offline'}
+                                </span>
+                                <span
+                                  className={`inline-flex h-2.5 w-2.5 rounded-full border ${
+                                    isOnline
+                                      ? 'border-emerald-300 bg-emerald-400'
+                                      : 'border-gray-300 bg-gray-300'
+                                  }`}
                                 />
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-end pr-2">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                type="button"
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
-                                onClick={(event) => event.stopPropagation()}
-                                onPointerDown={(event) => event.stopPropagation()}
-                                aria-label="Student actions"
-                              >
-                                <MoreVertical className="h-4 w-4" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                disabled={!canVerifyAll}
-                                onClick={(event) => {
-                                  event.stopPropagation()
-                                  handleVerifyAllCompleted(member.user)
-                                }}
-                              >
-                                Verify all completed activities
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </button>
-                    )
-                  })}
+                              <div className="w-full overflow-x-auto">
+                                <div
+                                  className="grid w-full items-center"
+                                  style={{
+                                    gridTemplateColumns: `repeat(${states.length}, minmax(52px, 1fr))`,
+                                    minWidth: `${states.length * 52}px`,
+                                  }}
+                                >
+                                  {states.map((state, index) => (
+                                    <div
+                                      key={`${member.user.id}:${state.activity_uuid}`}
+                                      className={`flex items-center justify-center py-3 ${
+                                        index === 0 ? '' : 'border-l border-gray-100'
+                                      }`}
+                                    >
+                                      <ActivityDot
+                                        status={state.status}
+                                        selected={false}
+                                        tooltip={buildTooltipContent(
+                                          activityMetaByUuid.get(state.activity_uuid),
+                                          state.status
+                                        )}
+                                        verification={state.step?.tutor_verified}
+                                        onClick={(event) => {
+                                          event.stopPropagation()
+                                          router.push(
+                                            buildUrl(
+                                              member.user.user_uuid,
+                                              state.activity_uuid
+                                            ),
+                                            { scroll: false }
+                                          )
+                                        }}
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="flex items-center justify-end pr-2">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button
+                                      type="button"
+                                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+                                      onClick={(event) => event.stopPropagation()}
+                                      onPointerDown={(event) => event.stopPropagation()}
+                                      aria-label="Student actions"
+                                    >
+                                      <MoreVertical className="h-4 w-4" />
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      disabled={!canVerifyAll}
+                                      onClick={(event) => {
+                                        event.stopPropagation()
+                                        handleVerifyAllCompleted(member.user)
+                                      }}
+                                    >
+                                      Verify all completed activities
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : null}
             </div>
@@ -1772,38 +2007,66 @@ function SelectedRoomPanel({
         }
       />
       <div className="pointer-events-none absolute bottom-6 right-6">
-        <div className="pointer-events-auto flex flex-col gap-2 rounded-xl border border-gray-200 bg-white/95 px-4 py-3 text-xs text-gray-600 shadow-sm backdrop-blur">
-          <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-            Legend
-          </div>
-          <div className="flex items-center gap-2">
-            <ActivityDot status="not_started" selected={false} />
-            <span>Not started</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <ActivityDot status="locked" selected={false} />
-            <span>Locked</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <ActivityDot status="in_progress" selected={false} />
-            <span>In progress</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <ActivityDot status="done" selected={false} />
-            <span>Done</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full border-[3px] border-emerald-500 bg-white ring-2 ring-emerald-200/80">
-              <Check className="h-3.5 w-3.5 text-emerald-600" />
-            </span>
-            <span>Verified correct</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full border-[3px] border-red-500 bg-white ring-2 ring-red-200/80">
-              <X className="h-3.5 w-3.5 text-red-600" />
-            </span>
-            <span>Verified incorrect</span>
-          </div>
+        <div className="pointer-events-auto flex flex-col items-end gap-2">
+          {legendExpanded ? (
+            <div className="flex max-w-[220px] flex-col gap-2 rounded-xl border border-gray-200 bg-white/95 px-4 py-3 text-xs text-gray-600 shadow-sm backdrop-blur">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                  Legend
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setLegendExpanded(false)}
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-50 hover:text-gray-700"
+                  aria-label="Collapse legend"
+                >
+                  <ChevronDown className="h-3.5 w-3.5 rotate-180" />
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <ActivityDot status="not_started" selected={false} />
+                <span>Not started</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ActivityDot status="locked" selected={false} />
+                <span>Locked</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ActivityDot status="in_progress" selected={false} />
+                <span>In progress</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ActivityDot status="done" selected={false} />
+                <span>Done</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full border-[3px] border-emerald-500 bg-white ring-2 ring-emerald-200/80">
+                  <Check className="h-3.5 w-3.5 text-emerald-600" />
+                </span>
+                <span>Verified correct</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full border-[3px] border-red-500 bg-white ring-2 ring-red-200/80">
+                  <X className="h-3.5 w-3.5 text-red-600" />
+                </span>
+                <span>Verified incorrect</span>
+              </div>
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setLegendExpanded((current) => !current)}
+            className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/95 px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm backdrop-blur transition hover:bg-white"
+            aria-label={legendExpanded ? 'Hide legend' : 'Show legend'}
+          >
+            <span>Legend</span>
+            <ChevronDown
+              className={cn(
+                'h-3.5 w-3.5 transition-transform',
+                legendExpanded && 'rotate-180'
+              )}
+            />
+          </button>
         </div>
       </div>
       <div className="absolute bottom-6 left-6">

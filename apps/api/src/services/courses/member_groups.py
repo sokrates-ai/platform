@@ -156,8 +156,18 @@ async def require_course_staff_context(
     db_session: Session,
 ) -> Course:
     course = await get_course_by_uuid(
-        request, course_uuid, current_user, db_session, "update"
+        request, course_uuid, current_user, db_session, "read"
     )
+    if current_user.id == 0:
+        raise HTTPException(status_code=403, detail="Authentication required")
+
+    role_flags = get_user_course_role_flags(current_user.id, course, db_session)
+    if not (
+        role_flags["is_admin"]
+        or role_flags["is_maintainer"]
+        or role_flags["is_tutor"]
+    ):
+        raise HTTPException(status_code=403, detail="Course staff access required")
     return course
 
 
@@ -941,6 +951,30 @@ def get_group_peer_user_ids(
     ]
 
 
+def get_group_member_user_ids(
+    *,
+    course_id: int,
+    user_id: int,
+    db_session: Session,
+    include_user: bool = True,
+) -> list[int]:
+    group = get_group_by_member_user_id(
+        course_id=course_id,
+        user_id=user_id,
+        db_session=db_session,
+    )
+    if not group:
+        return [user_id] if include_user else []
+
+    members = get_group_members(group_id=group.id or 0, db_session=db_session)
+    member_user_ids = [
+        member.user_id
+        for member in members
+        if include_user or member.user_id != user_id
+    ]
+    return sorted({member_user_ids_item for member_user_ids_item in member_user_ids})
+
+
 def _get_activity_chapter_context(
     *,
     course_id: int,
@@ -1173,6 +1207,7 @@ async def apply_pending_group_completion_if_any(
         db_session=db_session,
         complete=True,
         propagate_group_completion=False,
+        emit_group_activity_state_sync=False,
     )
     db_session.delete(pending)
     db_session.commit()

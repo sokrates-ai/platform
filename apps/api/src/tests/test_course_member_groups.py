@@ -387,7 +387,10 @@ def test_accepting_new_invite_moves_member_and_deletes_old_small_group(session: 
     assert alfred_membership.group_id == invite_b.group_id
 
 
-def test_group_completion_propagates_and_queues_pending_completion(session: Session):
+def test_group_completion_propagates_and_queues_pending_completion(
+    session: Session,
+    monkeypatch,
+):
     course, activities, _ = _create_course_with_activities(session)
     robin = session.exec(select(User).where(User.username == "robin")).first()
     assert robin is not None
@@ -433,6 +436,16 @@ def test_group_completion_propagates_and_queues_pending_completion(session: Sess
             )
         )
 
+    group_activity_sync_calls: list[list[int]] = []
+
+    async def _fake_notify_group_activity_state_sync(**kwargs):
+        group_activity_sync_calls.append(sorted(kwargs["user_ids"]))
+
+    monkeypatch.setattr(
+        "src.services.trail.trail.notify_group_activity_state_sync",
+        _fake_notify_group_activity_state_sync,
+    )
+
     asyncio.run(
         add_activity_to_trail(_build_request(), robin, activities[1].activity_uuid, session, complete=True)
     )
@@ -459,6 +472,9 @@ def test_group_completion_propagates_and_queues_pending_completion(session: Sess
     assert alfred_synced_step.complete is True
     assert barbara_pending is not None
     assert barbara_pending.activity_uuid == activities[1].activity_uuid
+    assert group_activity_sync_calls == [
+        sorted([robin.id or 0, alfred.id or 0, barbara.id or 0])
+    ]
 
     asyncio.run(
         add_activity_to_trail(_build_request(), barbara, activities[0].activity_uuid, session, complete=True)

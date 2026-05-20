@@ -133,6 +133,8 @@ export default function WebSocketNotifications() {
             'group_invite_declined',
             'group_member_left',
           ].includes(notificationKind)
+        const isSilentNotification =
+          notificationKind === 'group_activity_state_sync'
 
         if (canOpenGroupPill && typeof window !== 'undefined') {
           window.dispatchEvent(
@@ -144,6 +146,10 @@ export default function WebSocketNotifications() {
               },
             })
           )
+        }
+
+        if (isSilentNotification) {
+          return
         }
 
         toast({

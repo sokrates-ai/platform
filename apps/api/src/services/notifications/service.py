@@ -119,6 +119,18 @@ def build_tutor_student_activity_started_topic(
     )
 
 
+def build_group_activity_state_sync_topic(
+    *,
+    user_id: int,
+    course_uuid: str,
+    activity_uuid: str,
+) -> str:
+    return (
+        f"user/{user_id}/courses/{course_uuid}/activities/"
+        f"{activity_uuid}/group-activity-state-sync"
+    )
+
+
 def build_student_activity_verified_topic(
     *,
     student_user_id: int,
@@ -246,6 +258,44 @@ async def notify_tutors_student_activity_completed(
         return
 
 
+async def notify_group_activity_state_sync(
+    *,
+    user_ids: Iterable[int],
+    source_user: PublicUser | User,
+    activity: Activity,
+    course: Course,
+) -> None:
+    unique_user_ids = sorted({user_id for user_id in user_ids if user_id})
+    if not unique_user_ids:
+        return
+
+    source_name = _display_name(source_user)
+    for user_id in unique_user_ids:
+        await send_notification(
+            topic=build_group_activity_state_sync_topic(
+                user_id=user_id,
+                course_uuid=course.course_uuid,
+                activity_uuid=activity.activity_uuid,
+            ),
+            title="",
+            body="",
+            level="info",
+            data={
+                "kind": "group_activity_state_sync",
+                "course_id": course.id,
+                "course_uuid": course.course_uuid,
+                "course_name": course.name,
+                "activity_id": activity.id,
+                "activity_uuid": activity.activity_uuid,
+                "activity_name": activity.name,
+                "source_user_id": source_user.id,
+                "source_user_uuid": source_user.user_uuid,
+                "source_user_name": source_name,
+            },
+            user_id=user_id,
+        )
+
+
 async def notify_user_reward_update(
     *,
     user_id: int,
@@ -321,11 +371,13 @@ async def notify_student_activity_verified(
 __all__ = [
     "build_notification",
     "build_student_activity_verified_topic",
+    "build_group_activity_state_sync_topic",
     "build_tutor_student_activity_completed_topic",
     "build_tutor_student_activity_started_topic",
     "build_system_event",
     "notify_all",
     "notify_user_reward_update",
+    "notify_group_activity_state_sync",
     "notify_student_activity_verified",
     "notify_tutors_student_activity_started",
     "notify_tutors_student_activity_completed",

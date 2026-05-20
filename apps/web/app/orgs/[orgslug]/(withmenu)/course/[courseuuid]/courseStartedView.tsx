@@ -838,14 +838,19 @@ const CourseStartedView = ({
           kind.includes('verification') ||
           topic.includes('activity-verified') ||
           hasVerificationData
+        const isSilentGroupActivitySync =
+          kind === 'group_activity_state_sync' ||
+          topic.includes('group-activity-state-sync')
         const variant =
           notification.level === 'error' ? 'destructive' : 'default'
-        toast({
-          title: notification.title || 'Notification',
-          description: notification.body || '',
-          variant,
-          duration: 5000,
-        })
+        if (!isSilentGroupActivitySync) {
+          toast({
+            title: notification.title || 'Notification',
+            description: notification.body || '',
+            variant,
+            duration: 5000,
+          })
+        }
         if (isVerificationNotification && dynamicPreviewOpenRef.current) {
           const activityUuid = normalizeActivityUuid(
             data.activity_uuid ??
