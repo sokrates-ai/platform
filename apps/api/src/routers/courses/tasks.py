@@ -1,6 +1,5 @@
 from src.db.tasks import DeleteTag
 from typing import List, Optional
-from config.config import WorkspaceConfig
 from src.db.courses.activities import Activity, ActivityTypeEnum
 from src.services.courses.activities.activities import get_activity
 from src.services.courses.activities.workspaces import workspace_system_obtain_token
@@ -104,26 +103,18 @@ async def api_create_session(
 
     print(f'task ID={task_id}')
 
-    print(f'LEARNHOUSE={request.app.learnhouse_config.workspace_config}')
-
-    workspace_config: WorkspaceConfig = (
-        request.app.learnhouse_config.workspace_config
-    )
-
-    print(f'GET token... | Workspace_URL={workspace_config.workspace_external_base_url}')
-
     token = await workspace_system_obtain_token(
         user=current_user,
         task_id=task_id,
         activity_uuid=activity.activity_uuid,
-        config=workspace_config,
+        db_session=db_session,
     )
 
-    print(f'token={token} | Workspace_URL={workspace_config.workspace_external_base_url}')
+    print(f'token={token}')
 
     return SessionResponse(
         token=token,
-        workspace_url=workspace_config.workspace_external_base_url,
+        workspace_url='',
     )
 
 
@@ -150,10 +141,7 @@ async def api_modify_task(
     """
     Modify task
     """
-    workspace_config: WorkspaceConfig = (
-        request.app.learnhouse_config.workspace_config
-    )
-    return await modify_task(request, current_user, task_obj, db_session, workspace_config)
+    return await modify_task(request, current_user, task_obj, db_session)
 
 
 @router.post('/criteria')

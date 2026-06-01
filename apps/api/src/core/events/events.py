@@ -6,6 +6,10 @@ from src.core.events.content import check_content_directory
 from src.core.events.database import close_database, connect_to_db
 from src.core.events.logs import init_logging
 from src.services.notifications.service import start_notifications, stop_notifications
+from src.services.workspace.runtime import (
+    init_workspace_runtime,
+    shutdown_workspace_runtime,
+)
 
 
 def startup_app(app: FastAPI) -> Callable:
@@ -27,6 +31,9 @@ def startup_app(app: FastAPI) -> Callable:
         # Check if auto-installation is needed
         auto_install()
 
+        # Initialize merged workspace runtime state
+        await init_workspace_runtime(app)
+
         # Start notification system (websockets + optional Redis pubsub)
         await start_notifications(app)
 
@@ -36,6 +43,7 @@ def startup_app(app: FastAPI) -> Callable:
 def shutdown_app(app: FastAPI) -> Callable:
     async def close_app() -> None:
         await stop_notifications(app)
+        await shutdown_workspace_runtime(app)
         await close_database(app)
 
     return close_app

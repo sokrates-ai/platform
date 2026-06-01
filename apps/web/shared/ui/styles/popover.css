@@ -1,0 +1,51 @@
+.popover-bubble::after {
+    content: "";
+    position: absolute;
+    width: 1rem;
+    /* 16 px square  */
+    height: 1rem;
+    background: inherit;
+    /* same fill colour               */
+    border-left: inherit;
+    /* two sides keep the outline     */
+    border-bottom: inherit;
+    border-radius: 0.125rem 0 0 0;
+    /* tiny rounding like Figma union */
+    transform: translateX(-50%) rotate(45deg);
+    left: 50%;
+    bottom: -0.5rem;
+    /* pull 8 px below the box        */
+}
+
+[data-side="top"].popover-bubble::after {
+    top: 100%;
+    left: 50%;
+    border-left: none;
+    border-bottom: none;
+    border-right: inherit;
+    border-top: inherit;
+    border-radius: 0 0.125rem 0 0;
+    transform: translateX(-50%) translateY(-40%) rotate(-225deg);
+}
+
+[data-side="left"].popover-bubble::after {
+    top: 50%;
+    left: -0.5rem;
+    border-bottom: none;
+    border-left: inherit;
+    border-top: inherit;
+    border-right: none;
+    border-radius: 0 0 0.125rem 0;
+    transform: translateY(-50%) rotate(135deg);
+}
+
+[data-side="right"].popover-bubble::after {
+    top: 50%;
+    left: -0.55rem;
+    border-left: none;
+    border-top: inherit;
+    border-right: inherit;
+    border-bottom: none;
+    border-radius: 0 0 0 0.125rem;
+    transform: translateY(-50%) rotate(225deg);
+}

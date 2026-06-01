@@ -1,6 +1,7 @@
 'use client'
 
 import '../styles/globals.css'
+import 'katex/dist/katex.min.css'
 import React, { useEffect, useState, ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import { DM_Sans } from 'next/font/google'

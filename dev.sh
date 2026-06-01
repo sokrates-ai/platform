@@ -91,6 +91,16 @@ dev_backend() {
     bash -c 'cd ./apps/api/ && poetry run python3 app.py'
 }
 
+dev_collab() {
+    load_dev_env
+    docker compose -f docker-compose-dev.yml up -d collab
+}
+
+dev_lsp() {
+    load_dev_env
+    docker compose -f docker-compose-dev.yml up -d lsp
+}
+
 lint_web() {
     echo "=== WEB LINT ==="
     bash -c "cd ./apps/web && pnpm run lint"
@@ -215,6 +225,10 @@ elif [ "${ARG}" = "web-dev" ]; then
     dev_web
 elif [ "${ARG}" = "api-dev" ]; then
     dev_backend
+elif [ "${ARG}" = "collab-dev" ]; then
+    dev_collab
+elif [ "${ARG}" = "lsp-dev" ]; then
+    dev_lsp
 elif [ "${ARG}" = "reset" ]; then
     reset
 elif [ "${ARG}" = "lint" ]; then

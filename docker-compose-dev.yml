@@ -42,6 +42,44 @@ services:
     image: chromadb/chroma:0.5.16
     ports:
       - "8000:8000"
+  collab:
+    build:
+      context: ./apps/collab
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+      - LOG_PRETTY=true
+      - COLLAB_WS_PORT=3001
+      - COLLAB_BRIDGE_PORT=3002
+      - COLLAB_BIND_ADDRESS=0.0.0.0
+      - COLLAB_INSTANCE_NAME=collab-dev
+      - COLLAB_REDIS_HOST=redis
+      - COLLAB_REDIS_PORT=6379
+      - "COLLAB_REDIS_PREFIX=collab:"
+      - "COLLAB_PERSIST_PREFIX=y:doc:"
+      - COLLAB_API_BASE_URL=http://host.docker.internal:1338/api
+      - COLLAB_STORE_DEBOUNCE_MS=3000
+      - COLLAB_STORE_MAX_DEBOUNCE_MS=15000
+      - COLLAB_DIRECT_CONN_IDLE_MS=1500
+      - COLLAB_BODY_LIMIT_BYTES=1048576
+      - SHARED_COLLAB_JWT_SECRET=collab-secret
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+  lsp:
+    build:
+      context: ./apps/lsp
+    restart: unless-stopped
+    ports:
+      - "3011:3011"
+    environment:
+      - LSP_PROXY_PORT=3011
   keycloak:
     image: quay.io/keycloak/keycloak:25.0
     command: ["start-dev", "--import-realm"]

@@ -19,6 +19,12 @@ web-dev:
 api-dev:
 	./dev.sh api-dev
 
+collab-dev:
+	./dev.sh collab-dev
+
+lsp-dev:
+	./dev.sh lsp-dev
+
 lint:
 	./dev.sh lint
 

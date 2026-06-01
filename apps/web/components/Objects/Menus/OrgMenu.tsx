@@ -3,6 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
 import { getUriWithOrg, getUriWithoutOrg } from '@services/config/config'
@@ -21,9 +22,11 @@ const SHADOW = '0 2px 0 var(--color-SokratesBlackBoxShadow)'
 const DROP_SHADOW = 'drop-shadow(0px 2px 2px rgba(69, 69, 69, 0.15))'
 
 export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
+  const pathname = usePathname()
   const session = useSokratesSession() as any
   const org = useOrg() as any
   const isUserAdmin = useAdminStatus() as any
+  const isWorkspaceRoute = pathname?.includes('/workspace/')
 
   const roleBadge = React.useMemo(() => {
     if (session?.status !== 'authenticated') return null
@@ -50,6 +53,10 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
     if (hasTutor) return 'TUTOR'
     return null
   }, [session?.status, session?.data?.roles, org?.id])
+
+  if (isWorkspaceRoute) {
+    return null
+  }
 
   const logout = () =>
     (window.location.href = getUriWithoutOrg('/login?orgslug=' + org?.slug))

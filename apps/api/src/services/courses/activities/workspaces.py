@@ -17,57 +17,29 @@ from src.security.rbac.rbac import (
 )
 from src.db.users import AnonymousUser, PublicUser
 from fastapi import HTTPException, status, Request
-import httpx
-from config.config import WorkspaceConfig
+from src.services.workspace.sessions import create_or_get_session, refresh_all_sessions
 
 
 # Required cuz the workspace caches tasks per-session.
 # When we change a task, we might as well re-fetch all sessions :D
-async def workspace_system_reload_all_sessions(config: WorkspaceConfig):
-    url = f'http://{config.workspace_api_host}:{config.workspace_api_port}/v1/sessions/refresh'
-
-    print(f"Refreshing all WS sessions: at {url}")
-
-    async with httpx.AsyncClient() as client:
-        res = await client.post(url, json=None)
-        # print(res)
-
-        if res.status_code != 200:
-            print(f"WS_RESPONSE: {res.text}")
-            raise Exception(res.text)
-
-        parsed = res.json()
-        print(parsed)
+async def workspace_system_reload_all_sessions(db_session: Session):
+    print("Refreshing all merged workspace sessions")
+    return await refresh_all_sessions(db_session)
 
 
 async def workspace_system_obtain_token(
-    user: PublicUser, task_id: int, activity_uuid: str, config: WorkspaceConfig
+    user: PublicUser,
+    task_id: int,
+    activity_uuid: str,
+    db_session: Session,
 ) -> str:
-    url = f'http://{config.workspace_api_host}:{config.workspace_api_port}/v1/sessions'
-    body = {
-        'activity_uuid': activity_uuid,
-        'exercise_id': task_id,
-        'user_uuid': user.user_uuid,
-    }
-    # print(f"CREATING WS SESSION FOR USER={user} and TASK={task_id}...", url, body)
-    print(f'user={user.user_uuid}')
-    async with httpx.AsyncClient() as client:
-        res = await client.post(url, json=body)
-        # print(res)
-
-        if res.status_code != 200:
-            print(f"WS_RESPONSE: {res.text}")
-            raise Exception(res.text)
-
-        parsed = res.json()
-
-        if 'token' not in parsed:
-            print(f"WS_RESPONSE: {res.text}")
-            raise ('Illegal response: ' + res.text)
-
-        token = parsed['token']
-
-        return token
+    print(f'creating merged workspace session for user={user.user_uuid}')
+    return await create_or_get_session(
+        db_session,
+        user_uuid=user.user_uuid,
+        activity_uuid=activity_uuid,
+        exercise_id=task_id,
+    )
 
 
 async def add_course_task_association(
@@ -315,7 +287,6 @@ async def modify_task(
     current_user: PublicUser | AnonymousUser,
     data: TaskWithCourseIDAndTags,
     db_session: Session,
-    config: WorkspaceConfig
 ):
     # RBAC check
     await rbac_check(request, 'activity_x', current_user, 'update', db_session)
@@ -370,7 +341,10 @@ async def modify_task(
             )
 
     # Trigger workspace refresh.
-    await workspace_system_reload_all_sessions(config)
+    try:
+        await workspace_system_reload_all_sessions(db_session)
+    except Exception as exc:
+        print(f'Workspace refresh failed after task update: {exc}')
 
     return task
 

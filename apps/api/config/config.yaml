@@ -27,11 +27,6 @@ hosting_config:
       bucket_name: ""
       endpoint_url: ""
 
-workspace_config:
-  workspace_api_host: "localhost"
-  workspace_api_port: 8010
-  workspace_external_base_url: "http://localhost:3001"
-
 mailing_config:
   resend_api_key: ""
   system_email_adress: ""

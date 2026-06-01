@@ -50,12 +50,6 @@ class HostingConfig(BaseModel):
     content_delivery: ContentDeliveryConfig
 
 
-class WorkspaceConfig(BaseModel):
-    workspace_api_host: str
-    workspace_api_port: int
-    workspace_external_base_url: str
-
-
 class MailingConfig(BaseModel):
     resend_api_key: str
     system_email_address: str
@@ -75,7 +69,6 @@ class LearnHouseConfig(BaseModel):
     contact_email: str
     general_config: GeneralConfig
     hosting_config: HostingConfig
-    workspace_config: WorkspaceConfig
     database_config: DatabaseConfig
     redis_config: RedisConfig
     security_config: SecurityConfig
@@ -212,27 +205,6 @@ def get_learnhouse_config() -> LearnHouseConfig:
         "chromadb_config", {}
     ).get("db_host")
 
-    # Workspace config
-    workspace_api_host = yaml_config.get("workspace_config", {}).get("workspace_api_host")
-    workspace_api_port = yaml_config.get("workspace_config", {}).get("workspace_api_port")
-    workspace_external_base_url = yaml_config.get("workspace_config", {}).get("workspace_external_base_url")
-
-    # NOTE: workspace config can be overridden using environment variables.
-    workspace_api_host_ov = os.environ.get("LEARNHOUSE_WORKSPACE_API_HOST")
-    if workspace_api_host_ov is not None:
-        print("NOTE: using environment override from 'LEARNHOUSE_WORKSPACE_API_HOST'")
-        workspace_api_host = workspace_api_host_ov
-
-    workspace_api_port_ov = os.environ.get("LEARNHOUSE_WORKSPACE_API_PORT")
-    if workspace_api_port_ov is not None:
-        print("NOTE: using environment override from 'LEARNHOUSE_WORKSPACE_API_PORT'")
-        workspace_api_port = int(workspace_api_port_ov)
-
-    workspace_external_base_url_ov = os.environ.get("LEARNHOUSE_WORKSPACE_EXTERNAL_BASE_URL")
-    if workspace_external_base_url_ov is not None:
-        print("NOTE: using environment override from 'LEARNHOUSE_WORKSPACE_EXTERNAL_BASE_URL'")
-        workspace_external_base_url = workspace_external_base_url_ov
-
     # Redis config
     env_redis_connection_string = os.environ.get("LEARNHOUSE_REDIS_CONNECTION_STRING")
     redis_connection_string = env_redis_connection_string or yaml_config.get(
@@ -265,13 +237,6 @@ def get_learnhouse_config() -> LearnHouseConfig:
         sql_connection_string=sql_connection_string,
     )
 
-    # Create WorkspaceConfig
-    workspace_config = WorkspaceConfig(
-        workspace_api_host=workspace_api_host,
-        workspace_api_port=int(workspace_api_port),
-        workspace_external_base_url=workspace_external_base_url,
-    )
-
     # AI Config
     ai_config = AIConfig(
         openai_api_key=openai_api_key,
@@ -290,7 +255,6 @@ def get_learnhouse_config() -> LearnHouseConfig:
             development_mode=bool(development_mode), install_mode=bool(install_mode)
         ),
         hosting_config=hosting_config,
-        workspace_config=workspace_config,
         database_config=database_config,
         security_config=SecurityConfig(auth_jwt_secret_key=auth_jwt_secret_key),
         ai_config=ai_config,

@@ -1,0 +1,4 @@
+langservers:
+  pyright:
+    - pyright-langserver
+    - --stdio 

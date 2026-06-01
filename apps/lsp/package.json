@@ -1,0 +1,7 @@
+{
+  "name": "lsp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LSP container using lsp-ws-proxy and pyright",
+  "license": "MIT"
+} 

@@ -5,14 +5,13 @@ import React, { useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 async function createSession(
   activity_uuid: string,
   task_id: number | null,
   access_token: string
 ): Promise<{ token: string; workspace_url: string }> {
-  // const ACTIVATE_SESSION_URL = `${getAPIUrl()}ex/session`;
   const result = await fetch(
     `${getAPIUrl()}tasks/session`,
     RequestBodyWithAuthHeader(
@@ -33,7 +32,7 @@ function WorkspaceActivity({
   activity,
   course,
   access_token,
-  backlink,
+  backlink: _backlink,
 }: {
   activity: any
   course: any
@@ -42,6 +41,8 @@ function WorkspaceActivity({
 }) {
   const [url, setURL] = React.useState<string | null>(null)
   const [progress, setProgress] = React.useState(0)
+  const pathname = usePathname()
+  const router = useRouter()
 
   const searchParams = useSearchParams()
   const taskIDParam = searchParams.get('task_id')
@@ -66,23 +67,20 @@ function WorkspaceActivity({
 
     // Fetch redirect URL here
     createSession(activity.activity_uuid, task_id, access_token).then((res) => {
-      const url = `${res.workspace_url}/w/${encodeURIComponent(
+      const nextUrl = `${pathname.replace(/\/$/, '')}/workspace/${encodeURIComponent(
         res.token
-      )}?backlink=${encodeURIComponent(backlink)}`
-      setURL(url)
+      )}`
+      setURL(nextUrl)
       setProgress(100)
       clearInterval(interval)
 
-      // Short delay before redirect to show 100% progress
       setTimeout(() => {
-          if (!window.location.href.includes("localhost")) {
-             window.location.replace(url);
-          }
+        router.push(nextUrl)
       }, 50)
     })
 
     return () => clearInterval(interval)
-  }, [access_token, activity.activity_uuid, backlink, taskIDParam])
+  }, [access_token, activity.activity_uuid, pathname, router, taskIDParam])
 
   return (
     <div className="py-16 bg-gray-50 flex items-center justify-center p-4 rounded-md">
@@ -107,7 +105,7 @@ function WorkspaceActivity({
               variant="outline"
               size="sm"
               className="border-blue-500 text-blue-500 hover:bg-blue-50"
-              onClick={() => (window.location.replace(url))}
+              onClick={() => url && router.push(url)}
             >
               Open Workspace Now
             </Button>
