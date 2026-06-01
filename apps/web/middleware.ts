@@ -1,7 +1,6 @@
 import { isInstallModeEnabled } from '@services/install/install'
 import {
   LEARNHOUSE_DOMAIN,
-  LEARNHOUSE_TOP_DOMAIN,
   getDefaultOrg,
   getUriWithOrg,
   isMultiOrgModeEnabled,
@@ -76,7 +75,6 @@ export default async function middleware(req: NextRequest) {
   //   return response
   // }
 
-  const cookie_orgslug = req.cookies.get('learnhouse_current_orgslug')?.value
   const orgslug = fullhost
     ? fullhost.replace(`.${LEARNHOUSE_DOMAIN}`, '')
     : (default_org as string)
@@ -102,11 +100,8 @@ export default async function middleware(req: NextRequest) {
       response.cookies.set({
         name: 'learnhouse_current_orgslug',
         value: orgslug,
-        // domain: window.location.hostname // LEARNHOUSE_TOP_DOMAIN == 'localhost' ? '' : LEARNHOUSE_TOP_DOMAIN,
-        // TODO: this is also completely fucked rn
-        // domain: '.localhost'
-        domain: `${LEARNHOUSE_TOP_DOMAIN()}`
-        // domain: undefined
+        path: '/',
+        sameSite: 'lax',
       })
     }
     return response
@@ -135,43 +130,26 @@ export default async function middleware(req: NextRequest) {
 
   // Auth Redirects
   if (pathname == '/redirect_from_auth') {
-    if (cookie_orgslug) {
-      const searchParams = req.nextUrl.searchParams
-      const queryString = searchParams.toString()
-      const redirectPathname = '/'
-      const redirectUrl = new URL(
-        getUriWithOrg(cookie_orgslug, redirectPathname),
-        req.url
-      )
+    const targetOrgslug =
+      hosting_mode === 'multi' ? orgslug : (default_org as string | undefined)
 
-      if (queryString) {
-        redirectUrl.search = queryString
-      }
-      return NextResponse.redirect(redirectUrl)
-    } else {
-      const orgslug = getDefaultOrg()
-
-      if (!orgslug) {
-        throw("This is broken")
-      }
-
-      const searchParams = req.nextUrl.searchParams
-      const queryString = searchParams.toString()
-      const redirectPathname = '/'
-      const redirectUrl = new URL(
-        getUriWithOrg(orgslug!, redirectPathname),
-        req.url
-      )
-
-      if (queryString) {
-        redirectUrl.search = queryString
-      }
-
-      return NextResponse.redirect(redirectUrl)
-
-      // TODO: fix this in the next months
-      // return 'Did not find the orgslug in the cookie'
+    if (!targetOrgslug) {
+      throw new Error('Missing organization slug for auth redirect')
     }
+
+    const searchParams = req.nextUrl.searchParams
+    const queryString = searchParams.toString()
+    const redirectPathname = '/'
+    const redirectUrl = new URL(
+      getUriWithOrg(targetOrgslug, redirectPathname),
+      req.url
+    )
+
+    if (queryString) {
+      redirectUrl.search = queryString
+    }
+
+    return NextResponse.redirect(redirectUrl)
   }
 
   if (pathname.startsWith('/sitemap.xml')) {
@@ -203,39 +181,13 @@ export default async function middleware(req: NextRequest) {
     const orgslug = fullhost
       ? fullhost.replace(`.${LEARNHOUSE_DOMAIN}`, '')
       : (default_org as string)
-    const response = NextResponse.rewrite(
-      new URL(`/orgs/${orgslug}${pathname}`, req.url)
-    )
-
-    // Set the cookie with the orgslug value
-    response.cookies.set({
-      name: 'learnhouse_current_orgslug',
-      value: orgslug,
-      // domain: LEARNHOUSE_TOP_DOMAIN == 'localhost' ? '' : LEARNHOUSE_TOP_DOMAIN,
-      domain: '.localhost',
-      path: '/',
-    })
-
-    return response
+    return NextResponse.rewrite(new URL(`/orgs/${orgslug}${pathname}`, req.url))
   }
 
   // Single Organization Mode
   if (hosting_mode === 'single') {
     // Get the default organization slug
     const orgslug = default_org as string
-    const response = NextResponse.rewrite(
-      new URL(`/orgs/${orgslug}${pathname}`, req.url)
-    )
-
-    // Set the cookie with the orgslug value
-    response.cookies.set({
-      name: 'learnhouse_current_orgslug',
-      value: orgslug,
-      // domain: LEARNHOUSE_TOP_DOMAIN == 'localhost' ? '' : LEARNHOUSE_TOP_DOMAIN,
-      domain: '.',
-      path: '/',
-    })
-
-    return response
+    return NextResponse.rewrite(new URL(`/orgs/${orgslug}${pathname}`, req.url))
   }
 }

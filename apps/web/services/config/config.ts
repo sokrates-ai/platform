@@ -15,8 +15,7 @@ export function LEARNHOUSE_TOP_DOMAIN(): string {
     let domain = process.env['NEXT_PUBLIC_LEARNHOUSE_BASE_TOP_DOMAI' + N]
 
     if (!domain) {
-        throw "Error"
-        return "error"
+        throw new Error('NEXT_PUBLIC_LEARNHOUSE_BASE_TOP_DOMAIN is undefined')
     }
 
     console.log('got learnhouse top domain: ', domain)
@@ -30,8 +29,7 @@ export function LEARNHOUSE_BASE_URL(): string {
     let url = process.env['NEXT_PUBLIC_LEARNHOUSE_BASE_UR' + L]
 
     if (!url) {
-        // console.error("NEXT_PUBLIC_LEARNHOUSE_BASE_URL undefined")
-        throw "Error"
+        throw new Error('NEXT_PUBLIC_LEARNHOUSE_BASE_URL is undefined')
     }
     return url
 }
