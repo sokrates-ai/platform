@@ -38,7 +38,13 @@ redis_config:
   redis_connection_string: redis://localhost:6379/learnhouse
 
 ai_config:
-  openai_api_key: "Foobar"
+  enabled: true
+  provider: "openai"
+  api_key: ""
+  base_url: null
+  text_eval_model: "gpt-4.1-mini"
+  grading_criteria_model: "gpt-4.1-nano"
+  timeout_sec: 60
   chromadb_config:
     isSeparateDatabaseEnabled: True
     db_host: "localhost"

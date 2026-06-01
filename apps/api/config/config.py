@@ -5,6 +5,21 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 
 
+def _as_bool(value: object, *, default: bool = False) -> bool:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _as_int(value: object, *, default: int) -> int:
+    try:
+        return int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return default
+
+
 class CookieConfig(BaseModel):
     domain: str
 
@@ -23,9 +38,50 @@ class ChromaDBConfig(BaseModel):
     db_host: str | None 
 
 
+AIProviderType = Literal["openai", "self_hosted", "vllm_openai_compatible"]
+
+
+def _normalize_ai_provider(
+    value: object | None,
+    *,
+    default: AIProviderType,
+) -> AIProviderType:
+    if value is None:
+        return default
+
+    raw = str(value).strip().lower().replace("-", "_")
+    if not raw:
+        return default
+    if raw in {
+        "self_hosted",
+        "self_hosted_openai_compatible",
+        "openai_compatible",
+        "vllm",
+        "vllm_openai_compatible",
+    }:
+        return "self_hosted"
+    if raw == "openai":
+        return "openai"
+    return default
+
+
 class AIConfig(BaseModel):
-    openai_api_key: str | None
+    enabled: bool = True
+    provider: AIProviderType = "openai"
+    api_key: str | None = None
+    base_url: str | None = None
+    text_eval_model: str = "gpt-4.1-mini"
+    grading_criteria_model: str = "gpt-4.1-nano"
+    timeout_sec: int = 60
     chromadb_config: ChromaDBConfig | None
+
+    @property
+    def openai_api_key(self) -> str | None:
+        return self.api_key
+
+    @property
+    def is_ai_enabled(self) -> bool:
+        return self.enabled
 
 
 class S3ApiConfig(BaseModel):
@@ -187,23 +243,66 @@ def get_learnhouse_config() -> LearnHouseConfig:
     ).get("sql_connection_string")
 
     # AI Config
-    env_openai_api_key = os.environ.get("LEARNHOUSE_OPENAI_API_KEY")
+    env_ai_provider = os.environ.get("LEARNHOUSE_AI_PROVIDER")
+    env_ai_api_key = (
+        os.environ.get("LEARNHOUSE_AI_API_KEY")
+        or os.environ.get("LEARNHOUSE_OPENAI_API_KEY")
+        or os.environ.get("OPENAI_API_KEY")
+    )
+    env_ai_base_url = (
+        os.environ.get("LEARNHOUSE_AI_BASE_URL")
+        or os.environ.get("OPENAI_BASE_URL")
+    )
+    env_ai_text_eval_model = (
+        os.environ.get("LEARNHOUSE_AI_TEXT_EVAL_MODEL")
+        or os.environ.get("LEARNHOUSE_WORKSPACE_TEXT_EVAL_MODEL")
+    )
+    env_ai_grading_criteria_model = os.environ.get(
+        "LEARNHOUSE_AI_GRADING_CRITERIA_MODEL"
+    )
+    env_ai_timeout_sec = os.environ.get("LEARNHOUSE_AI_TIMEOUT_SEC")
     env_is_ai_enabled = os.environ.get("LEARNHOUSE_IS_AI_ENABLED")
     env_chromadb_separate = os.environ.get("LEARNHOUSE_CHROMADB_SEPARATE")
     env_chromadb_host = os.environ.get("LEARNHOUSE_CHROMADB_HOST")
 
-    openai_api_key = env_openai_api_key or yaml_config.get("ai_config", {}).get(
-        "openai_api_key"
+    ai_yaml = yaml_config.get("ai_config", {})
+    ai_provider_default: AIProviderType = (
+        "self_hosted" if _as_bool(self_hosted) else "openai"
     )
-    is_ai_enabled = env_is_ai_enabled or yaml_config.get("ai_config", {}).get(
-        "is_ai_enabled"
+    raw_ai_provider = env_ai_provider or ai_yaml.get("provider")
+    if (
+        env_ai_provider is None
+        and _as_bool(self_hosted)
+        and (
+            raw_ai_provider is None
+            or str(raw_ai_provider).strip().lower().replace("-", "_") == "openai"
+        )
+    ):
+        raw_ai_provider = "self_hosted"
+    ai_provider = _normalize_ai_provider(
+        raw_ai_provider,
+        default=ai_provider_default,
     )
-    chromadb_separate = env_chromadb_separate or yaml_config.get("ai_config", {}).get(
+    ai_api_key = env_ai_api_key or ai_yaml.get("api_key") or ai_yaml.get("openai_api_key")
+    ai_base_url = env_ai_base_url or ai_yaml.get("base_url")
+    ai_text_eval_model = (
+        env_ai_text_eval_model or ai_yaml.get("text_eval_model") or "gpt-4.1-mini"
+    )
+    ai_grading_criteria_model = (
+        env_ai_grading_criteria_model
+        or ai_yaml.get("grading_criteria_model")
+        or "gpt-4.1-nano"
+    )
+    ai_timeout_sec = _as_int(env_ai_timeout_sec or ai_yaml.get("timeout_sec"), default=60)
+    is_ai_enabled = (
+        env_is_ai_enabled
+        if env_is_ai_enabled is not None
+        else ai_yaml.get("enabled", ai_yaml.get("is_ai_enabled", True))
+    )
+    chromadb_separate = env_chromadb_separate or ai_yaml.get(
         "chromadb_config", {}
     ).get("isSeparateDatabaseEnabled")
-    chromadb_host = env_chromadb_host or yaml_config.get("ai_config", {}).get(
-        "chromadb_config", {}
-    ).get("db_host")
+    chromadb_host = env_chromadb_host or ai_yaml.get("chromadb_config", {}).get("db_host")
 
     # Redis config
     env_redis_connection_string = os.environ.get("LEARNHOUSE_REDIS_CONNECTION_STRING")
@@ -239,10 +338,16 @@ def get_learnhouse_config() -> LearnHouseConfig:
 
     # AI Config
     ai_config = AIConfig(
-        openai_api_key=openai_api_key,
-        is_ai_enabled=bool(is_ai_enabled),
+        enabled=_as_bool(is_ai_enabled, default=True),
+        provider=ai_provider,  # type: ignore[arg-type]
+        api_key=ai_api_key,
+        base_url=ai_base_url,
+        text_eval_model=ai_text_eval_model,
+        grading_criteria_model=ai_grading_criteria_model,
+        timeout_sec=ai_timeout_sec,
         chromadb_config=ChromaDBConfig(
-            isSeparateDatabaseEnabled=bool(chromadb_separate), db_host=chromadb_host
+            isSeparateDatabaseEnabled=_as_bool(chromadb_separate),
+            db_host=chromadb_host,
         ),
     )
 

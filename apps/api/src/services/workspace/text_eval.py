@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
-import os
 from typing import Any
 
-from openai import OpenAI
+from src.services.ai.client import AIProviderError, get_llm_client, get_llm_provider_settings
 
 
 logger = logging.getLogger(__name__)
@@ -75,13 +73,19 @@ def _coerce_feedback(payload: dict[str, Any], submission: str) -> dict[str, Any]
     }
 
 
-def _evaluate_with_openai(
+def _resolve_text_eval_model(model: str | None) -> str:
+    candidate = (model or "").strip()
+    if candidate:
+        return candidate
+    return get_llm_provider_settings().text_eval_model
+
+
+def _evaluate_with_ai(
     task: dict[str, Any],
     submission: str,
-    model: str,
+    model: str | None,
 ) -> dict[str, Any]:
-    api_key = os.getenv("OPENAI_API_KEY") or os.getenv("LEARNHOUSE_OPENAI_API_KEY")
-    client = OpenAI(api_key=api_key) if api_key else OpenAI()
+    client = get_llm_client()
     task_prompt = str(task.get("task") or "")
     solution = str(task.get("solution") or "")
     prompt = f"""
@@ -121,30 +125,19 @@ Rules:
 - Use quotes only when they appear verbatim in the submission.
 - Return valid JSON only.
 """.strip()
-    response = client.chat.completions.create(
-        model=model,
+    data = client.generate_json(
+        system_prompt="You are a rigorous educational evaluator that returns JSON only.",
+        user_prompt=prompt,
+        model=_resolve_text_eval_model(model),
         temperature=0.2,
-        response_format={"type": "json_object"},
-        messages=[
-            {
-                "role": "system",
-                "content": "You are a rigorous educational evaluator that returns JSON only.",
-            },
-            {
-                "role": "user",
-                "content": prompt,
-            },
-        ],
     )
-    content = response.choices[0].message.content or "{}"
-    data = json.loads(content)
     return _coerce_feedback(data, submission)
 
 
 async def evaluate_text_submission(
     task: dict[str, Any],
     submission: str,
-    model: str,
+    model: str | None = None,
 ) -> dict[str, Any]:
     if not submission.strip():
         return {
@@ -153,23 +146,44 @@ async def evaluate_text_submission(
             "comments": [],
         }
     try:
-        return await asyncio.to_thread(_evaluate_with_openai, task, submission, model)
-    except Exception as exc:
-        logger.warning("openai_text_evaluation_failed", exc_info=True)
+        return await asyncio.to_thread(_evaluate_with_ai, task, submission, model)
+    except AIProviderError as exc:
+        logger.warning("ai_text_evaluation_failed", exc_info=True)
         internal_message = str(exc).strip()
         lowered = internal_message.lower()
         user_message = (
             "AI feedback is temporarily unavailable. Your draft is still saved. Please try again in a moment."
         )
-        if "api_key client option must be set" in lowered or "openai_api_key" in lowered:
+        if (
+            "not configured" in lowered
+            or "api key" in lowered
+            or "base url is required" in lowered
+            or "unsupported ai provider" in lowered
+        ):
             user_message = (
                 "AI feedback is not configured on this server yet. Your draft is still saved."
             )
-        elif "connection" in lowered or "timed out" in lowered:
+        elif any(
+            token in lowered
+            for token in (
+                "connection",
+                "timed out",
+                "timeout",
+                "refused",
+                "unreachable",
+                "name or service not known",
+            )
+        ):
             user_message = (
                 "The AI provider could not be reached right now. Your draft is still saved. Please try again in a moment."
             )
         raise TextEvaluationUnavailable(
             user_message,
             internal_message=internal_message,
+        ) from exc
+    except Exception as exc:
+        logger.warning("ai_text_evaluation_failed", exc_info=True)
+        raise TextEvaluationUnavailable(
+            "AI feedback is temporarily unavailable. Your draft is still saved. Please try again in a moment.",
+            internal_message=str(exc),
         ) from exc

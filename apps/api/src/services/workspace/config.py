@@ -97,9 +97,10 @@ def build_workspace_settings(learnhouse_config: LearnHouseConfig) -> WorkspaceSe
         ),
         text_eval_model=_env(
             "LEARNHOUSE_WORKSPACE_TEXT_EVAL_MODEL",
-            default="gpt-4.1-mini",
+            "LEARNHOUSE_AI_TEXT_EVAL_MODEL",
+            default=learnhouse_config.ai_config.text_eval_model,
         )
-        or "gpt-4.1-mini",
+        or learnhouse_config.ai_config.text_eval_model,
         rate_limit_text_eval_max=_env_int(
             "LEARNHOUSE_WORKSPACE_RATE_LIMIT_TEXT_EVAL_MAX",
             "API_RATE_LIMIT_TEXT_EVAL_MAX",

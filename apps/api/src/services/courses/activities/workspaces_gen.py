@@ -1,9 +1,11 @@
-from typing import List
-from pydantic import BaseModel
-from openai import OpenAI
-from src.db.tasks import TaskBase, TaskType
-from src.services.courses.activities.workspaces_prompts import GENERATE_GRADING_CRITERIA
 import asyncio
+from typing import Any, List
+
+from pydantic import BaseModel, ValidationError
+
+from src.db.tasks import TaskBase, TaskType
+from src.services.ai.client import AIProviderError, get_llm_client, get_llm_provider_settings
+from src.services.courses.activities.workspaces_prompts import GENERATE_GRADING_CRITERIA
 
 
 class TaskGradingCriteria(BaseModel):
@@ -22,14 +24,21 @@ class GenerateGradingCriteria(TaskBase):
     user_input: str
 
 
+def _coerce_grading_criteria_payload(payload: dict[str, Any]) -> TaskGradingCriteriaCollection:
+    if "list" not in payload and isinstance(payload.get("criteria"), list):
+        payload = {"list": payload.get("criteria")}
+
+    try:
+        return TaskGradingCriteriaCollection.parse_obj(payload)
+    except ValidationError as exc:
+        raise AIProviderError(
+            "AI provider returned an invalid grading criteria payload."
+        ) from exc
+
+
 async def generate_task_grading_criteria(
     inputs: GenerateGradingCriteria,
 ) -> TaskGradingCriteriaCollection:
-    # Prompt the LLM to get the grading criteria
-    client = OpenAI()
-
-    print("A")
-
     if inputs.task_type != TaskType.AI:
         raise Exception("Unsupported task type: Only works with AI tasks")
 
@@ -39,35 +48,26 @@ async def generate_task_grading_criteria(
         f"Task Description: {inputs.description}\n"
         f"Task Data: {inputs.ai_instruction}\n"
         f"END OF TASK. Furthermore, add an additional grading criterion based on the following requirements MUST be generated. Do not mention that this information is not from the task context. Here is the additional information: {inputs.user_input}\n"
+        'Return a single JSON object with a top-level key "list".\n'
     )
-    print(f"Gen with user input: {text}")
+    client = get_llm_client()
+    settings = get_llm_provider_settings()
 
-    # Run the blocking call in a thread to avoid blocking the event loop
-    response = await asyncio.to_thread(
-        client.responses.parse,
-        model="gpt-4.1-nano", # USE GPT 5 later
-        input=[
-            {
-                "role": "developer",
-                "content": [
-                    {
-                        "type": "input_text",
-                        "text": text,
-                    }
-                ]
-            }
-        ],
-        text_format=TaskGradingCriteriaCollection,
+    payload = await asyncio.to_thread(
+        client.generate_json,
+        system_prompt=(
+            "You generate grading criteria for educational tasks and return JSON only."
+        ),
+        user_prompt=text,
+        model=settings.grading_criteria_model,
+        temperature=0.2,
     )
-
-    output: TaskGradingCriteriaCollection = response.output_parsed
+    output = _coerce_grading_criteria_payload(payload)
 
     for item in output.list:
         if item.weight > 1.0:
-            print(f"WARN: generated weight is > 1.0 ({item.weight}), ceiling it")
             item.weight = 1.0
 
-    return response.output_parsed
-
+    return output
 
 
