@@ -94,7 +94,9 @@ interface SessionContextType {
   awareness: Awareness | null;
   currentUser: SessionUser | null;
   workspaceInfo: WorkspaceInfo | null;
+  jobsActive: boolean;
   jobsRunning: boolean;
+  activeJobStatus: 'queued' | 'running' | null;
   latestJobText: string;
   latestTextResult: { status: 'success' | 'fail'; text: string; updatedAt: number } | null;
   latestTextFeedback: any | null;
@@ -1120,21 +1122,58 @@ export function SessionProvider({ children }: SessionProviderProps) {
     return () => { if (timer) clearTimeout(timer); };
   }, [refreshRateLimit, rateLimit]);
 
-  const { jobsRunning, latestJobText } = React.useMemo(() => {
+  const { jobsActive, jobsRunning, activeJobStatus, latestJobText } = React.useMemo(() => {
+    let anyActive = false;
     let anyRunning = false;
-    let latestText = '';
-    let latestTs = 0;
+    let bestStatus: 'queued' | 'running' | null = null;
+    let bestText = '';
+    let bestTs = 0;
+    let bestPriority = -1;
+
     try {
-      Object.values(jobsSnap).forEach((j: any) => {
-        if (j && j.status === 'running') {
+      Object.values(jobsSnap).forEach((job: any) => {
+        const status =
+          job?.status === 'queued' || job?.status === 'running'
+            ? job.status
+            : null;
+        if (!status) return;
+
+        anyActive = true;
+        if (status === 'running') {
           anyRunning = true;
-          const ts = Number(j.updatedAt || j.startedAt || 0);
-          const txt = (typeof j.progressText === 'string' && j.progressText) || (typeof j.progress === 'number' ? `${j.progress}%` : '');
-          if (ts >= latestTs && txt) { latestTs = ts; latestText = txt; }
+        }
+
+        const ts = Number(
+          job.updatedAt || job.startedAt || job.createdAt || 0
+        );
+        const priority = status === 'running' ? 2 : 1;
+        const progressText =
+          typeof job.progressText === 'string' && job.progressText.trim()
+            ? job.progressText.trim()
+            : typeof job.progress === 'number'
+              ? `${job.progress}%`
+              : status === 'queued'
+                ? 'Queued…'
+                : 'Processing…';
+
+        if (
+          priority > bestPriority ||
+          (priority === bestPriority && ts >= bestTs)
+        ) {
+          bestPriority = priority;
+          bestStatus = status;
+          bestText = progressText;
+          bestTs = ts;
         }
       });
     } catch {}
-    return { jobsRunning: anyRunning, latestJobText: latestText };
+
+    return {
+      jobsActive: anyActive,
+      jobsRunning: anyRunning,
+      activeJobStatus: bestStatus,
+      latestJobText: bestText,
+    };
   }, [jobsSnap]);
 
   const latestTextResult = React.useMemo(() => {
@@ -1346,7 +1385,9 @@ useEffect(() => {
         awareness: (providerRef.current as any)?.awareness ?? null,
         currentUser: currentUserRef.current,
         workspaceInfo,
+        jobsActive,
         jobsRunning,
+        activeJobStatus,
         latestJobText,
         latestTextResult,
         latestTextFeedback,

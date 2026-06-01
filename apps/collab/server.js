@@ -147,15 +147,16 @@ const server = new Hocuspocus({
 
 		const jobId = typeof msg.jobId === 'string' ? msg.jobId : (msg.id ? String(msg.id) : undefined);
 
-		// optimistic job:running in the Y.Doc (this will persist on next debounce)
+		// Optimistically mark the job as queued until the API posts an actual
+		// progress update back to the collaboration bridge.
 		if (jobId) {
 			document.transact(() => {
 				const jobs = document.getMap('jobs');
 				const prev = jobs.get(jobId) || {};
 				jobs.set(jobId, {
 					...prev,
-					status: 'running',
-					startedAt: prev.startedAt || Date.now(),
+					status: 'queued',
+					createdAt: prev.createdAt || Date.now(),
 					kind: type,
 					updatedAt: Date.now(),
 				});
@@ -384,7 +385,13 @@ function applyJobUpdate(doc /* Y.Doc */, body) {
 		const patch = {};
 		if (typeof body.progress === 'number') patch.progress = body.progress;
 		if (typeof body.progressText === 'string') patch.progressText = body.progressText;
-		jobs.set(jobId, { ...prev, status: 'running', ...patch, updatedAt: Date.now() });
+		jobs.set(jobId, {
+			...prev,
+			status: 'running',
+			startedAt: prev.startedAt || Date.now(),
+			...patch,
+			updatedAt: Date.now(),
+		});
 		return;
 	}
 

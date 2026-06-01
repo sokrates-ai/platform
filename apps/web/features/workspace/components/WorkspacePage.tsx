@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { Eye, EyeOff, Trash2 } from 'lucide-react'
+import { Clock3, Eye, EyeOff, Loader2, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
 
@@ -25,7 +25,8 @@ export default function WorkspacePage() {
     userStats,
     exercise,
     workspaceInfo,
-    jobsRunning,
+    jobsActive,
+    activeJobStatus,
     latestJobText,
     latestTextResult,
     latestTextFeedback,
@@ -46,6 +47,9 @@ export default function WorkspacePage() {
 
   const stats = userStats ?? { xp: 0, coins: 0, level: 0 }
   const showClearButton = (latestTextFeedback?.comments?.length ?? 0) > 0
+  const activeJobLabel =
+    latestJobText ||
+    (activeJobStatus === 'queued' ? 'Queued…' : 'Processing…')
 
   const handleUploadButtonClick = () => {
     setTriggerUpload(true)
@@ -150,7 +154,8 @@ export default function WorkspacePage() {
         onUpload={handleUploadButtonClick}
         showCheck={true}
         onCheck={handleCheck}
-        checking={jobsRunning}
+        checking={jobsActive}
+        checkStatus={activeJobStatus}
         onComplete={handleCompleteClick}
         completing={completing}
       />
@@ -158,7 +163,7 @@ export default function WorkspacePage() {
       <WorkspaceWebsocketDebugPanel />
       <WorkspaceBlockingErrorOverlay />
 
-      {jobsRunning && (
+      {jobsActive && (
         <div
           className="fixed inset-x-0 z-[60] flex justify-center"
           style={{ bottom: '6.5rem' }}
@@ -172,15 +177,17 @@ export default function WorkspacePage() {
               color: '#747474',
             }}
           >
-            <div
-              className="w-5 h-5 rounded-full animate-spin"
-              style={{
-                border: '2px solid #747474',
-                borderTopColor: 'transparent',
-              }}
-            />
-            <span className="text-sm sm:text-base animate-pulse whitespace-pre-line">
-              {latestJobText || 'Processing…'}
+            {activeJobStatus === 'queued' ? (
+              <Clock3 className="w-5 h-5" />
+            ) : (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            )}
+            <span
+              className={`text-sm sm:text-base whitespace-pre-line ${
+                activeJobStatus === 'queued' ? '' : 'animate-pulse'
+              }`}
+            >
+              {activeJobLabel}
             </span>
           </div>
         </div>
@@ -205,7 +212,7 @@ export default function WorkspacePage() {
         </div>
       )}
 
-      {!jobsRunning &&
+      {!jobsActive &&
         workspaceInfo.workspaceType === 'text' &&
         latestTextResult && (
           <div

@@ -1,0 +1,149 @@
+services:
+    #
+    #
+    #
+    #########################
+    # WORKSPACE
+    #########################
+    #
+    #
+    #
+    sk-workspace-collab:
+        container_name: sk-workspace-collab-staging
+        image: ghcr.io/sokrates-ai/sk-workspace-collab:staging
+        restart: unless-stopped
+        ports:
+          - "4003:80"
+        environment:
+          - NODE_ENV=production
+          - LOG_LEVEL=debug
+          - LOG_PRETTY=true
+          - LOG_FORMAT=console
+
+          - COLLAB_WS_PORT=80
+          - COLLAB_BRIDGE_PORT=81
+          - COLLAB_BIND_ADDRESS=0.0.0.0
+          - COLLAB_INSTANCE_NAME=collab-local
+          - COLLAB_REDIS_HOST=sk-platform-redis
+          - COLLAB_REDIS_PORT=6379
+          - COLLAB_REDIS_PREFIX="collab:"
+          - COLLAB_PERSIST_PREFIX="y:doc:"
+          - COLLAB_API_BASE_URL=http://sk-workspace-backend:8000
+          - COLLAB_STORE_DEBOUNCE_MS=3000
+          - COLLAB_STORE_MAX_DEBOUNCE_MS=15000
+          - COLLAB_DIRECT_CONN_IDLE_MS=1500
+          - COLLAB_BODY_LIMIT_BYTES=1048576
+          - SHARED_COLLAB_JWT_SECRET=collab-secret
+
+          - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+          - OTEL_EXPORTER_OTLP_HEADERS=api-key=your-dev-key
+          - OTEL_SERVICE_NAME=sokrates-collab
+          - ENABLE_TRACING=false
+        depends_on:
+            - sk-platform-redis
+
+
+    #
+    #
+    #
+    #########################
+    # PLATFORM
+    #########################
+    #
+    #
+    #
+    sk-platform-frontend:
+      container_name: sk-platform-frontend-staging
+      image: ghcr.io/sokrates-ai/sk-platform-frontend:staging
+      ports:
+        - "4001:3000"
+      env_file:
+        - platform-secrets.env
+      environment:
+        # External reachability config
+        - NEXT_PUBLIC_LEARNHOUSE_TOP_DOMAIN=staging.sokrates-hpi.de
+        - SK_PUBLIC_URL=https://staging.sokrates-hpi.de
+        - NEXT_PUBLIC_LEARNHOUSE_TOP_DOMAIN=staging.sokrates-hpi.de
+        - LEARNHOUSE_WORKSPACE_EXTERNAL_BASE_URL=https://ws1.app.sokrates.ae.org
+        - LEARNHOUSE_COOKIE_DOMAIN=.sokrates-hpi.de
+
+        - NEXT_PUBLIC_LEARNHOUSE_MULTI_ORG=false
+        - NEXT_PUBLIC_LEARNHOUSE_DEFAULT_ORG=default
+
+        - TODO_BACKEND=1
+
+        - LEARNHOUSE_KEYCLOAK_ISSUER=https://keycloak.hpi.de/realms/hpi
+        - LEARNHOUSE_KEYCLOAK_CLIENT_ID=sokrates
+        - LEARNHOUSE_KEYCLOAK_CLIENT_SECRET=SECRET
+        - LEARNHOUSE_KEYCLOAK_ID_TOKEN_ALG=RS512
+
+      depends_on:
+        - sk-platform-backend
+
+    sk-platform-backend:
+      container_name: sk-platform-backend-staging
+      image: ghcr.io/sokrates-ai/sk-platform-backend:staging
+      ports:
+        - "4000:1338"
+      volumes:
+        - ./learnhouse_data:/usr/learnhouse
+        - ./learnhouse_content:/app/api/content
+      env_file:
+        - platform-secrets.env
+      environment:
+        # Workspace runtime
+        - LEARNHOUSE_WORKSPACE_REDIS_URL=redis://sk-platform-redis:6379/0
+        - LEARNHOUSE_WORKSPACE_COLLAB_BRIDGE_URL=http://sk-workspace-collab:81
+
+        # External reachability config
+        - NEXT_PUBLIC_LEARNHOUSE_TOP_DOMAIN=staging.sokrates-hpi.de
+        - SK_PUBLIC_URL=https://staging.sokrates-hpi.de
+        - NEXT_PUBLIC_LEARNHOUSE_TOP_DOMAIN=staging.sokrates-hpi.de
+        - LEARNHOUSE_WORKSPACE_EXTERNAL_BASE_URL=https://ws1.app.sokrates.ae.org
+        - LEARNHOUSE_COOKIE_DOMAIN=.sokrates-hpi.de
+
+        - NEXT_PUBLIC_LEARNHOUSE_MULTI_ORG=false
+        - NEXT_PUBLIC_LEARNHOUSE_DEFAULT_ORG=default
+
+        # Databases
+        - LEARNHOUSE_SQL_CONNECTION_STRING=postgresql://learnhouse:learnhouse@sk-platform-postgres:5432/learnhouse
+        - LEARNHOUSE_REDIS_CONNECTION_STRING=redis://sk-platform-redis:6379/learnhouse
+        - LEARNHOUSE_CHROMADB_HOST=sk-platform-chroma
+
+      depends_on:
+        sk-platform-postgres:
+          condition: service_healthy
+        sk-platform-redis:
+          condition: service_healthy
+
+    sk-platform-postgres:
+      container_name: sk-platform-postgres-staging
+      image: docker.io/postgres:16-alpine
+      restart: always
+      environment:
+        - POSTGRES_USER=learnhouse
+        - POSTGRES_PASSWORD=learnhouse
+        - POSTGRES_DB=learnhouse
+      volumes:
+        - ./platform_postgres:/var/lib/postgresql/data
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U learnhouse"]
+        interval: 5s
+        timeout: 4s
+        retries: 5
+
+    sk-platform-redis:
+      container_name: sk-platform-redis-staging
+      image: docker.io/redis:latest
+      restart: always
+      healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 5s
+        timeout: 4s
+        retries: 5
+      volumes:
+          - ./platform_redis:/data
+
+    sk-platform-chroma:
+      container_name: sk-platform-chroma-staging
+      image: docker.io/chromadb/chroma:0.5.16

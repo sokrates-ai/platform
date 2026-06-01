@@ -14,10 +14,11 @@ export interface BottomMenuProps {
   onCheck?: () => void;
   showCheck: boolean;
   checking?: boolean;
+  checkStatus?: 'queued' | 'running' | null;
   onComplete?: () => void;
   completing?: boolean;
 }
-export default function BottomMenu({ canUpload, onBack, onUpload, onCheck, showCheck, checking, onComplete, completing }: BottomMenuProps) {
+export default function BottomMenu({ canUpload, onBack, onUpload, onCheck, showCheck, checking, checkStatus, onComplete, completing }: BottomMenuProps) {
   const [shareUrl, setShareUrl] = React.useState("");
   const [shareOpen, setShareOpen] = React.useState(false);
   const { rateLimit, refreshRateLimit } = useSession();
@@ -173,8 +174,12 @@ export default function BottomMenu({ canUpload, onBack, onUpload, onCheck, showC
                 <div className="flex items-center gap-2 sm:px-4">
                   {checking ? (
                     <span className="inline-flex items-center gap-2">
-                      <span className="hidden sm:inline">finding…</span>
-                      <span className="sm:hidden">…</span>
+                      <span className="hidden sm:inline">
+                        {checkStatus === 'queued' ? 'queued…' : 'finding…'}
+                      </span>
+                      <span className="sm:hidden">
+                        {checkStatus === 'queued' ? 'queued' : '…'}
+                      </span>
                     </span>
                   ) : isRateLimited ? (
                     <span className="tabular-nums">{waitSec}s</span>

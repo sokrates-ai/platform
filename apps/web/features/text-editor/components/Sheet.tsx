@@ -46,7 +46,7 @@ export type SheetRef = {
 }
 
 export const Sheet = forwardRef<SheetRef, SheetProps>(({ onActionStarted, onUploadDialogOpen, triggerUpload, onCompleted }, ref) => {
-  const { workspaceContent, updateWorkspaceContent, isInitialContentLoaded, ydoc, awareness, currentUser, apiClient, refreshRateLimit, refreshUserStats, provider, jobsRunning, latestTextFeedback, commentsVisible } = useSession();
+  const { workspaceContent, updateWorkspaceContent, isInitialContentLoaded, ydoc, awareness, currentUser, apiClient, refreshRateLimit, refreshUserStats, provider, jobsActive, latestTextFeedback, commentsVisible } = useSession();
   const [showEditor, setShowEditor] = useState(false)
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
   const [draggedFile, setDraggedFile] = useState<File | null>(null)
@@ -418,7 +418,7 @@ export const Sheet = forwardRef<SheetRef, SheetProps>(({ onActionStarted, onUplo
     }
   }, [apiClient, workspaceContent, refreshRateLimit, refreshUserStats, handleFeedbackReceived, onCompleted, provider, ydoc, formatLearnerError, waitForSettledJob, applyPolledJobState, buildDeliveryFailurePayload])
 
-  const isProcessing = jobsRunning
+  const isProcessing = jobsActive
 
   useImperativeHandle(ref, () => ({ requestFeedback, clearMarkers: clearFeedbackMarkers }))
 
