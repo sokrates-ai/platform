@@ -59,7 +59,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
         {isStaging && (
           <div
-            className="flex justify-between bg-red-500/50 text-black p-2.5 text-center font-black text-4xl absolute w-full z-[999] bottom-0 overflow-x-hidden gap-4"
+            className="flex justify-between bg-red-500/50 text-black p-2.5 text-center font-black text-4xl w-full z-[999] bottom-0 overflow-x-hidden gap-4"
+            style={{ position: 'absolute' }}
           >
             {Array.from({ length: 5 }).map((_, i) => (
               <span key={i}>STAGING</span>
