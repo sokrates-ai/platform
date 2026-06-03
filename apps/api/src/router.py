@@ -3,7 +3,7 @@ from src.routers.courses import tasks
 from fastapi import APIRouter, Depends
 from src.routers import health
 from src.routers import usergroups
-from src.routers import dev, trail, users, auth, orgs, roles, invlectrooms, map_proxy, notifications
+from src.routers import dev, trail, users, auth, orgs, roles, invlectrooms, map_proxy, notifications, features
 from src.routers.courses import chapters, collections, courses, assignments
 from src.routers.courses.activities import activities, blocks
 from src.routers.install import install
@@ -61,6 +61,9 @@ v1_router.include_router(
 )
 v1_router.include_router(
     notifications.router, prefix="/notifications", tags=["notifications"]
+)
+v1_router.include_router(
+    features.router, prefix="/features", tags=["features"]
 )
 
 # Dev Routes

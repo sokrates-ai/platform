@@ -11,12 +11,14 @@ import { getOrgLogoMediaDirectory } from '@services/media/media'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import useAdminStatus from '@components/Hooks/useAdminStatus'
+import { useFeatureFlag } from '@components/Hooks/useFeatureFlag'
 import { AvatarDropdownMenu } from './AvatarDropdownMenu'
 
 import logo_black from '@public/dark_logo.svg'
 
 // Farbschema-Variablen
 const GRADIENT = 'linear-gradient(135deg,var(--color-SokratesLightGray) 0%,var(--color-SokratesWhite) 100%)'
+const GRADIENT_PRIDE = 'linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 9%, #ffd2d9 9%, #ffd2d9 18%, #b7e8ee 18%, #b7e8ee 27%, #e2a175 27%, #e2a175 36%, #787878 36%, #787878 45%, #ff8177 45%, #ff8177 55%, #ffbe8e 55%, #ffbe8e 64%, #fff8a8 64%, #fff8a8 73%, #bfde8f 73%, #bfde8f 82%, #91a1cf 82%, #91a1cf 91%, #be7abd 91%, #be7abd 100%)'
 const BORDER = '2px solid var(--color-SokratesGrayBorder)'
 const SHADOW = '0 2px 0 var(--color-SokratesBlackBoxShadow)'
 const DROP_SHADOW = 'drop-shadow(0px 2px 2px rgba(69, 69, 69, 0.15))'
@@ -26,6 +28,7 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
   const session = useSokratesSession() as any
   const org = useOrg() as any
   const isUserAdmin = useAdminStatus() as any
+  const showPride = useFeatureFlag('pride_mode')
   const isWorkspaceRoute = pathname?.includes('/workspace/')
 
   const roleBadge = React.useMemo(() => {
@@ -70,7 +73,7 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
             className="relative flex h-12 sm:h-14 md:h-16 lg:h-[71px] w-full
                          items-center px-6 text-SokratesBlackBoxShadow/90"
             style={{
-              background: GRADIENT,
+              background: showPride ? GRADIENT_PRIDE : GRADIENT,
               border: BORDER,
               boxShadow: SHADOW,
               filter: DROP_SHADOW,
@@ -119,6 +122,7 @@ export const OrgMenu = ({ orgslug }: { orgslug: string }) => {
             orgslug={orgslug}
             org={org}
             session={session}
+            showPride={showPride}
           />
           <Avatar
             session={session}
@@ -140,12 +144,13 @@ function LeftRail({
   orgslug,
   org,
   session,
+  showPride,
 }: any) {
   return (
     <div
       className="relative flex h-12 sm:h-14 md:h-16 lg:h-[71px] w-full
                  items-center pl-4 sm:pl-6 pr-6 sm:pr-8 text-SokratesBlackBoxShadow/90"
-      style={railStyle('left')}
+      style={railStyle('left', showPride)}
     >
       {/* logo */}
       <Link href={getUriWithOrg(orgslug, '/')}>
@@ -304,9 +309,11 @@ function Avatar({ session, org, isUserAdmin, onLogout }: any) {
 
 /* ─── SHARED STYLES & HELPERS ─────────────────────────────────────────────── */
 
-function railStyle(side: 'left' | 'right'): React.CSSProperties {
+function railStyle(side: 'left' | 'right', showPride = false): React.CSSProperties {
   return {
-    background: GRADIENT,
+    background: side === 'left' && showPride
+      ? GRADIENT_PRIDE
+      : GRADIENT,
     border: BORDER,
     boxShadow: SHADOW,
     filter: DROP_SHADOW,
