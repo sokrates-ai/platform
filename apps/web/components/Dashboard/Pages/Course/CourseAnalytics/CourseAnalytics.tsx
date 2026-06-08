@@ -1,14 +1,488 @@
 'use client'
 
-import { BarChart3 } from 'lucide-react'
+import React, { useMemo } from 'react'
+import useSWR from 'swr'
+import {
+  BarChart3,
+  Users,
+  BookOpen,
+  CheckCircle2,
+  TrendingUp,
+  Loader2,
+} from 'lucide-react'
+import {
+  Bar,
+  BarChart,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  Cell,
+  Tooltip,
+  PieChart,
+  Pie,
+  Line,
+  LineChart,
+} from 'recharts'
+import { Card, CardContent } from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Progress } from '@/components/ui/progress'
+import { useCourse } from '@components/Contexts/CourseContext'
+import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
+import { getAPIUrl } from '@services/config/config'
+import { swrFetcher } from '@services/utils/ts/requests'
+import { ApiStudent, ExerciseLog } from '@components/Dashboard/Pages/Course/ManageCourseMembers/shared'
+
+type ActivityStatusStep = {
+  user_id: number
+  activity_uuid: string
+  complete: boolean
+  tutor_verified: 'NONE' | 'CORRECT' | 'INCORRECT'
+  creation_date?: string | null
+  update_date?: string | null
+}
+
+type Room = {
+  id: number
+  name: string
+  student_count?: number
+  tutor_count?: number
+}
 
 export default function CourseAnalytics() {
+  const session = useSokratesSession() as any
+  const access_token = session?.data?.tokens?.access_token
+  const course = useCourse() as any
+  const { courseStructure, isLoading: courseLoading } = course ?? {}
+
+  const courseUuid = courseStructure?.course_uuid
+
+  const { data: students } = useSWR<ApiStudent[]>(
+    courseUuid
+      ? `${getAPIUrl()}courses/students/list?course_uuid=${courseUuid}`
+      : null,
+    (url: string) => swrFetcher(url, access_token)
+  )
+
+  const { data: rooms } = useSWR<Room[]>(
+    courseUuid ? `${getAPIUrl()}courses/${courseUuid}/rooms` : null,
+    (url: string) => swrFetcher(url, access_token)
+  )
+
+  const allActivities = useMemo(() => {
+    const store = courseStructure?.tabStore ?? courseStructure?.tab_store ?? {}
+    const items: { activity_uuid: string; name: string; chapter_name: string; tab_name: string }[] = []
+    const seen = new Set<string>()
+
+    const tabMetadata = courseStructure?.tabMetadata ?? courseStructure?.tab_metadata ?? []
+
+    Object.entries(store).forEach(([tabId, tabData]: [string, any]) => {
+      const tabMeta = tabMetadata.find((t: any) => (t.id ?? t.tab_uuid) === tabId)
+      const tabName = tabMeta?.name ?? tabId
+      const chapters = tabData?.content?.chapters ?? []
+      chapters.forEach((chapter: any) => {
+        const chapterName = chapter?.name ?? 'Unnamed chapter'
+        const activities = Array.isArray(chapter?.activities) ? chapter.activities : []
+        activities.forEach((activity: any) => {
+          const uuid = activity?.activity_uuid ?? activity?.activityUuid ?? activity?.uuid
+          if (!uuid || seen.has(uuid)) return
+          seen.add(uuid)
+          items.push({
+            activity_uuid: uuid.startsWith('activity_') ? uuid : `activity_${uuid}`,
+            name: activity?.name ?? 'Unnamed',
+            chapter_name: chapterName,
+            tab_name: tabName,
+          })
+        })
+      })
+    })
+    return items
+  }, [courseStructure])
+
+  const firstRoomId = rooms?.[0]?.id
+  const activityUuids = useMemo(
+    () => allActivities.map((a) => a.activity_uuid),
+    [allActivities]
+  )
+
+  const { data: activityStatusData } = useSWR(
+    firstRoomId && activityUuids.length > 0
+      ? `${getAPIUrl()}courses/${courseUuid}/rooms/${firstRoomId}/activity-status?activity_uuids=${encodeURIComponent(activityUuids.join(','))}`
+      : null,
+    (url: string) => swrFetcher(url, access_token)
+  )
+
+  const activitySteps: ActivityStatusStep[] = activityStatusData?.steps ?? []
+
+  const stats = useMemo(() => {
+    const totalStudents = students?.length ?? 0
+    const totalActivities = allActivities.length
+    const totalPossible = totalStudents * totalActivities
+    const completedSteps = activitySteps.filter((s) => s.complete).length
+    const completionRate = totalPossible > 0 ? Math.round((completedSteps / totalPossible) * 100) : 0
+    const verifiedCorrect = activitySteps.filter((s) => s.tutor_verified === 'CORRECT').length
+    const verifiedIncorrect = activitySteps.filter((s) => s.tutor_verified === 'INCORRECT').length
+
+    const avgExercises = totalStudents > 0
+      ? Math.round((students?.reduce((sum, s) => sum + (s.log?.length ?? 0), 0) ?? 0) / totalStudents)
+      : 0
+
+    return { totalStudents, totalActivities, completionRate, completedSteps, totalPossible, verifiedCorrect, verifiedIncorrect, avgExercises }
+  }, [students, allActivities, activitySteps])
+
+  const chapterCompletionData = useMemo(() => {
+    const chapterMap = new Map<string, { total: number; completed: number }>()
+
+    allActivities.forEach((activity) => {
+      const key = activity.chapter_name
+      if (!chapterMap.has(key)) chapterMap.set(key, { total: 0, completed: 0 })
+      const entry = chapterMap.get(key)!
+      const studentCount = students?.length ?? 0
+      entry.total += studentCount
+      const completedForActivity = activitySteps.filter(
+        (s) => s.activity_uuid === activity.activity_uuid && s.complete
+      ).length
+      entry.completed += completedForActivity
+    })
+
+    return Array.from(chapterMap.entries()).map(([name, data]) => ({
+      name: name.length > 20 ? name.slice(0, 18) + '...' : name,
+      fullName: name,
+      rate: data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0,
+      completed: data.completed,
+      total: data.total,
+    }))
+  }, [allActivities, activitySteps, students])
+
+  const verificationData = useMemo(() => {
+    const unverified = activitySteps.filter((s) => s.complete && s.tutor_verified === 'NONE').length
+    return [
+      { name: 'Correct', value: stats.verifiedCorrect, color: '#22c55e' },
+      { name: 'Incorrect', value: stats.verifiedIncorrect, color: '#ef4444' },
+      { name: 'Pending', value: unverified, color: '#f59e0b' },
+    ].filter((d) => d.value > 0)
+  }, [activitySteps, stats])
+
+  const studentTableData = useMemo(() => {
+    if (!students) return []
+    return students.map((student) => {
+      const studentSteps = activitySteps.filter((s) => s.user_id === student.id)
+      const completed = studentSteps.filter((s) => s.complete).length
+      const total = allActivities.length
+      const rate = total > 0 ? Math.round((completed / total) * 100) : 0
+      const exerciseCount = student.log?.length ?? 0
+      const exerciseSuccess = exerciseCount > 0
+        ? Math.round((student.log.filter((l: ExerciseLog) => l.correct).length / exerciseCount) * 100)
+        : 0
+      return {
+        id: student.id,
+        name: `${student.first_name} ${student.last_name}`.trim() || student.email,
+        completed,
+        total,
+        rate,
+        exerciseCount,
+        exerciseSuccess,
+        level: student.level,
+        coins: student.coins,
+      }
+    }).sort((a, b) => b.rate - a.rate)
+  }, [students, activitySteps, allActivities])
+
+  const exerciseTimelineData = useMemo(() => {
+    if (!students) return []
+    const dayMap = new Map<string, { total: number; correct: number }>()
+    students.forEach((student) => {
+      (student.log ?? []).forEach((entry: ExerciseLog) => {
+        const day = entry.date?.split('T')[0]
+        if (!day) return
+        if (!dayMap.has(day)) dayMap.set(day, { total: 0, correct: 0 })
+        const d = dayMap.get(day)!
+        d.total++
+        if (entry.correct) d.correct++
+      })
+    })
+    return Array.from(dayMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-30)
+      .map(([date, data]) => ({
+        date: date.slice(5),
+        attempts: data.total,
+        correct: data.correct,
+      }))
+  }, [students])
+
+  if (courseLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    )
+  }
+
   return (
-    <div className="flex h-full items-center justify-center">
-      <div className="flex flex-col items-center space-y-3 text-gray-400">
-        <BarChart3 size={48} />
-        <p className="text-lg font-medium">Analytics coming soon</p>
+    <div className="h-full overflow-y-auto bg-white p-6">
+      <div className="space-y-6">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <SummaryCard
+            icon={<Users size={20} />}
+            label="Enrolled Students"
+            value={stats.totalStudents}
+            color="bg-blue-50 text-blue-600"
+          />
+          <SummaryCard
+            icon={<BookOpen size={20} />}
+            label="Activities"
+            value={stats.totalActivities}
+            color="bg-purple-50 text-purple-600"
+          />
+          <SummaryCard
+            icon={<CheckCircle2 size={20} />}
+            label="Completion Rate"
+            value={`${stats.completionRate}%`}
+            color="bg-green-50 text-green-600"
+          />
+          <SummaryCard
+            icon={<TrendingUp size={20} />}
+            label="Avg. Exercises/Student"
+            value={stats.avgExercises}
+            color="bg-amber-50 text-amber-600"
+          />
+        </div>
+
+        {/* Charts Row */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Chapter Completion Bar Chart */}
+          <Card className="lg:col-span-2">
+            <CardContent className="pt-6">
+              <h3 className="mb-4 text-sm font-semibold text-gray-700">Completion by Chapter</h3>
+              {chapterCompletionData.length > 0 ? (
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chapterCompletionData} margin={{ top: 0, right: 10, left: 0, bottom: 40 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fontSize: 11, fill: '#6b7280' }}
+                        angle={-30}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 11, fill: '#6b7280' }}
+                        domain={[0, 100]}
+                        tickFormatter={(v) => `${v}%`}
+                      />
+                      <Tooltip
+                        content={({ active, payload }) => {
+                          if (!active || !payload?.length) return null
+                          const d = payload[0].payload
+                          return (
+                            <div className="rounded-lg border bg-white px-3 py-2 shadow-md">
+                              <p className="text-sm font-medium">{d.fullName}</p>
+                              <p className="text-xs text-gray-500">{d.completed}/{d.total} completions ({d.rate}%)</p>
+                            </div>
+                          )
+                        }}
+                      />
+                      <Bar dataKey="rate" radius={[4, 4, 0, 0]}>
+                        {chapterCompletionData.map((_, i) => (
+                          <Cell key={i} fill={i % 2 === 0 ? '#EA8963' : '#F4A77D'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <p className="py-12 text-center text-sm text-gray-400">No chapter data available</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Verification Pie Chart */}
+          <Card>
+            <CardContent className="pt-6">
+              <h3 className="mb-4 text-sm font-semibold text-gray-700">Verification Status</h3>
+              {verificationData.length > 0 ? (
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={verificationData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={80}
+                        dataKey="value"
+                        nameKey="name"
+                      >
+                        {verificationData.map((entry, i) => (
+                          <Cell key={i} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        content={({ active, payload }) => {
+                          if (!active || !payload?.length) return null
+                          const d = payload[0].payload
+                          return (
+                            <div className="rounded-lg border bg-white px-3 py-2 shadow-md">
+                              <p className="text-sm font-medium">{d.name}: {d.value}</p>
+                            </div>
+                          )
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex justify-center gap-4">
+                    {verificationData.map((d) => (
+                      <div key={d.name} className="flex items-center gap-1.5">
+                        <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+                        <span className="text-xs text-gray-600">{d.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="py-12 text-center text-sm text-gray-400">No verification data</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Exercise Timeline */}
+        {exerciseTimelineData.length > 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <h3 className="mb-4 text-sm font-semibold text-gray-700">Exercise Activity (Last 30 Days)</h3>
+              <div className="h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={exerciseTimelineData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#6b7280' }} />
+                    <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} />
+                    <Tooltip
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload?.length) return null
+                        return (
+                          <div className="rounded-lg border bg-white px-3 py-2 shadow-md">
+                            <p className="text-xs font-medium text-gray-700">{label}</p>
+                            <p className="text-xs text-gray-500">Attempts: {payload[0]?.value}</p>
+                            <p className="text-xs text-green-600">Correct: {payload[1]?.value}</p>
+                          </div>
+                        )
+                      }}
+                    />
+                    <Line type="monotone" dataKey="attempts" stroke="#EA8963" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="correct" stroke="#22c55e" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+                <div className="mt-2 flex justify-center gap-4">
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-0.5 w-4 rounded bg-[#EA8963]" />
+                    <span className="text-xs text-gray-600">Attempts</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-0.5 w-4 rounded bg-[#22c55e]" />
+                    <span className="text-xs text-gray-600">Correct</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Student Progress Table */}
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="mb-4 text-sm font-semibold text-gray-700">Student Progress</h3>
+            {studentTableData.length > 0 ? (
+              <div className="max-h-[400px] overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Progress</TableHead>
+                      <TableHead className="text-center">Activities</TableHead>
+                      <TableHead className="text-center">Exercises</TableHead>
+                      <TableHead className="text-center">Success Rate</TableHead>
+                      <TableHead className="text-center">Level</TableHead>
+                      <TableHead className="text-center">Coins</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {studentTableData.map((student) => (
+                      <TableRow key={student.id}>
+                        <TableCell className="font-medium">{student.name}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Progress value={student.rate} className="h-2 w-20" />
+                            <span className="text-xs text-gray-500">{student.rate}%</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center text-xs text-gray-600">
+                          {student.completed}/{student.total}
+                        </TableCell>
+                        <TableCell className="text-center text-xs text-gray-600">
+                          {student.exerciseCount}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className={`text-xs font-medium ${
+                            student.exerciseSuccess >= 70 ? 'text-green-600' :
+                            student.exerciseSuccess >= 40 ? 'text-amber-600' : 'text-red-500'
+                          }`}>
+                            {student.exerciseCount > 0 ? `${student.exerciseSuccess}%` : '-'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center text-xs text-gray-600">
+                          {student.level}
+                        </TableCell>
+                        <TableCell className="text-center text-xs text-gray-600">
+                          {student.coins}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <p className="py-8 text-center text-sm text-gray-400">No student data available</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
+  )
+}
+
+function SummaryCard({
+  icon,
+  label,
+  value,
+  color,
+}: {
+  icon: React.ReactNode
+  label: string
+  value: string | number
+  color: string
+}) {
+  return (
+    <Card>
+      <CardContent className="flex items-center gap-4 p-4">
+        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${color}`}>
+          {icon}
+        </div>
+        <div>
+          <p className="text-2xl font-bold text-gray-900">{value}</p>
+          <p className="text-xs text-gray-500">{label}</p>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

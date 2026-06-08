@@ -1,7 +1,7 @@
 'use client'
 import PageLoading from '@components/Objects/Loaders/PageLoading';
-import { useSession } from 'next-auth/react';
-import React, { useContext, createContext, useEffect, useMemo, useState } from 'react'
+import { signOut, useSession } from 'next-auth/react';
+import React, { useContext, createContext, useEffect, useMemo, useRef, useState } from 'react'
 
 export const SessionContext = createContext({}) as any
 
@@ -12,6 +12,19 @@ function SokratesSessionProvider({ children }: { children: React.ReactNode }) {
         level?: number
         level_progress?: number
     } | null>(null)
+    const hasTriedSignOut = useRef(false)
+
+    useEffect(() => {
+        if (hasTriedSignOut.current) return
+        if (session?.status !== 'authenticated') return
+        const tokens = (session.data as any)?.tokens
+        const user = session.data?.user
+        const hasError = (session.data as any)?.error
+        if (hasError || (!tokens?.access_token && !user?.email)) {
+            hasTriedSignOut.current = true
+            signOut({ redirect: true, callbackUrl: '/auth/login' })
+        }
+    }, [session])
 
     useEffect(() => {
         const handler = (event: Event) => {
