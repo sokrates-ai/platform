@@ -1,0 +1,13 @@
+repos:
+  - repo: local
+    hooks:
+      - id: lint
+        name: lint
+        entry: make lint
+        language: system
+        pass_filenames: false
+      - id: api-tests
+        name: api tests
+        entry: make api-test
+        language: system
+        pass_filenames: false

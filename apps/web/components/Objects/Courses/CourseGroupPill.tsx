@@ -27,8 +27,11 @@ function displayName(user: {
   username: string
   email: string
 }) {
-  const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim()
-  return fullName || user.username || user.email
+  const first = user.first_name?.trim()
+  const lastInitial = user.last_name?.trim()?.[0]
+  if (first && lastInitial) return `${first} ${lastInitial}.`
+  if (first) return first
+  return user.username || user.email
 }
 
 function shortName(user: {

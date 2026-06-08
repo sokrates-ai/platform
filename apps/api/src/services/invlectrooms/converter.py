@@ -1251,7 +1251,24 @@ async def convert_invlectrooms_payload_to_course(
             checkpoint_level = _detect_checkpoint(problem)
 
         if checkpoint_level:
-            map_sequence.append(("checkpoint", (problem, checkpoint_level)))
+            chapter, activity = await _create_checkpoint_chapter(
+                level=checkpoint_level,
+                base_name=base_name,
+                problem=problem,
+                source_url=source_url,
+                payload=payload,
+                course=course,
+                xp_reward=xp_reward,
+                coin_reward=coin_reward,
+                request=request,
+                current_user=current_user,
+                db_session=db_session,
+            )
+            activities.append(activity)
+            chapter.activities = [activity]
+            chapters.append(chapter)
+            chapter_contexts.append((chapter, problem, checkpoint_level))
+            map_sequence.append(("chapter", (chapter, problem, checkpoint_level)))
             continue
 
         if _is_image_only_problem(problem):

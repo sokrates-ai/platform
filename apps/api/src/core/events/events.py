@@ -1,4 +1,5 @@
 from typing import Callable
+import os
 from fastapi import FastAPI
 from config.config import LearnHouseConfig, get_learnhouse_config
 from src.core.events.autoinstall import auto_install
@@ -18,6 +19,11 @@ def startup_app(app: FastAPI) -> Callable:
         # Get LearnHouse Config
         learnhouse_config: LearnHouseConfig = get_learnhouse_config()
         app.learnhouse_config = learnhouse_config  # type: ignore
+
+        if os.environ.get("LEARNHOUSE_TESTING") == "1":
+            await init_logging()
+            await check_content_directory()
+            return
 
         # Connect to database
         await connect_to_db(app)
@@ -42,6 +48,9 @@ def startup_app(app: FastAPI) -> Callable:
 
 def shutdown_app(app: FastAPI) -> Callable:
     async def close_app() -> None:
+        if os.environ.get("LEARNHOUSE_TESTING") == "1":
+            return
+
         await stop_notifications(app)
         await shutdown_workspace_runtime(app)
         await close_database(app)

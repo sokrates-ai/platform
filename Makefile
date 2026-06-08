@@ -1,4 +1,4 @@
-.PHONY: setup check sprites staging prod set-version
+.PHONY: setup check sprites staging prod set-version api-test pre-commit-install pre-commit-run
 
 env:
 	./dev.sh env
@@ -27,6 +27,17 @@ lsp-dev:
 
 lint:
 	./dev.sh lint
+
+api-test:
+	cd apps/api && poetry run env PYTHONPATH=. LEARNHOUSE_TESTING=1 pytest src/tests
+
+check: lint api-test
+
+pre-commit-install:
+	pre-commit install
+
+pre-commit-run:
+	pre-commit run --all-files
 
 version:
 	./dev.sh set-version

@@ -56,8 +56,9 @@ def _prepare_course_with_author(session: Session) -> Tuple[Course, str, PublicUs
     session.commit()
     session.refresh(course)
 
+    tab_uuid = f"tab_{uuid4()}"
     tab = CourseTab(
-        tab_uuid="tab-1",
+        tab_uuid=tab_uuid,
         course_id=course.id,
         course_uuid=course.course_uuid,
         name="Content",
@@ -361,9 +362,9 @@ def test_apply_invlectrooms_creates_activities(
         assert image_assets[0].get("type", {}).get("kind") == "default"
 
         boundaries = map_state.get("boundaries")
-        assert boundaries == {"left": -1000, "right": 1000, "top": -1000, "bottom": 1000}
+        assert boundaries == {"left": -1800, "right": 1800, "top": -1400, "bottom": 1400}
 
-        tab_map = course.tab_store.get("tab-1")
+        tab_map = course.tab_store.get(tab_uuid)
         assert isinstance(tab_map, dict)
         assert tab_map == map_state
     finally:

@@ -38,12 +38,11 @@ engine = create_engine(
     pool_pre_ping=True  # type: ignore
 )
 
-# Create all tables after importing all models
-SQLModel.metadata.create_all(engine)
-
 async def connect_to_db(app: FastAPI):
     app.db_engine = engine  # type: ignore
     logging.info("LearnHouse database has been started.")
+    # Create all tables once the application is actually starting. Keeping this
+    # out of module import lets tests override the DB dependency before use.
     SQLModel.metadata.create_all(engine)
 
 def get_db_session():
