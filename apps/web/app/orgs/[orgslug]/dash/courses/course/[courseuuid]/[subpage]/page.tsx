@@ -10,13 +10,14 @@ import {
 import Link from 'next/link'
 import { CourseOverviewTop } from '@components/Dashboard/Misc/CourseOverviewTop'
 import { motion } from 'framer-motion'
-import { GalleryVerticalEnd, Map, Info, LayoutGrid, UserRoundCog, Users } from 'lucide-react'
+import { BarChart3, GalleryVerticalEnd, Map, Info, LayoutGrid, UserRoundCog, Users } from 'lucide-react'
 import EditCourseStructure from '@components/Dashboard/Pages/Course/EditCourseStructure/EditCourseStructure'
 import EditCourseGeneral from '@components/Dashboard/Pages/Course/EditCourseGeneral/EditCourseGeneral'
 import EditCourseAccess from '@components/Dashboard/Pages/Course/EditCourseAccess/EditCourseAccess'
 import EditCourseMap from '@components/Dashboard/Pages/Course/EditCourseMap/EditCourseMap'
 import ManageCourseMembers from '@components/Dashboard/Pages/Course/ManageCourseMembers/ManageCourseMembers'
 import ManageCourseRooms from '@components/Dashboard/Pages/Course/ManageCourseRooms/ManageCourseRooms'
+import CourseAnalytics from '@components/Dashboard/Pages/Course/CourseAnalytics/CourseAnalytics'
 import {
   CourseTab,
   DEFAULT_COURSE_TABS,
@@ -406,6 +407,12 @@ function CourseOverviewLayout({ params }: { params: CourseOverviewParams }) {
             icon={<LayoutGrid size={16} />}
             label="Rooms"
           />
+          <NavigationLink
+            href={`${getUriWithOrg(params.orgslug, '')}/dash/courses/course/${params.courseuuid}/analytics`}
+            active={params.subpage.toString() === 'analytics'}
+            icon={<BarChart3 size={16} />}
+            label="Analytics"
+          />
         </div>
       </div>
       <motion.div
@@ -447,6 +454,7 @@ function CourseOverviewLayout({ params }: { params: CourseOverviewParams }) {
           <ManageCourseMembers orgslug={params.orgslug} />
         ) : null}
         {params.subpage === 'rooms' ? <ManageCourseRooms /> : null}
+        {params.subpage === 'analytics' ? <CourseAnalytics /> : null}
       </motion.div>
     </>
   )
