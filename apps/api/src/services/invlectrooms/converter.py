@@ -224,13 +224,38 @@ def _apply_checkpoint_marker(
     metadata["checkpointLevel"] = level
     slot["metadata"] = metadata
 
+_SIMPLE_MACROS: Dict[str, str] = {
+    "\\CalF": "\\mathcal{F}",
+    "\\bigO": "\\mathcal{O}",
+    "\\Bij": "\\mathcal{B}",
+    "\\natnum": "\\mathbb{N}",
+    "\\integers": "\\mathbb{Z}",
+    "\\rationals": "\\mathbb{Q}",
+    "\\realnum": "\\mathbb{R}",
+    "\\less": "\\lt",
+    "\\modulo": "\\; \\mathrm{mod} \\;",
+    "\\isom": "\\cong",
+    "\\qed": "\\Box",
+}
+
+_PARAMETERIZED_MACROS: List[Tuple[re.Pattern, str]] = [
+    (re.compile(r"\\set\{([^}]*)\}\{([^}]*)\}"), r"\\{\1 \\mid \2\\}"),
+    (re.compile(r"\\vec\{([^}]*)\}"), r"\1"),
+    (re.compile(r"\\eqnComment\{([^}]*)\}\{([^}]*)\}"), r"\\underset{{\\scriptstyle \\text{\1}}}{\2}"),
+    (re.compile(r"\\Pr\{([^}]*)\}"), r"\\mathrm{Pr}\\left[\1\\right]"),
+    (re.compile(r"\\Ew\{([^}]*)\}"), r"\\mathrm{E}\\left[\1\\right]"),
+    (re.compile(r"\\Var\{([^}]*)\}"), r"\\mathrm{Var}\\left[\1\\right]"),
+]
+
+
 def _normalize_text(value: Optional[str]) -> str:
     if not value:
         return ""
     normalized = re.sub(r"\s+", " ", value).strip()
-    normalized = normalized.replace("\\realnum", "\\mathbb{R}")
-    normalized = normalized.replace("\\natnum", "\\mathbb{N}")
-    normalized = normalized.replace("\\integers", "\\mathbb{Z}")
+    for macro, replacement in _SIMPLE_MACROS.items():
+        normalized = normalized.replace(macro, replacement)
+    for pattern, replacement in _PARAMETERIZED_MACROS:
+        normalized = pattern.sub(replacement, normalized)
     return normalized
 
 
