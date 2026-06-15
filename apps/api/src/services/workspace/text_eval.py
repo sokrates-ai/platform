@@ -134,6 +134,28 @@ Rules:
     return _coerce_feedback(data, submission)
 
 
+async def evaluate_sandbox_submission(
+    *,
+    problem: str,
+    solution: str,
+    rubric: str,
+    model: str | None = None,
+) -> dict[str, Any]:
+    """Sandbox adapter: maps user-supplied problem/solution/rubric onto the
+    workspace text-eval task shape and delegates to the existing pipeline."""
+    rubric_clean = (rubric or "").strip()
+    task = {
+        "task": (problem or "").strip(),
+        "solution": "",
+        "grading_criteria": (
+            [{"short": "User rubric", "detail": rubric_clean, "must_fix": True}]
+            if rubric_clean
+            else []
+        ),
+    }
+    return await evaluate_text_submission(task, solution, model)
+
+
 async def evaluate_text_submission(
     task: dict[str, Any],
     submission: str,

@@ -12,6 +12,7 @@ from src.routers.workspace import (
     flashcard as workspace_flashcard,
     images as workspace_images,
     judge0 as workspace_judge0,
+    sandbox as workspace_sandbox,
     sessions as workspace_sessions,
     system as workspace_system,
     text as workspace_text,
@@ -52,6 +53,7 @@ v1_router.include_router(workspace_code.router)
 v1_router.include_router(workspace_images.router)
 v1_router.include_router(workspace_system.router)
 v1_router.include_router(workspace_judge0.router)
+v1_router.include_router(workspace_sandbox.router)
 v1_router.include_router(health.router, prefix="/health", tags=["health"])
 v1_router.include_router(
     invlectrooms.router, prefix="/invlectrooms", tags=["invlectrooms"]

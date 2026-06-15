@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation' // ✅ import hook
 import { Button } from '@/components/ui/button'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import Canvas, { LayoutState } from '@components/Objects/ContentMap/Canvas'
-import { DoorOpen, EyeOff, Menu, X } from 'lucide-react'
+import { DoorOpen, EyeOff, Menu, Sparkles, X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { getUriWithOrg, getWebSocketUrl } from '@services/config/config'
 import usePrefetchPixiAssets from '@components/Objects/ContentMap/hooks/usePrefetchPixiAssets'
@@ -33,6 +33,7 @@ import {
   updateCourseCanvasInteractionState,
 } from '@services/courses/courses'
 import CourseChapter from '@components/Pages/Courses/CourseChapter'
+import CourseSandbox from '@components/Pages/Courses/CourseSandbox'
 import { cn } from '@/lib/utils'
 import { DEFAULT_COURSE_TABS } from '@components/Objects/Modals/Course/Create/CourseTabSelector'
 import useCourseStaffStatus from '@components/Hooks/useCourseStaffStatus'
@@ -655,6 +656,7 @@ const CourseStartedView = ({
     src: string
     label?: string
   } | null>(null)
+  const [sandboxOpen, setSandboxOpen] = useState(false)
 
   const assetsProgressPercent = Math.min(
     100,
@@ -965,6 +967,21 @@ const CourseStartedView = ({
         />}
       />
       <Modal
+        isDialogOpen={sandboxOpen}
+        onOpenChange={setSandboxOpen}
+        customWidth="w-screen max-w-screen rounded-none border-0 sm:w-[80vw] sm:max-w-[80vw] sm:rounded-[0.875rem] sm:border-4 md:w-[90vw] md:max-w-[90vw] lg:w-[90vw] lg:max-w-[90vw] xl:w-[70vw] xl:max-w-[70vw]"
+        customHeight="h-[100dvh] max-h-[100dvh] sm:h-[80vh] sm:max-h-[80vh] md:h-[85vh] md:max-h-[85vh] lg:h-[85vh] lg:max-h-[85vh] xl:h-[80vh] xl:max-h-[80vh]"
+        overlayClassName="backdrop-blur-sm"
+        dialogContent={
+          <CourseSandbox
+            courseUuid={courseUuidWithPrefix}
+            userId={studentUserId}
+            accessToken={access_token ?? null}
+            onClose={() => setSandboxOpen(false)}
+          />
+        }
+      />
+      <Modal
         isDialogOpen={imageDialogOpen}
         onOpenChange={(open) => {
           setImageDialogOpen(open)
@@ -1054,20 +1071,31 @@ const CourseStartedView = ({
         )}
       </div>
 
-      <Link href={getUriWithOrg(orgslug, '/')}>
-        <Button
-          variant="secondary"
-          size="default"
-          className="
-            absolute bottom-8
-            left-1/2 transform -translate-x-1/2
-            md:left-8 md:translate-x-0
-            z-10 h-10 w-18
-          "
-        >
-          <DoorOpen className="size-6" style={{ color: '#454545' }} />
-        </Button>
-      </Link>
+      <div
+        className="
+          absolute bottom-8
+          left-1/2 transform -translate-x-1/2
+          md:left-8 md:translate-x-0
+          z-10 flex items-center gap-2
+        "
+      >
+        <Link href={getUriWithOrg(orgslug, '/')}>
+          <Button variant="secondary" size="default" className="h-10 w-18">
+            <DoorOpen className="size-6" style={{ color: '#454545' }} />
+          </Button>
+        </Link>
+        {access_token ? (
+          <Button
+            variant="secondary"
+            size="default"
+            onClick={() => setSandboxOpen(true)}
+            className="h-10 gap-1.5 px-3"
+          >
+            <Sparkles className="size-4" style={{ color: '#FF6934' }} />
+            <span className="text-sm font-medium text-[#454545]">Sandbox</span>
+          </Button>
+        ) : null}
+      </div>
 
       <div className="absolute bottom-8 right-8 z-20 flex items-center gap-1 rounded-xl border border-gray-200 bg-white/90 px-2 py-1 shadow-lg backdrop-blur">
         <button
