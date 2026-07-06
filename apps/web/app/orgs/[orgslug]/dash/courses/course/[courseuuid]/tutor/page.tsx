@@ -49,6 +49,7 @@ import {
 } from '@services/courses/rooms'
 import { swrFetcher } from '@services/utils/ts/requests'
 import { isDynamicActivity } from '@components/Pages/Courses/utils'
+import AddStudentsDialog from './AddStudentsDialog'
 
 dayjs.extend(relativeTime)
 
@@ -321,6 +322,7 @@ function TutorCourseLayout({
     data: rooms,
     error: roomsError,
     isLoading: roomsLoading,
+    mutate: mutateRooms,
   } = useSWR(roomsKey, (url: string) => swrFetcher(url, accessToken))
   const {
     data: selection,
@@ -433,6 +435,7 @@ function TutorCourseLayout({
     data: roomMembers,
     error: roomMembersError,
     isLoading: roomMembersLoading,
+    mutate: mutateMembers,
   } = useSWR(membersKey, (url: string) => swrFetcher(url, accessToken))
   const { data: memberGroups } = useSWR<CourseMemberGroup[]>(
     memberGroupsKey,
@@ -979,8 +982,13 @@ function TutorCourseLayout({
               basePath={tutorBasePath}
               orgslug={params.orgslug}
               courseuuid={params.courseuuid}
+              courseApiUuid={courseUuid}
               accessToken={accessToken}
               onlineStatusMap={onlineStatusMap}
+              onStudentsAdded={() => {
+                mutateMembers()
+                mutateRooms()
+              }}
             />
           ) : null}
 
@@ -1090,8 +1098,10 @@ function SelectedRoomPanel({
   basePath,
   orgslug,
   courseuuid,
+  courseApiUuid,
   accessToken,
   onlineStatusMap: onlineStatusMapProp,
+  onStudentsAdded,
 }: {
   room: Room
   members: RoomMember[]
@@ -1117,8 +1127,10 @@ function SelectedRoomPanel({
   basePath: string
   orgslug: string
   courseuuid: string
+  courseApiUuid: string
   accessToken?: string
   onlineStatusMap: Map<number, boolean>
+  onStudentsAdded: () => void
 }) {
   const onlineStatusMap = onlineStatusMapProp ?? new Map<number, boolean>()
   const router = useRouter()
@@ -1518,13 +1530,19 @@ function SelectedRoomPanel({
           </div>
         ) : null}
         {!isDrilldown ? (
-          <div className="flex flex-wrap gap-2 text-xs font-semibold">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
             <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700">
               {room.student_count ?? 0} Students
             </span>
             <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700">
               {room.tutor_count ?? 0} Tutors
             </span>
+            <AddStudentsDialog
+              courseUuid={courseApiUuid}
+              roomId={room.id}
+              accessToken={accessToken}
+              onStudentsAdded={onStudentsAdded}
+            />
           </div>
         ) : null}
       </div>

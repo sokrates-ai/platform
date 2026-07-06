@@ -363,6 +363,7 @@ async def add_activity_to_trail(
             user_id=user.id,
             creation_date=str(datetime.now()),
             update_date=str(datetime.now()),
+            completed_date=str(datetime.now()) if complete else None,
         )
         db_session.add(trailstep)
         db_session.commit()
@@ -381,6 +382,10 @@ async def add_activity_to_trail(
         # Update the existing trail step with new data
         trailstep.update_date = str(datetime.now())
         if complete:
+            # Record the first completion so we can measure first-view→complete
+            # duration and, later, complete→verify tutor response time.
+            if not trailstep.complete and trailstep.completed_date is None:
+                trailstep.completed_date = str(datetime.now())
             trailstep.complete = complete
         db_session.add(trailstep)
         db_session.commit()
@@ -813,6 +818,9 @@ async def verify_trail_step_by_tutor(
         previous_status_by_user_id[target_user_id] = target_step.tutor_verified
         target_step.tutor_verified = status
         target_step.update_date = str(datetime.now())
+        # Record the first real tutor verification (complete→verify response time).
+        if status != TrailStepVerificationEnum.NONE and target_step.verified_date is None:
+            target_step.verified_date = str(datetime.now())
         db_session.add(target_step)
         affected_user_ids.append(target_user_id)
     db_session.commit()

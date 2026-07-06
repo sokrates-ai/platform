@@ -53,6 +53,11 @@ class TrailStep(SQLModel, table=True):
     # timestamps
     creation_date: str
     update_date: str
+    # timestamp of when the student first marked the step complete (first view →
+    # complete duration is measured from creation_date). Nullable for legacy rows.
+    completed_date: Optional[str] = Field(default=None, sa_column=Column(String))
+    # timestamp of the first tutor verification (complete → verify response time).
+    verified_date: Optional[str] = Field(default=None, sa_column=Column(String))
 
 
 # note : prepare assignments support

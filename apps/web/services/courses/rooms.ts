@@ -69,6 +69,32 @@ export async function addCourseRoomMembers(
   return await getResponseMetadata(result)
 }
 
+export async function getAvailableRoomStudents(
+  course_uuid: string,
+  room_id: number,
+  access_token: string
+) {
+  const result: any = await fetch(
+    `${getAPIUrl()}courses/${course_uuid}/rooms/${room_id}/available-students`,
+    RequestBodyWithAuthHeader('GET', null, null, access_token)
+  )
+  return await getResponseMetadata(result)
+}
+
+export async function addRoomStudents(
+  course_uuid: string,
+  room_id: number,
+  user_ids: RoomMemberIds,
+  access_token: string
+) {
+  const userIdsParam = Array.isArray(user_ids) ? user_ids.join(',') : user_ids
+  const result: any = await fetch(
+    `${getAPIUrl()}courses/${course_uuid}/rooms/${room_id}/students/add?user_ids=${userIdsParam}`,
+    RequestBodyWithAuthHeader('POST', null, null, access_token)
+  )
+  return await getResponseMetadata(result)
+}
+
 export async function removeCourseRoomMembers(
   course_uuid: string,
   room_id: number,

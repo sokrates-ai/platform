@@ -2,7 +2,7 @@ from typing import List
 from fastapi import APIRouter, Depends, UploadFile, Form, HTTPException, Request
 from pydantic import BaseModel
 from sqlmodel import Session
-from src.db.users import PublicUser
+from src.db.users import PublicUser, UserRead
 from src.core.events.database import get_db_session
 from src.db.courses.course_canvas import CourseCanvasUpdate
 from src.db.courses.course_rooms import (
@@ -61,8 +61,10 @@ from src.services.courses.rooms import (
     update_course_room,
 )
 from src.services.courses.tutor_room_selection import (
+    add_room_students,
     clear_tutor_room_selection,
     get_tutor_room_selection,
+    list_available_room_students,
     list_room_activity_status,
     set_tutor_room_selection,
 )
@@ -95,6 +97,8 @@ class RoomActivityStatusStep(BaseModel):
     tutor_verified: TrailStepVerificationEnum
     creation_date: str | None = None
     update_date: str | None = None
+    completed_date: str | None = None
+    verified_date: str | None = None
 
 
 class RoomActivityStatusRead(BaseModel):
@@ -627,6 +631,39 @@ async def api_add_course_room_members(
     """
     return await add_course_room_members(
         request, course_uuid, room_id, user_ids, role, current_user, db_session
+    )
+
+
+@router.get('/{course_uuid}/rooms/{room_id}/available-students')
+async def api_list_available_room_students(
+    request: Request,
+    course_uuid: str,
+    room_id: int,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+) -> List[UserRead]:
+    """
+    List students enrolled in the course who are not yet members of the room.
+    """
+    return await list_available_room_students(
+        request, course_uuid, room_id, current_user, db_session
+    )
+
+
+@router.post('/{course_uuid}/rooms/{room_id}/students/add')
+async def api_add_room_students(
+    request: Request,
+    course_uuid: str,
+    room_id: int,
+    user_ids: str,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+):
+    """
+    Add students to a course room (tutor-scoped).
+    """
+    return await add_room_students(
+        request, course_uuid, room_id, user_ids, current_user, db_session
     )
 
 

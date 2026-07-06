@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 from fastapi import HTTPException, Request
 from sqlmodel import Session, select
@@ -12,8 +13,10 @@ from src.db.courses.course_tutor_room_selection import (
 )
 from src.db.roles import Role
 from src.db.user_organizations import UserOrganization
-from src.db.users import AnonymousUser, PublicUser
+from src.db.users import AnonymousUser, PublicUser, User, UserRead
+from src.db.trail_runs import TrailRun
 from src.db.trail_steps import TrailStep
+from src.services.courses.rooms import ensure_user_role_for_room, parse_user_ids
 
 
 def get_course_and_role_flags(
@@ -257,6 +260,103 @@ async def list_room_activity_status(
             "tutor_verified": step.tutor_verified,
             "creation_date": step.creation_date,
             "update_date": step.update_date,
+            "completed_date": step.completed_date,
+            "verified_date": step.verified_date,
         }
         for step in steps
     ]
+
+
+async def list_available_room_students(
+    _request: Request,
+    course_uuid: str,
+    room_id: int,
+    current_user: PublicUser | AnonymousUser,
+    db_session: Session,
+) -> List[UserRead]:
+    """
+    List students enrolled in the course who are not yet members of the given room.
+    Tutor-scoped: the caller must be a tutor of this room (or an admin/maintainer).
+    """
+    course, role_flags = get_course_and_role_flags(
+        course_uuid, current_user, db_session
+    )
+    room = ensure_user_can_manage_room(
+        room_id, course, current_user, role_flags, db_session
+    )
+
+    existing_member_ids = db_session.exec(
+        select(CourseRoomMember.user_id).where(CourseRoomMember.room_id == room.id)
+    ).all()
+    existing_member_ids = {uid for uid in existing_member_ids if uid is not None}
+
+    statement = (
+        select(User)
+        .join(TrailRun, TrailRun.user_id == User.id)
+        .join(UserOrganization, UserOrganization.user_id == User.id)
+        .join(Role, Role.id == UserOrganization.role_id)
+        .where(
+            TrailRun.course_id == course.id,
+            UserOrganization.org_id == course.org_id,
+            (Role.role_uuid == "role_global_student") | (Role.id == 3),
+        )
+        .distinct()
+    )
+    students = db_session.exec(statement).all()
+
+    return [
+        UserRead.model_validate(student)
+        for student in students
+        if student.id is not None and student.id not in existing_member_ids
+    ]
+
+
+async def add_room_students(
+    _request: Request,
+    course_uuid: str,
+    room_id: int,
+    user_ids: str,
+    current_user: PublicUser | AnonymousUser,
+    db_session: Session,
+) -> str:
+    """
+    Add one or more students to the given room.
+    Tutor-scoped: the caller must be a tutor of this room (or an admin/maintainer).
+    Membership is non-exclusive (a student may belong to multiple rooms).
+    """
+    course, role_flags = get_course_and_role_flags(
+        course_uuid, current_user, db_session
+    )
+    room = ensure_user_can_manage_room(
+        room_id, course, current_user, role_flags, db_session
+    )
+
+    user_id_list = parse_user_ids(user_ids)
+    if not user_id_list:
+        raise HTTPException(status_code=400, detail="No user_ids provided")
+
+    for user_id in user_id_list:
+        ensure_user_role_for_room(user_id, course, RoomRoleEnum.student, db_session)
+
+        existing = db_session.exec(
+            select(CourseRoomMember).where(
+                CourseRoomMember.room_id == room.id,
+                CourseRoomMember.user_id == user_id,
+            )
+        ).first()
+        if existing:
+            continue
+
+        now = str(datetime.now())
+        db_session.add(
+            CourseRoomMember(
+                room_id=room.id,
+                user_id=user_id,
+                role=RoomRoleEnum.student,
+                creation_date=now,
+                update_date=now,
+            )
+        )
+        db_session.commit()
+
+    return "Students added to room successfully"

@@ -473,12 +473,14 @@ async def DEPRECEATED_get_course_chapters(
         }
 
     # get chapter order
+    # NOTE: CourseChapter.order was removed in a migration; chapter ordering now
+    # comes from CourseChapter_Graph. Fall back to a stable id-based order here.
     statement = (
         select(Chapter)
         .join(CourseChapter, CourseChapter.chapter_id == Chapter.id)
         .where(CourseChapter.chapter_id == Chapter.id)
-        .group_by(Chapter.id, CourseChapter.order)
-        .order_by(CourseChapter.order)
+        .group_by(Chapter.id)
+        .order_by(Chapter.id)
     )
     chapters_in_db = db_session.exec(statement).all()
 
