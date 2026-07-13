@@ -65,6 +65,7 @@ from src.services.courses.tutor_room_selection import (
     clear_tutor_room_selection,
     get_tutor_room_selection,
     list_available_room_students,
+    list_course_activity_status,
     list_room_activity_status,
     set_tutor_room_selection,
 )
@@ -612,6 +613,23 @@ async def api_list_course_room_activity_status(
     """
     steps = await list_room_activity_status(
         request, course_uuid, room_id, activity_uuids, current_user, db_session
+    )
+    return RoomActivityStatusRead(steps=steps)
+
+
+@router.get('/{course_uuid}/activity-status')
+async def api_list_course_activity_status(
+    request: Request,
+    course_uuid: str,
+    activity_uuids: str = "",
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+) -> RoomActivityStatusRead:
+    """
+    List activity status for all students in a course.
+    """
+    steps = await list_course_activity_status(
+        request, course_uuid, activity_uuids, current_user, db_session
     )
     return RoomActivityStatusRead(steps=steps)
 

@@ -1,18 +1,20 @@
 'use client'
 
 import React, { useState } from 'react'
-import { LayoutDashboard, Layers, DoorOpen, Loader2 } from 'lucide-react'
+import { LayoutDashboard, Layers, DoorOpen, Grid3x3, Loader2 } from 'lucide-react'
 import { useAnalyticsData } from './useAnalyticsData'
 import AnalyticsOverview from './AnalyticsOverview'
 import AnalyticsByTab from './AnalyticsByTab'
 import AnalyticsByRoom from './AnalyticsByRoom'
+import AnalyticsMatrix from './AnalyticsMatrix'
 
-type AnalyticsSubPage = 'overview' | 'by-tab' | 'by-room'
+type AnalyticsSubPage = 'overview' | 'by-tab' | 'by-room' | 'matrix'
 
 const SUB_PAGES: { id: AnalyticsSubPage; label: string; icon: React.ReactNode }[] = [
   { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={16} /> },
   { id: 'by-tab', label: 'By Tab', icon: <Layers size={16} /> },
   { id: 'by-room', label: 'By Room', icon: <DoorOpen size={16} /> },
+  { id: 'matrix', label: 'Matrix', icon: <Grid3x3 size={16} /> },
 ]
 
 export default function CourseAnalytics() {
@@ -74,6 +76,15 @@ export default function CourseAnalytics() {
             students={students}
             allActivities={allActivities}
             activitySteps={activitySteps}
+          />
+        )}
+        {subPage === 'matrix' && (
+          <AnalyticsMatrix
+            courseUuid={courseUuid}
+            tabs={tabs}
+            rooms={rooms}
+            students={students}
+            allActivities={allActivities}
           />
         )}
         {subPage === 'by-room' && (

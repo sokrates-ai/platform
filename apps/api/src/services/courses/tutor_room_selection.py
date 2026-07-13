@@ -215,6 +215,48 @@ def _parse_activity_uuids(activity_uuids: str) -> list[str]:
     return parsed
 
 
+async def list_course_activity_status(
+    _request: Request,
+    course_uuid: str,
+    activity_uuids: str,
+    current_user: PublicUser | AnonymousUser,
+    db_session: Session,
+) -> list[dict]:
+    course, role_flags = get_course_and_role_flags(
+        course_uuid, current_user, db_session
+    )
+    if not (role_flags["is_admin"] or role_flags["is_maintainer"]):
+        raise HTTPException(
+            status_code=403,
+            detail="User does not have permission to view course activity status",
+        )
+
+    normalized_activity_uuids = _parse_activity_uuids(activity_uuids)
+    if not normalized_activity_uuids:
+        return []
+
+    steps = db_session.exec(
+        select(TrailStep).where(
+            TrailStep.course_id == course.id,
+            TrailStep.activity_uuid.in_(normalized_activity_uuids),
+        )
+    ).all()
+
+    return [
+        {
+            "user_id": step.user_id,
+            "activity_uuid": step.activity_uuid,
+            "complete": step.complete,
+            "tutor_verified": step.tutor_verified,
+            "creation_date": step.creation_date,
+            "update_date": step.update_date,
+            "completed_date": step.completed_date,
+            "verified_date": step.verified_date,
+        }
+        for step in steps
+    ]
+
+
 async def list_room_activity_status(
     _request: Request,
     course_uuid: str,
