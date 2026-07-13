@@ -17,6 +17,16 @@ lh_config = get_learnhouse_config()
 # access to the values within the .ini file in use.
 config = context.config
 
+# Point alembic at the application's database instead of the hardcoded
+# localhost URL in alembic.ini. A programmatic caller (startup migrations)
+# may pass its own URL via config.attributes, which takes precedence.
+# Literal % must be escaped for configparser.
+_db_url = config.attributes.get("sqlalchemy_url") or (
+    lh_config.database_config.sql_connection_string
+)
+if _db_url:
+    config.set_main_option("sqlalchemy.url", _db_url.replace("%", "%%"))
+
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:

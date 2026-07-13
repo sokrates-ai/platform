@@ -3,7 +3,9 @@ import os
 import importlib
 from config.config import get_learnhouse_config
 from fastapi import FastAPI
-from sqlmodel import SQLModel, Session, create_engine
+from sqlmodel import Session, create_engine
+
+from src.core.events.migrations import run_database_migrations
 
 def import_all_models():
     base_dir = 'src/db'
@@ -41,9 +43,10 @@ engine = create_engine(
 async def connect_to_db(app: FastAPI):
     app.db_engine = engine  # type: ignore
     logging.info("LearnHouse database has been started.")
-    # Create all tables once the application is actually starting. Keeping this
-    # out of module import lets tests override the DB dependency before use.
-    SQLModel.metadata.create_all(engine)
+    # Bring the schema up to date once the application is actually starting.
+    # Keeping this out of module import lets tests override the DB dependency
+    # before use.
+    run_database_migrations(engine)
 
 def get_db_session():
     with Session(engine) as session:
