@@ -29,10 +29,9 @@ export { DEFAULT_COURSE_TABS, type CourseTab } from './courseTabs';
 const deriveCounter = (tabs: CourseTab[]): number => {
   const numericIds = tabs
     .map((tab) => {
-      const matches = tab.id.match(/(\d+)/g);
-      if (!matches) return Number.NaN;
-      const lastMatch = matches[matches.length - 1];
-      return Number.parseInt(lastMatch, 10);
+      const match = tab.id.match(/^tab-(\d+)/);
+      if (!match) return Number.NaN;
+      return Number.parseInt(match[1], 10);
     })
     .filter((value) => Number.isFinite(value));
 
@@ -41,6 +40,16 @@ const deriveCounter = (tabs: CourseTab[]): number => {
   }
 
   return Math.max(...numericIds);
+};
+
+const deriveTabIdSuffix = (tabs: CourseTab[]): string => {
+  for (const tab of tabs) {
+    const match = tab.id.match(/^tab-\d+(.+)$/);
+    if (match?.[1]) {
+      return match[1];
+    }
+  }
+  return '';
 };
 
 const StrictModeDroppable: React.FC<DroppableProps> = ({ children, ...props }) => {
@@ -63,8 +72,14 @@ export interface CourseTabSelectorProps {
   initialTabs?: CourseTab[];
   tabs?: CourseTab[];
   activeTab?: string;
-  onTabsChange?: (tabs: CourseTab[]) => void;
-  onActiveTabChange?: (tabId: string) => void;
+  onTabsChange?: (
+    tabs: CourseTab[],
+    change?: { type: 'create' | 'remove' | 'reorder' | 'update'; tabId?: string },
+  ) => void;
+  onActiveTabChange?: (
+    tabId: string,
+    change?: { type: 'create' | 'remove' | 'manual' },
+  ) => void;
   renderTabContent?: (tab: CourseTab) => React.ReactNode;
   addButtonLabel?: string;
   orientation?: 'horizontal' | 'vertical';
@@ -222,24 +237,27 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
     }
     if (tabs.length === 0) {
       setInternalActiveTab('');
-      onActiveTabChange?.('');
+      onActiveTabChange?.('', { type: 'remove' });
       return;
     }
     if (!tabs.some((tab) => tab.id === internalActiveTab)) {
       const fallback = tabs[0]?.id ?? '';
       setInternalActiveTab(fallback);
-      onActiveTabChange?.(fallback);
+      onActiveTabChange?.(fallback, { type: 'remove' });
     }
   }, [tabs, isActiveTabControlled, internalActiveTab, onActiveTabChange]);
 
   const handleActiveTabChange = useCallback(
-    (value: string) => {
+    (
+      value: string,
+      change: { type: 'create' | 'remove' | 'manual' } = { type: 'manual' },
+    ) => {
       setEditingTabId(null);
       setEditingValue('');
       if (!isActiveTabControlled) {
         setInternalActiveTab(value);
       }
-      onActiveTabChange?.(value);
+      onActiveTabChange?.(value, change);
     },
     [isActiveTabControlled, onActiveTabChange],
   );
@@ -263,7 +281,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
     if (!trimmedName) return;
 
     tabCounterRef.current += 1;
-    const newTabId = `tab-${tabCounterRef.current}`;
+    const newTabId = `tab-${tabCounterRef.current}${deriveTabIdSuffix(tabs)}`;
 
     const nextTabs = [
       ...tabs,
@@ -277,8 +295,8 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
     if (!isTabsControlled) {
       setInternalTabs(nextTabs);
     }
-    onTabsChange?.(nextTabs);
-    handleActiveTabChange(newTabId);
+    onTabsChange?.(nextTabs, { type: 'create', tabId: newTabId });
+    handleActiveTabChange(newTabId, { type: 'create' });
 
     setNewTabName('');
     setIsAddDialogOpen(false);
@@ -322,7 +340,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
         setInternalTabs(nextTabs);
       }
       if (hasChanged) {
-        onTabsChange?.(nextTabs);
+        onTabsChange?.(nextTabs, { type: 'update', tabId });
       }
       setEditingTabId(null);
       setEditingValue('');
@@ -336,7 +354,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
       if (!isTabsControlled) {
         setInternalTabs(nextTabs);
       }
-      onTabsChange?.(nextTabs);
+      onTabsChange?.(nextTabs, { type: 'update', tabId });
     },
     [isTabsControlled, onTabsChange, tabs],
   );
@@ -385,11 +403,11 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
     if (!isTabsControlled) {
       setInternalTabs(filteredTabs);
     }
-    onTabsChange?.(filteredTabs);
+    onTabsChange?.(filteredTabs, { type: 'remove', tabId: tabPendingRemoval.id });
 
     if (tabPendingRemoval.id === activeTab) {
       const fallbackTab = filteredTabs[Math.max(filteredTabs.length - 1, 0)];
-      handleActiveTabChange(fallbackTab?.id ?? '');
+      handleActiveTabChange(fallbackTab?.id ?? '', { type: 'remove' });
     }
 
     setTabPendingRemoval(null);
@@ -441,7 +459,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
           if (!isTabsControlled) {
             setInternalTabs(reordered);
           }
-          onTabsChange?.(reordered);
+          onTabsChange?.(reordered, { type: 'reorder', tabId: moved.id });
           if (!isActiveTabControlled) {
             const stillActive = reordered.find((tab) => tab.id === activeTab);
             if (!stillActive) {

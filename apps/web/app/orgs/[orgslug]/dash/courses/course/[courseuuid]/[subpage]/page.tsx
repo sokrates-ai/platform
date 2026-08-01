@@ -37,6 +37,8 @@ type CourseTabStoreEntry = {
 }
 
 type CourseTabStore = Record<string, CourseTabStoreEntry>
+type CourseTabsChange = { type: 'create' | 'remove' | 'reorder' | 'update'; tabId?: string }
+type ActiveTabChange = { type: 'create' | 'remove' | 'manual' }
 
 function createEmptyMapState() {
   return {
@@ -138,30 +140,30 @@ function CourseOverviewLayout({ params }: { params: CourseOverviewParams }) {
     [params.courseuuid],
   )
   const hasSyncedActiveTabRef = React.useRef(false)
+  const skipNextActiveTabPersistRef = React.useRef<string | null>(null)
   const getStoredTabId = React.useCallback(() => {
     if (typeof window === 'undefined') return null
     const value = window.sessionStorage.getItem(activeTabStorageKey)
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[CourseEditor] read stored tab', {
-        activeTabStorageKey,
-        value,
-      })
-    }
     return value
   }, [activeTabStorageKey])
   const setStoredTabId = React.useCallback(
     (tabId: string) => {
       if (typeof window === 'undefined') return
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('[CourseEditor] write stored tab', {
-          activeTabStorageKey,
-          tabId,
-        })
-      }
       window.sessionStorage.setItem(activeTabStorageKey, tabId)
     },
     [activeTabStorageKey],
   )
+  const removeStoredTabId = React.useCallback(() => {
+    if (typeof window === 'undefined') return
+    window.sessionStorage.removeItem(activeTabStorageKey)
+  }, [activeTabStorageKey])
+
+  const requestAutosave = React.useCallback(() => {
+    if (typeof window === 'undefined') return
+    window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('course:autosave'))
+    }, 50)
+  }, [])
 
   React.useEffect(() => {
     setTabs(initialTabs)
@@ -172,26 +174,12 @@ function CourseOverviewLayout({ params }: { params: CourseOverviewParams }) {
     const storedTabId = getStoredTabId()
     const normalizedStoredTabId =
       storedTabId &&
-      (tabs.find((tab) => tab.id === storedTabId)?.id ??
-        (() => {
-          const matches = tabs.filter(
-            (tab) => tab.id.startsWith(storedTabId) || storedTabId.startsWith(tab.id),
-          )
-          return matches.length === 1 ? matches[0]?.id : null
-        })())
+      tabs.find((tab) => tab.id === storedTabId)?.id
     if (
       normalizedStoredTabId &&
       tabs.some((tab) => tab.id === normalizedStoredTabId) &&
       normalizedStoredTabId !== selectedTabId
     ) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('[CourseEditor] apply stored tab', {
-          storedTabId,
-          normalizedStoredTabId,
-          selectedTabId,
-          tabs: tabs.map((tab) => tab.id),
-        })
-      }
       setSelectedTabId(normalizedStoredTabId)
       if (course?.activeTabId !== normalizedStoredTabId) {
         dispatchCourse({ type: 'setActiveTab', payload: normalizedStoredTabId })
@@ -247,6 +235,11 @@ function CourseOverviewLayout({ params }: { params: CourseOverviewParams }) {
     if (!tabs.some((tab) => tab.id === selectedTabId)) return
     if (course?.isLoading) return
     if (typeof window === 'undefined') return
+    if (skipNextActiveTabPersistRef.current === selectedTabId) {
+      skipNextActiveTabPersistRef.current = null
+      window.sessionStorage.removeItem(activeTabStorageKey)
+      return
+    }
     window.sessionStorage.setItem(activeTabStorageKey, selectedTabId)
   }, [activeTabStorageKey, course?.isLoading, selectedTabId, tabs])
 
@@ -262,10 +255,11 @@ function CourseOverviewLayout({ params }: { params: CourseOverviewParams }) {
   )
 
   const handleTabsChange = React.useCallback(
-    (nextTabs: CourseTab[]) => {
+    (nextTabs: CourseTab[], change?: CourseTabsChange) => {
       const existingIds = new Set(tabs.map((tab) => tab.id))
       const addedTab = nextTabs.find((tab) => !existingIds.has(tab.id))
       const wasAdded = Boolean(addedTab)
+      const wasRemoved = change?.type === 'remove'
       const tabsWithPositions = nextTabs.map((tab, index) => ({
         ...tab,
         position: index,
@@ -278,13 +272,18 @@ function CourseOverviewLayout({ params }: { params: CourseOverviewParams }) {
 
       setSelectedTabId((current) => {
         if (wasAdded && addedTab) {
+          skipNextActiveTabPersistRef.current = addedTab.id
           dispatchCourse({ type: 'setActiveTab', payload: addedTab.id })
-          setStoredTabId(addedTab.id)
+          removeStoredTabId()
           return addedTab.id
         }
         if (tabsWithPositions.some((tab) => tab.id === current)) {
           dispatchCourse({ type: 'setActiveTab', payload: current })
-          setStoredTabId(current)
+          if (wasRemoved) {
+            removeStoredTabId()
+          } else {
+            setStoredTabId(current)
+          }
           return current
         }
         const fallback = tabsWithPositions[0]?.id ?? ''
@@ -295,29 +294,25 @@ function CourseOverviewLayout({ params }: { params: CourseOverviewParams }) {
         return fallback
       })
 
-      if (wasAdded && typeof window !== 'undefined') {
-        window.setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('course:autosave'))
-        }, 0)
+      if (wasAdded || wasRemoved) {
+        requestAutosave()
       }
     },
-    [dispatchCourse, syncStore, tabStore, tabs],
+    [dispatchCourse, removeStoredTabId, requestAutosave, setStoredTabId, syncStore, tabStore, tabs],
   )
 
   const handleTabChange = React.useCallback(
-    (tabId: string) => {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('[CourseEditor] handleTabChange', {
-          tabId,
-          selectedTabId,
-          tabs: tabs.map((tab) => tab.id),
-        })
+    (tabId: string, change: ActiveTabChange = { type: 'manual' }) => {
+      if (change.type === 'create') {
+        skipNextActiveTabPersistRef.current = tabId
+        removeStoredTabId()
+      } else {
+        setStoredTabId(tabId)
       }
-      setStoredTabId(tabId)
       setSelectedTabId(tabId)
       dispatchCourse({ type: 'setActiveTab', payload: tabId })
     },
-    [dispatchCourse, selectedTabId, setStoredTabId, tabs],
+    [dispatchCourse, removeStoredTabId, setStoredTabId],
   )
 
   const handleUpdateTabMap = React.useCallback(

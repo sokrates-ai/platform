@@ -31,15 +31,6 @@ export function CourseProvider({
   );
 
   const defaultTabId = DEFAULT_COURSE_TABS[0]?.id ?? 'tab-1';
-  const rawCourseUuid = useMemo(() => {
-    if (typeof courseuuid !== 'string') return '';
-    return courseuuid.startsWith('course_') ? courseuuid.slice('course_'.length) : courseuuid;
-  }, [courseuuid]);
-  const activeTabStorageKey = useMemo(() => {
-    if (!rawCourseUuid) return '';
-    return `course_editor_active_tab_${rawCourseUuid}`;
-  }, [rawCourseUuid]);
-
   const initialState = useMemo(() => ({
     courseStructure: {
       course_uuid: courseuuid,
@@ -64,13 +55,6 @@ export function CourseProvider({
 
   useEffect(() => {
     if (courseStructureData) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('[CourseContext] meta loaded', {
-          courseuuid,
-          activeTabStorageKey,
-          previousActive: activeTabIdRef.current,
-        });
-      }
       const transformed = transformCourseStructure(courseStructureData);
       dispatch({ type: 'setCourseTabsStore', payload: transformed.courseTabsStore });
       dispatch({ type: 'setCourseStructure', payload: transformed.courseStructure });
@@ -87,97 +71,18 @@ export function CourseProvider({
         storeKeys[0] ??
         DEFAULT_COURSE_TABS[0]?.id ??
         'tab-1';
-      const storedTabId =
-        typeof window !== 'undefined' && activeTabStorageKey
-          ? window.sessionStorage.getItem(activeTabStorageKey)
-          : null;
-      const normalizeStoredTabId = (value: string | null): string | null => {
-        if (!value) return null;
-        if (metadataIds.includes(value) || storeKeys.includes(value)) {
-          return value;
-        }
-        const candidates = Array.from(new Set([...metadataIds, ...storeKeys]));
-        const prefixMatches = candidates.filter(
-          (candidate) => candidate.startsWith(value) || value.startsWith(candidate),
-        );
-        if (prefixMatches.length === 1) {
-          return prefixMatches[0];
-        }
-        return null;
-      };
-      const normalizedStoredTabId = normalizeStoredTabId(storedTabId);
-      const hasStoredTab = !!normalizedStoredTabId;
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('[CourseContext] active tab resolve', {
-          courseuuid,
-          activeTabStorageKey,
-          storedTabId,
-          normalizedStoredTabId,
-          hasStoredTab,
-          metadataIds,
-          storeKeys,
-          fallbackTabId,
-          previousActive,
-        });
-      }
       const shouldKeepPrevious =
         !!previousActive &&
         (metadataIds.includes(previousActive) || storeKeys.includes(previousActive));
-      const nextActiveTabId = hasStoredTab
-        ? (normalizedStoredTabId as string)
-        : shouldKeepPrevious
+      const nextActiveTabId = shouldKeepPrevious
         ? previousActive
         : fallbackTabId;
-      if (storedTabId && !hasStoredTab && typeof window !== 'undefined' && activeTabStorageKey) {
-        window.sessionStorage.removeItem(activeTabStorageKey);
-      }
       if (nextActiveTabId) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('[CourseContext] setActiveTab', {
-            courseuuid,
-            nextActiveTabId,
-          });
-        }
         dispatch({ type: 'setActiveTab', payload: nextActiveTabId });
       }
       dispatch({ type: 'setIsLoaded' });
     }
-  }, [activeTabStorageKey, courseStructureData]);
-
-  useEffect(() => {
-    if (!activeTabStorageKey) return;
-    if (!state?.activeTabId) return;
-    if (state?.isLoading) return;
-    const metadataIds = Array.isArray(state?.courseTabMetadata)
-      ? state.courseTabMetadata
-          .map((tab: any) => tab?.id ?? tab?.tab_uuid ?? null)
-          .filter((value: string | null): value is string => Boolean(value))
-      : [];
-    const storeKeys = Object.keys(state?.courseTabsStore ?? {});
-    const hasValidActive =
-      metadataIds.includes(state.activeTabId) || storeKeys.includes(state.activeTabId);
-    if (!hasValidActive) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('[CourseContext] skip persist active tab (invalid)', {
-          courseuuid,
-          activeTabStorageKey,
-          activeTabId: state.activeTabId,
-          metadataIds,
-          storeKeys,
-        });
-      }
-      return;
-    }
-    if (typeof window === 'undefined') return;
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[CourseContext] persist active tab', {
-        courseuuid,
-        activeTabStorageKey,
-        activeTabId: state.activeTabId,
-      });
-    }
-    window.sessionStorage.setItem(activeTabStorageKey, state.activeTabId);
-  }, [activeTabStorageKey, state?.activeTabId]);
+  }, [courseStructureData]);
 
   if (error) return <div>Failed to load course structure</div>;
   if (!courseStructureData) return loadingFallback ?? null;
