@@ -1623,34 +1623,34 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
                   ⛶
                 </button>
                 {/* Auto layout */}
-                <Button
-                  variant="secondary"
+                <button
+                  type="button"
                   onClick={() => setTriggerAutoLayout((v) => !v)}
-                  className="hover:bg-indigo-100 font-medium rounded px-4 py-2 text-xs shadow transition-all"
+                  className="inline-flex h-8 items-center justify-center rounded-md bg-gray-100 px-4 text-xs font-medium text-gray-700 shadow transition-all hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-60"
                   title="Auto Layout"
                 >
                   Auto Layout
-                </Button>
-                <Button
-                  variant="secondary"
+                </button>
+                <button
+                  type="button"
                   onClick={() => setIsImportModalOpen(true)}
-                  className={`hover:bg-emerald-100 font-medium rounded px-4 py-2 text-xs shadow transition-all flex items-center gap-2${isSaving ? ' opacity-60 cursor-not-allowed' : ''}`}
+                  className="inline-flex h-8 items-center justify-center gap-2 rounded-md bg-gray-100 px-4 text-xs font-medium text-gray-700 shadow transition-all hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
                   title="Import course content"
                   disabled={isSaving}
                 >
                   <Download strokeWidth={2} size={14} />
                   Import
-                </Button>
+                </button>
                 {/* Add chapter */}
-                <Button
-                  variant={"secondary"}
+                <button
+                  type="button"
                   onClick={() => setNewChapterModal(true)}
-                  className={`hover:bg-cyan-100 font-medium rounded px-4 py-2 text-xs shadow transition-all flex items-center gap-2${isSaving ? ' opacity-60 cursor-not-allowed' : ''}`}
+                  className="inline-flex h-8 items-center justify-center gap-2 rounded-md bg-gray-100 px-4 text-xs font-medium text-gray-700 shadow transition-all hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={isSaving}
                 >
                   <Hexagon strokeWidth={2} size={14} className="" />
                   Add Chapter
-                </Button>
+                </button>
               </div>
             </div>
           </div>
