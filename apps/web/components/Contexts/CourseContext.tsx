@@ -4,7 +4,7 @@ import { swrFetcher } from '@services/utils/ts/requests'
 import React, { createContext, useContext, useEffect, useMemo, useReducer, useRef } from 'react'
 import useSWR from 'swr'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
-import { DEFAULT_COURSE_TABS } from '@components/Objects/Modals/Course/Create/CourseTabSelector'
+import { DEFAULT_COURSE_TABS } from '@components/Objects/Modals/Course/Create/courseTabs'
 
 export const CourseContext = createContext(null)
 export const CourseDispatchContext = createContext(null)

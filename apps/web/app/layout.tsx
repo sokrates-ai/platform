@@ -3,7 +3,6 @@
 import '../styles/globals.css'
 import 'katex/dist/katex.min.css'
 import React, { useEffect, useState, ReactNode } from 'react'
-import { motion } from 'framer-motion'
 import { DM_Sans } from 'next/font/google'
 
 import { SessionProvider } from 'next-auth/react'
@@ -44,19 +43,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const variants = {
-    hidden: { opacity: 0 },
-    enter: { opacity: 1 },
-    exit: { opacity: 0 },
-  }
-
   return (
     <html className={dmSans.className} lang="en">
       <body>
-        <link
-          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500;1,700;1,900&display=swap"
-          rel="stylesheet"
-        />
         {isStaging && (
           <div
             className="flex justify-between bg-red-500/50 text-black p-2.5 text-center font-black text-4xl w-full z-[999] bottom-0 overflow-x-hidden gap-4"
@@ -68,15 +57,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </div>
         )}
         <AppProviders>
-          <motion.main
-            variants={variants}
-            initial="hidden"
-            animate="enter"
-            exit="exit"
-            transition={{ type: 'linear' }}
-          >
-            {children}
-          </motion.main>
+          <main>{children}</main>
         </AppProviders>
       </body>
     </html>

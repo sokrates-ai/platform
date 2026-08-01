@@ -6,7 +6,7 @@ import {
   useCourse,
   useCourseDispatch,
 } from '@components/Contexts/CourseContext'
-import { DEFAULT_COURSE_TABS } from '@components/Objects/Modals/Course/Create/CourseTabSelector'
+import { DEFAULT_COURSE_TABS } from '@components/Objects/Modals/Course/Create/courseTabs'
 import { Check, Loader2, SaveAllIcon, Timer } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import React, { useEffect } from 'react'

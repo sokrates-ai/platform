@@ -21,7 +21,7 @@ import CourseAnalytics from '@components/Dashboard/Pages/Course/CourseAnalytics/
 import {
   CourseTab,
   DEFAULT_COURSE_TABS,
-} from '@components/Objects/Modals/Course/Create/CourseTabSelector'
+} from '@components/Objects/Modals/Course/Create/courseTabs'
 
 export type CourseOverviewParams = {
   orgslug: string

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { useSearchParams } from 'next/navigation' // ✅ import hook
 import { Button } from '@/components/ui/button'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
@@ -9,13 +10,7 @@ import Canvas, { LayoutState } from '@components/Objects/ContentMap/Canvas'
 import { DoorOpen, EyeOff, Menu, Sparkles, X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { getUriWithOrg, getWebSocketUrl } from '@services/config/config'
-import usePrefetchPixiAssets from '@components/Objects/ContentMap/hooks/usePrefetchPixiAssets'
-import { AnimatePresence, motion } from 'framer-motion'
 import type { Viewport } from 'pixi-viewport'
-import {
-  DEFAULT_CHAPTER_STONE_ICON,
-  DEFAULT_CHAPTER_STONE_THEME,
-} from '@components/Objects/ContentMap/assets/ChapterStoneAsset'
 import { getSpriteUrl } from '@components/Objects/ContentMap/utils/spriteUrl'
 import type { AssetData } from '@components/Objects/ContentMap/Asset/assetTypes'
 import {
@@ -32,12 +27,20 @@ import {
   getCourseMetadata,
   updateCourseCanvasInteractionState,
 } from '@services/courses/courses'
-import CourseChapter from '@components/Pages/Courses/CourseChapter'
-import CourseSandbox from '@components/Pages/Courses/CourseSandbox'
 import { cn } from '@/lib/utils'
-import { DEFAULT_COURSE_TABS } from '@components/Objects/Modals/Course/Create/CourseTabSelector'
+import { DEFAULT_COURSE_TABS } from '@components/Objects/Modals/Course/Create/courseTabs'
 import useCourseStaffStatus from '@components/Hooks/useCourseStaffStatus'
 import CourseGroupPill from '@components/Objects/Courses/CourseGroupPill'
+
+const CourseChapter = dynamic(
+  () => import('@components/Pages/Courses/CourseChapter'),
+  { loading: () => <PageLoading /> },
+)
+
+const CourseSandbox = dynamic(
+  () => import('@components/Pages/Courses/CourseSandbox'),
+  { loading: () => <PageLoading /> },
+)
 
 const DEFAULT_BOUNDARIES = {
   left: -1000,
@@ -459,48 +462,6 @@ const CourseStartedView = ({
     }
   }, [layout])
 
-  const prefetchUrls = useMemo(() => {
-    const urls = new Set<string>()
-    const addUrl = (url?: string) => {
-      if (url) {
-        urls.add(url)
-      }
-    }
-
-    const assets = Array.isArray(layout.layout) ? layout.layout : []
-    assets.forEach((asset) => {
-      if (asset?.file) {
-        addUrl(getSpriteUrl(asset.file))
-      }
-      if (asset?.type?.kind === 'chapter') {
-        Object.values(DEFAULT_CHAPTER_STONE_THEME).forEach((visual) => {
-          const skin = visual?.skin
-          if (!skin) return
-          addUrl(skin)
-          if (skin.endsWith('.svg')) {
-            addUrl(skin.replace(/\.svg$/, '-pressed.svg'))
-          }
-          if (skin.endsWith('.png')) {
-            addUrl(skin.replace(/\.png$/, '-pressed.png'))
-          }
-          if (visual?.icon) {
-            addUrl(visual.icon)
-          }
-        })
-        addUrl(DEFAULT_CHAPTER_STONE_ICON)
-      }
-    })
-
-    return Array.from(urls)
-  }, [layout.layout])
-
-  const {
-    ready: assetsReady,
-    progress: assetsProgress,
-    loaded: assetsLoaded,
-    total: assetsTotal,
-  } = usePrefetchPixiAssets(prefetchUrls, !!activeCourse)
-
   const [viewport, setViewport] = useState<Viewport | null>(null)
   const [zoomPercent, setZoomPercent] = useState<number | null>(null)
   const initialZoomRef = useRef<number | null>(null)
@@ -657,11 +618,6 @@ const CourseStartedView = ({
     label?: string
   } | null>(null)
   const [sandboxOpen, setSandboxOpen] = useState(false)
-
-  const assetsProgressPercent = Math.min(
-    100,
-    Math.max(0, Math.round(assetsProgress * 100)),
-  )
 
   const session = useSokratesSession() as any
   const access_token: string | undefined = session?.data?.tokens?.access_token
@@ -910,40 +866,6 @@ const CourseStartedView = ({
 
   return (
     <div className="relative flex h-screen flex-col overflow-hidden">
-      <AnimatePresence>
-        {!assetsReady && (
-          <motion.div
-            key="course-map-loader"
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.35, ease: 'easeOut' }}
-            className="absolute inset-0 z-50 bg-white"
-          >
-            <PageLoading />
-            {assetsTotal > 0 ? (
-              <div className="absolute bottom-10 left-1/2 w-[18rem] max-w-[80vw] -translate-x-1/2">
-                <div
-                  className="mb-2 text-center text-sm font-medium text-gray-600"
-                  role="status"
-                  aria-live="polite"
-                >
-                  Loading assets {assetsProgressPercent}%
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-                  <div
-                    className="h-full bg-[#FF6934] transition-[width] duration-200 ease-out"
-                    style={{ width: `${assetsProgressPercent}%` }}
-                  />
-                </div>
-                <div className="mt-1 text-center text-xs text-gray-400">
-                  {assetsLoaded}/{assetsTotal}
-                </div>
-              </div>
-            ) : null}
-          </motion.div>
-        )}
-      </AnimatePresence>
       <Modal
         isDialogOpen={chapterDialogOpen}
         onOpenChange={(open) => {
@@ -956,15 +878,19 @@ const CourseStartedView = ({
         customWidth="w-screen max-w-screen rounded-none border-0 sm:w-[80vw] sm:max-w-[80vw] sm:rounded-[0.875rem] sm:border-4 md:w-[90vw] md:max-w-[90vw] lg:w-[90vw] lg:max-w-[90vw] xl:w-[60vw] xl:max-w-[60vw]"
         customHeight="h-[100dvh] max-h-[100dvh] sm:h-[75vh] sm:max-h-[75vh] md:h-[90vh] md:max-h-[90vh] lg:h-[90vh] lg:max-h-[90vh] xl:h-[60vh] xl:max-h-[60vh]"
         overlayClassName="backdrop-blur-sm"
-        dialogContent={<CourseChapter
-          course={activeCourse}
-          courseId={courseIdWithoutPrefix}
-          orgslug={orgslug}
-          chapterID={selectedChapter}
-          access_token={access_token ?? ''}
-          selectedTabId={selectedTab}
-          onDynamicPreviewStateChange={handleDynamicPreviewStateChange}
-        />}
+        dialogContent={
+          chapterDialogOpen ? (
+            <CourseChapter
+              course={activeCourse}
+              courseId={courseIdWithoutPrefix}
+              orgslug={orgslug}
+              chapterID={selectedChapter}
+              access_token={access_token ?? ''}
+              selectedTabId={selectedTab}
+              onDynamicPreviewStateChange={handleDynamicPreviewStateChange}
+            />
+          ) : null
+        }
       />
       <Modal
         isDialogOpen={sandboxOpen}
@@ -973,12 +899,14 @@ const CourseStartedView = ({
         customHeight="h-[100dvh] max-h-[100dvh] sm:h-[80vh] sm:max-h-[80vh] md:h-[85vh] md:max-h-[85vh] lg:h-[85vh] lg:max-h-[85vh] xl:h-[80vh] xl:max-h-[80vh]"
         overlayClassName="backdrop-blur-sm"
         dialogContent={
-          <CourseSandbox
-            courseUuid={courseUuidWithPrefix}
-            userId={studentUserId}
-            accessToken={access_token ?? null}
-            onClose={() => setSandboxOpen(false)}
-          />
+          sandboxOpen ? (
+            <CourseSandbox
+              courseUuid={courseUuidWithPrefix}
+              userId={studentUserId}
+              accessToken={access_token ?? null}
+              onClose={() => setSandboxOpen(false)}
+            />
+          ) : null
         }
       />
       <Modal
