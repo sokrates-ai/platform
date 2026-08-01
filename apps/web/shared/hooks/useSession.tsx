@@ -530,23 +530,19 @@ export function SessionProvider({ children }: SessionProviderProps) {
 
     const initializeSession = async () => {
       try {
-        const [exerciseData, workspaceInfoData, workspaceStateData] = await Promise.all([
-          client.getExercise(),
-          client.getWorkspaceInfo(),
-          client.getWorkspaceState().catch(() => ({ content: '' })),
-        ]);
+        const { exercise, workspaceInfo, workspaceState } = await client.getInitialState();
 
         if (isMounted) {
           const savedContent =
-            typeof workspaceStateData?.content === 'string'
-              ? workspaceStateData.content
+            typeof workspaceState?.content === 'string'
+              ? workspaceState.content
               : '';
-          setExercise(exerciseData);
-          setWorkspaceInfo(workspaceInfoData);
+          setExercise(exercise);
+          setWorkspaceInfo(workspaceInfo);
           setWorkspaceContent(savedContent);
           lastHtmlRef.current = savedContent;
           lastPersistedContentRef.current = savedContent;
-          const kind = workspaceInfoData.workspaceType === 'text' ? 'text.eval' : (workspaceInfoData.workspaceType === 'code' ? 'code.run' : 'flashcard.validate');
+          const kind = workspaceInfo.workspaceType === 'text' ? 'text.eval' : (workspaceInfo.workspaceType === 'code' ? 'code.run' : 'flashcard.validate');
           setRateLimit(await client.getRateLimit(kind));
           setIsInitialContentLoaded(true);
         }

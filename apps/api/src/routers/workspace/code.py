@@ -244,8 +244,30 @@ async def create_judgement(
             for _ in range(120):
                 await asyncio.sleep(0.5)
                 done_now: list[str] = []
-                for token in list(remaining):
-                    submission = await j0.get_submission(token)
+                remaining_tokens = list(remaining)
+                try:
+                    submissions_by_token = {
+                        str(submission.get("token")): submission
+                        for submission in await j0.get_submissions_batch(remaining_tokens)
+                        if submission.get("token") is not None
+                    }
+                    missing_tokens = [
+                        token
+                        for token in remaining_tokens
+                        if token not in submissions_by_token
+                    ]
+                    for token in missing_tokens:
+                        submissions_by_token[token] = await j0.get_submission(token)
+                except Exception:
+                    submissions_by_token = {
+                        token: await j0.get_submission(token)
+                        for token in remaining_tokens
+                    }
+
+                for token in remaining_tokens:
+                    submission = submissions_by_token.get(token)
+                    if not submission:
+                        continue
                     status_desc = (submission.get("status") or {}).get("description")
                     if status_desc and status_desc not in ("In Queue", "Processing"):
                         case = {

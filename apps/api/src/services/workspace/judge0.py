@@ -75,6 +75,28 @@ async def get_submission(token: str) -> Dict[str, Any]:
         return response.json()
 
 
+async def get_submissions_batch(tokens: List[str]) -> List[Dict[str, Any]]:
+    base_url = _base_url()
+    if not base_url:
+        raise RuntimeError("Judge0 is not configured")
+    if not tokens:
+        return []
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"{base_url}/submissions/batch?base64_encoded=false",
+            headers=await _headers(),
+            params={"tokens": ",".join(tokens)},
+            timeout=30,
+        )
+        response.raise_for_status()
+        data = response.json() or {}
+    if isinstance(data, dict):
+        submissions = data.get("submissions")
+        if isinstance(submissions, list):
+            return [item for item in submissions if isinstance(item, dict)]
+    return []
+
+
 async def submit_batch(payloads: List[Dict[str, Any]]) -> List[str]:
     base_url = _base_url()
     if not base_url or not payloads:

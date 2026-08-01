@@ -60,6 +60,12 @@ export interface WorkspaceInfo {
   workspaceSpec?: Record<string, unknown> | null;
 }
 
+export interface WorkspaceInitialState {
+  exercise: Exercise;
+  workspaceInfo: WorkspaceInfo;
+  workspaceState: { content: string };
+}
+
 const readErrorDetail = async (response: Response, fallback: string) => {
   try {
     const payload = await response.json();
@@ -108,23 +114,42 @@ export class ApiClient {
     return { id: data.id, type, spec: data.spec ?? null, exercise: data.exercise };
   }
 
-  async getWorkspaceInfo(): Promise<WorkspaceInfo> {
-    const ws = await this.getWorkspace();
-    return { workspaceType: ws.type, workspaceSpec: ws.spec };
-  }
-
-  async getExercise(): Promise<Exercise> {
-    const ws = await this.getWorkspace();
+  private workspaceToExercise(ws: { spec?: Record<string, unknown> | null; exercise?: Exercise }): Exercise {
     if (ws.exercise) return ws.exercise;
     const spec = (ws.spec || {}) as Record<string, unknown>;
-    const inferred: Exercise = {
+    return {
       id: Number(spec.id ?? 0),
       title: String(spec.title ?? 'Exercise'),
       description: String(spec.description ?? ''),
       task: String(spec.task ?? ''),
       solution: String(spec.solution ?? ''),
     };
-    return inferred;
+  }
+
+  private workspaceToInfo(ws: { type: WorkspaceType; spec?: Record<string, unknown> | null }): WorkspaceInfo {
+    return { workspaceType: ws.type, workspaceSpec: ws.spec };
+  }
+
+  async getWorkspaceInfo(): Promise<WorkspaceInfo> {
+    const ws = await this.getWorkspace();
+    return this.workspaceToInfo(ws);
+  }
+
+  async getExercise(): Promise<Exercise> {
+    const ws = await this.getWorkspace();
+    return this.workspaceToExercise(ws);
+  }
+
+  async getInitialState(): Promise<WorkspaceInitialState> {
+    const [workspace, workspaceState] = await Promise.all([
+      this.getWorkspace(),
+      this.getWorkspaceState().catch(() => ({ content: '' })),
+    ]);
+    return {
+      exercise: this.workspaceToExercise(workspace),
+      workspaceInfo: this.workspaceToInfo(workspace),
+      workspaceState,
+    };
   }
 
   async validateStep(stepId: string, answer: unknown): Promise<{ correct: boolean; rateLimit?: RateLimit } & { _status?: number } > {

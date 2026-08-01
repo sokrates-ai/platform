@@ -79,12 +79,21 @@ const AnnouncementCarousel: React.FC<AnnouncementCarouselProps> = ({
         border-y-2 sm:border-b-2 mt-36 sm:mt-0 overflow-hidden
         h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[80vh]
       "
-      style={
-        current.bgImage
-          ? { backgroundImage: `url(${current.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-          : { backgroundColor: current.color }
-      }
+      style={{ backgroundColor: current.color }}
     >
+      {slides.map((slide, idx) => (
+        slide.bgImage ? (
+          <div
+            key={`${slide.bgImage}-${idx}`}
+            className={`
+              absolute inset-0 bg-cover bg-center transition-opacity duration-500
+              ${currentSlide === idx ? 'opacity-100' : 'opacity-0'}
+            `}
+            style={{ backgroundImage: `url(${slide.bgImage})` }}
+            aria-hidden="true"
+          />
+        ) : null
+      ))}
 
       {/* overlay only if bgImage exists */}
       {current.bgImage && (
