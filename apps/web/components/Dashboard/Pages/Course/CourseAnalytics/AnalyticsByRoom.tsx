@@ -1,18 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
-import useSWR from 'swr'
-import {
-  Bar,
-  BarChart,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  Cell,
-  Tooltip,
-} from 'recharts'
-import { Users, GraduationCap, CheckCircle2, Eye, Clock, Timer } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Clock, Eye, GraduationCap, Timer, Users } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import {
@@ -23,140 +12,38 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
-import { getAPIUrl } from '@services/config/config'
-import { swrFetcher } from '@services/utils/ts/requests'
-import {
-  AnalyticsActivity,
-  ActivityStatusStep,
-  Room,
-} from './useAnalyticsData'
 import { SummaryCard } from './SummaryCard'
-import { avgTaskDurationMs, avgTutorResponseMs, formatDuration } from './analyticsMetrics'
-
-type RoomMember = {
-  user: {
-    id: number
-    first_name?: string
-    last_name?: string
-    username?: string
-    email?: string
-  }
-  role: 'student' | 'tutor'
-}
+import { CourseAnalyticsData } from './useAnalyticsData'
+import { formatDuration } from './analyticsMetrics'
 
 type AnalyticsByRoomProps = {
-  rooms?: Room[]
-  courseUuid?: string
-  allActivities: AnalyticsActivity[]
+  analytics: CourseAnalyticsData
 }
 
-export default function AnalyticsByRoom({
-  rooms,
-  courseUuid,
-  allActivities,
-}: AnalyticsByRoomProps) {
-  const session = useSokratesSession() as any
-  const access_token = session?.data?.tokens?.access_token
+export default function AnalyticsByRoom({ analytics }: AnalyticsByRoomProps) {
+  const roomList = useMemo(() => analytics.rooms, [analytics.rooms])
+  const [selectedRoomId, setSelectedRoomId] = useState<number | null>(roomList[0]?.id ?? null)
 
-  const roomList = useMemo(() => rooms ?? [], [rooms])
-  const [selectedRoomId, setSelectedRoomId] = useState<number | null>(
-    roomList[0]?.id ?? null
-  )
-
-  // Keep the selection valid as rooms load / change.
   useEffect(() => {
-    if (roomList.length === 0) {
+    if (!roomList.length) {
       setSelectedRoomId(null)
       return
     }
-    if (!roomList.some((r) => r.id === selectedRoomId)) {
+    if (!roomList.some((room) => room.id === selectedRoomId)) {
       setSelectedRoomId(roomList[0].id)
     }
   }, [roomList, selectedRoomId])
 
-  const selectedRoom = roomList.find((r) => r.id === selectedRoomId)
-
-  const activityUuids = useMemo(
-    () => allActivities.map((a) => a.activity_uuid),
-    [allActivities]
+  const selectedRoom = roomList.find((room) => room.id === selectedRoomId)
+  const roomAttention = analytics.attention.filter(
+    (item) => item.scope === 'room' && item.ref_id === String(selectedRoomId),
   )
-
-  const { data: members } = useSWR<RoomMember[]>(
-    courseUuid && selectedRoomId != null
-      ? `${getAPIUrl()}courses/${courseUuid}/rooms/${selectedRoomId}/members`
-      : null,
-    (url: string) => swrFetcher(url, access_token)
-  )
-
-  const { data: activityStatusData } = useSWR(
-    courseUuid && selectedRoomId != null && activityUuids.length > 0
-      ? `${getAPIUrl()}courses/${courseUuid}/rooms/${selectedRoomId}/activity-status?activity_uuids=${encodeURIComponent(activityUuids.join(','))}`
-      : null,
-    (url: string) => swrFetcher(url, access_token)
-  )
-
-  const roomSteps: ActivityStatusStep[] = activityStatusData?.steps ?? []
-
-  const roomStudents = useMemo(
-    () => (members ?? []).filter((m) => m.role === 'student'),
-    [members]
-  )
-
-  const stats = useMemo(() => {
-    const studentCount = selectedRoom?.student_count ?? roomStudents.length
-    const tutorCount = selectedRoom?.tutor_count ?? 0
-    const totalActivities = allActivities.length
-    const completedSteps = roomSteps.filter((s) => s.complete).length
-    const totalPossible = studentCount * totalActivities
-    const completionRate = totalPossible > 0 ? Math.round((completedSteps / totalPossible) * 100) : 0
-    const engagedStudents = new Set(roomSteps.map((s) => s.user_id)).size
-    const avgTaskDuration = avgTaskDurationMs(roomSteps)
-    const avgTutorResponse = avgTutorResponseMs(roomSteps)
-
-    return { studentCount, tutorCount, completionRate, engagedStudents, avgTaskDuration, avgTutorResponse }
-  }, [selectedRoom, roomStudents, allActivities, roomSteps])
-
-  const tabCompletionData = useMemo(() => {
-    const tabMap = new Map<string, { name: string; total: number; completed: number }>()
-    const studentCount = stats.studentCount
-    allActivities.forEach((activity) => {
-      const key = activity.tab_id
-      if (!tabMap.has(key)) tabMap.set(key, { name: activity.tab_name, total: 0, completed: 0 })
-      const entry = tabMap.get(key)!
-      entry.total += studentCount
-      entry.completed += roomSteps.filter(
-        (s) => s.activity_uuid === activity.activity_uuid && s.complete
-      ).length
-    })
-    return Array.from(tabMap.values()).map((data) => ({
-      name: data.name.length > 20 ? data.name.slice(0, 18) + '...' : data.name,
-      fullName: data.name,
-      rate: data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0,
-      completed: data.completed,
-      total: data.total,
-    }))
-  }, [allActivities, roomSteps, stats.studentCount])
-
-  const studentTableData = useMemo(() => {
-    const total = allActivities.length
-    return roomStudents.map((member) => {
-      const user = member.user
-      const studentSteps = roomSteps.filter((s) => s.user_id === user.id)
-      const completed = studentSteps.filter((s) => s.complete).length
-      const rate = total > 0 ? Math.round((completed / total) * 100) : 0
-      const name =
-        [user.first_name, user.last_name].filter(Boolean).join(' ') ||
-        user.username ||
-        user.email ||
-        `User ${user.id}`
-      return { id: user.id, name, completed, total, rate }
-    }).sort((a, b) => b.rate - a.rate)
-  }, [roomStudents, roomSteps, allActivities])
+  const students = analytics.students
+    .filter((student) => selectedRoom?.student_ids.includes(student.id))
+    .sort((a, b) => a.completion_rate - b.completion_rate)
 
   return (
     <div className="flex h-full gap-6">
-      {/* Left room navigation */}
       <Card className="h-full w-80 shrink-0">
         <CardContent className="h-full overflow-y-auto px-3 py-4">
           {roomList.length > 0 ? (
@@ -176,7 +63,7 @@ export default function AnalyticsByRoom({
                   >
                     <span className="text-sm font-medium text-gray-900">{room.name}</span>
                     <span className="mt-0.5 text-xs text-gray-500">
-                      {room.student_count ?? 0} students · {room.tutor_count ?? 0} tutors
+                      {room.student_count} students · {room.tutor_count} tutors · {room.completion_rate}%
                     </span>
                   </button>
                 )
@@ -188,14 +75,13 @@ export default function AnalyticsByRoom({
         </CardContent>
       </Card>
 
-      {/* Per-room analytics */}
       <div className="flex-1 space-y-6 overflow-y-auto">
         {selectedRoom ? (
           <>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">{selectedRoom.name}</h2>
               <p className="text-sm text-gray-500">
-                Engagement and completion for students in this room.
+                Room-level completion and review blockers.
               </p>
             </div>
 
@@ -203,114 +89,97 @@ export default function AnalyticsByRoom({
               <SummaryCard
                 icon={<Users size={20} />}
                 label="Students"
-                value={stats.studentCount}
+                value={selectedRoom.student_count}
                 color="bg-blue-50 text-blue-600"
               />
               <SummaryCard
                 icon={<GraduationCap size={20} />}
                 label="Tutors"
-                value={stats.tutorCount}
+                value={selectedRoom.tutor_count}
                 color="bg-indigo-50 text-indigo-600"
               />
               <SummaryCard
                 icon={<Eye size={20} />}
                 label="Students Engaged"
-                value={`${stats.engagedStudents}/${stats.studentCount}`}
+                value={`${selectedRoom.engaged_student_count}/${selectedRoom.student_count}`}
                 color="bg-amber-50 text-amber-600"
               />
               <SummaryCard
                 icon={<CheckCircle2 size={20} />}
                 label="Completion Rate"
-                value={`${stats.completionRate}%`}
+                value={`${selectedRoom.completion_rate}%`}
                 color="bg-green-50 text-green-600"
               />
               <SummaryCard
                 icon={<Clock size={20} />}
                 label="Avg. Task Duration"
-                value={formatDuration(stats.avgTaskDuration)}
+                value={formatDuration(selectedRoom.avg_task_duration_ms)}
                 color="bg-teal-50 text-teal-600"
               />
               <SummaryCard
                 icon={<Timer size={20} />}
                 label="Avg. Tutor Response"
-                value={formatDuration(stats.avgTutorResponse)}
+                value={formatDuration(selectedRoom.avg_tutor_response_ms)}
                 color="bg-rose-50 text-rose-600"
               />
             </div>
 
-            {/* Completion by tab (within this room) */}
             <Card>
               <CardContent className="pt-6">
-                <h3 className="mb-4 text-sm font-semibold text-gray-700">Completion by Tab</h3>
-                {tabCompletionData.length > 0 ? (
-                  <div className="h-[260px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={tabCompletionData} margin={{ top: 0, right: 10, left: 0, bottom: 40 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                        <XAxis
-                          dataKey="name"
-                          tick={{ fontSize: 11, fill: '#6b7280' }}
-                          angle={-30}
-                          textAnchor="end"
-                          height={60}
-                        />
-                        <YAxis
-                          tick={{ fontSize: 11, fill: '#6b7280' }}
-                          domain={[0, 100]}
-                          tickFormatter={(v) => `${v}%`}
-                        />
-                        <Tooltip
-                          content={({ active, payload }) => {
-                            if (!active || !payload?.length) return null
-                            const d = payload[0].payload
-                            return (
-                              <div className="rounded-lg border bg-white px-3 py-2 shadow-md">
-                                <p className="text-sm font-medium">{d.fullName}</p>
-                                <p className="text-xs text-gray-500">{d.completed}/{d.total} completions ({d.rate}%)</p>
-                              </div>
-                            )
-                          }}
-                        />
-                        <Bar dataKey="rate" radius={[4, 4, 0, 0]}>
-                          {tabCompletionData.map((_, i) => (
-                            <Cell key={i} fill={i % 2 === 0 ? '#EA8963' : '#F4A77D'} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
+                <h3 className="mb-4 text-sm font-semibold text-gray-700">Room Attention</h3>
+                {roomAttention.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                    {roomAttention.map((item) => (
+                      <div
+                        key={`${item.kind}-${item.ref_id}`}
+                        className="rounded-md border border-gray-200 p-3"
+                      >
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-amber-500" />
+                          <p className="text-sm font-medium text-gray-900">{item.label}</p>
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">{item.message}</p>
+                      </div>
+                    ))}
                   </div>
                 ) : (
-                  <p className="py-12 text-center text-sm text-gray-400">No tab data available</p>
+                  <p className="py-8 text-center text-sm text-gray-400">No room blockers detected.</p>
                 )}
               </CardContent>
             </Card>
 
-            {/* Per-student table */}
             <Card>
               <CardContent className="pt-6">
-                <h3 className="mb-4 text-sm font-semibold text-gray-700">Student Progress</h3>
-                {studentTableData.length > 0 ? (
-                  <div className="max-h-[400px] overflow-y-auto">
+                <h3 className="mb-4 text-sm font-semibold text-gray-700">Room Students</h3>
+                {students.length > 0 ? (
+                  <div className="max-h-[420px] overflow-y-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Student</TableHead>
-                          <TableHead>Progress</TableHead>
-                          <TableHead className="text-center">Activities</TableHead>
+                          <TableHead>Completion</TableHead>
+                          <TableHead className="text-center">Pending</TableHead>
+                          <TableHead className="text-center">Incorrect</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {studentTableData.map((student) => (
+                        {students.map((student) => (
                           <TableRow key={student.id}>
-                            <TableCell className="font-medium">{student.name}</TableCell>
+                            <TableCell>
+                              <p className="font-medium">{student.name}</p>
+                              <p className="text-xs text-gray-400">{student.email}</p>
+                            </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                <Progress value={student.rate} className="h-2 w-20" />
-                                <span className="text-xs text-gray-500">{student.rate}%</span>
+                                <Progress value={student.completion_rate} className="h-2 w-24" />
+                                <span className="text-xs text-gray-500">{student.completion_rate}%</span>
                               </div>
                             </TableCell>
-                            <TableCell className="text-center text-xs text-gray-600">
-                              {student.completed}/{student.total}
+                            <TableCell className="text-center text-xs text-amber-600">
+                              {student.pending_verification_count}
+                            </TableCell>
+                            <TableCell className="text-center text-xs text-red-500">
+                              {student.incorrect_count}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -318,7 +187,7 @@ export default function AnalyticsByRoom({
                     </Table>
                   </div>
                 ) : (
-                  <p className="py-8 text-center text-sm text-gray-400">No students in this room</p>
+                  <p className="py-8 text-center text-sm text-gray-400">No student data available</p>
                 )}
               </CardContent>
             </Card>

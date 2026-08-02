@@ -12,7 +12,6 @@ import { CourseTab, CourseTabSelector } from '@components/Objects/Modals/Course/
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, PanelRightOpen, Download, Upload } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { getAPIUrl } from '@services/config/config';
 const ContentMap = dynamic(() => import('components/Objects/ContentMap/Canvas'), { ssr: false });
@@ -922,26 +921,22 @@ const EditCourseMap: React.FC<EditCourseMapProps> = (props) => {
                                 />
                                 <div className="h-8 w-px bg-gray-200" />
                                 <div className="flex items-center gap-2">
-                                    <Button
+                                    <button
                                         type="button"
-                                        variant="outline"
-                                        size="sm"
                                         onClick={handleExportMap}
-                                        className="gap-2"
+                                        className="inline-flex h-8 items-center gap-2 rounded-md border border-gray-300 bg-white px-3 text-xs font-semibold leading-none text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
                                     >
                                         <Download className="h-4 w-4" />
                                         Export
-                                    </Button>
-                                    <Button
+                                    </button>
+                                    <button
                                         type="button"
-                                        variant="outline"
-                                        size="sm"
                                         onClick={handleImportMap}
-                                        className="gap-2"
+                                        className="inline-flex h-8 items-center gap-2 rounded-md border border-gray-300 bg-white px-3 text-xs font-semibold leading-none text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
                                     >
                                         <Upload className="h-4 w-4" />
                                         Import
-                                    </Button>
+                                    </button>
                                 </div>
                             </div>
                         </div>

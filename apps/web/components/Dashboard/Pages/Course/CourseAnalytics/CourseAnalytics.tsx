@@ -19,20 +19,20 @@ const SUB_PAGES: { id: AnalyticsSubPage; label: string; icon: React.ReactNode }[
 
 export default function CourseAnalytics() {
   const [subPage, setSubPage] = useState<AnalyticsSubPage>('overview')
-  const {
-    courseLoading,
-    courseUuid,
-    tabs,
-    rooms,
-    students,
-    allActivities,
-    activitySteps,
-  } = useAnalyticsData()
+  const { courseLoading, isLoading, error, data } = useAnalyticsData()
 
-  if (courseLoading) {
+  if (courseLoading || isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex h-full items-center justify-center bg-white">
+        <p className="text-sm text-gray-500">Analytics data could not be loaded.</p>
       </div>
     )
   }
@@ -64,35 +64,16 @@ export default function CourseAnalytics() {
       {/* Sub-page content */}
       <div className="flex-1 overflow-y-auto p-6">
         {subPage === 'overview' && (
-          <AnalyticsOverview
-            students={students}
-            allActivities={allActivities}
-            activitySteps={activitySteps}
-          />
+          <AnalyticsOverview analytics={data} />
         )}
         {subPage === 'by-tab' && (
-          <AnalyticsByTab
-            tabs={tabs}
-            students={students}
-            allActivities={allActivities}
-            activitySteps={activitySteps}
-          />
+          <AnalyticsByTab analytics={data} />
         )}
         {subPage === 'matrix' && (
-          <AnalyticsMatrix
-            courseUuid={courseUuid}
-            tabs={tabs}
-            rooms={rooms}
-            students={students}
-            allActivities={allActivities}
-          />
+          <AnalyticsMatrix analytics={data} />
         )}
         {subPage === 'by-room' && (
-          <AnalyticsByRoom
-            rooms={rooms}
-            courseUuid={courseUuid}
-            allActivities={allActivities}
-          />
+          <AnalyticsByRoom analytics={data} />
         )}
       </div>
     </div>

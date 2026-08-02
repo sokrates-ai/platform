@@ -394,6 +394,7 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
       return;
     }
 
+    const removedIndex = tabs.findIndex((tab) => tab.id === tabPendingRemoval.id);
     const filteredTabs = tabs.filter((tab) => tab.id !== tabPendingRemoval.id);
     if (!filteredTabs.length) {
       handleRemoveDialogOpenChange(false);
@@ -406,7 +407,11 @@ export const CourseTabSelector: React.FC<CourseTabSelectorProps> = ({
     onTabsChange?.(filteredTabs, { type: 'remove', tabId: tabPendingRemoval.id });
 
     if (tabPendingRemoval.id === activeTab) {
-      const fallbackTab = filteredTabs[Math.max(filteredTabs.length - 1, 0)];
+      const fallbackIndex =
+        removedIndex >= 0
+          ? Math.min(removedIndex, filteredTabs.length - 1)
+          : 0;
+      const fallbackTab = filteredTabs[fallbackIndex];
       handleActiveTabChange(fallbackTab?.id ?? '', { type: 'remove' });
     }
 

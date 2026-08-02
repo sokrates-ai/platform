@@ -1,6 +1,7 @@
 from typing import Any, Dict, Literal, List
 from uuid import uuid4
 from src.db.courses.chapters import Chapter
+from src.db.courses.chapter_activities import ChapterActivity
 from src.db.courses.course_canvas import CourseCanvas
 from sqlmodel import Session, select, or_, and_
 from src.db.usergroup_resources import UserGroupResource
@@ -25,7 +26,7 @@ from src.db.courses.courses import (
     default_map_state,
 )
 from src.db.courses.course_tabs import CourseTab, CourseTabRead, CourseTabUpsert
-from src.db.courses.course_chapters import CourseChapter_Graph
+from src.db.courses.course_chapters import CourseChapter, CourseChapter_Graph
 from src.security.rbac.rbac import (
     authorization_verify_based_on_roles_and_authorship,
     authorization_verify_if_element_is_public,
@@ -127,6 +128,54 @@ def ensure_default_tabs(course: Course, db_session: Session) -> List[CourseTab]:
     return created_tabs
 
 
+def delete_chapters_for_tab(course: Course, tab_uuid: str, db_session: Session) -> None:
+    chapter_id_rows = db_session.exec(
+        select(CourseChapter_Graph.chapter_id)
+        .where(CourseChapter_Graph.course_id == course.id)
+        .where(CourseChapter_Graph.tab_uuid == tab_uuid)
+    ).all()
+    chapter_ids = {chapter_id for chapter_id in chapter_id_rows if chapter_id is not None}
+    if not chapter_ids:
+        return
+
+    graph_edges = db_session.exec(
+        select(CourseChapter_Graph)
+        .where(CourseChapter_Graph.course_id == course.id)
+        .where(
+            or_(
+                CourseChapter_Graph.chapter_id.in_(chapter_ids),
+                CourseChapter_Graph.predecessor_id.in_(chapter_ids),
+            )
+        )
+    ).all()
+    for edge in graph_edges:
+        db_session.delete(edge)
+
+    chapter_activities = db_session.exec(
+        select(ChapterActivity)
+        .where(ChapterActivity.course_id == course.id)
+        .where(ChapterActivity.chapter_id.in_(chapter_ids))
+    ).all()
+    for chapter_activity in chapter_activities:
+        db_session.delete(chapter_activity)
+
+    course_chapters = db_session.exec(
+        select(CourseChapter)
+        .where(CourseChapter.course_id == course.id)
+        .where(CourseChapter.chapter_id.in_(chapter_ids))
+    ).all()
+    for course_chapter in course_chapters:
+        db_session.delete(course_chapter)
+
+    chapters = db_session.exec(
+        select(Chapter)
+        .where(Chapter.course_id == course.id)
+        .where(Chapter.id.in_(chapter_ids))
+    ).all()
+    for chapter in chapters:
+        db_session.delete(chapter)
+
+
 def upsert_course_tabs(
     course: Course,
     incoming_tabs: List[CourseTabUpsert],
@@ -179,31 +228,12 @@ def upsert_course_tabs(
             )
             db_session.add(tab)
 
-    # Reassign chapters from tabs that will be removed
-    ordered_payload = sorted(incoming_tabs, key=lambda t: t.position)
-    fallback_tab_uuid = ordered_payload[0].tab_uuid if ordered_payload else None
-
     tabs_to_delete = [
         tab for tab_uuid, tab in existing_by_id.items() if tab_uuid not in incoming_by_id
     ]
-    if tabs_to_delete and not fallback_tab_uuid:
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot delete all tabs from a course.",
-        )
 
     for tab in tabs_to_delete:
-        if not fallback_tab_uuid:
-            continue
-        edge_stmt = (
-            select(CourseChapter_Graph)
-            .where(CourseChapter_Graph.course_id == course.id)
-            .where(CourseChapter_Graph.tab_uuid == tab.tab_uuid)
-        )
-        edges = db_session.exec(edge_stmt).all()
-        for edge in edges:
-            edge.tab_uuid = fallback_tab_uuid  # type: ignore[arg-type]
-            db_session.add(edge)
+        delete_chapters_for_tab(course, tab.tab_uuid, db_session)
         db_session.delete(tab)
 
     db_session.commit()

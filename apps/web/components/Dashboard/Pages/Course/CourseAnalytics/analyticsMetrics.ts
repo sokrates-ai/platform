@@ -1,4 +1,8 @@
-import { ActivityStatusStep } from './useAnalyticsData'
+type TimestampedAnalyticsItem = {
+  creation_date?: string | null
+  completed_date?: string | null
+  verified_date?: string | null
+}
 
 /**
  * Parse a backend timestamp. The API stores naive datetimes as
@@ -19,9 +23,9 @@ function parseTimestamp(value?: string | null): number | null {
  * (clock skew / bad data), are ignored. Returns null when there's no sample.
  */
 function averageDeltaMs(
-  steps: ActivityStatusStep[],
-  fromField: keyof ActivityStatusStep,
-  toField: keyof ActivityStatusStep
+  steps: TimestampedAnalyticsItem[],
+  fromField: keyof TimestampedAnalyticsItem,
+  toField: keyof TimestampedAnalyticsItem
 ): number | null {
   let sum = 0
   let count = 0
@@ -38,12 +42,12 @@ function averageDeltaMs(
 }
 
 /** Avg time from first view (creation) to marking complete. */
-export function avgTaskDurationMs(steps: ActivityStatusStep[]): number | null {
+export function avgTaskDurationMs(steps: TimestampedAnalyticsItem[]): number | null {
   return averageDeltaMs(steps, 'creation_date', 'completed_date')
 }
 
 /** Avg time from student completion to first tutor verification. */
-export function avgTutorResponseMs(steps: ActivityStatusStep[]): number | null {
+export function avgTutorResponseMs(steps: TimestampedAnalyticsItem[]): number | null {
   return averageDeltaMs(steps, 'completed_date', 'verified_date')
 }
 

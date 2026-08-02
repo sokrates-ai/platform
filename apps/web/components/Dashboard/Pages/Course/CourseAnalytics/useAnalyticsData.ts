@@ -1,129 +1,101 @@
 'use client'
 
-import { useMemo } from 'react'
 import useSWR from 'swr'
 import { useCourse } from '@components/Contexts/CourseContext'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import { getAPIUrl } from '@services/config/config'
 import { swrFetcher } from '@services/utils/ts/requests'
-import { ApiStudent } from '@components/Dashboard/Pages/Course/ManageCourseMembers/shared'
-import { CourseTab } from '@components/Objects/Modals/Course/Create/CourseTabSelector'
 
-export type ActivityStatusStep = {
-  user_id: number
-  activity_uuid: string
-  complete: boolean
-  tutor_verified: 'NONE' | 'CORRECT' | 'INCORRECT'
-  creation_date?: string | null
-  update_date?: string | null
-  // Set when the student first marked the step complete.
-  completed_date?: string | null
-  // Set at the first tutor verification.
-  verified_date?: string | null
+export type AnalyticsMetricSummary = {
+  student_count: number
+  activity_count: number
+  started_count: number
+  completed_count: number
+  verified_count: number
+  correct_count: number
+  incorrect_count: number
+  pending_verification_count: number
+  engaged_student_count: number
+  completion_rate: number
+  engagement_rate: number
+  avg_task_duration_ms: number | null
+  avg_tutor_response_ms: number | null
 }
 
-export type Room = {
-  id: number
-  name: string
-  student_count?: number
-  tutor_count?: number
-}
-
-export type AnalyticsActivity = {
+export type AnalyticsActivity = AnalyticsMetricSummary & {
   activity_uuid: string
   name: string
   chapter_name: string
   tab_id: string
   tab_name: string
+  tab_position: number
+  chapter_position: number
+  activity_position: number
+  last_activity_at: string | null
 }
 
-/**
- * Shared data-fetching for the course analytics sub-pages. Loads the students,
- * rooms and per-activity completion status once so every analytics view works
- * off the same source of truth.
- */
+export type AnalyticsTab = AnalyticsMetricSummary & {
+  tab_id: string
+  name: string
+  position: number
+}
+
+export type AnalyticsRoom = AnalyticsMetricSummary & {
+  id: number
+  name: string
+  tutor_count: number
+  student_ids: number[]
+  activities: AnalyticsActivity[]
+}
+
+export type AnalyticsStudent = AnalyticsMetricSummary & {
+  id: number
+  name: string
+  email: string
+  last_activity_at: string | null
+}
+
+export type AnalyticsAttentionItem = {
+  kind: string
+  scope: 'activity' | 'tab' | 'room' | string
+  ref_id: string
+  label: string
+  severity: 'high' | 'medium' | 'low' | string
+  metric: number
+  message: string
+}
+
+export type CourseAnalyticsData = {
+  course_uuid: string
+  summary: AnalyticsMetricSummary
+  tabs: AnalyticsTab[]
+  rooms: AnalyticsRoom[]
+  activities: AnalyticsActivity[]
+  students: AnalyticsStudent[]
+  matrix: { rows: Array<{ tab_id: string; name: string; cells: AnalyticsActivity[] }> }
+  attention: AnalyticsAttentionItem[]
+  thresholds: {
+    low_completion_rate: number
+    slow_task_ms: number
+    slow_response_ms: number
+  }
+}
+
 export function useAnalyticsData() {
   const session = useSokratesSession() as any
-  const access_token = session?.data?.tokens?.access_token
+  const accessToken = session?.data?.tokens?.access_token
   const course = useCourse() as any
-  const { courseStructure, isLoading: courseLoading } = course ?? {}
+  const courseUuid = course?.courseStructure?.course_uuid
 
-  const courseUuid = courseStructure?.course_uuid
-
-  const tabs: CourseTab[] = useMemo(() => {
-    const metadata =
-      course?.courseTabMetadata ??
-      courseStructure?.tabMetadata ??
-      courseStructure?.tab_metadata ??
-      []
-    return Array.isArray(metadata) ? metadata : []
-  }, [course?.courseTabMetadata, courseStructure])
-
-  const { data: students } = useSWR<ApiStudent[]>(
-    courseUuid
-      ? `${getAPIUrl()}courses/students/list?course_uuid=${courseUuid}`
-      : null,
-    (url: string) => swrFetcher(url, access_token)
+  const { data, error, isLoading } = useSWR<CourseAnalyticsData>(
+    courseUuid ? `${getAPIUrl()}courses/${courseUuid}/analytics` : null,
+    (url: string) => swrFetcher(url, accessToken),
   )
-
-  const { data: rooms } = useSWR<Room[]>(
-    courseUuid ? `${getAPIUrl()}courses/${courseUuid}/rooms` : null,
-    (url: string) => swrFetcher(url, access_token)
-  )
-
-  const allActivities = useMemo<AnalyticsActivity[]>(() => {
-    const store = courseStructure?.tabStore ?? courseStructure?.tab_store ?? {}
-    const items: AnalyticsActivity[] = []
-    const seen = new Set<string>()
-
-    const tabMetadata = courseStructure?.tabMetadata ?? courseStructure?.tab_metadata ?? []
-
-    Object.entries(store).forEach(([tabId, tabData]: [string, any]) => {
-      const tabMeta = tabMetadata.find((t: any) => (t.id ?? t.tab_uuid) === tabId)
-      const tabName = tabMeta?.name ?? tabId
-      const chapters = tabData?.content?.chapters ?? []
-      chapters.forEach((chapter: any) => {
-        const chapterName = chapter?.name ?? 'Unnamed chapter'
-        const activities = Array.isArray(chapter?.activities) ? chapter.activities : []
-        activities.forEach((activity: any) => {
-          const uuid = activity?.activity_uuid ?? activity?.activityUuid ?? activity?.uuid
-          if (!uuid || seen.has(uuid)) return
-          seen.add(uuid)
-          items.push({
-            activity_uuid: uuid.startsWith('activity_') ? uuid : `activity_${uuid}`,
-            name: activity?.name ?? 'Unnamed',
-            chapter_name: chapterName,
-            tab_id: tabId,
-            tab_name: tabName,
-          })
-        })
-      })
-    })
-    return items
-  }, [courseStructure])
-
-  const firstRoomId = rooms?.[0]?.id
-  const activityUuids = useMemo(
-    () => allActivities.map((a) => a.activity_uuid),
-    [allActivities]
-  )
-
-  const { data: activityStatusData } = useSWR(
-    firstRoomId && activityUuids.length > 0
-      ? `${getAPIUrl()}courses/${courseUuid}/rooms/${firstRoomId}/activity-status?activity_uuids=${encodeURIComponent(activityUuids.join(','))}`
-      : null,
-    (url: string) => swrFetcher(url, access_token)
-  )
-
-  const activitySteps: ActivityStatusStep[] = activityStatusData?.steps ?? []
 
   return {
-    courseLoading: Boolean(courseLoading),
-    courseUuid,
-    tabs,
-    students,
-    rooms,
-    allActivities,
-    activitySteps,
+    courseLoading: Boolean(course?.isLoading),
+    isLoading,
+    error,
+    data,
   }
 }

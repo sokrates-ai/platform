@@ -186,7 +186,11 @@ function CourseOverviewLayout({ params }: { params: CourseOverviewParams }) {
       }
       return
     }
-    if (course?.activeTabId && course.activeTabId !== selectedTabId) {
+    if (
+      course?.activeTabId &&
+      tabs.some((tab) => tab.id === course.activeTabId) &&
+      course.activeTabId !== selectedTabId
+    ) {
       setSelectedTabId(course.activeTabId)
     }
   }, [course?.activeTabId, dispatchCourse, getStoredTabId, selectedTabId, tabs])
@@ -265,44 +269,59 @@ function CourseOverviewLayout({ params }: { params: CourseOverviewParams }) {
         position: index,
       }))
       const nextStore = ensureStoreForTabs(tabsWithPositions, tabStore)
+      const removedIndex = change?.tabId
+        ? tabs.findIndex((tab) => tab.id === change.tabId)
+        : -1
+      const fallbackIndex =
+        removedIndex >= 0
+          ? Math.min(removedIndex, tabsWithPositions.length - 1)
+          : 0
+      const fallbackTabId = tabsWithPositions[fallbackIndex]?.id ?? ''
+      const nextSelectedTabId =
+        wasAdded && addedTab
+          ? addedTab.id
+          : tabsWithPositions.some((tab) => tab.id === selectedTabId)
+            ? selectedTabId
+            : fallbackTabId
+
       setTabs(tabsWithPositions)
       dispatchCourse({ type: 'setIsNotSaved' })
       syncStore(nextStore, true)
       dispatchCourse({ type: 'setCourseTabMetadata', payload: tabsWithPositions })
 
-      setSelectedTabId((current) => {
-        if (wasAdded && addedTab) {
-          skipNextActiveTabPersistRef.current = addedTab.id
-          dispatchCourse({ type: 'setActiveTab', payload: addedTab.id })
-          removeStoredTabId()
-          return addedTab.id
-        }
-        if (tabsWithPositions.some((tab) => tab.id === current)) {
-          dispatchCourse({ type: 'setActiveTab', payload: current })
-          if (wasRemoved) {
-            removeStoredTabId()
-          } else {
-            setStoredTabId(current)
-          }
-          return current
-        }
-        const fallback = tabsWithPositions[0]?.id ?? ''
-        if (fallback) {
-          dispatchCourse({ type: 'setActiveTab', payload: fallback })
-          setStoredTabId(fallback)
-        }
-        return fallback
-      })
+      setSelectedTabId(nextSelectedTabId)
+      if (nextSelectedTabId) {
+        dispatchCourse({ type: 'setActiveTab', payload: nextSelectedTabId })
+      }
+
+      if (wasAdded && addedTab) {
+        skipNextActiveTabPersistRef.current = addedTab.id
+        removeStoredTabId()
+      } else if (wasRemoved) {
+        removeStoredTabId()
+      } else if (nextSelectedTabId) {
+        setStoredTabId(nextSelectedTabId)
+      }
 
       if (wasAdded || wasRemoved) {
         requestAutosave()
       }
     },
-    [dispatchCourse, removeStoredTabId, requestAutosave, setStoredTabId, syncStore, tabStore, tabs],
+    [
+      dispatchCourse,
+      removeStoredTabId,
+      requestAutosave,
+      selectedTabId,
+      setStoredTabId,
+      syncStore,
+      tabStore,
+      tabs,
+    ],
   )
 
   const handleTabChange = React.useCallback(
     (tabId: string, change: ActiveTabChange = { type: 'manual' }) => {
+      if (!tabs.some((tab) => tab.id === tabId)) return
       if (change.type === 'create') {
         skipNextActiveTabPersistRef.current = tabId
         removeStoredTabId()
@@ -312,7 +331,7 @@ function CourseOverviewLayout({ params }: { params: CourseOverviewParams }) {
       setSelectedTabId(tabId)
       dispatchCourse({ type: 'setActiveTab', payload: tabId })
     },
-    [dispatchCourse, removeStoredTabId, setStoredTabId],
+    [dispatchCourse, removeStoredTabId, setStoredTabId, tabs],
   )
 
   const handleUpdateTabMap = React.useCallback(

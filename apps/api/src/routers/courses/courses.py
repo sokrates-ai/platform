@@ -69,6 +69,7 @@ from src.services.courses.tutor_room_selection import (
     list_room_activity_status,
     set_tutor_room_selection,
 )
+from src.services.courses.analytics import get_course_analytics
 from src.services.courses.courses import (
     create_course,
     get_course,
@@ -104,6 +105,93 @@ class RoomActivityStatusStep(BaseModel):
 
 class RoomActivityStatusRead(BaseModel):
     steps: List[RoomActivityStatusStep]
+
+
+class CourseAnalyticsMetricSummary(BaseModel):
+    student_count: int
+    activity_count: int
+    started_count: int
+    completed_count: int
+    verified_count: int
+    correct_count: int
+    incorrect_count: int
+    pending_verification_count: int
+    engaged_student_count: int
+    completion_rate: int
+    engagement_rate: int
+    avg_task_duration_ms: float | None = None
+    avg_tutor_response_ms: float | None = None
+
+
+class CourseAnalyticsActivity(CourseAnalyticsMetricSummary):
+    activity_uuid: str
+    name: str
+    chapter_name: str
+    tab_id: str
+    tab_name: str
+    tab_position: int
+    chapter_position: int
+    activity_position: int
+    last_activity_at: str | None = None
+
+
+class CourseAnalyticsTab(CourseAnalyticsMetricSummary):
+    tab_id: str
+    name: str
+    position: int
+
+
+class CourseAnalyticsRoom(CourseAnalyticsMetricSummary):
+    id: int
+    name: str
+    tutor_count: int
+    student_ids: List[int]
+    activities: List[CourseAnalyticsActivity]
+
+
+class CourseAnalyticsStudent(CourseAnalyticsMetricSummary):
+    id: int
+    name: str
+    email: str
+    last_activity_at: str | None = None
+
+
+class CourseAnalyticsMatrixRow(BaseModel):
+    tab_id: str
+    name: str
+    cells: List[CourseAnalyticsActivity]
+
+
+class CourseAnalyticsMatrix(BaseModel):
+    rows: List[CourseAnalyticsMatrixRow]
+
+
+class CourseAnalyticsAttentionItem(BaseModel):
+    kind: str
+    scope: str
+    ref_id: str
+    label: str
+    severity: str
+    metric: int
+    message: str
+
+
+class CourseAnalyticsThresholds(BaseModel):
+    low_completion_rate: int
+    slow_task_ms: int
+    slow_response_ms: int
+
+
+class CourseAnalyticsRead(BaseModel):
+    course_uuid: str
+    summary: CourseAnalyticsMetricSummary
+    tabs: List[CourseAnalyticsTab]
+    rooms: List[CourseAnalyticsRoom]
+    activities: List[CourseAnalyticsActivity]
+    students: List[CourseAnalyticsStudent]
+    matrix: CourseAnalyticsMatrix
+    attention: List[CourseAnalyticsAttentionItem]
+    thresholds: CourseAnalyticsThresholds
 
 
 @router.post('/')
@@ -152,6 +240,24 @@ async def api_create_course_thumbnail(
     print('=====UPLOAD====')
     return await update_course_thumbnail(
         request, course_uuid, current_user, db_session, thumbnail
+    )
+
+
+@router.get('/{course_uuid}/analytics', response_model=CourseAnalyticsRead)
+async def api_get_course_analytics(
+    request: Request,
+    course_uuid: str,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+) -> CourseAnalyticsRead:
+    """
+    Aggregated tutor analytics for a course.
+    """
+    return await get_course_analytics(
+        request,
+        course_uuid,
+        current_user,
+        db_session,
     )
 
 
