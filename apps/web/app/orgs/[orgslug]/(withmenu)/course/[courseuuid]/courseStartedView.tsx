@@ -10,6 +10,7 @@ import Canvas, { LayoutState } from '@components/Objects/ContentMap/Canvas'
 import { DoorOpen, EyeOff, Menu, Sparkles, X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { getUriWithOrg, getWebSocketUrl } from '@services/config/config'
+import { AnimatePresence, motion } from 'framer-motion'
 import type { Viewport } from 'pixi-viewport'
 import { getSpriteUrl } from '@components/Objects/ContentMap/utils/spriteUrl'
 import type { AssetData } from '@components/Objects/ContentMap/Asset/assetTypes'
@@ -463,6 +464,7 @@ const CourseStartedView = ({
   }, [layout])
 
   const [viewport, setViewport] = useState<Viewport | null>(null)
+  const [mapReady, setMapReady] = useState(false)
   const [zoomPercent, setZoomPercent] = useState<number | null>(null)
   const initialZoomRef = useRef<number | null>(null)
   const isAnimatingZoomRef = useRef(false)
@@ -476,6 +478,14 @@ const CourseStartedView = ({
     () => `sokrates:course-map-zoom:${courseuuid}:${selectedTab}`,
     [courseuuid, selectedTab],
   )
+
+  const showMapLoader = Boolean(activeCourse) && !mapReady
+
+  useEffect(() => {
+    setMapReady(false)
+    setViewport(null)
+    setZoomPercent(null)
+  }, [selectedTab])
 
   const clampScale = useCallback(
     (scale: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, scale)),
@@ -866,6 +876,32 @@ const CourseStartedView = ({
 
   return (
     <div className="relative flex h-screen flex-col overflow-hidden">
+      <AnimatePresence>
+        {showMapLoader && (
+          <motion.div
+            key="course-map-loader"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="absolute inset-0 z-50 bg-white"
+          >
+            <PageLoading />
+            <div className="absolute bottom-10 left-1/2 w-[18rem] max-w-[80vw] -translate-x-1/2">
+              <div
+                className="mb-2 text-center text-sm font-medium text-gray-600"
+                role="status"
+                aria-live="polite"
+              >
+                Loading course map
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                <div className="h-full w-1/2 animate-pulse rounded-full bg-[#FF6934]" />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <Modal
         isDialogOpen={chapterDialogOpen}
         onOpenChange={(open) => {
@@ -1081,7 +1117,10 @@ const CourseStartedView = ({
             layout={layeredLayout}
             readOnly
             chapterStates={chapterStates}
-            onViewportReady={setViewport}
+            onViewportReady={(nextViewport) => {
+              setViewport(nextViewport)
+              setMapReady(true)
+            }}
             minZoom={MIN_ZOOM}
             maxZoom={MAX_ZOOM}
             setLayout={() => {
