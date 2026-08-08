@@ -3,10 +3,7 @@ from sqlmodel import Session, select
 from src.db.trail_runs import TrailRun
 from src.db.users import PublicUser, AnonymousUser, User
 
-from src.services.courses.activities.workspaces import (
-    get_task_log_of_user,
-    TaskLog,
-)
+from src.services.courses.activities.workspaces import TaskLog
 from src.db.courses.courses import (
     Course,
 )
@@ -43,15 +40,23 @@ async def list_course_students(
         select(User).join(TrailRun)
         # .on(TrailStep.user_id == User.id)
         .where(TrailRun.course_id == course_id)
+        .distinct()
     )
 
     print(str(statement.compile(dialect=postgresql.dialect())))
 
     students = db_session.exec(statement).all()
 
+    student_uuids = [student.user_uuid for student in students]
+    logs_by_user: dict[str, list[TaskLog]] = {user_uuid: [] for user_uuid in student_uuids}
+    if student_uuids:
+        logs_statement = select(TaskLog).where(TaskLog.user_uuid.in_(student_uuids))
+        for log in db_session.exec(logs_statement).all():
+            logs_by_user.setdefault(log.user_uuid, []).append(log)
+
     students_new = []
     for student in students:
-        log = await get_task_log_of_user(db_session, student.user_uuid)
+        log = logs_by_user.get(student.user_uuid, [])
         stud = CourseStudent(**student.dict(), log=log)
         students_new.append(stud)
 

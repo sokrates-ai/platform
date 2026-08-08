@@ -93,14 +93,14 @@ async def complete_workspace(
             activity_uuid=str(session_data["activity_uuid"]),
             user_uuid=str(session_data["user_uuid"]),
         )
-    except Exception:
-        logger.warning("complete_workspace_record_solution_failed", exc_info=True)
-
-    try:
         session_data["lastCompletionAt"] = datetime.now(timezone.utc).isoformat()
         await save_session_to_redis(workspaceId, session_data)
-    except Exception:
-        logger.warning("complete_workspace_state_update_failed", exc_info=True)
+    except Exception as exc:
+        logger.warning("complete_workspace_failed", exc_info=True)
+        raise HTTPException(
+            status_code=503,
+            detail="Completion could not be recorded. Please try again.",
+        ) from exc
 
     return {"message": "Completion recorded", "correct": correct}
 

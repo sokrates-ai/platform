@@ -1,5 +1,5 @@
 from typing import Any, List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field as PydanticField
 from sqlmodel import Column, ForeignKey, Integer
 from sqlmodel import Field, SQLModel
 from src.db.courses.activities import ActivityRead
@@ -56,13 +56,13 @@ class ActivityOrder(BaseModel):
     activity_id: int
 
 
-# class ChapterOrder(BaseModel):
-#     chapter_id: int
-#     activities_order_by_ids: List[ActivityOrder]
+class ChapterOrder(BaseModel):
+    chapter_id: int
+    activities_order_by_ids: List[ActivityOrder] = PydanticField(default_factory=list)
 
 
-# class ChapterUpdateOrder(BaseModel):
-#     chapter_order_by_ids: List[ChapterOrder]
+class ChapterUpdateOrder(BaseModel):
+    chapter_order_by_ids: List[ChapterOrder]
 
 class ChapterEdge(BaseModel):
     from_chapter_id: int

@@ -33,7 +33,7 @@ services:
           - COLLAB_STORE_MAX_DEBOUNCE_MS=15000
           - COLLAB_DIRECT_CONN_IDLE_MS=1500
           - COLLAB_BODY_LIMIT_BYTES=1048576
-          - SHARED_COLLAB_JWT_SECRET=collab-secret
+          - SHARED_COLLAB_JWT_SECRET=
 
           - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
           - OTEL_EXPORTER_OTLP_HEADERS=api-key=your-dev-key
@@ -74,7 +74,7 @@ services:
 
         - LEARNHOUSE_KEYCLOAK_ISSUER=https://keycloak.hpi.de/realms/hpi
         - LEARNHOUSE_KEYCLOAK_CLIENT_ID=sokrates
-        - LEARNHOUSE_KEYCLOAK_CLIENT_SECRET=SECRET
+        - LEARNHOUSE_KEYCLOAK_CLIENT_SECRET=
         - LEARNHOUSE_KEYCLOAK_ID_TOKEN_ALG=RS512
 
       depends_on:
@@ -122,7 +122,7 @@ services:
       restart: always
       environment:
         - POSTGRES_USER=learnhouse
-        - POSTGRES_PASSWORD=learnhouse
+        - POSTGRES_PASSWORD=
         - POSTGRES_DB=learnhouse
       volumes:
         - ./platform_postgres:/var/lib/postgresql/data

@@ -9,7 +9,7 @@ general:
   install_mode: true
 
 security:
-  auth_jwt_secret_key: secret
+  auth_jwt_secret_key: ""
 
 hosting_config:
   domain: learnhouse.app
@@ -32,7 +32,7 @@ mailing_config:
   system_email_adress: ""
 
 database_config:
-  sql_connection_string: postgresql://learnhouse:learnhouse@localhost:5432/learnhouse
+  sql_connection_string: postgresql://learnhouse:@localhost:5432/learnhouse
 
 redis_config:
   redis_connection_string: redis://localhost:6379/learnhouse

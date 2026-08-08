@@ -16,6 +16,7 @@ from src.db.courses.chapters import (
     Chapter,
     ChapterCreate,
     ChapterRead,
+    ChapterUpdateOrder,
     ChapterUpdate,
     ChapterEdge,
 )
@@ -751,6 +752,69 @@ async def modify_chapter_edge(
         db_session.commit()
 
     return
+
+
+async def reorder_chapters_and_activities(
+    request: Request,
+    course_uuid: str,
+    chapters_order: ChapterUpdateOrder,
+    current_user: PublicUser,
+    db_session: Session,
+):
+    course = db_session.exec(select(Course).where(Course.course_uuid == course_uuid)).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course does not exist")
+
+    await rbac_check(request, course.course_uuid, current_user, "update", db_session)
+
+    requested_chapter_ids = [item.chapter_id for item in chapters_order.chapter_order_by_ids]
+    if len(requested_chapter_ids) != len(set(requested_chapter_ids)):
+        raise HTTPException(status_code=422, detail="A chapter was listed more than once")
+
+    chapters = db_session.exec(select(Chapter).where(Chapter.course_id == course.id)).all()
+    if set(requested_chapter_ids) != {chapter.id for chapter in chapters}:
+        raise HTTPException(status_code=422, detail="The chapter order is incomplete or invalid")
+
+    tabs = get_sorted_course_tabs(course.id, db_session)
+    fallback_tab_uuid = tabs[0].tab_uuid if tabs else "tab-1"
+    existing_edges = db_session.exec(
+        select(CourseChapter_Graph).where(CourseChapter_Graph.course_id == course.id)
+    ).all()
+    tab_by_chapter: dict[int, str] = {}
+    for edge in existing_edges:
+        tab_by_chapter.setdefault(edge.chapter_id, edge.tab_uuid)
+        db_session.delete(edge)
+
+    now = str(datetime.now())
+    for index, chapter_id in enumerate(requested_chapter_ids):
+        db_session.add(
+            CourseChapter_Graph(
+                course_id=course.id,
+                chapter_id=chapter_id,
+                predecessor_id=requested_chapter_ids[index - 1] if index else None,
+                tab_uuid=tab_by_chapter.get(chapter_id, fallback_tab_uuid),
+            )
+        )
+
+    for chapter_order in chapters_order.chapter_order_by_ids:
+        activity_ids = [item.activity_id for item in chapter_order.activities_order_by_ids]
+        if len(activity_ids) != len(set(activity_ids)):
+            raise HTTPException(status_code=422, detail="An activity was listed more than once")
+        rows = db_session.exec(
+            select(ChapterActivity).where(
+                ChapterActivity.course_id == course.id,
+                ChapterActivity.chapter_id == chapter_order.chapter_id,
+            )
+        ).all()
+        if set(activity_ids) != {row.activity_id for row in rows}:
+            raise HTTPException(status_code=422, detail="The activity order is incomplete or invalid")
+        by_activity = {row.activity_id: row for row in rows}
+        for index, activity_id in enumerate(activity_ids):
+            by_activity[activity_id].order = index
+            by_activity[activity_id].update_date = now
+
+    db_session.commit()
+    return {"detail": "Chapters reordered"}
 
 
 # async def reorder_chapters_and_activities(

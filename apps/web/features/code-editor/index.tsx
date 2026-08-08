@@ -190,7 +190,25 @@ const CodeEditorContainer = forwardRef<CodeEditorRef, {}>((_props, ref) => {
           }
         } catch {}
       }
+      const pollJob = async () => {
+        for (let attempt = 0; attempt < 90; attempt += 1) {
+          await new Promise((resolve) => window.setTimeout(resolve, 2000))
+          try {
+            const job = await apiClient.getWorkspaceJob(jobId)
+            if (job.status === 'error') {
+              const message = typeof job.result?.message === 'string'
+                ? job.result.message
+                : 'The code run failed. Please try again.'
+              consoleState.appendLine(`Error: ${message}`)
+              return
+            }
+            if (job.status === 'done') return
+          } catch {}
+        }
+        consoleState.appendLine('The code run timed out. Please try again.')
+      }
       try { jobs.observe(onJobs); runtime.observe(onRuntime) } catch {}
+      void pollJob()
     } catch (_e) {
       consoleState.appendLine('Failed to start Judge0 run')
     }
@@ -252,4 +270,6 @@ const CodeEditorContainer = forwardRef<CodeEditorRef, {}>((_props, ref) => {
   )
 })
 
-export default CodeEditorContainer 
+CodeEditorContainer.displayName = 'CodeEditorContainer'
+
+export default CodeEditorContainer

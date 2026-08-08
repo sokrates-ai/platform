@@ -12,7 +12,7 @@
       "enabled": true,
       "protocol": "openid-connect",
       "publicClient": false,
-      "secret": "h2PxfJjCepQzf9MUOYqsSHuNV1Zk3rEl",
+      "secret": "",
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "redirectUris": [
@@ -34,7 +34,7 @@
       "credentials": [
         {
           "type": "password",
-          "value": "password",
+          "value": "",
           "temporary": false
         }
       ]

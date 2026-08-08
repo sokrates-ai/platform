@@ -19,10 +19,16 @@ check() {
 }
 
 load_dev_env() {
-    if [ -f "./dev.env" ]; then
+    if [ -f "./dev.env" ] || [ -f "./dev.local.env" ]; then
         set -a
-        # shellcheck disable=SC1091
-        . "./dev.env"
+        if [ -f "./dev.env" ]; then
+            # shellcheck disable=SC1091
+            . "./dev.env"
+        fi
+        if [ -f "./dev.local.env" ]; then
+            # shellcheck disable=SC1091
+            . "./dev.local.env"
+        fi
         set +a
     fi
 }

@@ -7,6 +7,7 @@ from redis.asyncio import Redis
 
 from src.services.workspace.config import WorkspaceSettings, build_workspace_settings
 from src.services.workspace.history import HistoryManager
+from src.services.workspace.jobs import JobsService
 from src.services.workspace.state import set_app_instance
 
 
@@ -31,6 +32,8 @@ async def init_workspace_runtime(app: FastAPI) -> None:
         history_manager=history_manager,
     )
     set_app_instance(app)
+    if redis_client is not None:
+        await JobsService(redis_client).recover_interrupted_jobs()
 
 
 async def shutdown_workspace_runtime(app: FastAPI) -> None:

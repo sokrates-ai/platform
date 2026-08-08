@@ -548,6 +548,18 @@ export function SessionProvider({ children }: SessionProviderProps) {
         }
       } catch (error) {
         console.error("Failed to initialize session:", error);
+        if (isMounted) {
+          const detail = error instanceof Error ? error.message : '';
+          setWorkspaceBlockingError(
+            buildWorkspaceBlockingError(detail) ?? {
+              code: 'workspace_session_invalid',
+              title: 'Workspace Unavailable',
+              message:
+                'The workspace could not be loaded. Reload the workspace or go back and open it again.',
+              detail: detail || 'The workspace data request failed.',
+            }
+          );
+        }
       }
     };
 

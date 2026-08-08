@@ -6,6 +6,7 @@ from src.db.courses.chapters import (
     ChapterRead,
     ChapterUpdate,
     ChapterEdge,
+    ChapterUpdateOrder,
 )
 from src.services.courses.chapters import (
     DEPRECEATED_get_course_chapters,
@@ -14,6 +15,7 @@ from src.services.courses.chapters import (
     get_chapter,
     get_course_chapters,
     modify_chapter_edge,
+    reorder_chapters_and_activities,
     update_chapter,
 )
 
@@ -64,20 +66,17 @@ async def api_get_chapter_meta(
     )
 
 
-# @router.put("/course/{course_uuid}/order")
-# async def api_update_chapter_meta(
-#     request: Request,
-#     course_uuid: str,
-#     order: ChapterUpdateOrder,
-#     current_user: PublicUser = Depends(get_current_user),
-#     db_session=Depends(get_db_session),
-# ):
-#     """
-#     Update Chapter metadata
-#     """
-#     return await reorder_chapters_and_activities(
-#         request, course_uuid, order, current_user, db_session
-#     )
+@router.put("/course/{course_uuid}/order")
+async def api_update_chapter_meta(
+    request: Request,
+    course_uuid: str,
+    order: ChapterUpdateOrder,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session=Depends(get_db_session),
+):
+    return await reorder_chapters_and_activities(
+        request, course_uuid, order, current_user, db_session
+    )
 
 
 @router.put("/course/{course_uuid}/edge")

@@ -82,7 +82,7 @@ services:
         - LEARNHOUSE_WORKSPACE_API_HOST=sk-workspace-backend
         - LEARNHOUSE_WORKSPACE_API_PORT=8000
         - LEARNHOUSE_WORKSPACE_EXTERNAL_BASE_URL=http://localhost:7001
-        - LEARNHOUSE_OPENAI_API_KEY=foobar
+        - LEARNHOUSE_OPENAI_API_KEY=
       depends_on:
         db:
           condition: service_healthy
@@ -93,7 +93,7 @@ services:
       restart: always
       environment:
         - POSTGRES_USER=learnhouse
-        - POSTGRES_PASSWORD=learnhouse
+        - POSTGRES_PASSWORD=
         - POSTGRES_DB=learnhouse
       volumes:
         - ./platform_postgres:/var/lib/postgresql/data

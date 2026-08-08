@@ -112,9 +112,6 @@ function SaveState(props: { orgslug: string }) {
   //
   // Course Order
   const changeOrderBackend = async () => {
-    // TODO: this does nothing!
-    return
-
     mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
     await updateCourseOrderStructure(
       course.courseStructure.course_uuid,
@@ -226,7 +223,7 @@ function SaveState(props: { orgslug: string }) {
     } finally {
       setSavingState(false)
     }
-  }, [changeMetadataBackend, changeOrderBackend, changeRoomsBackend, course?.courseStructure?.course_uuid, dispatchCourse, props.orgslug, saved, isSaving, setSavingState])
+  }, [changeChapterRewardsBackend, changeMetadataBackend, changeOrderBackend, changeRoomsBackend, course?.courseStructure?.course_uuid, dispatchCourse, props.orgslug, saved, isSaving, setSavingState])
 
   const handleCourseOrder = React.useCallback((course_structure: any) => {
     const chapters = course_structure.chapters

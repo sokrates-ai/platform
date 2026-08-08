@@ -72,3 +72,25 @@ class JobsService:
         if result is not None:
             job["result"] = result
         await self.redis.set(self._job_key(job_id), json.dumps(job))
+
+    async def recover_interrupted_jobs(self) -> int:
+        """Mark in-flight jobs as failed after an API process restart."""
+        recovered = 0
+        async for key in self.redis.scan_iter(match="workspace:job:*"):
+            raw = await self.redis.get(key)
+            if not raw:
+                continue
+            try:
+                job = json.loads(raw)
+            except (TypeError, json.JSONDecodeError):
+                continue
+            if job.get("status") not in {"queued", "running"}:
+                continue
+            job["status"] = "error"
+            job["updatedAt"] = datetime.now(timezone.utc).isoformat()
+            job["result"] = {
+                "message": "This evaluation was interrupted by a server restart. Please try again."
+            }
+            await self.redis.set(key, json.dumps(job))
+            recovered += 1
+        return recovered

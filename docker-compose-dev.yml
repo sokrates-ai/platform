@@ -19,7 +19,7 @@ services:
       - "5432:5432"
     environment:
       - POSTGRES_USER=learnhouse
-      - POSTGRES_PASSWORD=learnhouse
+      - POSTGRES_PASSWORD=
       - POSTGRES_DB=learnhouse
     volumes:
       - sk-postgres:/var/lib/postgresql/data
@@ -66,7 +66,7 @@ services:
       - COLLAB_STORE_MAX_DEBOUNCE_MS=15000
       - COLLAB_DIRECT_CONN_IDLE_MS=1500
       - COLLAB_BODY_LIMIT_BYTES=1048576
-      - SHARED_COLLAB_JWT_SECRET=collab-secret
+      - SHARED_COLLAB_JWT_SECRET=${SHARED_COLLAB_JWT_SECRET:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -85,7 +85,7 @@ services:
     command: ["start-dev", "--import-realm"]
     environment:
       - KEYCLOAK_ADMIN=admin
-      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KEYCLOAK_ADMIN_PASSWORD=
     ports:
       - "8081:8080"
     volumes:

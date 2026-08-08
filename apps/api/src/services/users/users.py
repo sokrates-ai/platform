@@ -314,7 +314,13 @@ async def update_user_avatar(
         name_in_disk = (
             f"{user.user_uuid}_avatar_{uuid4()}.{avatar_file.filename.split('.')[-1]}"
         )
-        await upload_avatar(avatar_file, name_in_disk, user.user_uuid)
+        try:
+            await upload_avatar(avatar_file, name_in_disk, user.user_uuid)
+        except Exception as exc:
+            raise HTTPException(
+                status_code=500,
+                detail="Avatar upload failed. Please try again.",
+            ) from exc
 
         # Update course
         if name_in_disk:
