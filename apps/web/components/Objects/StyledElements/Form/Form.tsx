@@ -57,7 +57,7 @@ export const inputStyles = {
   justifyContent: 'center',
   borderRadius: 4,
   fontSize: 15,
-  color: '#7c7c7c',
+  color: '#454545',
   background: '#fbfdff',
   boxShadow: `0 0 0 1px #edeeef`,
   '&:hover': { boxShadow: `0 0 0 1px #edeeef` },

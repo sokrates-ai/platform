@@ -4,7 +4,8 @@ import ResetPasswordClient from './reset'
 import AuthLayout from '@components/Pages/AuthLayout'
 
 export const metadata: Metadata = {
-    title: 'Sokrates',
+    title: 'Reset password — Sokrates',
+    description: 'Set a new password for your Sokrates account.',
 }
 
 function ResetPasswordPage() {

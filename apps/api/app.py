@@ -1,4 +1,6 @@
 import uvicorn
+import asyncio
+import time
 from fastapi import FastAPI, Request
 import logging
 from config.config import LearnHouseConfig, get_learnhouse_config
@@ -39,6 +41,7 @@ app = FastAPI(
 )
 
 logger = logging.getLogger(__name__)
+slow_request_ms = float(os.getenv('SLOW_REQUEST_MS', '500'))
 
 app.add_middleware(
     CORSMiddleware,
@@ -78,6 +81,7 @@ app.include_router(v1_router)
 
 @app.middleware('http')
 async def log_server_errors_middleware(request: Request, call_next):
+    started_at = time.perf_counter()
     try:
         response = await call_next(request)
     except Exception:
@@ -101,6 +105,17 @@ async def log_server_errors_middleware(request: Request, call_next):
                 "client": request.client.host if request.client else None,
             },
         )
+    duration_ms = (time.perf_counter() - started_at) * 1000
+    if duration_ms >= slow_request_ms:
+        logger.warning(
+            "Slow API request",
+            extra={
+                "method": request.method,
+                "path": request.url.path,
+                "status_code": response.status_code,
+                "duration_ms": round(duration_ms, 2),
+            },
+        )
     return response
 
 
@@ -114,13 +129,14 @@ async def user_interaction_middleware(request: Request, call_next):
         user_id = Authorize.get_jwt_subject()
     except Exception:
         pass  # No valid JWT, skip
-    if user_id:
-        try:
-            record_user_interaction(user_id, str(request.url.path))
-        except Exception:
-            # Optionally log the error
-            pass
     response = await call_next(request)
+    if user_id:
+        interaction_task = asyncio.create_task(
+            asyncio.to_thread(record_user_interaction, user_id, str(request.url.path))
+        )
+        interaction_task.add_done_callback(
+            lambda task: task.exception() if not task.cancelled() else None
+        )
     return response
 
 

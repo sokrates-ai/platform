@@ -18,7 +18,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 #### JWT Auth ####################################################
 class Settings(BaseModel):
-    authjwt_secret_key: str = "secret" if isDevModeEnabled() else SECRET_KEY
+    # Keep every JWT consumer on the configured key, including development.
+    # Using a separate hardcoded development key makes tokens issued by
+    # fastapi-jwt-auth fail validation in WebSocket and jose-based endpoints.
+    authjwt_secret_key: str = SECRET_KEY
     authjwt_token_location = {"cookies", "headers"}
     authjwt_cookie_csrf_protect = False
     authjwt_access_token_expires = (

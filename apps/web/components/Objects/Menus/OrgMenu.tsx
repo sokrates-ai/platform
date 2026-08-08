@@ -346,6 +346,7 @@ const Badge = ({
 const FallbackLogo = () => (
   <Image
     width={120}
+    priority
     className="h-full w-auto"
     src={logo_black || '/placeholder.svg'}
     alt="HPI Sokrates"

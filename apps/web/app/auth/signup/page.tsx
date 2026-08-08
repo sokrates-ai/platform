@@ -9,7 +9,10 @@ type Props = {
 
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: 'Sokrates Sign Up' }
+  return {
+    title: 'Sokrates Sign Up',
+    description: 'Create your Sokrates learning account.',
+  }
 }
 
 export default async function SignUpPage({ searchParams }: Props) {

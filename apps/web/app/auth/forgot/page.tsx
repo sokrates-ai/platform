@@ -3,7 +3,8 @@ import ForgotPasswordClient from './forgot'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Sokrates',
+  title: 'Forgot password — Sokrates',
+  description: 'Request a link to reset your Sokrates password.',
 }
 
 function ForgotPasswordPage() {

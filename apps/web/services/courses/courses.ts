@@ -18,7 +18,7 @@ export async function getOrgCourses(
 ) {
   const result: any = await fetch(
     `${getAPIUrl()}courses/org_slug/${org_slug}/page/1/limit/10`,
-    RequestBodyWithAuthHeader('GET', null, next, access_token)
+    RequestBodyWithAuthHeader('GET', null, next, access_token ?? undefined)
   )
   const res = await errorHandling(result)
   return res
@@ -27,11 +27,11 @@ export async function getOrgCourses(
 export async function getCourseMetadata(
   course_uuid: any,
   next: any,
-  access_token: string
+  access_token?: string | null
 ) {
   const result = await fetch(
     `${getAPIUrl()}courses/course_${course_uuid}/meta`,
-    RequestBodyWithAuthHeader('GET', null, next, access_token)
+    RequestBodyWithAuthHeader('GET', null, next, access_token ?? undefined)
   )
   const res = await errorHandling(result)
   return res

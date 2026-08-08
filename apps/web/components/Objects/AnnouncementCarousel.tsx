@@ -22,16 +22,17 @@ const AnnouncementCarousel: React.FC<AnnouncementCarouselProps> = ({
   const [currentSlide, setCurrentSlide] = React.useState(0)
   const [progress, setProgress] = React.useState(0) // % progress of current timer
 
-  const rafRef = React.useRef<number | null>(null)
+  const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null)
   const startTimeRef = React.useRef<number | null>(null)
 
   const startTimer = React.useCallback(() => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    if (timerRef.current) clearInterval(timerRef.current)
     setProgress(0)
     startTimeRef.current = performance.now()
 
-    const tick = (now: number) => {
+    const tick = () => {
       if (!startTimeRef.current) return
+      const now = performance.now()
       const elapsed = now - startTimeRef.current
       const pct = Math.min((elapsed / intervalMs) * 100, 100)
       setProgress(pct)
@@ -40,18 +41,16 @@ const AnnouncementCarousel: React.FC<AnnouncementCarouselProps> = ({
         // move to next slide and restart
         setCurrentSlide((i) => (i + 1) % slides.length)
         startTimer()
-      } else {
-        rafRef.current = requestAnimationFrame(tick)
       }
     }
 
-    rafRef.current = requestAnimationFrame(tick)
+    timerRef.current = setInterval(tick, 250)
   }, [slides.length, intervalMs])
 
   React.useEffect(() => {
     startTimer()
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      if (timerRef.current) clearInterval(timerRef.current)
     }
   }, [startTimer])
 
@@ -81,19 +80,13 @@ const AnnouncementCarousel: React.FC<AnnouncementCarouselProps> = ({
       "
       style={{ backgroundColor: current.color }}
     >
-      {slides.map((slide, idx) => (
-        slide.bgImage ? (
-          <div
-            key={`${slide.bgImage}-${idx}`}
-            className={`
-              absolute inset-0 bg-cover bg-center transition-opacity duration-500
-              ${currentSlide === idx ? 'opacity-100' : 'opacity-0'}
-            `}
-            style={{ backgroundImage: `url(${slide.bgImage})` }}
-            aria-hidden="true"
-          />
-        ) : null
-      ))}
+      {current.bgImage && (
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${current.bgImage})` }}
+          aria-hidden="true"
+        />
+      )}
 
       {/* overlay only if bgImage exists */}
       {current.bgImage && (
@@ -143,7 +136,7 @@ const AnnouncementCarousel: React.FC<AnnouncementCarouselProps> = ({
                 relative overflow-hidden transition-all duration-200
                 ${isActive
                   ? 'w-6 h-3 sm:w-8 sm:h-4 rounded-full'
-                  : 'w-2 h-2 sm:w-3 sm:h-3 rounded-full opacity-50'}
+                  : 'w-6 h-6 sm:w-6 sm:h-6 rounded-full opacity-50'}
                 bg-[#F5F5F5]
               `}
             >

@@ -1,8 +1,11 @@
 import os
+import secrets
 import yaml
 from typing import Literal, Optional
 from pydantic import BaseModel
 from dotenv import load_dotenv
+
+_EPHEMERAL_DEVELOPMENT_JWT_SECRET = secrets.token_urlsafe(32)
 
 
 def _as_bool(value: object, *, default: bool = False) -> bool:
@@ -165,6 +168,13 @@ def get_learnhouse_config() -> LearnHouseConfig:
     auth_jwt_secret_key = env_auth_jwt_secret_key or yaml_config.get(
         "security", {}
     ).get("auth_jwt_secret_key")
+    if not auth_jwt_secret_key:
+        if development_mode:
+            auth_jwt_secret_key = _EPHEMERAL_DEVELOPMENT_JWT_SECRET
+        else:
+            raise ValueError(
+                "LEARNHOUSE_AUTH_JWT_SECRET_KEY must be configured outside development"
+            )
 
     # Check if environment variables are defined
     env_site_name = os.environ.get("LEARNHOUSE_SITE_NAME")

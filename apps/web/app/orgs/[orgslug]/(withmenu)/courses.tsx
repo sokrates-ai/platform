@@ -9,6 +9,7 @@ import CourseCard from '@components/Objects/StyledElements/Cards/CourseCard'
 import NoCoursesAlert from '@components/Objects/StyledElements/Alerts/NoCourseAlert'
 
 import AnnouncementCarousel, { type Slide } from '@components/Objects/AnnouncementCarousel'
+import CoursePrefetchQueue from '@components/Objects/Courses/CoursePrefetchQueue'
 import { LayoutGrid } from 'lucide-react'
 
 import {
@@ -42,6 +43,10 @@ const CoursesClient: React.FC<CoursesClientProps> = ({
 
   return (
     <div className="relative flex flex-col min-h-screen md:overscroll-y-none">
+      <CoursePrefetchQueue
+        courses={courses}
+        orgslug={orgslug}
+      />
       {/* pull-out announcement reel */}
       <AnnouncementCarousel slides={slides} />
 

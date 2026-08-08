@@ -12,7 +12,7 @@ const nextConfig = {
       },
     ]
   },
-  productionBrowserSourceMaps: true,
+  productionBrowserSourceMaps: false,
   reactStrictMode: false,
   output: 'standalone',
 }

@@ -1,6 +1,10 @@
 import React from 'react'
 import CourseClient from './course'
-import { getCourseCanvasInteractionState, getCourseMetadata } from '@services/courses/courses'
+import {
+  getCourse,
+  getCourseCanvasInteractionState,
+  getCourseMetadata,
+} from '@services/courses/courses'
 import { getOrganizationContextInfo } from '@services/organizations/orgs'
 import { Metadata } from 'next'
 import { getCourseThumbnailMediaDirectory } from '@services/media/media'
@@ -35,8 +39,8 @@ export async function generateMetadata({
     revalidate: 1800,
     tags: ['organizations'],
   })
-  const course_meta = await getCourseMetadata(
-    params.courseuuid,
+  const course_meta = await getCourse(
+    `course_${params.courseuuid}`,
     { revalidate: 0, tags: ['courses'] },
     access_token ? access_token : null
   )
@@ -86,16 +90,24 @@ const CoursePage = async (params: any) => {
   }
   const session = await getServerSession(nextAuthOptions)
   const access_token = session?.tokens?.access_token
-  const course_meta = await getCourseMetadata(
-    courseuuid,
-    { revalidate: 0, tags: ['courses'] },
-    access_token ? access_token : null
-  )
-  const courseCanvas = await getCourseCanvasInteractionState({
-    // TODO: Find out why we normally remove "course" from the course uuid.
-    courseUuid: `course_${courseuuid}`,
-    access_token,
-  });
+  const course_meta = access_token
+    ? await getCourseMetadata(
+        courseuuid,
+        { revalidate: 0, tags: ['courses'] },
+        access_token
+      )
+    : await getCourse(
+        `course_${courseuuid}`,
+        { revalidate: 0, tags: ['courses'] },
+        null
+      )
+  const courseCanvas = access_token
+    ? await getCourseCanvasInteractionState({
+        // TODO: Find out why we normally remove "course" from the course uuid.
+        courseUuid: `course_${courseuuid}`,
+        access_token,
+      })
+    : { selected_chapter_id: null, selected_tab_id: null }
   
   return (
     <div>

@@ -100,13 +100,10 @@ const LoginClient = (props: LoginClientProps) => {
 
       if (res && res.error) {
         setError("Wrong Email or password");
+        setSubmitting(false)
         setIsSubmitting(false);
       } else {
-        await signIn('credentials', {
-          email: values.email,
-          password: values.password,
-          callbackUrl: '/redirect_from_auth'
-        });
+        router.push('/redirect_from_auth')
       }
     },
   })
@@ -129,7 +126,7 @@ const LoginClient = (props: LoginClientProps) => {
 
       <AuthCard>
         {error && (
-          <Alert variant="destructive" className="mb-6">
+          <Alert variant="destructive" className="mb-6" role="alert" aria-live="assertive">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription className="ml-2">{error}</AlertDescription>
           </Alert>
@@ -155,10 +152,11 @@ const LoginClient = (props: LoginClientProps) => {
                 required
                 aria-required="true"
                 aria-invalid={Boolean(formik.touched.email && formik.errors.email)}
+                aria-describedby={formik.touched.email && formik.errors.email ? 'login-email-error' : undefined}
               />
             </div>
             {formik.touched.email && formik.errors.email && (
-              <p className="text-xs text-[#E25A26] mt-1">{formik.errors.email}</p>
+              <p id="login-email-error" role="alert" aria-live="polite" className="text-xs text-[#E25A26] mt-1">{formik.errors.email}</p>
             )}
           </div>
 
@@ -181,14 +179,24 @@ const LoginClient = (props: LoginClientProps) => {
                 required
                 aria-required="true"
                 aria-invalid={Boolean(formik.touched.password && formik.errors.password)}
+                aria-describedby={formik.touched.password && formik.errors.password ? 'login-password-error' : undefined}
               />
             </div>
             {formik.touched.password && formik.errors.password && (
-              <p className="text-xs text-[#E25A26] mt-1">{formik.errors.password}</p>
+              <p id="login-password-error" role="alert" aria-live="polite" className="text-xs text-[#E25A26] mt-1">{formik.errors.password}</p>
             )}
           </div>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full h-10 bg-[#e25a26] rounded-md shadow-[0_4px_0_#c94918] text-white font-semibold flex items-center justify-center">
+          <div className="flex justify-end -mt-1">
+            <Link
+              href={`/forgot?orgslug=${encodeURIComponent(props.org?.slug || 'default')}`}
+              className="text-sm font-semibold text-[#8f3518] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8f3518] rounded"
+            >
+              Forgot password?
+            </Link>
+          </div>
+
+          <Button type="submit" disabled={isSubmitting} className="w-full h-10 bg-[#b7471f] hover:bg-[#9f3d1b] rounded-md shadow-[0_4px_0_#7f2f15] text-white font-semibold flex items-center justify-center">
             {isSubmitting ? (
               <>
                 <Loader2 className="animate-spin mr-2 h-4 w-4" />

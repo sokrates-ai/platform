@@ -9,6 +9,7 @@ import AuthenticatedClientElement from "@components/Security/AuthenticatedClient
 import ConfirmationModal from "@components/Objects/StyledElements/ConfirmationModal/ConfirmationModal"
 import { getCourseThumbnailMediaDirectory } from "@services/media/media"
 import { getUriWithOrg } from "@services/config/config"
+import { prefetchCourseExperience } from "@services/performance/coursePrefetch"
 import { deleteCourseFromBackend } from "@services/courses/courses"
 import { revalidateTags } from "@services/utils/ts/requests"
 import { BookMinus, FilePenLine, Settings2, EllipsisVertical, GraduationCap } from "lucide-react"
@@ -89,8 +90,18 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, orgslug }) => {
       )
     : getUriWithOrg(
         orgslug,
-        `/course/${removeCoursePrefix(course.course_uuid)}`
+      `/course/${removeCoursePrefix(course.course_uuid)}`
+    )
+
+  const prefetchCourse = () => {
+    router.prefetch(courseHref)
+    if (!hasCourseStaffRole && typeof course.course_uuid === "string") {
+      void prefetchCourseExperience(
+        course.course_uuid,
+        session.data?.tokens?.access_token,
       )
+    }
+  }
 
   return (
     <div>
@@ -100,6 +111,8 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, orgslug }) => {
       >
         <Link
           prefetch
+          onMouseEnter={prefetchCourse}
+          onFocus={prefetchCourse}
           href={courseHref}
           aria-label={`Open course ${course.name}`}
           className="

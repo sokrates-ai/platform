@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import json
 import logging
+from typing import Optional
 
 import redis
 from fastapi import HTTPException, Request
@@ -17,6 +18,8 @@ from src.db.organizations import (
     OrganizationRead,
     OrganizationUser,
 )
+
+_interaction_redis: Optional[redis.Redis] = None
 
 
 async def get_organization_users(
@@ -437,13 +440,16 @@ def record_user_interaction(user_id: str, api_route: str):
     Stores the last 100 interactions per user, each with a timestamp.
     The data expires after 30 minutes of inactivity.
     """
+    global _interaction_redis
     LH_CONFIG = get_learnhouse_config()
     redis_conn_string = LH_CONFIG.redis_config.redis_connection_string
 
     if not redis_conn_string:
         raise Exception("Redis connection string not found")
 
-    r = redis.Redis.from_url(redis_conn_string)
+    if _interaction_redis is None:
+        _interaction_redis = redis.Redis.from_url(redis_conn_string)
+    r = _interaction_redis
     key = f"user_interactions:{user_id}"
     timestamp = datetime.now().isoformat()
     interaction = json.dumps({"route": api_route, "timestamp": timestamp})

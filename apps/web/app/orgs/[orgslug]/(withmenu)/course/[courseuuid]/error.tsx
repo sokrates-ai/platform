@@ -1,6 +1,7 @@
 'use client' // Error components must be Client Components
 
 import { useEffect } from 'react'
+import ErrorUI from '@components/Objects/StyledElements/Error/Error'
 
 export default function Error({
   error,
@@ -15,8 +16,9 @@ export default function Error({
   }, [error])
 
   return (
-    <div>
-      
-    </div>
+    <ErrorUI
+      message="This course could not be loaded"
+      submessage="The course may have been removed or is temporarily unavailable."
+    />
   )
 }

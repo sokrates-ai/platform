@@ -1,8 +1,10 @@
 import logging
 import os
 import importlib
+import time
 from config.config import get_learnhouse_config
 from fastapi import FastAPI
+from sqlalchemy import event
 from sqlmodel import Session, create_engine
 
 from src.core.events.migrations import run_database_migrations
@@ -39,6 +41,30 @@ engine = create_engine(
     echo=False,
     pool_pre_ping=True  # type: ignore
 )
+
+slow_query_ms = float(os.getenv('SLOW_DB_QUERY_MS', '200'))
+
+
+@event.listens_for(engine, 'before_cursor_execute')
+def record_query_start(connection, cursor, statement, parameters, context, executemany):
+    context._learnhouse_query_started = time.perf_counter()
+
+
+@event.listens_for(engine, 'after_cursor_execute')
+def log_slow_query(connection, cursor, statement, parameters, context, executemany):
+    started_at = getattr(context, '_learnhouse_query_started', None)
+    if started_at is None:
+        return
+
+    duration_ms = (time.perf_counter() - started_at) * 1000
+    if duration_ms >= slow_query_ms:
+        logging.getLogger(__name__).warning(
+            'Slow database query',
+            extra={
+                'duration_ms': round(duration_ms, 2),
+                'statement': ' '.join(statement.split())[:500],
+            },
+        )
 
 async def connect_to_db(app: FastAPI):
     app.db_engine = engine  # type: ignore

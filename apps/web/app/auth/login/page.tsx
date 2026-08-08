@@ -19,6 +19,7 @@ export async function generateMetadata(params: MetadataProps): Promise<Metadata>
 
   return {
     title: 'Login' + ` — Sokrates`,
+    description: 'Sign in to continue learning with Sokrates.',
   }
 }
 

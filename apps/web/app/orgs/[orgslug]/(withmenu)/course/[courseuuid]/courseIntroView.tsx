@@ -27,13 +27,14 @@ const CourseIntroView = ({ courseuuid, orgslug, course }: Props) => {
     return course.learnings.split(',').filter((l: string) => l && l !== 'null')
   }, [course?.learnings])
 
-  const thumbnailUrl = course?.thumbnail_image && org
+  const hasThumbnail = Boolean(course?.thumbnail_image && org)
+  const thumbnailUrl = hasThumbnail
     ? getCourseThumbnailMediaDirectory(
         org.org_uuid,
         course.course_uuid,
         course.thumbnail_image,
       )
-    : '../empty_thumbnail.webp'
+    : '/empty_thumbnail.webp'
 
   if (!org || !course) return null
 
@@ -56,9 +57,17 @@ const CourseIntroView = ({ courseuuid, orgslug, course }: Props) => {
 
       <Card className="mb-6 overflow-hidden border-none">
         <div
-          className="h-52 w-full rounded-lg bg-cover bg-center shadow-md md:h-96 lg:h-[500px]"
+          role="img"
+          aria-label={hasThumbnail ? `${course.name} course thumbnail` : 'Course thumbnail unavailable'}
+          className="relative h-52 w-full rounded-lg bg-cover bg-center shadow-md md:h-96 lg:h-[500px]"
           style={{ backgroundImage: `url(${thumbnailUrl})` }}
-        />
+        >
+          {!hasThumbnail && (
+            <span className="absolute inset-0 flex items-center justify-center bg-black/10 text-sm font-semibold text-gray-700">
+              Course thumbnail unavailable
+            </span>
+          )}
+        </div>
       </Card>
 
       <div className="grid grid-cols-1 gap-6 pt-6 lg:grid-cols-4">

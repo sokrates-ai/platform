@@ -90,13 +90,13 @@ function ResetPasswordClient() {
 
             <AuthCard>
                 {error && (
-                    <div className="flex justify-center bg-red-200 rounded-md text-red-950 space-x-2 items-center p-4 transition-all shadow-sm">
+                    <div role="alert" aria-live="assertive" className="flex justify-center bg-red-200 rounded-md text-red-950 space-x-2 items-center p-4 transition-all shadow-sm">
                         <AlertTriangle size={18} />
                         <div className="font-bold text-sm">{error}</div>
                     </div>
                 )}
                 {message && (
-                    <div className="flex justify-center bg-green-200 rounded-md text-green-950 space-x-2 items-center p-4 transition-all shadow-sm">
+                    <div role="status" aria-live="polite" className="flex justify-center bg-green-200 rounded-md text-green-950 space-x-2 items-center p-4 transition-all shadow-sm">
                         <Info size={18} />
                         <div className="font-bold text-sm">{message}</div>
                     </div>
@@ -158,7 +158,7 @@ function ResetPasswordClient() {
                         </Form.Control>
                     </FormField>
 
-                    <div className="flex  py-4">
+                    <div className="flex py-4">
                         <Form.Submit asChild>
                             <button className="w-full bg-black text-white font-bold text-center p-2 rounded-md shadow-md hover:cursor-pointer">
                                 {isSubmitting ? 'Loading...' : 'Change Password'}
@@ -166,6 +166,16 @@ function ResetPasswordClient() {
                         </Form.Submit>
                     </div>
                 </FormLayout>
+                <p className="text-center text-sm text-[#454545]">
+                    Already reset your password?{' '}
+                    <button
+                        type="button"
+                        onClick={() => router.push(`/login?orgslug=${encodeURIComponent(org?.slug || 'default')}`)}
+                        className="font-semibold text-[#8f3518] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8f3518] rounded"
+                    >
+                        Sign in
+                    </button>
+                </p>
             </AuthCard>
         </div>
     )

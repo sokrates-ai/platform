@@ -20,7 +20,10 @@ const loadPostHog = async () => {
         client.init(apiKey, {
           api_host: apiHost,
           capture_pageview: false,
-          capture_pageleave: true,
+          capture_pageleave: false,
+          autocapture: false,
+          capture_performance: false,
+          disable_session_recording: true,
         })
         posthogClient = client
       }
@@ -32,12 +35,15 @@ const loadPostHog = async () => {
 
 const schedulePostHog = (callback: () => void) => {
   if (typeof window === 'undefined') return () => {}
-  const requestIdleCallback = window.requestIdleCallback
-  if (requestIdleCallback) {
-    const idleId = requestIdleCallback(callback, { timeout: 3000 })
-    return () => window.cancelIdleCallback(idleId)
-  }
-  const timeoutId = window.setTimeout(callback, 1500)
+  const timeoutId = window.setTimeout(() => {
+    const requestIdleCallback = window.requestIdleCallback
+    if (requestIdleCallback) {
+      const idleId = requestIdleCallback(callback, { timeout: 2000 })
+      window.setTimeout(() => window.cancelIdleCallback(idleId), 2500)
+      return
+    }
+    callback()
+  }, 5000)
   return () => window.clearTimeout(timeoutId)
 }
 

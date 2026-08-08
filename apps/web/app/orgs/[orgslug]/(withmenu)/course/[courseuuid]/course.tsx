@@ -1,9 +1,14 @@
 'use client'
 
 import React from 'react'
+import dynamic from 'next/dynamic'
 import { courseIsStarted } from '@components/Objects/Courses/CourseActions/CoursesActions'
-import CourseStartedView from './courseStartedView'
 import CourseIntroView   from './courseIntroView'
+import PageLoading from '@components/Objects/Loaders/PageLoading'
+
+const CourseStartedView = dynamic(() => import('./courseStartedView'), {
+  loading: () => <PageLoading />,
+})
 
 type Props = {
   courseuuid: string

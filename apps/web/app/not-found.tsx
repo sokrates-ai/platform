@@ -36,6 +36,13 @@ export default function NotFound() {
             The page you are looking for can't be found.
           </p>
 
+          <Link
+            href="/"
+            className="mt-8 rounded-full bg-[#b7471f] px-6 py-3 font-semibold text-white shadow-[0_4px_0_#7f2f15] transition hover:bg-[#9f3d1b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7f2f15]"
+          >
+            Return home
+          </Link>
+
           <div className="mt-20 w-[180px] sm:w-[200px] md:w-[215px]">
             <img
               src="/looking-at-sheet.svg"
