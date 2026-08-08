@@ -358,6 +358,7 @@ def test_apply_invlectrooms_creates_activities(
             and obj.get("file") == "https://example.com/image.jpg"
         ]
         assert len(image_assets) == 1
+        assert image_assets[0]["anchor"] == 0.5
         assert image_assets[0].get("sourceUrl") == "https://example.com/image.jpg"
         assert image_assets[0].get("type", {}).get("kind") == "default"
 
@@ -443,7 +444,7 @@ def test_apply_invlectrooms_skips_image_only_problem(
         client.app.dependency_overrides.pop(get_current_user, None)
 
 
-def test_apply_invlectrooms_creates_checkpoint_activity(
+def test_apply_invlectrooms_creates_standalone_checkpoint_marker(
     client: TestClient,
     session: Session,
 ):
@@ -480,15 +481,8 @@ def test_apply_invlectrooms_creates_checkpoint_activity(
         assert response.status_code == 200
         data = response.json()
 
-        assert len(data["chapters"]) == 1
-        assert len(data["activities"]) == 1
-
-        activity = data["activities"][0]
-        assert activity["activity_type"] == "TYPE_CUSTOM"
-        assert activity["activity_sub_type"] == "SUBTYPE_CUSTOM"
-        source_meta = activity["content"]["meta"]["source"]
-        assert source_meta["checkpoint"] == "bronze"
-        assert source_meta["kind"] == "checkpoint_dummy"
+        assert data["chapters"] == []
+        assert data["activities"] == []
 
         session.refresh(course)
         map_state = course.map_state
@@ -501,8 +495,74 @@ def test_apply_invlectrooms_creates_checkpoint_activity(
         ]
         assert len(checkpoint_markers) == 1
         marker = checkpoint_markers[0]
-        assert marker["type"]["kind"] == "chapter"
+        assert marker["type"]["kind"] == "default"
+        assert marker["type"]["associatedChapterID"] is None
+        assert marker["anchor"] == 0.5
         assert marker["file"] == "Bronze.webp"
+    finally:
+        client.app.dependency_overrides.pop(get_current_user, None)
+
+
+def test_apply_invlectrooms_keeps_checkpoint_out_of_chapter_sequence(
+    client: TestClient,
+    session: Session,
+):
+    course, tab_uuid, public_user = _prepare_course_with_author(session)
+
+    async def override_current_user():
+        return public_user
+
+    client.app.dependency_overrides[get_current_user] = override_current_user
+
+    try:
+        response = client.post(
+            "/api/v1/invlectrooms/apply",
+            json={
+                "url": "https://hpi.de/friedrich/docs/InvLectRooms/example/tutorium",
+                "course_uuid": course.course_uuid,
+                "tab_uuid": tab_uuid,
+                "problems": [
+                    {
+                        "id": 1,
+                        "title": "A normal problem",
+                        "html": "<p>Content</p>",
+                        "plain_text": "Content",
+                        "chapter_name": "Normal chapter",
+                    },
+                    {
+                        "id": 2,
+                        "title": "Schnabeltierchen in Silber",
+                        "image": {
+                            "original": "https://example.com/PlatypusSilver.jpg",
+                        },
+                        "chapter_name": None,
+                    },
+                    {
+                        "id": 3,
+                        "title": "Another normal problem",
+                        "html": "<p>More content</p>",
+                        "plain_text": "More content",
+                        "chapter_name": "Another chapter",
+                    },
+                ],
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["chapters"]) == 2
+        assert len(data["activities"]) == 2
+
+        session.refresh(course)
+        objects = course.map_state["objects"]
+        checkpoint_markers = [
+            obj
+            for obj in objects
+            if obj.get("file") == "Silber.webp"
+            and obj.get("metadata", {}).get("checkpointLevel") == "silver"
+        ]
+        assert len(checkpoint_markers) == 1
+        assert checkpoint_markers[0]["type"]["kind"] == "default"
     finally:
         client.app.dependency_overrides.pop(get_current_user, None)
 

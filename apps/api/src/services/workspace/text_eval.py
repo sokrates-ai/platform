@@ -177,13 +177,15 @@ async def evaluate_text_submission(
             "AI feedback is temporarily unavailable. Your draft is still saved. Please try again in a moment."
         )
         if (
+            "disabled" in lowered
+            or
             "not configured" in lowered
             or "api key" in lowered
             or "base url is required" in lowered
             or "unsupported ai provider" in lowered
         ):
             user_message = (
-                "AI feedback is not configured on this server yet. Your draft is still saved."
+                "AI feedback is disabled or not configured on this server. Your draft is still saved."
             )
         elif any(
             token in lowered

@@ -30,6 +30,7 @@ const SpriteAsset = React.forwardRef<Sprite, Props>(
         y={asset.y}
         zIndex={layer}
         scale={asset.scale}
+        anchor={asset.anchor ?? 0}
         alpha={selected ? 0.8 : 1}
         interactive
         onPointerDown={(e: any) => onPointerDown(e, asset, spriteRef.current!)}

@@ -10,7 +10,7 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup, NavigableString, Tag
 
-from .constants import CHECKPOINT_IMAGE_PATTERNS, CHECKPOINT_LEVEL_KEYWORDS
+from .checkpoints import detect_checkpoint_level
 
 
 DEFAULT_TIMEOUT = 15.0
@@ -115,43 +115,8 @@ def _extract_plain_text(value: Any) -> str:
     return _normalize_whitespace(text)
 
 
-def _collect_checkpoint_image_candidates(image: Any) -> List[str]:
-    if isinstance(image, str):
-        return [image]
-    if isinstance(image, dict):
-        candidates: List[str] = []
-        for key in ("original", "local", "src"):
-            candidate = image.get(key)
-            if isinstance(candidate, str):
-                candidates.append(candidate)
-        return candidates
-    return []
-
-
 def _detect_checkpoint_level_from_problem(problem: Dict[str, Any]) -> Optional[str]:
-    text_fragments: List[str] = []
-    for key in ("title", "status", "body", "html", "plain_text", "plainText", "description", "text"):
-        value = problem.get(key)
-        if not isinstance(value, str):
-            continue
-        text_fragments.append(_extract_plain_text(value) if key in {"body", "html"} else _normalize_whitespace(value))
-
-    combined_text = " ".join(fragment for fragment in text_fragments if fragment).casefold()
-    if combined_text:
-        contains_marker = any(marker in combined_text for marker in ("schnabeltier", "checkpoint", "platypus"))
-        if contains_marker:
-            for level, keywords in CHECKPOINT_LEVEL_KEYWORDS.items():
-                if any(keyword in combined_text for keyword in keywords):
-                    return level
-
-    image_candidates = _collect_checkpoint_image_candidates(problem.get("img") or problem.get("image"))
-    for candidate in image_candidates:
-        lowered = candidate.casefold()
-        for level, patterns in CHECKPOINT_IMAGE_PATTERNS.items():
-            if any(pattern in lowered for pattern in patterns):
-                return level
-
-    return None
+    return detect_checkpoint_level(problem)
 
 
 def _annotate_checkpoint_levels(node: Any) -> None:

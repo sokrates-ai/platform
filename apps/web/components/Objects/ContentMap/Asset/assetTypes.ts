@@ -20,6 +20,8 @@ export interface AssetData {
     label?: string;
     sourceUrl?: string;
     order?: number;
+    /** Optional Pixi anchor; legacy decorative sprites remain top-left anchored. */
+    anchor?: number;
     type: AssetTypeData;
 }
 

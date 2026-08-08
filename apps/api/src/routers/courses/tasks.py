@@ -36,6 +36,7 @@ from pydantic import BaseModel
 from src.core.events.database import get_db_session
 from src.db.users import PublicUser
 from src.security.auth import get_current_user
+from src.services.ai.client import AIProviderError
 
 
 router = APIRouter()
@@ -155,7 +156,15 @@ async def api_generate_grading_criteria(
     Generate task grading criteria
     """
 
-    return await generate_task_grading_criteria(body)
+    try:
+        return await generate_task_grading_criteria(body)
+    except AIProviderError as exc:
+        message = str(exc).lower()
+        if "disabled" in message or "not configured" in message or "base url" in message:
+            detail = "AI grading criteria are disabled or not configured on this server."
+        else:
+            detail = "AI grading criteria are temporarily unavailable. Please try again shortly."
+        raise HTTPException(status_code=503, detail=detail) from exc
 
 
 @router.get('/id/{id}')

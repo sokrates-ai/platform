@@ -1,9 +1,13 @@
 import pytest
+import time
 
 from config.config import get_learnhouse_config
 from src.services.ai.client import (
     AIProviderError,
     LLMProviderSettings,
+    OpenAICompatibleLLMClient,
+    _CircuitBreaker,
+    _get_cached_llm_client,
     build_openai_client_kwargs,
 )
 
@@ -153,3 +157,75 @@ def test_vllm_provider_uses_dummy_api_key_when_missing():
     assert kwargs["api_key"] == "EMPTY"
     assert kwargs["base_url"] == "http://localhost:8000/v1"
     assert kwargs["timeout"] == 60
+
+
+def test_ai_config_clamps_provider_timeout_and_concurrency(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    _clear_ai_env(monkeypatch)
+    monkeypatch.setenv("LEARNHOUSE_AI_TIMEOUT_SEC", "1")
+    monkeypatch.setenv("LEARNHOUSE_AI_MAX_CONCURRENT_REQUESTS", "100")
+
+    config = get_learnhouse_config()
+
+    assert config.ai_config.timeout_sec == 5
+    assert config.ai_config.max_concurrent_requests == 32
+
+
+def test_ai_config_can_disable_provider(monkeypatch: pytest.MonkeyPatch):
+    _clear_ai_env(monkeypatch)
+    monkeypatch.setenv("LEARNHOUSE_IS_AI_ENABLED", "false")
+
+    config = get_learnhouse_config()
+
+    assert config.ai_config.enabled is False
+
+
+def test_disabled_provider_is_rejected_before_client_creation():
+    settings = LLMProviderSettings(
+        provider="self_hosted",
+        api_key=None,
+        base_url="http://localhost:8000/v1",
+        text_eval_model="model",
+        grading_criteria_model="model",
+        timeout_sec=60,
+        enabled=False,
+    )
+
+    with pytest.raises(AIProviderError, match="disabled"):
+        OpenAICompatibleLLMClient(settings)
+
+
+def test_provider_client_is_cached_per_settings():
+    settings = LLMProviderSettings(
+        provider="self_hosted",
+        api_key=None,
+        base_url="http://localhost:8000/v1",
+        text_eval_model="model",
+        grading_criteria_model="model",
+        timeout_sec=60,
+    )
+    _get_cached_llm_client.cache_clear()
+
+    first = _get_cached_llm_client(settings)
+    second = _get_cached_llm_client(settings)
+
+    assert first is second
+    _get_cached_llm_client.cache_clear()
+
+
+def test_circuit_breaker_rejects_after_repeated_transient_failures():
+    breaker = _CircuitBreaker(failure_threshold=2, cooldown_sec=0.01)
+
+    breaker.before_call()
+    breaker.record_failure(transient=True)
+    breaker.before_call()
+    breaker.record_failure(transient=True)
+
+    with pytest.raises(AIProviderError, match="temporarily unavailable"):
+        breaker.before_call()
+
+    time.sleep(0.02)
+    breaker.before_call()
+    breaker.record_success()
+    breaker.before_call()

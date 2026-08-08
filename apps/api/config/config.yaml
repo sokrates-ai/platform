@@ -45,6 +45,7 @@ ai_config:
   text_eval_model: "gpt-4.1-mini"
   grading_criteria_model: "gpt-4.1-nano"
   timeout_sec: 60
+  max_concurrent_requests: 2
   chromadb_config:
     isSeparateDatabaseEnabled: True
     db_host: "localhost"

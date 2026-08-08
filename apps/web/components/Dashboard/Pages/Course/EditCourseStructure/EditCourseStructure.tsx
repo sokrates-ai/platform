@@ -661,12 +661,13 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
       return;
     }
     const trimmedChapterNames = chapterNames.map((name) => name.trim());
+    const chapterProblems = problems.filter((problem) => !problem.checkpointLevel);
     if (trimmedChapterNames.length !== problems.length) {
       setApplyError('Provide a chapter name for each problem before applying.');
       return;
     }
-    if (trimmedChapterNames.some((name) => !name)) {
-      setApplyError('Provide a chapter name for each problem before applying.');
+    if (chapterProblems.some((problem) => !trimmedChapterNames[problems.indexOf(problem)])) {
+      setApplyError('Provide a chapter name for each non-checkpoint problem before applying.');
       return;
     }
     setApplyError(null);
@@ -686,7 +687,7 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
             html: problem.html,
             plain_text: problem.plainText,
             image: problem.image ?? null,
-            chapter_name: trimmedChapterNames[index],
+            chapter_name: problem.checkpointLevel ? undefined : trimmedChapterNames[index],
             checkpoint_level: problem.checkpointLevel ?? null,
           })),
         },
@@ -822,7 +823,7 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
                 ? problems.length > 0
                   ? `Found ${problems.length} problem${problems.length === 1 ? '' : 's'} in the source.`
                   : 'No problems detected in the source document.'
-                : 'Run an import to preview the chapters that will be created.'}
+                : 'Run an import to preview the chapters and map checkpoints that will be created.'}
             </p>
             {importResult?.refresh_url && (
               <a
@@ -849,25 +850,33 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
                           className="space-y-3 rounded-md border border-gray-200 bg-white/70 p-3 shadow-sm"
                         >
                         <div className="space-y-1">
-                          <label
-                            className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
-                            htmlFor={chapterInputId}
-                          >
-                            Chapter name
-                          </label>
-                          <Input
-                            id={chapterInputId}
-                            value={chapterValue}
-                            onChange={(event) =>
-                              setChapterNames((current) => {
-                                const next = [...current];
-                                next[index] = event.target.value;
-                                return next;
-                              })
-                            }
-                            placeholder={`Chapter title for ${problem.title}`}
-                            disabled={isApplying}
-                          />
+                          {checkpointLevel ? (
+                            <div className="rounded border border-amber-200 bg-amber-50 px-2 py-2 text-xs text-amber-800">
+                              This entry will be imported as a standalone map checkpoint, not a chapter.
+                            </div>
+                          ) : (
+                            <>
+                              <label
+                                className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+                                htmlFor={chapterInputId}
+                              >
+                                Chapter name
+                              </label>
+                              <Input
+                                id={chapterInputId}
+                                value={chapterValue}
+                                onChange={(event) =>
+                                  setChapterNames((current) => {
+                                    const next = [...current];
+                                    next[index] = event.target.value;
+                                    return next;
+                                  })
+                                }
+                                placeholder={`Chapter title for ${problem.title}`}
+                                disabled={isApplying}
+                              />
+                            </>
+                          )}
                         </div>
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <div className="min-w-0 flex-1 space-y-1">
@@ -1188,7 +1197,7 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
         await mutate(`${getAPIUrl()}courses/${course_uuid}/meta`);
       }
       await revalidateTags(['courses'], props.orgslug);
-      toast.success('Imported problems as new activities');
+      toast.success('Imported problems and map checkpoints');
     } catch (error) {
       toast.error('Import applied, but refreshing the course failed.');
     } finally {

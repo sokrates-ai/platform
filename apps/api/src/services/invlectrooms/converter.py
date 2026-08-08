@@ -29,8 +29,6 @@ from src.services.courses.activities.activities import create_activity
 from src.services.courses.chapters import create_chapter
 
 from .constants import (
-    CHECKPOINT_IMAGE_PATTERNS,
-    CHECKPOINT_LEVEL_KEYWORDS,
     CHECKPOINT_MARKER_ASSETS,
     CHECKPOINT_MARKER_SCALES,
     CONTENT_MAP_SPRITE_SCALE_FACTOR,
@@ -46,6 +44,7 @@ from .scraper import (
     _ensure_image_cached,
     _get_content_directory,
 )
+from .checkpoints import detect_checkpoint_level
 
 logger = logging.getLogger(__name__)
 
@@ -199,6 +198,7 @@ def _apply_checkpoint_marker(
     slot["file"] = _resolve_checkpoint_asset(level)
     slot["label"] = CHECKPOINT_DISPLAY_NAMES.get(level, level.capitalize())
     slot["scale"] = _checkpoint_marker_scale(level, slot.get("scale", 0.2))
+    slot["anchor"] = 0.5
 
     slot_type = slot.get("type")
     if isinstance(slot_type, dict):
@@ -874,7 +874,7 @@ def _build_content_map(
                             _apply_checkpoint_marker(
                                 slot,
                                 checkpoint_level,
-                                preserve_placeholder_position=False,
+                                preserve_placeholder_position=True,
                             )
                             used_placeholder_indices.add(object_index)
                             checkpoint_slot_indices.append(object_index)
@@ -1066,6 +1066,7 @@ def _build_content_map(
                 "x": target_x,
                 "y": target_y,
                 "scale": image_scale,
+                "anchor": 0.5,
                 "file": image_url,
                 "label": (problem.title or "").strip() or f"Image {chapter_id}",
                 "sourceUrl": original_url or image_url,
@@ -1113,8 +1114,12 @@ def _build_content_map(
                 else:
                     slot["type"] = {"kind": "default", "label": "", "customChapterId": 0}
                 continue
+            placeholder_scale = slot.get("scale", 1)
             target_x = slot.get("x", 0)
             target_y = slot.get("y", 0)
+            if isinstance(placeholder_scale, (int, float)):
+                target_x += (PLACEHOLDER_WIDTH * placeholder_scale) / 2
+                target_y += (PLACEHOLDER_HEIGHT * placeholder_scale) / 2
             target_x = max(
                 left_boundary + boundary_margin,
                 min(right_boundary - boundary_margin, target_x),
@@ -1126,6 +1131,7 @@ def _build_content_map(
             slot["x"] = target_x
             slot["y"] = target_y
             slot["scale"] = _normalized_image_scale(local_url)
+            slot["anchor"] = 0.5
             slot["file"] = image_url
             slot["label"] = (problem.title or "").strip() or f"Image {slot.get('id')}"
             slot["sourceUrl"] = original_url or image_url
@@ -1171,6 +1177,7 @@ def _build_content_map(
                     "x": target_x,
                     "y": target_y,
                     "scale": image_scale,
+                    "anchor": 0.5,
                     "file": image_url,
                     "label": (problem.title or "").strip() or f"Image {next_id}",
                     "sourceUrl": original_url or image_url,
@@ -1219,6 +1226,7 @@ def _build_content_map(
                     "x": target_x,
                     "y": target_y,
                     "scale": _checkpoint_marker_scale(checkpoint_level, 0.2),
+                    "anchor": 0.5,
                     "file": _resolve_checkpoint_asset(checkpoint_level),
                     "label": CHECKPOINT_DISPLAY_NAMES.get(
                         checkpoint_level, checkpoint_level.capitalize()
@@ -1276,24 +1284,7 @@ async def convert_invlectrooms_payload_to_course(
             checkpoint_level = _detect_checkpoint(problem)
 
         if checkpoint_level:
-            chapter, activity = await _create_checkpoint_chapter(
-                level=checkpoint_level,
-                base_name=base_name,
-                problem=problem,
-                source_url=source_url,
-                payload=payload,
-                course=course,
-                xp_reward=xp_reward,
-                coin_reward=coin_reward,
-                request=request,
-                current_user=current_user,
-                db_session=db_session,
-            )
-            activities.append(activity)
-            chapter.activities = [activity]
-            chapters.append(chapter)
-            chapter_contexts.append((chapter, problem, checkpoint_level))
-            map_sequence.append(("chapter", (chapter, problem, checkpoint_level)))
+            map_sequence.append(("checkpoint", (problem, checkpoint_level)))
             continue
 
         if _is_image_only_problem(problem):
@@ -1346,7 +1337,7 @@ async def convert_invlectrooms_payload_to_course(
         chapter_contexts.append((chapter, problem, None))
         map_sequence.append(("chapter", (chapter, problem, None)))
 
-    if chapters or image_only_problems:
+    if chapters or image_only_problems or map_sequence:
         tab_store = dict(course.tab_store or {})
         tab_uuid = payload.tab_uuid or next(iter(tab_store), "tab-1")
 
@@ -1370,146 +1361,5 @@ async def convert_invlectrooms_payload_to_course(
 
 
 def _detect_checkpoint(problem: InvlectRoomsProblemPayload) -> Optional[str]:
-    text_fragments: List[str] = []
-    if isinstance(problem.title, str):
-        text_fragments.append(problem.title)
-    if isinstance(problem.plain_text, str):
-        text_fragments.append(problem.plain_text)
-    if isinstance(problem.html, str):
-        text_fragments.append(problem.html)
-
-    combined_text = " ".join(text_fragments).casefold()
-    if "schnabeltierchen" in combined_text:
-        for level, keywords in CHECKPOINT_LEVEL_KEYWORDS.items():
-            if any(keyword in combined_text for keyword in keywords):
-                return level
-
-    image_payload = problem.image if isinstance(problem.image, dict) else {}
-    if isinstance(image_payload, dict):
-        for key in ("original", "local"):
-            value = image_payload.get(key)
-            if not isinstance(value, str):
-                continue
-            lowered = value.casefold()
-            for level, patterns in CHECKPOINT_IMAGE_PATTERNS.items():
-                if any(pattern in lowered for pattern in patterns):
-                    return level
-
-    return None
-
-
-async def _create_checkpoint_chapter(
-    *,
-    level: str,
-    base_name: Optional[str],
-    problem: InvlectRoomsProblemPayload,
-    source_url: str,
-    payload: InvlectRoomsApplyRequest,
-    course: Course,
-    xp_reward: int,
-    coin_reward: int,
-    request: Request,
-    current_user: PublicUser | AnonymousUser,
-    db_session: Session,
-) -> Tuple[ChapterRead, ActivityRead]:
-    display_name = CHECKPOINT_DISPLAY_NAMES.get(level, level.capitalize())
-    requested_title = _normalize_text(problem.chapter_name or "")
-    if requested_title:
-        chapter_title = requested_title
-    elif base_name:
-        chapter_title = f"{base_name} — Checkpoint {display_name}"
-    else:
-        chapter_title = f"Checkpoint {display_name}"
-
-    chapter_name, chapter_description = _split_chapter_title(chapter_title)
-    chapter_request = ChapterCreate(
-        name=chapter_name,
-        description=chapter_description or "",
-        thumbnail_image="",
-        org_id=course.org_id,
-        course_id=course.id,
-        xp_reward=xp_reward,
-        coin_reward=coin_reward,
-        tab_uuid=payload.tab_uuid,
-    )
-
-    chapter = await create_chapter(request, chapter_request, current_user, db_session)
-
-    checkpoint_content = _build_checkpoint_content(
-        level=level,
-        display_name=display_name,
-        source_url=source_url,
-        problem=problem,
-    )
-
-    activity_request = ActivityCreate(
-        chapter_id=chapter.id,
-        name=f"Checkpoint {display_name}",
-        activity_type=ActivityTypeEnum.TYPE_CUSTOM,
-        activity_sub_type=ActivitySubTypeEnum.SUBTYPE_CUSTOM,
-        content=checkpoint_content,
-        published=True,
-    )
-
-    activity = await create_activity(request, activity_request, current_user, db_session)
-    return chapter, activity
-
-
-def _build_checkpoint_content(
-    *,
-    level: str,
-    display_name: str,
-    source_url: str,
-    problem: InvlectRoomsProblemPayload,
-) -> Dict[str, Any]:
-    nodes: List[Dict[str, Any]] = [
-        {
-            "type": "heading",
-            "attrs": {"level": 2},
-            "content": [{"type": "text", "text": f"{display_name} Checkpoint"}],
-        },
-        {
-            "type": "paragraph",
-            "content": [
-                {
-                    "type": "text",
-                    "text": "This checkpoint placeholder was imported from InvLectRooms.",
-                }
-            ],
-        },
-    ]
-
-    original_title = _normalize_text(problem.title or "")
-    if original_title:
-        nodes.insert(
-            1,
-            {
-                "type": "paragraph",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": f"Original label: {original_title}",
-                    }
-                ],
-            },
-        )
-
-    metadata: Dict[str, Any] = {
-        "provider": "invlectrooms",
-        "url": source_url,
-        "checkpoint": level,
-        "kind": "checkpoint_dummy",
-    }
-
-    if problem.id is not None:
-        metadata["problem_id"] = problem.id
-    if problem.title:
-        metadata["original_title"] = problem.title
-    if problem.status:
-        metadata["original_status"] = problem.status
-
-    return {
-        "type": "doc",
-        "content": nodes,
-        "meta": {"source": metadata},
-    }
+    problem_data = problem.dict(by_alias=True)
+    return detect_checkpoint_level(problem_data)

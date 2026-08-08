@@ -80,7 +80,7 @@ def test_evaluate_text_submission_reports_missing_provider_config(
 
     assert (
         exc_info.value.user_message
-        == "AI feedback is not configured on this server yet. Your draft is still saved."
+        == "AI feedback is disabled or not configured on this server. Your draft is still saved."
     )
 
 

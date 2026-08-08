@@ -76,6 +76,7 @@ class AIConfig(BaseModel):
     text_eval_model: str = "gpt-4.1-mini"
     grading_criteria_model: str = "gpt-4.1-nano"
     timeout_sec: int = 60
+    max_concurrent_requests: int = 2
     chromadb_config: ChromaDBConfig | None
 
     @property
@@ -271,6 +272,7 @@ def get_learnhouse_config() -> LearnHouseConfig:
         "LEARNHOUSE_AI_GRADING_CRITERIA_MODEL"
     )
     env_ai_timeout_sec = os.environ.get("LEARNHOUSE_AI_TIMEOUT_SEC")
+    env_ai_max_concurrent = os.environ.get("LEARNHOUSE_AI_MAX_CONCURRENT_REQUESTS")
     env_is_ai_enabled = os.environ.get("LEARNHOUSE_IS_AI_ENABLED")
     env_chromadb_separate = os.environ.get("LEARNHOUSE_CHROMADB_SEPARATE")
     env_chromadb_host = os.environ.get("LEARNHOUSE_CHROMADB_HOST")
@@ -303,7 +305,20 @@ def get_learnhouse_config() -> LearnHouseConfig:
         or ai_yaml.get("grading_criteria_model")
         or "gpt-4.1-nano"
     )
-    ai_timeout_sec = _as_int(env_ai_timeout_sec or ai_yaml.get("timeout_sec"), default=60)
+    ai_timeout_sec = max(
+        5,
+        min(_as_int(env_ai_timeout_sec or ai_yaml.get("timeout_sec"), default=60), 120),
+    )
+    ai_max_concurrent = max(
+        1,
+        min(
+            _as_int(
+                env_ai_max_concurrent or ai_yaml.get("max_concurrent_requests"),
+                default=2,
+            ),
+            32,
+        ),
+    )
     is_ai_enabled = (
         env_is_ai_enabled
         if env_is_ai_enabled is not None
@@ -355,6 +370,7 @@ def get_learnhouse_config() -> LearnHouseConfig:
         text_eval_model=ai_text_eval_model,
         grading_criteria_model=ai_grading_criteria_model,
         timeout_sec=ai_timeout_sec,
+        max_concurrent_requests=ai_max_concurrent,
         chromadb_config=ChromaDBConfig(
             isSeparateDatabaseEnabled=_as_bool(chromadb_separate),
             db_host=chromadb_host,
