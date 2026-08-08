@@ -49,12 +49,12 @@ const AuthorInfo = ({ author, isMobile }: { author: Author, isMobile: boolean })
       width={isMobile ? 60 : 100}
     />
     <div className="md:-space-y-2">
-      <div className="text-[12px] text-neutral-400 font-semibold">Author</div>
+      <div className="text-[12px] text-neutral-600 font-semibold">Author</div>
       <div className="text-lg md:text-xl font-bold text-neutral-800">
         {(author.first_name && author.last_name) ? (
           <div className="flex space-x-2 items-center">
             <p>{`${author.first_name} ${author.last_name}`}</p>
-            <span className="text-xs bg-neutral-100 p-1 px-3 rounded-full text-neutral-400 font-semibold">
+            <span className="text-xs bg-neutral-100 p-1 px-3 rounded-full text-neutral-600 font-semibold">
               @{author.username}
             </span>
           </div>

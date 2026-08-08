@@ -5,18 +5,18 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium font-[inherit] transition-all disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0",
   {
     variants: {
       variant: {
         default:
-          "relative bg-SokratesOrange text-white font-semibold font-['DM_Sans'] shadow-[0px_4px_0px_0px_var(--color-SokratesOrangeShadow)] hover:bg-SokratesOrangeShadow/90 overflow-hidden active:rounded-[0.375rem] active:bg-SokratesOrange active:shadow-[0px_2px_0px_0px_var(--color-SokratesOrangeShadow)] active:translate-y-[2px] active:[&>svg]:opacity-0",
+          "relative bg-SokratesOrangeShadow text-white font-semibold shadow-[0px_4px_0px_0px_var(--color-SokratesOrangeShadow)] hover:bg-SokratesOrangeShadow/90 overflow-hidden active:rounded-[0.375rem] active:bg-SokratesOrangeShadow active:shadow-[0px_2px_0px_0px_var(--color-SokratesOrangeShadow)] active:translate-y-[2px] active:[&>svg]:opacity-0",
         destructive:
           "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
-          "rounded-[0.375rem] border border-SokratesGrayBorder text-SokratesBlackBoxShadow text-center font-['DM_Sans'] text-[0.875rem] font-semibold leading-[1.5rem] hover:bg-accent hover:text-accent-foreground",
+          "rounded-[0.375rem] border border-SokratesGrayBorder text-SokratesBlackBoxShadow text-center text-[0.875rem] font-semibold leading-[1.5rem] hover:bg-accent hover:text-accent-foreground",
         secondary:
-          "relative h-10 rounded-md bg-SokratesLightGray border border-SokratesGrayBorder text-SokratesBlackBoxShadow text-center font-['DM_Sans'] text-[0.875rem] font-semibold leading-[1.5rem] shadow-[0px_4px_0px_var(--color-SokratesBlackBoxShadow)] hover:bg-SokratesWhite active:rounded-[0.375rem] active:border-SokratesGrayBorder active:bg-SokratesLightGray active:shadow-[0px_2px_0px_0px_var(--color-SokratesBlackBoxShadow)] active:translate-y-[2px]",
+          "relative h-10 rounded-md bg-SokratesLightGray border border-SokratesGrayBorder text-SokratesBlackBoxShadow text-center text-[0.875rem] font-semibold leading-[1.5rem] shadow-[0px_4px_0px_var(--color-SokratesBlackBoxShadow)] hover:bg-SokratesWhite active:rounded-[0.375rem] active:border-SokratesGrayBorder active:bg-SokratesLightGray active:shadow-[0px_2px_0px_0px_var(--color-SokratesBlackBoxShadow)] active:translate-y-[2px]",
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link:

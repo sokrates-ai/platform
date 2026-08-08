@@ -38,6 +38,13 @@ a {
   box-sizing: border-box;
 }
 
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
 @media (prefers-color-scheme: dark) {
   
   body {

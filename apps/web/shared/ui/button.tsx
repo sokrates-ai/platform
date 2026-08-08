@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/shared/utils/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all outline-none shrink-0 " +
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium font-[inherit] transition-all outline-none shrink-0 " +
     "cursor-pointer disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-100 " + // cursor behavior
     "[&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 " +
     "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
@@ -12,13 +12,13 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "relative overflow-hidden border border-[#9F3812] bg-[#C94918] text-[#FFF8F4] font-semibold font-['DM_Sans'] shadow-[0px_4px_0px_0px_#8F3110] hover:bg-[#B84215] active:rounded-[0.375rem] active:bg-[#AF3E14] active:shadow-[0px_2px_0px_0px_#8F3110] active:translate-y-[2px] active:[&>svg]:opacity-0",
+          "relative overflow-hidden border border-[#9F3812] bg-[#C94918] text-[#FFF8F4] font-semibold shadow-[0px_4px_0px_0px_#8F3110] hover:bg-[#B84215] active:rounded-[0.375rem] active:bg-[#AF3E14] active:shadow-[0px_2px_0px_0px_#8F3110] active:translate-y-[2px] active:[&>svg]:opacity-0",
         destructive:
           "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
-          "rounded-[0.375rem] border border-[#626262] bg-white text-[#1F1F1F] text-center font-['DM_Sans'] text-[0.875rem] font-semibold leading-[1.5rem] hover:bg-[#F4F4F4]",
+          "rounded-[0.375rem] border border-[#626262] bg-white text-[#1F1F1F] text-center text-[0.875rem] font-semibold leading-[1.5rem] hover:bg-[#F4F4F4]",
         secondary:
-          "relative h-10 rounded-md border border-[#626262] bg-white text-[#1F1F1F] box-border font-['DM_Sans'] text-[0.875rem] font-semibold leading-[1.5rem] shadow-[0px_4px_0px_#454545] hover:bg-[#F6F6F6] active:rounded-[0.375rem] active:border active:border-[#626262] active:bg-[#F0F0F0] active:shadow-[0px_2px_0px_0px_#454545] active:translate-y-[2px]",
+          "relative h-10 rounded-md border border-[#626262] bg-white text-[#1F1F1F] box-border text-[0.875rem] font-semibold leading-[1.5rem] shadow-[0px_4px_0px_#454545] hover:bg-[#F6F6F6] active:rounded-[0.375rem] active:border active:border-[#626262] active:bg-[#F0F0F0] active:shadow-[0px_2px_0px_0px_#454545] active:translate-y-[2px]",
         ghost:
           "text-[#2F2F2F] hover:bg-[#ECECEC] hover:text-[#1F1F1F] dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
