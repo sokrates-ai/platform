@@ -66,7 +66,10 @@ def build_workspace_settings(learnhouse_config: LearnHouseConfig) -> WorkspaceSe
         default=learnhouse_config.security_config.auth_jwt_secret_key,
     )
     if not collab_secret:
-        collab_secret = learnhouse_config.security_config.auth_jwt_secret_key
+        if learnhouse_config.general_config.development_mode:
+            collab_secret = "local-development-only-collab-secret"
+        else:
+            collab_secret = learnhouse_config.security_config.auth_jwt_secret_key
 
     return WorkspaceSettings(
         redis_url=_env(

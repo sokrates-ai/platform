@@ -5,6 +5,7 @@ import React, {
   memo,
   Dispatch,
   SetStateAction,
+  useMemo,
 } from 'react'
 import { Viewport } from 'pixi-viewport'
 import { useApplication, extend } from '@pixi/react'
@@ -16,7 +17,6 @@ import Asset from './Asset'
 import type { AssetData, ChapterState } from './Asset/assetTypes'
 import * as PIXI from 'pixi.js'
 import { Graphics } from 'pixi.js'
-import { ZoomBlurFilter } from 'pixi-filters'
 import useDragInteractions from './hooks/useDragInteractions'
 import { getSpriteUrl } from './utils/spriteUrl'
 
@@ -110,6 +110,8 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
 
     const gridSize =
       effectiveGridSize || MINOR_GRID_SIZE * (11 - gridGranularity)
+
+    const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds])
 
     /* All pointer / drag / multi-select bookkeeping lives in this hook now */
     const {
@@ -226,6 +228,8 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
         onViewportReady,
         readOnly,
         clampToMap,
+        minZoom,
+        maxZoom,
       ]
     )
 
@@ -366,7 +370,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
               spriteURL={spriteURL}
               onPointerDown={handlePointerDown}
               onPointerUp={handlePointerUp}
-              selected={selectedIds.includes(asset.id)}
+              selected={selectedIdSet.has(asset.id)}
               chapterState={
                 asset.type.kind === 'chapter' &&
                   asset.type.associatedChapterID !== undefined &&

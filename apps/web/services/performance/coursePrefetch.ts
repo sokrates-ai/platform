@@ -15,6 +15,8 @@ type ConnectionInformation = {
 }
 
 const prefetchPromises = new Map<string, Promise<void>>()
+const MAX_PREFETCH_ASSETS = 32
+const ASSET_LOAD_CONCURRENCY = 4
 
 const getCourseUuid = (courseUuid: string) =>
   courseUuid.startsWith('course_') ? courseUuid.slice('course_'.length) : courseUuid
@@ -63,6 +65,21 @@ const loadCourseCode = async () => {
   )
 }
 
+const loadAssetsWithConcurrency = async (urls: string[]) => {
+  const PIXI = await import('pixi.js')
+  let nextIndex = 0
+
+  const worker = async () => {
+    while (nextIndex < urls.length) {
+      const index = nextIndex++
+      await PIXI.Assets.load(urls[index]).catch(() => undefined)
+    }
+  }
+
+  const workerCount = Math.min(ASSET_LOAD_CONCURRENCY, urls.length)
+  await Promise.all(Array.from({ length: workerCount }, worker))
+}
+
 export const prefetchCourseExperience = (
   courseUuid: string,
   accessToken?: string,
@@ -83,11 +100,10 @@ export const prefetchCourseExperience = (
     if (!loadAssets) return
 
     const metadata = await metadataPromise
-    const assetUrls = extractCourseAssetUrls(metadata)
+    const assetUrls = extractCourseAssetUrls(metadata).slice(0, MAX_PREFETCH_ASSETS)
     if (assetUrls.length === 0) return
 
-    const PIXI = await import('pixi.js')
-    await Promise.allSettled(assetUrls.map((url) => PIXI.Assets.load(url)))
+    await loadAssetsWithConcurrency(assetUrls)
   })().catch(() => undefined)
 
   prefetchPromises.set(normalizedUuid, promise)

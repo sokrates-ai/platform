@@ -25,6 +25,16 @@ type ChapterRewardsDraft = {
   coin_reward?: number
 }
 
+const FALLBACK_MAP_STATE = {
+  objects: [],
+  boundaries: {
+    left: -1000,
+    right: 1000,
+    top: -1000,
+    bottom: 1000,
+  },
+}
+
 function SaveState(props: { orgslug: string }) {
   const course = useCourse() as any
   const session = useSokratesSession() as any;  const router = useRouter()
@@ -32,17 +42,7 @@ function SaveState(props: { orgslug: string }) {
   const dispatchCourse = useCourseDispatch() as any
   const course_structure = course.courseStructure
   const [isSaving, setIsSaving] = React.useState(false)
-  const fallbackMapState = {
-    objects: [],
-    boundaries: {
-      left: -1000,
-      right: 1000,
-      top: -1000,
-      bottom: 1000,
-    },
-  };
-
-  const buildCourseUpdatePayload = () => {
+  const buildCourseUpdatePayload = React.useCallback(() => {
     const metadataSource = Array.isArray(course.courseTabMetadata)
       ? [...course.courseTabMetadata].sort(
           (a: any, b: any) => (a?.position ?? 0) - (b?.position ?? 0),
@@ -71,22 +71,22 @@ function SaveState(props: { orgslug: string }) {
       Object.fromEntries(
         Object.entries(course_structure?.tabStore ?? {}).map(([tabId, value]: [string, any]) => [
           tabId,
-          value?.map ? { ...value.map } : { ...fallbackMapState },
+          value?.map ? { ...value.map } : { ...FALLBACK_MAP_STATE },
         ]),
       );
 
     const sanitizedTabStore = metadata.reduce<Record<string, any>>((acc, tab) => {
       const mapState = tabStoreSource?.[tab.tab_uuid]
         ? { ...tabStoreSource[tab.tab_uuid] }
-        : { ...fallbackMapState };
+        : { ...FALLBACK_MAP_STATE };
       acc[tab.tab_uuid] = mapState;
       return acc;
     }, {});
 
     const primaryMap =
       metadata.length > 0
-        ? sanitizedTabStore[metadata[0].tab_uuid] ?? { ...fallbackMapState }
-        : { ...fallbackMapState };
+        ? sanitizedTabStore[metadata[0].tab_uuid] ?? { ...FALLBACK_MAP_STATE }
+        : { ...FALLBACK_MAP_STATE };
 
     const payload: Record<string, any> = {
       name: course_structure?.name,
@@ -107,11 +107,11 @@ function SaveState(props: { orgslug: string }) {
     });
 
     return payload;
-  };
+  }, [course.courseTabMetadata, course_structure]);
 
   //
   // Course Order
-  const changeOrderBackend = async () => {
+  const changeOrderBackend = React.useCallback(async () => {
     mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
     await updateCourseOrderStructure(
       course.courseStructure.course_uuid,
@@ -121,10 +121,10 @@ function SaveState(props: { orgslug: string }) {
     await revalidateTags(['courses'], props.orgslug)
     router.refresh()
     dispatchCourse({ type: 'setIsSaved' })
-  }
+  }, [course.courseOrder, course.courseStructure?.course_uuid, dispatchCourse, props.orgslug, router, session.data?.tokens?.access_token])
 
   // Course metadata
-  const changeMetadataBackend = async () => {
+  const changeMetadataBackend = React.useCallback(async () => {
     mutate(`${getAPIUrl()}courses/${course.courseStructure.course_uuid}/meta`)
     const payload = buildCourseUpdatePayload()
     await updateCourse(
@@ -135,7 +135,7 @@ function SaveState(props: { orgslug: string }) {
     await revalidateTags(['courses'], props.orgslug)
     router.refresh()
     dispatchCourse({ type: 'setIsSaved' })
-  }
+  }, [buildCourseUpdatePayload, course.courseStructure?.course_uuid, dispatchCourse, props.orgslug, router, session.data?.tokens?.access_token])
 
   const changeRoomsBackend = React.useCallback(async () => {
     const drafts: Record<string, RoomMembershipDraft> =

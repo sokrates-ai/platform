@@ -69,13 +69,11 @@ def put_update(
             status_code=status.HTTP_403_FORBIDDEN, detail="Anonymous User cannot update the course canvas."
         )
     
-    print(f"Course is: {course.id}")
     statement = select(CourseCanvas).where(
         CourseCanvas.course_id == course.id,
         CourseCanvas.user_id == user.id,
     )
     canvas = db_session.exec(statement).first()
-    print(canvas)
     fields_set = getattr(course_canvas_update, "model_fields_set", None)
     if not fields_set:
         fields_set = getattr(course_canvas_update, "__fields_set__", set())
@@ -95,7 +93,6 @@ def put_update(
         )
         db_session.add(canvas)
 
-    print(f"ID: {course_canvas_update.selected_chapter_id}")
     db_session.commit()
     
     return CourseCanvasRead(

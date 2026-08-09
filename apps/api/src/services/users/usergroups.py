@@ -128,12 +128,13 @@ async def get_users_linked_to_usergroup(
 
     user_ids = [usergroup_user.user_id for usergroup_user in usergroup_users]
 
-    # get users
-    users = []
-    for user_id in user_ids:
-        statement = select(User).where(User.id == user_id)
-        user = db_session.exec(statement).first()
-        users.append(user)
+    if not user_ids:
+        return []
+
+    # Fetch all linked users in one query instead of issuing one query per link.
+    statement = select(User).where(User.id.in_(user_ids))
+    users_by_id = {user.id: user for user in db_session.exec(statement).all()}
+    users = [users_by_id[user_id] for user_id in user_ids if user_id in users_by_id]
 
     users = [UserRead.model_validate(user) for user in users]
 
@@ -187,12 +188,12 @@ async def get_usergroups_by_resource(
 
     usergroup_ids = [usergroup.usergroup_id for usergroup in usergroup_resources]
 
-    # get usergroups
-    usergroups = []
-    for usergroup_id in usergroup_ids:
-        statement = select(UserGroup).where(UserGroup.id == usergroup_id)
-        usergroup = db_session.exec(statement).first()
-        usergroups.append(usergroup)
+    if not usergroup_ids:
+        return []
+
+    # Fetch all groups in one query instead of issuing one query per resource link.
+    statement = select(UserGroup).where(UserGroup.id.in_(usergroup_ids))
+    usergroups = db_session.exec(statement).all()
 
     usergroups = [UserGroupRead.model_validate(usergroup) for usergroup in usergroups]
 

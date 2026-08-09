@@ -1,6 +1,5 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import Image from 'next/image'
 import {
   AlertTriangle,
   BetweenHorizontalStart,
@@ -9,7 +8,6 @@ import {
   FileStack,
   HelpCircle,
   Languages,
-  MoreVertical,
   X,
 } from 'lucide-react'
 import { Editor } from '@tiptap/react'

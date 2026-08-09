@@ -508,18 +508,42 @@ async def get_courses_orgslug(
 
     courses = db_session.exec(query).all()
 
-    # Fetch authors for each course
+    if not courses:
+        return []
+
+    # Fetch shared course metadata in batches instead of issuing one author and
+    # one tab query for every course in the page.
+    course_uuids = [course.course_uuid for course in courses]
+    course_ids = [course.id for course in courses]
+
+    authors_by_course: Dict[str, List[UserRead]] = {
+        course_uuid: [] for course_uuid in course_uuids
+    }
+    authors_query = (
+        select(User, ResourceAuthor.resource_uuid)
+        .join(ResourceAuthor, ResourceAuthor.user_id == User.id)  # type: ignore
+        .where(ResourceAuthor.resource_uuid.in_(course_uuids))
+    )
+    for author, resource_uuid in db_session.exec(authors_query).all():
+        authors_by_course[resource_uuid].append(UserRead.model_validate(author))
+
+    tabs_by_course: Dict[int, List[CourseTab]] = {course_id: [] for course_id in course_ids}
+    tabs_query = (
+        select(CourseTab)
+        .where(CourseTab.course_id.in_(course_ids))
+        .order_by(CourseTab.course_id, CourseTab.position.asc(), CourseTab.id.asc())
+    )
+    for tab in db_session.exec(tabs_query).all():
+        tabs_by_course[tab.course_id].append(tab)
+
     course_reads = []
     for course in courses:
-        authors_query = (
-            select(User)
-            .join(ResourceAuthor, ResourceAuthor.user_id == User.id)  # type: ignore
-            .where(ResourceAuthor.resource_uuid == course.course_uuid)
-        )
-        authors = db_session.exec(authors_query).all()
-
-        author_reads = [UserRead.model_validate(author) for author in authors]
-        tabs = ensure_default_tabs(course, db_session)
+        author_reads = authors_by_course[course.course_uuid]
+        tabs = tabs_by_course[course.id]
+        if not tabs:
+            # Keep the existing compatibility behavior for older courses that
+            # predate the default-tab records.
+            tabs = ensure_default_tabs(course, db_session)
         course_read = build_course_read(course, author_reads, tabs)
         course_reads.append(course_read)
 

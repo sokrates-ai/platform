@@ -14,4 +14,4 @@ COPY servers.yml ./servers.yml
 ENV LSP_PROXY_PORT=3011
 EXPOSE 3011
 
-CMD ["sh", "-lc", "node `which jsonrpc-ws-proxy` --port ${LSP_PROXY_PORT} --languageServers ./servers.yml"] 
+CMD ["sh", "-lc", "node /root/.local/share/pnpm/global/5/node_modules/jsonrpc-ws-proxy/dist/server.js --port ${LSP_PROXY_PORT} --languageServers ./servers.yml"]

@@ -66,23 +66,22 @@ def upgrade() -> None:
         sa.text(
             """
             UPDATE course
-            SET tab_metadata = :metadata::json,
+                SET tab_metadata = CAST(:metadata AS json),
                 tab_store = json_build_object(
                     'tab-1', json_build_object(
-                        'map', COALESCE(map_state, :default_map::json),
+                        'map', COALESCE(map_state, CAST(:default_map AS json)),
                         'content', json_build_object('chapters', '[]'::json)
                     ),
                     'tab-2', json_build_object(
-                        'map', COALESCE(map_state, :default_map::json),
+                        'map', COALESCE(map_state, CAST(:default_map AS json)),
                         'content', json_build_object('chapters', '[]'::json)
                     )
                 )
             """
-        ),
-        {
-            "metadata": json.dumps(default_metadata),
-            "default_map": json.dumps(default_map),
-        },
+        ).bindparams(
+            metadata=json.dumps(default_metadata),
+            default_map=json.dumps(default_map),
+        )
     )
 
     op.alter_column(

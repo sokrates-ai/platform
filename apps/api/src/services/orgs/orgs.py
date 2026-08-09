@@ -519,22 +519,20 @@ async def get_orgs_by_user_admin(
     orgs = result.all()
 
     orgsWithConfig = []
+    org_ids = [org.id for org in orgs if org.id is not None]
+    configs_by_org_id = {}
+    if org_ids:
+        config_statement = select(OrganizationConfig).where(
+            OrganizationConfig.org_id.in_(org_ids)
+        )
+        configs_by_org_id = {
+            config.org_id: config for config in db_session.exec(config_statement).all()
+        }
 
     for org in orgs:
-
-        # Get org config
-        statement = select(OrganizationConfig).where(
-            OrganizationConfig.org_id == org.id
-        )
-        result = db_session.exec(statement)
-
-        org_config = result.first()
-
+        org_config = configs_by_org_id.get(org.id)
         config = OrganizationConfig.model_validate(org_config) if org_config else {}
-
-        org = OrganizationRead(**org.model_dump(), config=config)
-
-        orgsWithConfig.append(org)
+        orgsWithConfig.append(OrganizationRead(**org.model_dump(), config=config))
 
     return orgsWithConfig
 
@@ -560,22 +558,20 @@ async def get_orgs_by_user(
     orgs = result.all()
 
     orgsWithConfig = []
+    org_ids = [org.id for org in orgs if org.id is not None]
+    configs_by_org_id = {}
+    if org_ids:
+        config_statement = select(OrganizationConfig).where(
+            OrganizationConfig.org_id.in_(org_ids)
+        )
+        configs_by_org_id = {
+            config.org_id: config for config in db_session.exec(config_statement).all()
+        }
 
     for org in orgs:
-
-        # Get org config
-        statement = select(OrganizationConfig).where(
-            OrganizationConfig.org_id == org.id
-        )
-        result = db_session.exec(statement)
-
-        org_config = result.first()
-
+        org_config = configs_by_org_id.get(org.id)
         config = OrganizationConfig.model_validate(org_config) if org_config else {}
-
-        org = OrganizationRead(**org.model_dump(), config=config)
-
-        orgsWithConfig.append(org)
+        orgsWithConfig.append(OrganizationRead(**org.model_dump(), config=config))
 
     return orgsWithConfig
 

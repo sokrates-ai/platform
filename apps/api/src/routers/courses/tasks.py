@@ -63,8 +63,6 @@ async def api_create_session(
     Create new exercise session
     """
 
-    print(f'create new session: {current_user} | {session_obj}')
-
     # Get task-id based on the activity.
     activity: Activity = await get_activity(
         request=request,
@@ -74,7 +72,6 @@ async def api_create_session(
     )
 
     # Sanity-check that the activity type is task.
-    print(f'activity={activity}')
     if activity.activity_type != ActivityTypeEnum.TYPE_WORKSPACE:
         raise HTTPException(
             status_code=422,
@@ -90,7 +87,6 @@ async def api_create_session(
         raise 'BUG: illegal content in activity'
 
     if session_obj.task_id is not None:
-        print(f'Using specific task ID={session_obj.task_id}')
         # Sanity-check that the task_id is in the activity.
         if session_obj.task_id not in task_ids:
             raise HTTPException(
@@ -99,10 +95,7 @@ async def api_create_session(
             )
         task_id = session_obj.task_id
     else:
-        print('Not a specific task, using first task in activity')
         task_id = task_ids[0]
-
-    print(f'task ID={task_id}')
 
     token = await workspace_system_obtain_token(
         user=current_user,
@@ -110,8 +103,6 @@ async def api_create_session(
         activity_uuid=activity.activity_uuid,
         db_session=db_session,
     )
-
-    print(f'token={token}')
 
     return SessionResponse(
         token=token,

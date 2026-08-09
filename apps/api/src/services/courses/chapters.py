@@ -346,6 +346,11 @@ async def get_course_chapters(
 
     statement = select(Course).where(Course.id == course_id)
     course = db_session.exec(statement).first()
+    if not course:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course does not exist",
+        )
 
     statement = (
         select(Chapter)
@@ -357,60 +362,59 @@ async def get_course_chapters(
     )
     chapters = db_session.exec(statement).all()
 
-    chapters = [ChapterRead(**chapter.model_dump(), activities=[], predecessors=[]) for chapter in chapters]
-
     # RBAC check
-    await rbac_check(request, course.course_uuid, current_user, "read", db_session)  # type: ignore
+    await rbac_check(request, course.course_uuid, current_user, "read", db_session)
 
     tabs = get_sorted_course_tabs(course_id, db_session)
     fallback_tab_uuid = tabs[0].tab_uuid if tabs else "tab-1"
+    chapter_ids = [chapter.id for chapter in chapters]
 
-    # Get activities and predecessor(s) for each chapter
-    for chapter in chapters:
-        #
-        # Activities.
-        #
-        statement = (
-            select(ChapterActivity)
-            .where(ChapterActivity.chapter_id == chapter.id)
-            .order_by(ChapterActivity.order)
-            .distinct(ChapterActivity.id, ChapterActivity.order)
+    activities_by_chapter: Dict[int, List[ActivityRead]] = {
+        chapter_id: [] for chapter_id in chapter_ids
+    }
+    if chapter_ids:
+        activity_statement = (
+            select(ChapterActivity, Activity)
+            .join(Activity, Activity.id == ChapterActivity.activity_id)
+            .where(ChapterActivity.chapter_id.in_(chapter_ids))
+            .order_by(ChapterActivity.chapter_id, ChapterActivity.order)
         )
-        chapter_activities = db_session.exec(statement).all()
-
-        for chapter_activity in chapter_activities:
-            statement = (
-                select(Activity)
-                .where(Activity.id == chapter_activity.activity_id)
-                .distinct(Activity.id)
+        for chapter_activity, activity in db_session.exec(activity_statement).all():
+            activities_by_chapter[chapter_activity.chapter_id].append(
+                ActivityRead(**activity.model_dump())
             )
-            activity = db_session.exec(statement).first()
 
-            if activity:
-                chapter.activities.append(ActivityRead(**activity.model_dump()))
-
-        #
-        # Predecessors.
-        #
-
-        statement = (
+    edges_by_chapter: Dict[int, List[CourseChapter_Graph]] = {
+        chapter_id: [] for chapter_id in chapter_ids
+    }
+    if chapter_ids:
+        edge_statement = (
             select(CourseChapter_Graph)
             .where(CourseChapter_Graph.course_id == course_id)
-            .where(CourseChapter_Graph.chapter_id == chapter.id)
+            .where(CourseChapter_Graph.chapter_id.in_(chapter_ids))
         )
+        for edge in db_session.exec(edge_statement).all():
+            edges_by_chapter[edge.chapter_id].append(edge)
 
-        incoming_edges = db_session.exec(statement).all()
-        # print(f"INCOMING of {chapter.id} = {incoming_edges}")
-        chapter.tab_uuid = (
+    chapter_reads = []
+    for chapter in chapters:
+        incoming_edges = edges_by_chapter[chapter.id]
+        chapter_reads.append(ChapterRead(
+            **chapter.model_dump(),
+            activities=activities_by_chapter[chapter.id],
+            tab_uuid=(
             incoming_edges[0].tab_uuid
             if incoming_edges and incoming_edges[0].tab_uuid
             else fallback_tab_uuid
-        )
-        chapter.predecessors = [
-            ch.predecessor_id for ch in incoming_edges if ch.predecessor_id is not None
-        ]
+            ),
+            predecessors=[
+                edge.predecessor_id
+                for edge in incoming_edges
+                if edge.predecessor_id is not None
+            ],
+        ))
 
-    return chapters
+    return chapter_reads
 
 
 # Important Note : this is legacy code that has been used because

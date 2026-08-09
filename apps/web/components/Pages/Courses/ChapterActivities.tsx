@@ -228,7 +228,7 @@ export default function ChapterActivities({
 		setIsLoadingDynamic(false)
 		latestDynamicRequest.current = null
 		onDynamicPreviewStateChange?.({ isOpen: false, activityUuid: null })
-	}, [chapterID])
+  }, [chapterID, onDynamicPreviewStateChange])
 
 	const handleActivityStart = useCallback(async (
 		activity: any,

@@ -13,7 +13,6 @@ from src.security.rbac.rbac import (
     authorization_verify_if_user_is_anon,
 )
 from fastapi import HTTPException, Request
-from sqlalchemy.dialects import postgresql
 
 
 class CourseStudent(PublicUser):
@@ -34,16 +33,12 @@ async def list_course_students(
         request, course_uuid, current_user, db_session
     )
 
-    print(f'CID={course_id}')
-
     statement = (
         select(User).join(TrailRun)
         # .on(TrailStep.user_id == User.id)
         .where(TrailRun.course_id == course_id)
         .distinct()
     )
-
-    print(str(statement.compile(dialect=postgresql.dialect())))
 
     students = db_session.exec(statement).all()
 
@@ -59,8 +54,6 @@ async def list_course_students(
         log = logs_by_user.get(student.user_uuid, [])
         stud = CourseStudent(**student.dict(), log=log)
         students_new.append(stud)
-
-    print('STUD = ', students_new)
 
     # Get task log for each user
 
@@ -94,7 +87,6 @@ async def get_course_id_by_uuid(
     current_user: PublicUser | AnonymousUser,
     db_session: Session,
 ) -> int:
-    print(f'GET COURSE UUID: {uuid}')
     statement = select(Course).where(Course.course_uuid == uuid)
     course = db_session.exec(statement).first()
 

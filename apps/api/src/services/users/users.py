@@ -535,24 +535,18 @@ async def get_user_session(
     user = UserRead.model_validate(user)
 
     # Get roles and orgs
+    # Resolve roles and organizations together; the previous implementation
+    # performed two additional queries for every organization membership.
     statement = (
-        select(UserOrganization)
+        select(UserOrganization, Role, Organization)
+        .join(Role, Role.id == UserOrganization.role_id)
+        .join(Organization, Organization.id == UserOrganization.org_id)
         .where(UserOrganization.user_id == user.id)
-        .join(Organization)
     )
-    user_organizations = db_session.exec(statement).all()
+    role_rows = db_session.exec(statement).all()
 
     roles = []
-
-    for user_organization in user_organizations:
-        role_statement = select(Role).where(Role.id == user_organization.role_id)
-        role = db_session.exec(role_statement).first()
-
-        org_statement = select(Organization).where(
-            Organization.id == user_organization.org_id
-        )
-        org = db_session.exec(org_statement).first()
-
+    for _, role, org in role_rows:
         roles.append(
             UserRoleWithOrg(
                 role=RoleRead.model_validate(role),

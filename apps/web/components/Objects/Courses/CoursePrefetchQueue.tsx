@@ -29,11 +29,13 @@ const CoursePrefetchQueue = ({
   useEffect(() => {
     if (!canPrefetchFullCourse() || courses.length === 0) return
 
+    const coursesToPrefetch = courses.slice(0, 3)
     let cancelled = false
     let releaseIdleTask: () => void = () => undefined
 
     const runQueue = async () => {
-      for (const course of courses) {
+      for (let index = 0; index < coursesToPrefetch.length; index += 1) {
+        const course = coursesToPrefetch[index]
         if (cancelled) return
 
         const courseUuid = course?.course_uuid
@@ -41,7 +43,9 @@ const CoursePrefetchQueue = ({
 
         const coursePath = `/course/${courseUuid.replace('course_', '')}`
         router.prefetch(getUriWithOrg(orgslug, coursePath))
-        await prefetchCourseExperience(courseUuid, effectiveAccessToken, true)
+        // The first candidate gets a small asset head start. Code and metadata
+        // prefetching for the remaining candidates stays cheap and bounded.
+        await prefetchCourseExperience(courseUuid, effectiveAccessToken, index === 0)
       }
     }
 

@@ -170,7 +170,6 @@ async def api_ws_record_solution(
     """
     Add Course to trail from WS
     """
-    print('WSMarkComplete called: ', body)
     await record_workspace_solution(
         request,
         db_session,

@@ -1365,11 +1365,14 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
     const [layoutApplied, setLayoutApplied] = useState(false);
 
     // ----------------------- Dagre helpers ----------------------------------
-    const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+    const dagreGraph = useMemo(
+      () => new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({})),
+      [],
+    );
     const nodeWidth = 180;
     const nodeHeight = 80;
 
-    const getLayouted = (n: any[], e: any[]) => {
+    const getLayouted = useCallback((n: any[], e: any[]) => {
       dagreGraph.setGraph({ rankdir: 'TB', nodesep: 100, ranksep: 150, edgesep: 80 });
       n.forEach((node: any) => dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight }));
       e.forEach((edge: any) => dagreGraph.setEdge(edge.source, edge.target));
@@ -1384,7 +1387,7 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
         };
       });
       return { nodes: layoutedNodes, edges: e };
-    };
+    }, [dagreGraph]);
 
     const onLayoutInternal = useCallback(() => {
       if (!nodes.length) return;
@@ -1394,7 +1397,7 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
       setEdges(lEdges);
       setLayoutApplied(true);
       setTimeout(() => setIsAnimating(false), 500);
-    }, [edges, nodes, setEdges, setNodes]);
+    }, [edges, getLayouted, nodes, setEdges, setNodes]);
 
     // ----------------------- Effects ----------------------------------------
 

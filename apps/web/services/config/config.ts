@@ -18,8 +18,6 @@ export function LEARNHOUSE_TOP_DOMAIN(): string {
         throw new Error('NEXT_PUBLIC_LEARNHOUSE_BASE_TOP_DOMAIN is undefined')
     }
 
-    console.log('got learnhouse top domain: ', domain)
-
     return domain
 }
 
@@ -90,7 +88,6 @@ export const getUriWithOrg = (orgslug: string, path: string) => {
   const baseURL = getLearnhouseBaseURL()
 
   if (multi_org) {
-      console.log("ERROR: is multi ORG")
     // HACK: this is probably not supported.
     return `${LEARNHOUSE_HTTP_PROTOCOL}${orgslug}.${LEARNHOUSE_DOMAIN}${path}`
   }
@@ -100,15 +97,7 @@ export const getUriWithOrg = (orgslug: string, path: string) => {
 }
 
 export const getUriWithoutOrg = (path: string) => {
-  const multi_org = isMultiOrgModeEnabled()
-
-  console.warn("THIS IS OBSOLETE; remove this")
   return `${path}`
-
-  if (multi_org) {
-    return `${LEARNHOUSE_HTTP_PROTOCOL}${LEARNHOUSE_DOMAIN}${path}`
-  }
-  return `${LEARNHOUSE_HTTP_PROTOCOL}${LEARNHOUSE_DOMAIN}${path}`
 }
 
 export const getOrgFromUri = () => {

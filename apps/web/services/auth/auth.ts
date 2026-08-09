@@ -33,7 +33,6 @@ export async function loginAndGetToken(
   }
 
   // fetch using await and async
-  console.log('authentication api url:', getAPIUrl())
   const response = await fetch(`${getAPIUrl()}auth/login`, requestOptions)
   return response
 }

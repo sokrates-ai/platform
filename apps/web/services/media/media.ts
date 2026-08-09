@@ -16,9 +16,7 @@ export function getCourseThumbnailMediaDirectory(
   courseId: string,
   fileId: string
 ) {
-  console.log(`MEDIA_URL: ${getMediaUrl()}`)
-  let uri = `${getMediaUrl()}content/orgs/${orgUUID}/courses/${courseId}/thumbnails/${fileId}`
-  return uri
+  return `${getMediaUrl()}content/orgs/${orgUUID}/courses/${courseId}/thumbnails/${fileId}`
 }
 
 export function getUserAvatarMediaDirectory(userUUID: string, fileId: string) {

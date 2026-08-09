@@ -4,7 +4,6 @@ import React, {
   useRef,
   useMemo,
   useState,
-  useCallback,
 } from 'react';
 import { Container, Sprite } from 'pixi.js';
 import { extend } from '@pixi/react';

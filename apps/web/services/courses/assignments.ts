@@ -7,7 +7,6 @@ import {
 
 export async function createAssignment(body: any, access_token: string) {
   const url = `${getAPIUrl()}assignments/`
-  console.log('create assignment url, ', url)
   const result: any = await fetch(
     url,
     RequestBodyWithAuthHeader('POST', body, null, access_token)

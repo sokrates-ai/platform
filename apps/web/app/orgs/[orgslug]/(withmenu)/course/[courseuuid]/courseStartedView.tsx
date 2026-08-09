@@ -858,6 +858,7 @@ const CourseStartedView = ({
     notificationTopics,
     refreshCourseData,
     toast,
+    normalizeActivityUuid,
   ])
 
   useEffect(() => {

@@ -468,7 +468,10 @@ function RoomMembersManager({
     }
   )
 
-  const membersData = membersOverride ?? members ?? []
+  const membersData = React.useMemo(
+    () => membersOverride ?? members ?? [],
+    [members, membersOverride],
+  )
   const userById = React.useMemo(() => {
     const map = new Map<number, any>()
     orgUsers?.forEach((entry: any) => {

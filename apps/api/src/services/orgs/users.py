@@ -22,6 +22,19 @@ from src.db.organizations import (
 _interaction_redis: Optional[redis.Redis] = None
 
 
+def _get_interaction_redis() -> redis.Redis:
+    global _interaction_redis
+    if _interaction_redis is not None:
+        return _interaction_redis
+
+    redis_conn_string = get_learnhouse_config().redis_config.redis_connection_string
+    if not redis_conn_string:
+        raise Exception("Redis connection string not found")
+
+    _interaction_redis = redis.Redis.from_url(redis_conn_string)
+    return _interaction_redis
+
+
 async def get_organization_users(
     request: Request,
     org_id: str,
@@ -440,29 +453,17 @@ def record_user_interaction(user_id: str, api_route: str):
     Stores the last 100 interactions per user, each with a timestamp.
     The data expires after 30 minutes of inactivity.
     """
-    global _interaction_redis
-    LH_CONFIG = get_learnhouse_config()
-    redis_conn_string = LH_CONFIG.redis_config.redis_connection_string
-
-    if not redis_conn_string:
-        raise Exception("Redis connection string not found")
-
-    if _interaction_redis is None:
-        _interaction_redis = redis.Redis.from_url(redis_conn_string)
-    r = _interaction_redis
+    r = _get_interaction_redis()
     key = f"user_interactions:{user_id}"
     timestamp = datetime.now().isoformat()
     interaction = json.dumps({"route": api_route, "timestamp": timestamp})
 
-    # Add the new interaction to the list (as the latest)
-    r.lpush(key, interaction)
-    # Trim the list to the last 100 items
-    r.ltrim(key, 0, 99)
-
     MINUTES_TTL=5
-
-    # Set TTL to X minutes
-    r.expire(key, MINUTES_TTL * 60)
+    with r.pipeline(transaction=False) as pipeline:
+        pipeline.lpush(key, interaction)
+        pipeline.ltrim(key, 0, 99)
+        pipeline.expire(key, MINUTES_TTL * 60)
+        pipeline.execute()
 
 
 def count_recent_active_users() -> int:
@@ -471,17 +472,10 @@ def count_recent_active_users() -> int:
     if the last user interaction of the user occurred in the last 30 seconds.
     Returns the count of such users.
     """
-    LH_CONFIG = get_learnhouse_config()
-    redis_conn_string = LH_CONFIG.redis_config.redis_connection_string
-
-    if not redis_conn_string:
-        raise Exception("Redis connection string not found")
-
-    r = redis.Redis.from_url(redis_conn_string)
+    r = _get_interaction_redis()
     count = 0
     now = datetime.now().timestamp()
-    for key in r.keys("user_interactions:*"):
-        print(f"key={key}")
+    for key in r.scan_iter(match="user_interactions:*"):
         # Get the most recent interaction (first in the list)
         interaction = r.lindex(key, 0)
         if not interaction:
@@ -497,7 +491,5 @@ def count_recent_active_users() -> int:
                     count += 1
         except Exception:
             continue
-
-    print(f"active users: {count}")
 
     return count

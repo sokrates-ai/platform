@@ -233,7 +233,7 @@ const Canvas: React.FC<CanvasProps> = ({
             setOrderInput("");
         }
         setOrderInputError(false);
-    }, [contextMenu?.assetId, layout.layout, isPlaceholderStone]);
+    }, [contextMenu, layout.layout, isPlaceholderStone]);
 
     const handleIncreaseLayer = () => {
         if (!layout.layout) return;

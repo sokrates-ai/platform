@@ -34,8 +34,6 @@ export async function createExercise(
   // const newURL = new URL(urlComplete)
   // const url = newURL.pathname
 
-  console.log('create exercise url, ', urlComplete)
-
   if (data.course_id == '') {
     data.course_id = null
   } else {
@@ -59,8 +57,6 @@ export async function modifyExercise(
 
   // const newURL = new URL(urlComplete)
   // const url = newURL.pathname
-
-  console.log('create exercise url, ', urlComplete)
 
   const result = await fetch(
     urlComplete,

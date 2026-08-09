@@ -6,7 +6,6 @@ import {
 import { AlertTriangle, BadgeInfo, NotebookTabs } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FlaskConical, MessageCircle, X } from 'lucide-react'
-import Image from 'next/image'
 import React, { useEffect, useRef } from 'react'
 import {
   AIChatBotStateTypes,

@@ -6,15 +6,9 @@ const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventi
 const { getNodeAutoInstrumentations } = require('@opentelemetry/auto-instrumentations-node');
 const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
 
-function requireEnv(name) {
-  const v = process.env[name];
-  if (v === undefined || v === '') {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-  return v;
-}
-
-const endpoint = requireEnv('OTEL_EXPORTER_OTLP_ENDPOINT');
+// Tracing is optional. The service must still start in local/self-hosted
+// environments that do not run an OTLP collector.
+const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
 
 if (endpoint) {
   const serviceName = process.env.OTEL_SERVICE_NAME || 'sokrates-collab';
@@ -44,5 +38,4 @@ if (endpoint) {
   process.on('SIGTERM', shutdown);
   process.on('SIGINT', shutdown);
 }
-
 

@@ -267,12 +267,12 @@ const ActivityElementOptions = ({ activity, isMobile }: { activity: any; isMobil
   const course = useCourse() as any;
   const session = useSokratesSession() as any;  const access_token = session?.data?.tokens?.access_token;
 
-  async function getAssignmentUUIDFromActivityUUID(activityUUID: string):  Promise<string | undefined> {
+  const getAssignmentUUIDFromActivityUUID = React.useCallback(async (activityUUID: string): Promise<string | undefined> => {
     const activity = await getAssignmentFromActivityUUID(activityUUID, access_token);
     if (activity) {
       return activity.data.assignment_uuid;
     }
-  }
+  }, [access_token])
 
   const fetchAssignmentUUID = React.useCallback(async () => {
     if (activity.activity_type === 'TYPE_ASSIGNMENT') {
@@ -280,7 +280,7 @@ const ActivityElementOptions = ({ activity, isMobile }: { activity: any; isMobil
       if(assignment_uuid)
         setAssignmentUUID(assignment_uuid.replace('assignment_', ''));
     }
-  }, [access_token, activity.activity_type, activity.activity_uuid]);
+  }, [activity.activity_type, activity.activity_uuid, getAssignmentUUIDFromActivityUUID]);
 
   useEffect(() => {
     fetchAssignmentUUID();

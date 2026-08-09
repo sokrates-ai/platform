@@ -1,10 +1,8 @@
 'use client'
 import { getAPIUrl } from '@services/config/config'
-import Canva from '@components/Objects/Activities/DynamicCanva/DynamicCanva'
-import VideoActivity from '@components/Objects/Activities/Video/Video'
+import dynamic from 'next/dynamic'
 import { BookOpenCheck, Check, CheckCircle, Loader2, UserRoundPen } from 'lucide-react'
 import { markActivityAsComplete } from '@services/courses/activity'
-import DocumentPdfActivity from '@components/Objects/Activities/DocumentPdf/DocumentPdf'
 import { useRouter } from 'next/navigation'
 import AuthenticatedClientElement from '@components/Security/AuthenticatedClientElement'
 import { useOrg } from '@components/Contexts/OrgContext'
@@ -12,7 +10,6 @@ import { CourseProvider } from '@components/Contexts/CourseContext'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import React, { useEffect } from 'react'
 import { getAssignmentFromActivityUUID, getFinalGrade, submitAssignmentForGrading } from '@services/courses/assignments'
-import AssignmentStudentActivity from '@components/Objects/Activities/Assignment/AssignmentStudentActivity'
 import { AssignmentProvider } from '@components/Contexts/Assignments/AssignmentContext'
 import { AssignmentsTaskProvider } from '@components/Contexts/Assignments/AssignmentsTaskContext'
 import AssignmentSubmissionProvider, { useAssignmentSubmission } from '@components/Contexts/Assignments/AssignmentSubmissionContext'
@@ -20,7 +17,6 @@ import toast from 'react-hot-toast'
 import { mutate } from 'swr'
 import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationModal/ConfirmationModal'
 import { useMediaQuery } from 'usehooks-ts'
-import WorkspaceActivity from '@components/Objects/Activities/Workspace/WorkspaceActivity'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -29,6 +25,19 @@ import { swrFetcher } from '@services/utils/ts/requests'
 import { isActivityDone } from '@components/Pages/Courses/utils'
 import CourseGroupPill from '@components/Objects/Courses/CourseGroupPill'
 
+// Activity pages only render one activity type. Keep the editor/viewer for the
+// other types out of the initial route bundle and load it when selected.
+const Canva = dynamic(() => import('@components/Objects/Activities/DynamicCanva/DynamicCanva'))
+const VideoActivity = dynamic(() => import('@components/Objects/Activities/Video/Video'))
+const DocumentPdfActivity = dynamic(
+  () => import('@components/Objects/Activities/DocumentPdf/DocumentPdf'),
+)
+const AssignmentStudentActivity = dynamic(
+  () => import('@components/Objects/Activities/Assignment/AssignmentStudentActivity'),
+)
+const WorkspaceActivity = dynamic(
+  () => import('@components/Objects/Activities/Workspace/WorkspaceActivity'),
+)
 
 
 interface ActivityClientProps {

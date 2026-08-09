@@ -13,12 +13,11 @@ import KeycloakProvider from 'next-auth/providers/keycloak'
 const domain = `.${LEARNHOUSE_TOP_DOMAIN()}`
 
 function getDomain(): string {
-	console.log(`DOMAIN: ${domain}`)
 	return domain
 }
 
 export const nextAuthOptions = {
-	debug: true,
+	debug: process.env.NODE_ENV !== 'production',
 	providers: (() => {
 		const providers: any[] = [
 		CredentialsProvider({
