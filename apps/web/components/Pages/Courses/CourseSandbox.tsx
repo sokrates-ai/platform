@@ -38,6 +38,7 @@ const RichInput = ({ placeholder, initialContent, onChange }: RichInputProps) =>
       attributes: {
         class:
           'prose prose-sm prose-gray max-w-none focus:outline-none min-h-[160px]',
+        'aria-label': 'Sandbox editor',
       },
     },
     onUpdate: ({ editor }) => {

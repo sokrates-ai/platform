@@ -24,7 +24,7 @@ export default function ActivityPageLayout({ children }: { children: React.React
         transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
       >
         <div className="relative w-full h-full">
-          <Image src={Puzzle1} alt="" fill className="object-contain" />
+          <Image src={Puzzle1} alt="" fill priority className="object-contain" />
           <svg className="absolute inset-0 w-full h-full" style={{ overflow: 'visible' }}>
             <use href="/puzzle-piece-1.svg#Layer_1" fill="none" stroke="#FF6934" strokeOpacity="0.7" strokeWidth="2.5" />
           </svg>
@@ -40,7 +40,7 @@ export default function ActivityPageLayout({ children }: { children: React.React
         transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
       >
         <div className="relative w-full h-full">
-          <Image src={Puzzle2} alt="" fill className="object-contain" />
+          <Image src={Puzzle2} alt="" fill priority className="object-contain" />
           <svg className="absolute inset-0 w-full h-full" style={{ overflow: 'visible' }}>
             <use href="/puzzle-piece-2.svg#Layer_1" fill="none" stroke="#FF6934" strokeOpacity="0.7" strokeWidth="2.5" />
           </svg>
@@ -56,7 +56,7 @@ export default function ActivityPageLayout({ children }: { children: React.React
         transition={{ duration: 13, repeat: Infinity, ease: 'easeInOut' }}
       >
         <div className="relative w-full h-full">
-          <Image src={Puzzle1} alt="" fill className="object-contain" />
+          <Image src={Puzzle1} alt="" fill priority className="object-contain" />
           <svg className="absolute inset-0 w-full h-full" style={{ overflow: 'visible' }}>
             <use href="/puzzle-piece-1.svg#Layer_1" fill="none" stroke="#FF6934" strokeOpacity="0.7" strokeWidth="2.5" />
           </svg>
@@ -72,7 +72,7 @@ export default function ActivityPageLayout({ children }: { children: React.React
         transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
       >
         <div className="relative w-full h-full">
-          <Image src={Puzzle2} alt="" fill className="object-contain" />
+          <Image src={Puzzle2} alt="" fill priority className="object-contain" />
           <svg className="absolute inset-0 w-full h-full" style={{ overflow: 'visible' }}>
             <use href="/puzzle-piece-2.svg#Layer_1" fill="none" stroke="#FF6934" strokeOpacity="0.7" strokeWidth="2.5" />
           </svg>

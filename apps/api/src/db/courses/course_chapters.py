@@ -1,9 +1,13 @@
 from typing import Optional
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Column, ForeignKey, Index, Integer, String
 from sqlmodel import Field, SQLModel
 
 
 class CourseChapter(SQLModel, table=True):
+    __table_args__ = (
+        Index("ix_coursechapter_course_chapter", "course_id", "chapter_id"),
+    )
+
     id: Optional[int] = Field(default=None, primary_key=True)
     # NOTE: order was removed in newest migration.
     # order: int
@@ -21,6 +25,12 @@ class CourseChapter(SQLModel, table=True):
 
 
 class CourseChapter_Graph(SQLModel, table=True):
+    __table_args__ = (
+        Index(
+            "ix_coursechapter_graph_course_chapter", "course_id", "chapter_id"
+        ),
+    )
+
     id: Optional[int] = Field(
         default=None,
         sa_column=Column(Integer, primary_key=True, autoincrement=True),

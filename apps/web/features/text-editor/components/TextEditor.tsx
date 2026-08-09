@@ -181,6 +181,7 @@ export const Editor: React.FC<EditorProps> = ({
     // Initialize TipTap editor
     const editor = useEditor({
         extensions,
+        immediatelyRender: false,
         // With collaboration, don’t set initial content here to avoid clobbering CRDT state
         ...(ydoc ? {} : { content }),
         onUpdate: ({ editor }) => {
@@ -192,6 +193,7 @@ export const Editor: React.FC<EditorProps> = ({
         editorProps: {
             attributes: {
                 class: 'prose prose-gray max-w-none focus:outline-none',
+                'aria-label': 'Text editor',
             },
             handleClick(view, pos, event) {
                 // If clicking at the end of a line whose last inline is math, keep the caret at end

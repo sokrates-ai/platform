@@ -1,9 +1,13 @@
 from typing import Optional
-from sqlalchemy import Column, ForeignKey, Integer
+from sqlalchemy import Column, ForeignKey, Index, Integer
 from sqlmodel import Field, SQLModel
 
 
 class UserGroupUser(SQLModel, table=True):
+    __table_args__ = (
+        Index("ix_usergroupuser_user_group", "user_id", "usergroup_id"),
+    )
+
     id: Optional[int] = Field(default=None, primary_key=True)
     usergroup_id: int = Field(
         sa_column=Column(Integer, ForeignKey("usergroup.id", ondelete="CASCADE"))

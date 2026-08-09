@@ -73,8 +73,14 @@ function Editor(props: Editor) {
 
   const editor: any = useEditor({
     editable: true,
+    immediatelyRender: false,
+    editorProps: {
+      attributes: {
+        'aria-label': 'Activity content editor',
+      },
+    },
     extensions: [
-      StarterKit,
+      StarterKit.configure({ codeBlock: false }),
       InfoCallout.configure({
         editable: true,
       }),
@@ -132,7 +138,6 @@ function Editor(props: Editor) {
       TableCell,
     ],
     content: props.content,
-    immediatelyRender: false,
   })
 
   const isMobile = useMediaQuery('(max-width: 767px)')

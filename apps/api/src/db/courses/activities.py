@@ -1,5 +1,5 @@
 from typing import Optional
-from sqlalchemy import JSON, Column, ForeignKey, Integer
+from sqlalchemy import JSON, Column, ForeignKey, Index, Integer
 from sqlmodel import Field, SQLModel
 from enum import Enum
 
@@ -39,6 +39,8 @@ class ActivityBase(SQLModel):
 
 
 class Activity(ActivityBase, table=True):
+    __table_args__ = (Index("ix_activity_course_id", "course_id"),)
+
     id: Optional[int] = Field(default=None, primary_key=True)
     org_id: int = Field(
         sa_column=Column(Integer, ForeignKey("organization.id", ondelete="CASCADE"))

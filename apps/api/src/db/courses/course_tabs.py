@@ -1,6 +1,6 @@
 from datetime import date
 from typing import Optional
-from sqlalchemy import Boolean, Column, Date, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, Column, Date, ForeignKey, Index, Integer, String, UniqueConstraint
 from sqlmodel import Field, SQLModel
 
 
@@ -8,6 +8,7 @@ class CourseTab(SQLModel, table=True):
     __tablename__ = 'course_tab'
     __table_args__ = (
         UniqueConstraint('course_id', 'tab_uuid', name='uq_course_tab_per_course'),
+        Index('ix_course_tab_course_position', 'course_id', 'position', 'id'),
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)

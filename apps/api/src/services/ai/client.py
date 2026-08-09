@@ -72,19 +72,27 @@ class _CircuitBreaker:
 
     def before_call(self) -> None:
         now = time.monotonic()
+        local_probe_acquired = False
         with self._lock:
-            if self._opened_until <= now:
-                if self._opened_until and self._probe_in_flight:
+            if self._opened_until > now:
+                raise AIProviderUnavailableError(
+                    "AI provider is temporarily unavailable. Please try again shortly."
+                )
+            if self._opened_until:
+                if self._probe_in_flight:
                     raise AIProviderUnavailableError(
                         "AI provider is temporarily unavailable."
                     )
-                if self._opened_until:
-                    self._probe_in_flight = True
-                return
-            raise AIProviderUnavailableError(
-                "AI provider is temporarily unavailable. Please try again shortly."
-            )
-        self._remote_before_call()
+                self._probe_in_flight = True
+                local_probe_acquired = True
+
+        try:
+            self._remote_before_call()
+        except Exception:
+            if local_probe_acquired:
+                with self._lock:
+                    self._probe_in_flight = False
+            raise
 
     def _remote_before_call(self) -> None:
         if self._remote is None:
@@ -333,7 +341,6 @@ class OpenAICompatibleLLMClient:
                         # Some OpenAI-compatible servers accept JSON prompts but
                         # reject the newer response_format parameter.
                         response = self.client.chat.completions.create(**request)
-                    self._circuit.record_success()
                     break
                 except Exception as exc:
                     last_error = exc
@@ -356,27 +363,37 @@ class OpenAICompatibleLLMClient:
 
             choices = getattr(response, "choices", None) or []
             if not choices or not getattr(choices[0], "message", None):
+                self._circuit.record_failure(transient=True)
                 raise AIProviderError(
                     "AI provider returned an empty response "
                     f"(provider={self.settings.provider}, model={model})."
                 )
-            content = choices[0].message.content or "{}"
+            content = choices[0].message.content
+            if not content:
+                self._circuit.record_failure(transient=True)
+                raise AIProviderError(
+                    "AI provider returned an empty response "
+                    f"(provider={self.settings.provider}, model={model})."
+                )
         finally:
             self._concurrency.release()
 
         try:
             parsed = json.loads(content)
         except json.JSONDecodeError as exc:
+            self._circuit.record_failure(transient=True)
             raise AIProviderError(
                 "AI provider returned invalid JSON "
                 f"(provider={self.settings.provider}, model={model})."
             ) from exc
 
         if not isinstance(parsed, dict):
+            self._circuit.record_failure(transient=True)
             raise AIProviderError(
                 "AI provider returned a non-object JSON response "
                 f"(provider={self.settings.provider}, model={model})."
             )
+        self._circuit.record_success()
         return parsed
 
     def status(self) -> dict[str, Any]:

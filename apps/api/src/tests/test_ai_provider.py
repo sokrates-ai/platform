@@ -1,5 +1,6 @@
 import pytest
 import time
+from types import SimpleNamespace
 
 from config.config import get_learnhouse_config
 from src.services.ai.client import (
@@ -229,3 +230,53 @@ def test_circuit_breaker_rejects_after_repeated_transient_failures():
     breaker.before_call()
     breaker.record_success()
     breaker.before_call()
+
+
+def test_circuit_breaker_honors_remote_open_state():
+    class OpenCircuitStore:
+        def hgetall(self, _key):
+            return {"opened_until": str(time.time() + 60)}
+
+    breaker = _CircuitBreaker()
+    breaker._remote = OpenCircuitStore()
+    breaker._remote_key = "test:ai:circuit"
+
+    with pytest.raises(AIProviderError, match="temporarily unavailable"):
+        breaker.before_call()
+
+
+def test_invalid_provider_responses_open_circuit():
+    settings = LLMProviderSettings(
+        provider="self_hosted",
+        api_key=None,
+        base_url="http://localhost:8000/v1",
+        text_eval_model="model",
+        grading_criteria_model="model",
+        timeout_sec=5,
+    )
+    client = OpenAICompatibleLLMClient(settings)
+
+    class InvalidCompletions:
+        def create(self, **_kwargs):
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(content="not-json"))]
+            )
+
+    client.client = SimpleNamespace(
+        chat=SimpleNamespace(completions=InvalidCompletions())
+    )
+
+    for _ in range(3):
+        with pytest.raises(AIProviderError, match="invalid JSON"):
+            client.generate_json(
+                system_prompt="system",
+                user_prompt="user",
+                model="model",
+            )
+
+    with pytest.raises(AIProviderError, match="temporarily unavailable"):
+        client.generate_json(
+            system_prompt="system",
+            user_prompt="user",
+            model="model",
+        )

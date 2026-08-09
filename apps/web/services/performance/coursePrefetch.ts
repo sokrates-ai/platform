@@ -14,7 +14,11 @@ type ConnectionInformation = {
   saveData?: boolean
 }
 
-const prefetchPromises = new Map<string, Promise<void>>()
+const metadataPrefetchPromises = new Map<
+  string,
+  Promise<CourseLike | undefined>
+>()
+const assetPrefetchPromises = new Map<string, Promise<void>>()
 const MAX_PREFETCH_ASSETS = 32
 const ASSET_LOAD_CONCURRENCY = 4
 
@@ -86,28 +90,43 @@ export const prefetchCourseExperience = (
   loadAssets = canPrefetchFullCourse(),
 ) => {
   const normalizedUuid = getCourseUuid(courseUuid)
-  const existing = prefetchPromises.get(normalizedUuid)
-  if (existing) return existing
+  let metadataPromise = metadataPrefetchPromises.get(normalizedUuid)
+  if (!metadataPromise) {
+    metadataPromise = Promise.all([
+      loadCourseCode(),
+      getCourseMetadata(
+        normalizedUuid,
+        { revalidate: 0 },
+        accessToken ?? null,
+      ),
+    ])
+      .then(([, metadata]) => metadata as CourseLike)
+      .catch(() => undefined)
+    metadataPrefetchPromises.set(normalizedUuid, metadataPromise)
+  }
 
-  const promise = (async () => {
-    const metadataPromise = getCourseMetadata(
-      normalizedUuid,
-      { revalidate: 0 },
-      accessToken ?? null,
-    )
+  if (!loadAssets) {
+    return metadataPromise.then(() => undefined)
+  }
 
-    await Promise.all([loadCourseCode(), metadataPromise])
-    if (!loadAssets) return
+  const existingAssetPrefetch = assetPrefetchPromises.get(normalizedUuid)
+  if (existingAssetPrefetch) return existingAssetPrefetch
 
-    const metadata = await metadataPromise
-    const assetUrls = extractCourseAssetUrls(metadata).slice(0, MAX_PREFETCH_ASSETS)
-    if (assetUrls.length === 0) return
+  const assetPromise = metadataPromise
+    .then(async (metadata) => {
+      if (!metadata) return
+      const assetUrls = extractCourseAssetUrls(metadata).slice(
+        0,
+        MAX_PREFETCH_ASSETS,
+      )
+      if (assetUrls.length === 0) return
 
-    await loadAssetsWithConcurrency(assetUrls)
-  })().catch(() => undefined)
+      await loadAssetsWithConcurrency(assetUrls)
+    })
+    .catch(() => undefined)
 
-  prefetchPromises.set(normalizedUuid, promise)
-  return promise
+  assetPrefetchPromises.set(normalizedUuid, assetPromise)
+  return assetPromise
 }
 
 export const scheduleIdleTask = (callback: () => void) => {

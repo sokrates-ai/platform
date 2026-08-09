@@ -1,5 +1,5 @@
 from typing import Any, Dict, List, Optional
-from sqlalchemy import Column, ForeignKey, Integer, JSON
+from sqlalchemy import Column, ForeignKey, Index, Integer, JSON
 from sqlmodel import Field, SQLModel
 from src.db.users import UserRead
 from src.db.trails import TrailRead
@@ -46,6 +46,8 @@ class CourseBase(SQLModel):
 
 
 class Course(CourseBase, table=True):
+    __table_args__ = (Index("ix_course_course_uuid", "course_uuid"),)
+
     id: Optional[int] = Field(default=None, primary_key=True)
     org_id: int = Field(
         sa_column=Column(

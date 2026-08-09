@@ -52,8 +52,14 @@ function Canva(props: Editor) {
 
   const editor: any = useEditor({
     editable: isEditable,
+    immediatelyRender: false,
+    editorProps: {
+      attributes: {
+        'aria-label': isEditable ? 'Activity content editor' : 'Activity content',
+      },
+    },
     extensions: [
-      StarterKit,
+      StarterKit.configure({ codeBlock: false }),
       NoTextInput,
       // Custom Extensions
       InfoCallout.configure({

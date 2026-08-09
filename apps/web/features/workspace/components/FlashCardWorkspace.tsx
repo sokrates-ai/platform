@@ -346,6 +346,7 @@ const FlashCardWorkspace = forwardRef<FlashCardRef, FlashCardWorkspaceProps>(({ 
 
   // Tiptap editor for constrained input
   const tiptap = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({ codeBlock: false }),
       Placeholder.configure({ placeholder: "Type your answer… Use $...$ for math" }),
@@ -361,6 +362,7 @@ const FlashCardWorkspace = forwardRef<FlashCardRef, FlashCardWorkspaceProps>(({ 
     editorProps: {
       attributes: {
         class: "editor-content ProseMirror",
+        "aria-label": "Answer editor",
       },
     },
   })
