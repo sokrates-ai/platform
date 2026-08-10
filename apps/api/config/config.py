@@ -37,8 +37,8 @@ class SecurityConfig(BaseModel):
 
 
 class ChromaDBConfig(BaseModel):
-    isSeparateDatabaseEnabled: bool | None 
-    db_host: str | None 
+    isSeparateDatabaseEnabled: bool | None
+    db_host: str | None
 
 
 AIProviderType = Literal["openai", "self_hosted", "vllm_openai_compatible"]
@@ -111,8 +111,18 @@ class HostingConfig(BaseModel):
 
 
 class MailingConfig(BaseModel):
-    resend_api_key: str
+    provider: Literal["resend", "smtp", "disabled"]
+    resend_api_key: str | None
     system_email_address: str
+    sender_name: str
+    reply_to: str | None
+    public_web_url: str
+    smtp_host: str | None
+    smtp_port: int
+    smtp_username: str | None
+    smtp_password: str | None
+    smtp_starttls: bool
+    smtp_timeout_sec: int
 
 
 class DatabaseConfig(BaseModel):
@@ -137,7 +147,6 @@ class LearnHouseConfig(BaseModel):
 
 
 def get_learnhouse_config() -> LearnHouseConfig:
-
     load_dotenv()
 
     # Get the YAML file
@@ -260,14 +269,12 @@ def get_learnhouse_config() -> LearnHouseConfig:
         or os.environ.get("LEARNHOUSE_OPENAI_API_KEY")
         or os.environ.get("OPENAI_API_KEY")
     )
-    env_ai_base_url = (
-        os.environ.get("LEARNHOUSE_AI_BASE_URL")
-        or os.environ.get("OPENAI_BASE_URL")
+    env_ai_base_url = os.environ.get("LEARNHOUSE_AI_BASE_URL") or os.environ.get(
+        "OPENAI_BASE_URL"
     )
-    env_ai_text_eval_model = (
-        os.environ.get("LEARNHOUSE_AI_TEXT_EVAL_MODEL")
-        or os.environ.get("LEARNHOUSE_WORKSPACE_TEXT_EVAL_MODEL")
-    )
+    env_ai_text_eval_model = os.environ.get(
+        "LEARNHOUSE_AI_TEXT_EVAL_MODEL"
+    ) or os.environ.get("LEARNHOUSE_WORKSPACE_TEXT_EVAL_MODEL")
     env_ai_grading_criteria_model = os.environ.get(
         "LEARNHOUSE_AI_GRADING_CRITERIA_MODEL"
     )
@@ -295,7 +302,9 @@ def get_learnhouse_config() -> LearnHouseConfig:
         raw_ai_provider,
         default=ai_provider_default,
     )
-    ai_api_key = env_ai_api_key or ai_yaml.get("api_key") or ai_yaml.get("openai_api_key")
+    ai_api_key = (
+        env_ai_api_key or ai_yaml.get("api_key") or ai_yaml.get("openai_api_key")
+    )
     ai_base_url = env_ai_base_url or ai_yaml.get("base_url")
     ai_text_eval_model = (
         env_ai_text_eval_model or ai_yaml.get("text_eval_model") or "gpt-4.1-mini"
@@ -324,10 +333,12 @@ def get_learnhouse_config() -> LearnHouseConfig:
         if env_is_ai_enabled is not None
         else ai_yaml.get("enabled", ai_yaml.get("is_ai_enabled", True))
     )
-    chromadb_separate = env_chromadb_separate or ai_yaml.get(
-        "chromadb_config", {}
-    ).get("isSeparateDatabaseEnabled")
-    chromadb_host = env_chromadb_host or ai_yaml.get("chromadb_config", {}).get("db_host")
+    chromadb_separate = env_chromadb_separate or ai_yaml.get("chromadb_config", {}).get(
+        "isSeparateDatabaseEnabled"
+    )
+    chromadb_host = env_chromadb_host or ai_yaml.get("chromadb_config", {}).get(
+        "db_host"
+    )
 
     # Redis config
     env_redis_connection_string = os.environ.get("LEARNHOUSE_REDIS_CONNECTION_STRING")
@@ -336,14 +347,60 @@ def get_learnhouse_config() -> LearnHouseConfig:
     ).get("redis_connection_string")
 
     # Mailing config
+    mailing_yaml = yaml_config.get("mailing_config", {})
+    env_email_provider = os.environ.get("LEARNHOUSE_EMAIL_PROVIDER")
     env_resend_api_key = os.environ.get("LEARNHOUSE_RESEND_API_KEY")
     env_system_email_address = os.environ.get("LEARNHOUSE_SYSTEM_EMAIL_ADDRESS")
-    resend_api_key = env_resend_api_key or yaml_config.get("mailing_config", {}).get(
-        "resend_api_key"
+    env_email_sender_name = os.environ.get("LEARNHOUSE_EMAIL_SENDER_NAME")
+    env_email_reply_to = os.environ.get("LEARNHOUSE_EMAIL_REPLY_TO")
+    env_public_web_url = os.environ.get("LEARNHOUSE_PUBLIC_WEB_URL") or os.environ.get(
+        "SK_PUBLIC_URL"
     )
-    system_email_address = env_system_email_address or yaml_config.get(
-        "mailing_config", {}
-    ).get("system_email_adress")
+    env_smtp_host = os.environ.get("LEARNHOUSE_SMTP_HOST")
+    env_smtp_port = os.environ.get("LEARNHOUSE_SMTP_PORT")
+    env_smtp_username = os.environ.get("LEARNHOUSE_SMTP_USERNAME")
+    env_smtp_password = os.environ.get("LEARNHOUSE_SMTP_PASSWORD")
+    env_smtp_starttls = os.environ.get("LEARNHOUSE_SMTP_STARTTLS")
+    env_smtp_timeout = os.environ.get("LEARNHOUSE_SMTP_TIMEOUT_SEC")
+
+    raw_email_provider = env_email_provider or mailing_yaml.get("provider", "disabled")
+    email_provider = str(raw_email_provider).strip().lower()
+    if email_provider not in {"resend", "smtp", "disabled"}:
+        raise ValueError(
+            "LEARNHOUSE_EMAIL_PROVIDER must be one of: resend, smtp, disabled"
+        )
+    resend_api_key = env_resend_api_key or mailing_yaml.get("resend_api_key")
+    system_email_address = env_system_email_address or mailing_yaml.get(
+        "system_email_address",
+        mailing_yaml.get("system_email_adress", ""),
+    )
+    email_sender_name = env_email_sender_name or mailing_yaml.get(
+        "sender_name", site_name
+    )
+    email_reply_to = env_email_reply_to or mailing_yaml.get("reply_to")
+    public_web_url = env_public_web_url or mailing_yaml.get("public_web_url")
+    if not public_web_url:
+        public_web_url = f"{'https' if _as_bool(ssl) else 'http'}://{domain}"
+    smtp_host = env_smtp_host or mailing_yaml.get("smtp_host")
+    smtp_port = _as_int(env_smtp_port or mailing_yaml.get("smtp_port"), default=587)
+    smtp_username = env_smtp_username or mailing_yaml.get("smtp_username")
+    smtp_password = env_smtp_password or mailing_yaml.get("smtp_password")
+    smtp_starttls = _as_bool(
+        env_smtp_starttls
+        if env_smtp_starttls is not None
+        else mailing_yaml.get("smtp_starttls"),
+        default=True,
+    )
+    smtp_timeout_sec = max(
+        1,
+        min(
+            _as_int(
+                env_smtp_timeout or mailing_yaml.get("smtp_timeout_sec"),
+                default=10,
+            ),
+            60,
+        ),
+    )
 
     # Create HostingConfig and DatabaseConfig objects
     hosting_config = HostingConfig(
@@ -391,8 +448,19 @@ def get_learnhouse_config() -> LearnHouseConfig:
         ai_config=ai_config,
         redis_config=RedisConfig(redis_connection_string=redis_connection_string),
         mailing_config=MailingConfig(
-            resend_api_key=resend_api_key, system_email_address=system_email_address
-        )
+            provider=email_provider,  # type: ignore[arg-type]
+            resend_api_key=resend_api_key,
+            system_email_address=system_email_address,
+            sender_name=email_sender_name,
+            reply_to=email_reply_to,
+            public_web_url=public_web_url.rstrip("/"),
+            smtp_host=smtp_host,
+            smtp_port=smtp_port,
+            smtp_username=smtp_username,
+            smtp_password=smtp_password,
+            smtp_starttls=smtp_starttls,
+            smtp_timeout_sec=smtp_timeout_sec,
+        ),
     )
 
     return config

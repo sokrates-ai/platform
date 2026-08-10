@@ -8,7 +8,7 @@ import Puzzle2 from 'public/puzzle-piece-2.svg'
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative w-full min-h-screen bg-[#f2f2f2] overflow-hidden flex flex-col items-center justify-center font-['DM_Sans'] text-[#7a7a7a] bg-[url('/background-1.svg')] bg-repeat bg-auto">
+    <div className="relative w-full min-h-screen bg-[#f2f2f2] overflow-hidden flex flex-col items-center justify-center text-[#7a7a7a] bg-[url('/background-1.svg')] bg-repeat bg-auto">
       {/* Light grey overlay over the dotted pattern */}
       <div className="absolute inset-0 pointer-events-none bg-[#f2f2f2]/80" />
 

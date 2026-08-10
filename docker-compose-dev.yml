@@ -38,6 +38,17 @@ services:
       interval: 5s
       timeout: 4s
       retries: 5
+  mailpit:
+    image: axllent/mailpit:v1.27
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    environment:
+      - MP_MAX_MESSAGES=500
+      - MP_DATABASE=/data/mailpit.db
+    volumes:
+      - sk-mailpit:/data
   chromadb:
     image: chromadb/chroma:0.5.16
     ports:
@@ -95,3 +106,4 @@ services:
 volumes:
   sk-postgres:
   sk-keycloak:
+  sk-mailpit:

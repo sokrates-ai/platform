@@ -1,4 +1,4 @@
-.PHONY: setup check sprites staging prod set-version api-test pre-commit-install pre-commit-run
+.PHONY: setup check sprites staging prod set-version api-test pre-commit-install pre-commit-run mail-dev
 
 env:
 	./dev.sh env
@@ -18,6 +18,10 @@ web-dev:
 
 api-dev:
 	./dev.sh api-dev
+
+mail-dev:
+	docker compose -f docker-compose-dev.yml up -d mailpit
+	@echo "Mailpit inbox: http://localhost:8025"
 
 collab-dev:
 	./dev.sh collab-dev

@@ -28,8 +28,19 @@ hosting_config:
       endpoint_url: ""
 
 mailing_config:
+  # Local email is captured by Mailpit at http://localhost:8025.
+  provider: "smtp"
   resend_api_key: ""
-  system_email_adress: ""
+  system_email_address: "no-reply@sokrates.local"
+  sender_name: "Sokrates"
+  reply_to: ""
+  public_web_url: "http://localhost:3000"
+  smtp_host: "localhost"
+  smtp_port: 1025
+  smtp_username: ""
+  smtp_password: ""
+  smtp_starttls: false
+  smtp_timeout_sec: 10
 
 database_config:
   sql_connection_string: postgresql://learnhouse:@localhost:5432/learnhouse

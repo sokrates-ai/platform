@@ -1,5 +1,5 @@
 from typing import Literal
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, UploadFile
 from pydantic import EmailStr
 from sqlmodel import Session, select
 from src.services.users.password_reset import (
@@ -275,7 +275,7 @@ async def api_change_password_with_reset_code(
     request: Request,
     db_session: Session = Depends(get_db_session),
     current_user: PublicUser = Depends(get_current_user),
-    new_password: str,
+    new_password: str = Body(embed=True, min_length=8, max_length=128),
     email: EmailStr,
     org_id: int,
     reset_code: str,

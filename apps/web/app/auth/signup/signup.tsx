@@ -30,7 +30,6 @@ export default function SignUpClient({
       <h1
         className="text-[3.25rem] font-extrabold leading-[1.25] tracking-[0.065rem]"
         style={{
-          fontFamily: '"DM Sans", sans-serif',
           backgroundImage:
             'radial-gradient(328.3% 203.09% at 85.28% -100%, #646464 0%, #3C3C3C 100%)',
           backgroundClip: 'text',

@@ -1,15 +1,16 @@
-from datetime import datetime
+import asyncio
+from datetime import datetime, timezone
+import hashlib
 import json
-import random
 import redis
-import string
-import uuid
+import secrets
 from fastapi import HTTPException, Request
 from pydantic import EmailStr
 from sqlmodel import Session, select
 from src.db.organizations import Organization, OrganizationRead
 from src.security.security import security_hash_password
 from config.config import get_learnhouse_config
+from src.services.email.utils import EmailDeliveryError
 from src.services.users.emails import (
     send_password_reset_email,
 )
@@ -20,6 +21,22 @@ from src.db.users import (
     UserRead,
 )
 
+RESET_TOKEN_TTL_SECONDS = 60 * 60
+RESET_REQUEST_COOLDOWN_SECONDS = 60
+RESET_REQUEST_RESPONSE = (
+    "If an account exists, check your email for a password reset link."
+)
+
+
+def _reset_token_key(user_uuid: str, org_uuid: str, reset_token: str) -> str:
+    token_digest = hashlib.sha256(reset_token.encode()).hexdigest()
+    return f"password_reset:{user_uuid}:{org_uuid}:{token_digest}"
+
+
+def _reset_rate_limit_key(org_uuid: str, email: EmailStr) -> str:
+    email_digest = hashlib.sha256(str(email).lower().encode()).hexdigest()
+    return f"password_reset_rate:{org_uuid}:{email_digest}"
+
 
 async def send_reset_password_code(
     request: Request,
@@ -28,16 +45,6 @@ async def send_reset_password_code(
     org_id: int,
     email: EmailStr,
 ):
-    # Get user
-    statement = select(User).where(User.email == email)
-    user = db_session.exec(statement).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=400,
-            detail="User does not exist",
-        )
-
     # Get org
     statement = select(Organization).where(Organization.id == org_id)
     org = db_session.exec(statement).first()
@@ -47,6 +54,13 @@ async def send_reset_password_code(
             status_code=400,
             detail="Organization not found",
         )
+
+    # Always return the same response for unknown addresses so this endpoint cannot
+    # be used to discover which people have accounts.
+    statement = select(User).where(User.email == email)
+    user = db_session.exec(statement).first()
+    if not user:
+        return RESET_REQUEST_RESPONSE
 
     # Redis init
     LH_CONFIG = get_learnhouse_config()
@@ -58,60 +72,70 @@ async def send_reset_password_code(
             detail="Redis connection string not found",
         )
 
-    # Connect to Redis
     r = redis.Redis.from_url(redis_conn_string)
-
-    if not r:
-        raise HTTPException(
-            status_code=500,
-            detail="Could not connect to Redis",
+    rate_limit_key = _reset_rate_limit_key(org.org_uuid, email)
+    try:
+        accepted = r.set(
+            rate_limit_key,
+            "1",
+            ex=RESET_REQUEST_COOLDOWN_SECONDS,
+            nx=True,
         )
+    except redis.RedisError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Password reset is temporarily unavailable",
+        ) from exc
+    if not accepted:
+        return RESET_REQUEST_RESPONSE
 
-    # Generate reset code
-    def generate_code(length=5):
-        letters_and_digits = string.ascii_letters + string.digits
-        return "".join(random.choice(letters_and_digits) for _ in range(length))
-
-    generated_reset_code = generate_code()
-    reset_email_invite_uuid = f"reset_email_invite_code_{uuid.uuid4()}"
-
-    ttl = int(datetime.now().timestamp()) + 60 * 60 * 1  # 1 hour
-
-    resetCodeObject = {
-        "reset_code": generated_reset_code,
-        "reset_email_invite_uuid": reset_email_invite_uuid,
-        "reset_code_expires": ttl,
-        "reset_code_type": "signup",
-        "created_at": datetime.now().isoformat(),
+    generated_reset_code = secrets.token_urlsafe(32)
+    reset_code_key = _reset_token_key(
+        user.user_uuid,
+        org.org_uuid,
+        generated_reset_code,
+    )
+    reset_code_object = {
+        "reset_code_expires": int(datetime.now(timezone.utc).timestamp())
+        + RESET_TOKEN_TTL_SECONDS,
+        "reset_code_type": "password_reset",
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "created_by": user.user_uuid,
         "org_uuid": org.org_uuid,
     }
 
-    r.set(
-        f"{reset_email_invite_uuid}:user:{user.user_uuid}:org:{org.org_uuid}:code:{generated_reset_code}",
-        json.dumps(resetCodeObject),
-        ex=ttl,
-    )
+    try:
+        r.set(
+            reset_code_key,
+            json.dumps(reset_code_object),
+            ex=RESET_TOKEN_TTL_SECONDS,
+        )
+    except redis.RedisError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Password reset is temporarily unavailable",
+        ) from exc
 
     user = UserRead.model_validate(user)
 
     org = OrganizationRead.model_validate(org)
 
-    # Send reset code via email
-    isEmailSent = send_password_reset_email(
-        generated_reset_code=generated_reset_code,
-        user=user,
-        organization=org,
-        email=user.email,
-    )
-
-    if not isEmailSent:
-        raise HTTPException(
-            status_code=500,
-            detail="Issue with sending reset code",
+    try:
+        await asyncio.to_thread(
+            send_password_reset_email,
+            generated_reset_code=generated_reset_code,
+            user=user,
+            organization=org,
+            email=user.email,
         )
+    except EmailDeliveryError as exc:
+        r.delete(reset_code_key)
+        raise HTTPException(
+            status_code=503,
+            detail="The password reset email could not be sent. Please try again later.",
+        ) from exc
 
-    return "Reset code sent"
+    return RESET_REQUEST_RESPONSE
 
 
 async def change_password_with_reset_code(
@@ -153,40 +177,31 @@ async def change_password_with_reset_code(
             detail="Redis connection string not found",
         )
 
-    # Connect to Redis
     r = redis.Redis.from_url(redis_conn_string)
-
-    if not r:
+    reset_code_key = _reset_token_key(user.user_uuid, org.org_uuid, reset_code)
+    try:
+        reset_code_value = r.get(reset_code_key)
+    except redis.RedisError as exc:
         raise HTTPException(
-            status_code=500,
-            detail="Could not connect to Redis",
-        )
-
-    # Get reset code
-    reset_code_key = f"*:user:{user.user_uuid}:org:{org.org_uuid}:code:{reset_code}"
-    keys = r.keys(reset_code_key)
-
-    if not keys:
-        raise HTTPException(
-            status_code=400,
-            detail="Reset code not found",
-        )
-
-    # Get reset code object
-    reset_code_value = r.get(keys[0])
+            status_code=503,
+            detail="Password reset is temporarily unavailable",
+        ) from exc
 
     if reset_code_value is None:
         raise HTTPException(
             status_code=400,
-            detail="Reset code value not found",
+            detail="Reset link is invalid or expired",
         )
     reset_code_object = json.loads(reset_code_value)
 
     # Check if reset code is expired
-    if reset_code_object["reset_code_expires"] < int(datetime.now().timestamp()):
+    if reset_code_object["reset_code_expires"] < int(
+        datetime.now(timezone.utc).timestamp()
+    ):
+        r.delete(reset_code_key)
         raise HTTPException(
             status_code=400,
-            detail="Reset code expired",
+            detail="Reset link is invalid or expired",
         )
 
     # Change password
@@ -197,6 +212,6 @@ async def change_password_with_reset_code(
     db_session.refresh(user)
 
     # Delete reset code
-    r.delete(keys[0])
+    r.delete(reset_code_key)
 
     return "Password changed"

@@ -44,8 +44,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <html className={dmSans.className} lang="en">
-      <body>
+    <html lang="en">
+      <body className={dmSans.className}>
         {isStaging && (
           <div
             className="flex justify-between bg-red-500/50 text-black p-2.5 text-center font-black text-4xl w-full z-[999] bottom-0 overflow-x-hidden gap-4"

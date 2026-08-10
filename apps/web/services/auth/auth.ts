@@ -97,7 +97,7 @@ export async function impersonateUser(
 
 export async function sendResetLink(email: string, org_id: number) {
   const result = await fetch(
-    `${getAPIUrl()}users/reset_password/send_reset_code/${email}?org_id=${org_id}`,
+    `${getAPIUrl()}users/reset_password/send_reset_code/${encodeURIComponent(email)}?org_id=${org_id}`,
     RequestBody('POST', null, null)
   )
   const res = await getResponseMetadata(result)
@@ -111,8 +111,8 @@ export async function resetPassword(
   reset_code: string
 ) {
   const result = await fetch(
-    `${getAPIUrl()}users/reset_password/change_password/${email}?reset_code=${reset_code}&new_password=${new_password}&org_id=${org_id}`,
-    RequestBody('POST', null, null)
+    `${getAPIUrl()}users/reset_password/change_password/${encodeURIComponent(email)}?reset_code=${encodeURIComponent(reset_code)}&org_id=${org_id}`,
+    RequestBody('POST', { new_password }, null)
   )
   const res = await getResponseMetadata(result)
   return res

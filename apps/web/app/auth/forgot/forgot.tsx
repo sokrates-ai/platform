@@ -41,12 +41,18 @@ function ForgotPasswordClient() {
         validateOnBlur: true,
         onSubmit: async (values) => {
             setIsSubmitting(true)
-            let res = await sendResetLink(values.email, org?.id)
-            if (res.status == 200) {
-                setMessage(res.data + ', please check your email')
-                setIsSubmitting(false)
-            } else {
-                setError(res.data.detail)
+            setError('')
+            setMessage('')
+            try {
+                const res = await sendResetLink(values.email, org?.id)
+                if (res.status === 200) {
+                    setMessage(res.data)
+                } else {
+                    setError(res.data?.detail || 'Could not send the reset email')
+                }
+            } catch {
+                setError('Could not send the reset email. Please try again later.')
+            } finally {
                 setIsSubmitting(false)
             }
         },
@@ -56,7 +62,6 @@ function ForgotPasswordClient() {
             <h1
                 className="text-[3.25rem] font-extrabold leading-[1.25] tracking-[0.065rem]"
                 style={{
-                    fontFamily: '"DM Sans", sans-serif',
                     backgroundImage:
                         'radial-gradient(328.3% 203.09% at 85.28% -100%, #646464 0%, #3C3C3C 100%)',
                     backgroundClip: 'text',
@@ -101,8 +106,11 @@ function ForgotPasswordClient() {
                     </FormField>
                     <div className="flex  py-4">
                         <Form.Submit asChild>
-                            <button className="w-full bg-black text-white font-bold text-center p-2 rounded-md shadow-md hover:cursor-pointer">
-                                {isSubmitting ? 'Loading...' : 'Send Reset Link'}
+                            <button
+                                disabled={isSubmitting}
+                                className="w-full bg-black text-white font-bold text-center p-2 rounded-md shadow-md hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {isSubmitting ? 'Sending...' : 'Send Reset Link'}
                             </button>
                         </Form.Submit>
                     </div>

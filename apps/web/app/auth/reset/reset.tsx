@@ -16,14 +16,10 @@ import AuthCard from '@components/Pages/AuthCard'
 const validate = (values: any) => {
     const errors: any = {}
 
-    if (!values.email) {
-        errors.email = 'Required'
-    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)) {
-        errors.email = 'Invalid email address'
-    }
-
     if (!values.new_password) {
         errors.new_password = 'Required'
+    } else if (values.new_password.length < 8) {
+        errors.new_password = 'Password must be at least 8 characters'
     }
 
     if (!values.confirm_password) {
@@ -34,9 +30,6 @@ const validate = (values: any) => {
         errors.confirm_password = 'Passwords do not match'
     }
 
-    if (!values.reset_code) {
-        errors.reset_code = 'Required'
-    }
     return errors
 }
 
@@ -46,27 +39,35 @@ function ResetPasswordClient() {
     const searchParams = useSearchParams()
     const reset_code = searchParams.get('resetCode') || ''
     const email = searchParams.get('email') || ''
+    const hasValidResetLink = Boolean(email && reset_code)
     const router = useRouter()
     const [error, setError] = React.useState('')
     const [message, setMessage] = React.useState('')
 
     const formik = useFormik({
         initialValues: {
-            email: email,
             new_password: '',
             confirm_password: '',
-            reset_code: reset_code
         },
         validate,
-        enableReinitialize: true,
         onSubmit: async (values) => {
+            if (!hasValidResetLink) {
+                setError('This password reset link is incomplete. Request a new one.')
+                return
+            }
             setIsSubmitting(true)
-            let res = await resetPassword(values.email, values.new_password, org?.id, values.reset_code)
-            if (res.status == 200) {
-                setMessage(res.data + ', please login')
-                setIsSubmitting(false)
-            } else {
-                setError(res.data.detail)
+            setError('')
+            setMessage('')
+            try {
+                const res = await resetPassword(email, values.new_password, org?.id, reset_code)
+                if (res.status === 200) {
+                    setMessage(res.data + ', please login')
+                } else {
+                    setError(res.data?.detail || 'Could not reset your password')
+                }
+            } catch {
+                setError('Could not reset your password. Please try again later.')
+            } finally {
                 setIsSubmitting(false)
             }
 
@@ -77,7 +78,6 @@ function ResetPasswordClient() {
             <h1
                 className="text-[3.25rem] font-extrabold leading-[1.25] tracking-[0.065rem]"
                 style={{
-                    fontFamily: '"DM Sans", sans-serif',
                     backgroundImage:
                         'radial-gradient(328.3% 203.09% at 85.28% -100%, #646464 0%, #3C3C3C 100%)',
                     backgroundClip: 'text',
@@ -101,35 +101,13 @@ function ResetPasswordClient() {
                         <div className="font-bold text-sm">{message}</div>
                     </div>
                 )}
+                {!hasValidResetLink && !error && (
+                    <div role="alert" className="flex justify-center bg-red-200 rounded-md text-red-950 space-x-2 items-center p-4 shadow-sm">
+                        <AlertTriangle size={18} />
+                        <div className="font-bold text-sm">This password reset link is incomplete. Request a new one.</div>
+                    </div>
+                )}
                 <FormLayout onSubmit={formik.handleSubmit}>
-                    <FormField name="email">
-                        <FormLabelAndMessage
-                            label="Email"
-                            message={formik.errors.email}
-                        />
-                        <Form.Control asChild>
-                            <Input
-                                onChange={formik.handleChange}
-                                value={formik.values.email}
-                                type="email"
-                            />
-                        </Form.Control>
-                    </FormField>
-
-                    <FormField name="reset_code">
-                        <FormLabelAndMessage
-                            label="Reset Code"
-                            message={formik.errors.reset_code}
-                        />
-                        <Form.Control asChild>
-                            <Input
-                                onChange={formik.handleChange}
-                                value={formik.values.reset_code}
-                                type="text"
-                            />
-                        </Form.Control>
-                    </FormField>
-
                     <FormField name="new_password">
                         <FormLabelAndMessage
                             label="New Password"
@@ -160,8 +138,11 @@ function ResetPasswordClient() {
 
                     <div className="flex py-4">
                         <Form.Submit asChild>
-                            <button className="w-full bg-black text-white font-bold text-center p-2 rounded-md shadow-md hover:cursor-pointer">
-                                {isSubmitting ? 'Loading...' : 'Change Password'}
+                            <button
+                                disabled={isSubmitting || !hasValidResetLink}
+                                className="w-full bg-black text-white font-bold text-center p-2 rounded-md shadow-md hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {isSubmitting ? 'Changing...' : 'Change Password'}
                             </button>
                         </Form.Submit>
                     </div>

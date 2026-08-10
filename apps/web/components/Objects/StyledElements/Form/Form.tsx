@@ -51,6 +51,7 @@ export const Flex = styled('div', { display: 'flex' })
 export const inputStyles = {
   all: 'unset',
   boxSizing: 'border-box',
+  fontFamily: 'inherit',
   width: '100%',
   display: 'inline-flex',
   alignItems: 'center',
@@ -90,6 +91,7 @@ export const ButtonBlack = styled('button', {
     },
   },
   all: 'unset',
+  fontFamily: 'inherit',
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
