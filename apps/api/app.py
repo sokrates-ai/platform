@@ -140,14 +140,37 @@ async def user_interaction_middleware(request: Request, call_next):
     return response
 
 
+def _worker_count() -> int:
+    """
+    Number of uvicorn worker processes.
+
+    One worker means one event loop for the whole API, so a single expensive
+    request blocks every other request on the box. Defaults to leaving one core
+    for the frontend and databases that share the host.
+
+    Multiple workers are safe here: migrations take a Postgres advisory lock on
+    startup, and websocket notifications fan out across workers over Redis
+    pub/sub (see src/services/notifications/broker.py).
+    """
+    configured = os.getenv('LEARNHOUSE_WORKERS')
+    if configured:
+        return max(1, int(configured))
+    return max(1, (os.cpu_count() or 2) - 1)
+
+
 if __name__ == '__main__':
     # Spawn data reporting thread.
+
+    development_mode = learnhouse_config.general_config.development_mode
+    # reload and workers are mutually exclusive in uvicorn.
+    workers = 1 if development_mode else _worker_count()
 
     uvicorn.run(
         'app:app',
         host='0.0.0.0',
         port=learnhouse_config.hosting_config.port,
-        reload=learnhouse_config.general_config.development_mode,
+        reload=development_mode,
+        workers=workers if workers > 1 else None,
         forwarded_allow_ips='*',
         log_level="debug"
     )

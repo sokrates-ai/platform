@@ -2,6 +2,7 @@ services:
     sk-platform-frontend:
       container_name: sk-platform-frontend
       image: ghcr.io/sokrates-ai/sk-platform-frontend:staging
+      restart: unless-stopped
       ports:
         - "8001:3000"
       env_file:
@@ -23,6 +24,13 @@ services:
     sk-platform-backend:
       container_name: sk-platform-backend
       image: ghcr.io/sokrates-ai/sk-platform-backend:staging
+      restart: unless-stopped
+      healthcheck:
+        test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:1338/api/v1/health', timeout=5)\""]
+        interval: 15s
+        timeout: 10s
+        retries: 3
+        start_period: 60s
       ports:
         - "8000:1338"
       volumes:

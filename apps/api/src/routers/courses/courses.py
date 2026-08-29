@@ -1,9 +1,10 @@
 from typing import List
-from fastapi import APIRouter, Depends, UploadFile, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, UploadFile, Form, HTTPException, Request, Response
 from pydantic import BaseModel
 from sqlmodel import Session
 from src.db.users import PublicUser, UserRead
 from src.core.events.database import get_db_session
+from src.core.responses import orjson_response
 from src.db.courses.course_canvas import CourseCanvasUpdate
 from src.db.courses.course_rooms import (
     CourseRoomCreate,
@@ -261,19 +262,28 @@ async def api_get_course_analytics(
     )
 
 
-@router.get('/{course_uuid}')
+@router.get(
+    '/{course_uuid}',
+    response_model=None,
+    responses={200: {'model': CourseRead}},
+)
 async def api_get_course(
     request: Request,
     course_uuid: str,
     db_session: Session = Depends(get_db_session),
     current_user: PublicUser = Depends(get_current_user),
-) -> CourseRead:
+) -> Response:
     """
     Get single Course by course_uuid
+
+    Encoded with orjson; this is the endpoint the course page renders from and
+    it carries the full map state (hundreds of kilobytes). See
+    src/core/responses.py for why the response_model path is avoided.
     """
-    return await get_course(
+    course = await get_course(
         request, course_uuid, current_user=current_user, db_session=db_session
     )
+    return orjson_response(course)
 
 
 @router.get('/id/{course_id}')
@@ -291,19 +301,31 @@ async def api_get_course_by_id(
     )
 
 
-@router.get('/{course_uuid}/meta')
+@router.get(
+    '/{course_uuid}/meta',
+    response_model=None,
+    responses={200: {'model': FullCourseReadWithTrail}},
+)
 async def api_get_course_meta(
     request: Request,
     course_uuid: str,
     db_session: Session = Depends(get_db_session),
     current_user: PublicUser = Depends(get_current_user),
-) -> FullCourseReadWithTrail:
+) -> Response:
     """
     Get single Course Metadata (chapters, activities) by course_uuid
+
+    This response is large (megabytes for a full course), so it is dumped once
+    and encoded with orjson. Declaring a response_model instead would make
+    FastAPI dump the model again and then walk the whole structure a third time
+    through jsonable_encoder before encoding it with the stdlib json module —
+    all of it on the event loop, which is what made this endpoint the
+    throughput ceiling for the whole API.
     """
-    return await get_course_meta(
+    course_meta = await get_course_meta(
         request, course_uuid, current_user=current_user, db_session=db_session
     )
+    return orjson_response(course_meta)
 
 
 @router.get('/{course_uuid}/tabs/{tab_uuid}/content')
@@ -326,7 +348,11 @@ async def api_get_course_tab_content(
     )
 
 
-@router.get('/org_slug/{org_slug}/page/{page}/limit/{limit}')
+@router.get(
+    '/org_slug/{org_slug}/page/{page}/limit/{limit}',
+    response_model=None,
+    responses={200: {'model': List[CourseRead]}},
+)
 async def api_get_course_by_orgslug(
     request: Request,
     page: int,
@@ -334,13 +360,17 @@ async def api_get_course_by_orgslug(
     org_slug: str,
     db_session: Session = Depends(get_db_session),
     current_user: PublicUser = Depends(get_current_user),
-) -> List[CourseRead]:
+) -> Response:
     """
     Get courses by page and limit
+
+    Encoded with orjson; a page of courses carries every course's map state.
+    See src/core/responses.py.
     """
-    return await get_courses_orgslug(
+    courses = await get_courses_orgslug(
         request, current_user, org_slug, db_session, page, limit
     )
+    return orjson_response(courses)
 
 
 @router.put('/{course_uuid}')

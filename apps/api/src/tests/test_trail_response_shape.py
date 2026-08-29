@@ -14,6 +14,7 @@ from src.db.courses.course_tabs import CourseTab
 from src.db.courses.courses import Course
 from src.db.organizations import Organization
 from src.db.resource_authors import ResourceAuthor, ResourceAuthorshipEnum
+from src.db.trail_steps import TrailStepVerificationEnum
 from src.db.users import PublicUser, User
 from src.services.courses.courses import get_course_meta
 from src.services.trail.trail import add_activity_to_trail, get_user_trails
@@ -228,3 +229,49 @@ def test_get_course_meta_keeps_trail_steps_lean(session: Session):
     assert "map_state" not in run["course"]
     assert "tabStore" not in run["course"]
     assert run["steps"][0]["data"] == {"parts": []}
+
+
+def test_course_meta_orjson_encoding_matches_fastapi_encoder(session: Session):
+    """
+    The /meta route encodes with orjson instead of letting FastAPI serialize a
+    response_model, because the response_model path walks the (multi-megabyte)
+    payload several extra times on the event loop. orjson is stricter than
+    jsonable_encoder about exotic types, so pin the two against each other.
+    """
+    import json
+
+    import orjson
+    from fastapi.encoders import jsonable_encoder
+
+    user, course, _ = _prepare_course_with_trail_step(session)
+
+    course_meta = asyncio.run(
+        get_course_meta(
+            _build_request(f"/api/v1/courses/{course.course_uuid}/meta"),
+            course.course_uuid,
+            user,
+            session,
+        )
+    )
+
+    payload = course_meta.dict(by_alias=True)
+    encoded = orjson.dumps(payload)
+    legacy = json.dumps(jsonable_encoder(payload))
+
+    assert json.loads(encoded) == json.loads(legacy)
+
+    # The enums that show up inside this payload must survive orjson as plain
+    # strings; orjson only handles these because they subclass str.
+    assert json.loads(
+        orjson.dumps(
+            {
+                "activity_type": ActivityTypeEnum.TYPE_DYNAMIC,
+                "verification": TrailStepVerificationEnum.CORRECT,
+                "authorship": ResourceAuthorshipEnum.CREATOR,
+            }
+        )
+    ) == {
+        "activity_type": "TYPE_DYNAMIC",
+        "verification": "CORRECT",
+        "authorship": ResourceAuthorshipEnum.CREATOR.value,
+    }

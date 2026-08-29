@@ -460,8 +460,16 @@ async def get_course_meta(
             request, current_user, course.org_id, db_session
         )
 
-    return FullCourseReadWithTrail(
-        **course_read.model_dump(),
+    # course_read is already validated, so re-dumping it into the constructor and
+    # revalidating would walk the whole (multi-megabyte) course payload twice for
+    # nothing. construct() skips both passes; the values are already the right
+    # types because they come straight off the validated CourseRead.
+    return FullCourseReadWithTrail.construct(
+        **{
+            field: getattr(course_read, field)
+            for field in FullCourseReadWithTrail.__fields__
+            if field not in ('chapters', 'trail') and hasattr(course_read, field)
+        },
         chapters=chapters,
         trail=trail if trail else None,
     )

@@ -1,5 +1,6 @@
 import logging
 import os
+from contextlib import contextmanager
 
 import sqlalchemy as sa
 from alembic import command
@@ -31,6 +32,32 @@ def _alembic_config(engine: Engine) -> AlembicConfig:
     return cfg
 
 
+@contextmanager
+def schema_lock(engine: Engine):
+    """
+    Serialize schema-touching startup work across worker processes.
+
+    Uvicorn runs several workers, all of which boot at once and all of which
+    want to reconcile the schema. On Postgres this takes an advisory lock so
+    only one of them does it at a time; other backends are left alone.
+    """
+    if engine.dialect.name != "postgresql":
+        yield
+        return
+
+    with engine.connect() as lock_conn:
+        lock_conn.execute(
+            text("SELECT pg_advisory_lock(:key)"), {"key": _MIGRATION_LOCK_KEY}
+        )
+        try:
+            yield
+        finally:
+            lock_conn.execute(
+                text("SELECT pg_advisory_unlock(:key)"),
+                {"key": _MIGRATION_LOCK_KEY},
+            )
+
+
 def run_database_migrations(engine: Engine) -> None:
     """
     Bring the database schema up to date on startup.
@@ -43,17 +70,8 @@ def run_database_migrations(engine: Engine) -> None:
         SQLModel.metadata.create_all(engine)
         return
 
-    with engine.connect() as lock_conn:
-        lock_conn.execute(
-            text("SELECT pg_advisory_lock(:key)"), {"key": _MIGRATION_LOCK_KEY}
-        )
-        try:
-            _migrate(engine)
-        finally:
-            lock_conn.execute(
-                text("SELECT pg_advisory_unlock(:key)"),
-                {"key": _MIGRATION_LOCK_KEY},
-            )
+    with schema_lock(engine):
+        _migrate(engine)
 
 
 def _migrate(engine: Engine) -> None:

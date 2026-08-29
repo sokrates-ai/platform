@@ -36,10 +36,23 @@ def import_all_models():
 import_all_models()
 
 learnhouse_config = get_learnhouse_config()
+
+# Sized explicitly rather than left at SQLAlchemy's 5 + 10 default. This pool is
+# per worker process, so keep the total (workers x (pool_size + max_overflow))
+# comfortably under the Postgres max_connections.
+_pool_size = int(os.getenv('LEARNHOUSE_DB_POOL_SIZE', '10'))
+_max_overflow = int(os.getenv('LEARNHOUSE_DB_MAX_OVERFLOW', '5'))
+
 engine = create_engine(
     learnhouse_config.database_config.sql_connection_string,  # type: ignore
     echo=False,
-    pool_pre_ping=True  # type: ignore
+    pool_pre_ping=True,  # type: ignore
+    pool_size=_pool_size,
+    max_overflow=_max_overflow,
+    # Never block a request forever waiting for a connection; failing fast turns
+    # a pool shortage into a visible error instead of a silent hang.
+    pool_timeout=int(os.getenv('LEARNHOUSE_DB_POOL_TIMEOUT', '10')),
+    pool_recycle=int(os.getenv('LEARNHOUSE_DB_POOL_RECYCLE', '1800')),
 )
 
 slow_query_ms = float(os.getenv('SLOW_DB_QUERY_MS', '200'))
