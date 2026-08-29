@@ -75,7 +75,7 @@ from src.services.courses.courses import (
     create_course,
     get_course,
     get_course_by_id,
-    get_course_meta,
+    get_course_meta_json,
     get_courses_orgslug,
     update_course,
     delete_course,
@@ -322,10 +322,10 @@ async def api_get_course_meta(
     all of it on the event loop, which is what made this endpoint the
     throughput ceiling for the whole API.
     """
-    course_meta = await get_course_meta(
+    body = await get_course_meta_json(
         request, course_uuid, current_user=current_user, db_session=db_session
     )
-    return orjson_response(course_meta)
+    return Response(content=body, media_type='application/json')
 
 
 @router.get('/{course_uuid}/tabs/{tab_uuid}/content')

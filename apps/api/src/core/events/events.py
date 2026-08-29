@@ -6,6 +6,7 @@ from src.core.events.autoinstall import auto_install
 from src.core.events.content import check_content_directory
 from src.core.events.database import close_database, connect_to_db
 from src.core.events.logs import init_logging
+from src.services.courses.meta_cache import register_cache_invalidation
 from src.services.notifications.service import start_notifications, stop_notifications
 from src.services.workspace.runtime import (
     init_workspace_runtime,
@@ -42,6 +43,9 @@ def startup_app(app: FastAPI) -> Callable:
 
         # Start notification system (websockets + optional Redis pubsub)
         await start_notifications(app)
+
+        # Drop the cached course payloads whenever course content is committed.
+        register_cache_invalidation()
 
     return start_app
 

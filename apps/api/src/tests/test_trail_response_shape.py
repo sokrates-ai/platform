@@ -1,4 +1,5 @@
 import asyncio
+import json
 from datetime import datetime
 from uuid import uuid4
 
@@ -16,7 +17,7 @@ from src.db.organizations import Organization
 from src.db.resource_authors import ResourceAuthor, ResourceAuthorshipEnum
 from src.db.trail_steps import TrailStepVerificationEnum
 from src.db.users import PublicUser, User
-from src.services.courses.courses import get_course_meta
+from src.services.courses.courses import get_course_meta_json
 from src.services.trail.trail import add_activity_to_trail, get_user_trails
 
 
@@ -202,15 +203,16 @@ def test_get_user_trails_returns_lean_course_summaries(session: Session):
 def test_get_course_meta_keeps_trail_steps_lean(session: Session):
     user, course, _ = _prepare_course_with_trail_step(session)
 
-    course_meta = asyncio.run(
-        get_course_meta(
-            _build_request(f"/api/v1/courses/{course.course_uuid}/meta"),
-            course.course_uuid,
-            user,
-            session,
+    payload = json.loads(
+        asyncio.run(
+            get_course_meta_json(
+                _build_request(f"/api/v1/courses/{course.course_uuid}/meta"),
+                course.course_uuid,
+                user,
+                session,
+            )
         )
     )
-    payload = _dump_model(course_meta, by_alias=True)
 
     assert payload["course_uuid"] == course.course_uuid
     assert payload["trail"] is not None
@@ -231,22 +233,19 @@ def test_get_course_meta_keeps_trail_steps_lean(session: Session):
     assert run["steps"][0]["data"] == {"parts": []}
 
 
-def test_course_meta_orjson_encoding_matches_fastapi_encoder(session: Session):
+def test_course_meta_json_is_encodable_and_well_formed(session: Session):
     """
-    The /meta route encodes with orjson instead of letting FastAPI serialize a
-    response_model, because the response_model path walks the (multi-megabyte)
-    payload several extra times on the event loop. orjson is stricter than
-    jsonable_encoder about exotic types, so pin the two against each other.
+    The /meta route returns pre-encoded bytes built by splicing the per-user
+    trail into a cached course body, so the result has to be valid JSON with the
+    trail present exactly once - a splice bug would produce broken JSON rather
+    than a wrong field.
     """
-    import json
-
     import orjson
-    from fastapi.encoders import jsonable_encoder
 
     user, course, _ = _prepare_course_with_trail_step(session)
 
-    course_meta = asyncio.run(
-        get_course_meta(
+    body = asyncio.run(
+        get_course_meta_json(
             _build_request(f"/api/v1/courses/{course.course_uuid}/meta"),
             course.course_uuid,
             user,
@@ -254,14 +253,13 @@ def test_course_meta_orjson_encoding_matches_fastapi_encoder(session: Session):
         )
     )
 
-    payload = course_meta.dict(by_alias=True)
-    encoded = orjson.dumps(payload)
-    legacy = json.dumps(jsonable_encoder(payload))
+    payload = json.loads(body)
+    assert payload["course_uuid"] == course.course_uuid
+    assert payload["trail"] is not None
+    assert body.count(b'"trail":') == 1
 
-    assert json.loads(encoded) == json.loads(legacy)
-
-    # The enums that show up inside this payload must survive orjson as plain
-    # strings; orjson only handles these because they subclass str.
+    # The enums inside this payload must survive orjson as plain strings; orjson
+    # only handles them because they subclass str.
     assert json.loads(
         orjson.dumps(
             {
@@ -275,3 +273,26 @@ def test_course_meta_orjson_encoding_matches_fastapi_encoder(session: Session):
         "verification": "CORRECT",
         "authorship": ResourceAuthorshipEnum.CREATOR.value,
     }
+
+
+def test_course_meta_json_for_anonymous_user_has_null_trail(session: Session):
+    from src.db.users import AnonymousUser
+
+    _, course, _ = _prepare_course_with_trail_step(session)
+    # Anonymous reads only get through RBAC on a public course.
+    course.public = True
+    session.add(course)
+    session.commit()
+
+    body = asyncio.run(
+        get_course_meta_json(
+            _build_request(f"/api/v1/courses/{course.course_uuid}/meta"),
+            course.course_uuid,
+            AnonymousUser(),
+            session,
+        )
+    )
+
+    payload = json.loads(body)
+    assert payload["trail"] is None
+    assert payload["course_uuid"] == course.course_uuid

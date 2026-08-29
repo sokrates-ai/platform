@@ -343,7 +343,6 @@ async def get_course_chapters(
     page: int = 1,
     limit: int = 10,
 ) -> List[ChapterRead]:
-
     statement = select(Course).where(Course.id == course_id)
     course = db_session.exec(statement).first()
     if not course:
@@ -352,6 +351,22 @@ async def get_course_chapters(
             detail="Course does not exist",
         )
 
+    # RBAC check
+    await rbac_check(request, course.course_uuid, current_user, "read", db_session)
+
+    return get_course_chapters_sync(course_id, db_session)
+
+
+def get_course_chapters_sync(
+    course_id: int,
+    db_session: Session,
+) -> List[ChapterRead]:
+    """
+    The chapter/activity tree for a course, without the authorization check.
+
+    The returned data is the same for every user - callers authorize first and
+    may cache the result. get_course_chapters is the checked entry point.
+    """
     statement = (
         select(Chapter)
         .join(CourseChapter, Chapter.id == CourseChapter.chapter_id)
@@ -361,9 +376,6 @@ async def get_course_chapters(
         # .group_by(Chapter.id, CourseChapter.order)
     )
     chapters = db_session.exec(statement).all()
-
-    # RBAC check
-    await rbac_check(request, course.course_uuid, current_user, "read", db_session)
 
     tabs = get_sorted_course_tabs(course_id, db_session)
     fallback_tab_uuid = tabs[0].tab_uuid if tabs else "tab-1"

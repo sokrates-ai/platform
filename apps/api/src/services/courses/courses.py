@@ -1,5 +1,9 @@
 from typing import Any, Dict, Literal, List
 from uuid import uuid4
+
+import orjson
+
+from src.services.courses import meta_cache
 from src.db.courses.chapters import Chapter
 from src.db.courses.chapter_activities import ChapterActivity
 from src.db.courses.course_canvas import CourseCanvas
@@ -22,7 +26,6 @@ from src.db.courses.courses import (
     CourseCreate,
     CourseRead,
     CourseUpdate,
-    FullCourseReadWithTrail,
     default_map_state,
 )
 from src.db.courses.course_tabs import CourseTab, CourseTabRead, CourseTabUpsert
@@ -412,15 +415,18 @@ async def get_course_by_id(
     return course_read
 
 
-async def get_course_meta(
+async def get_course_meta_json(
     request: Request,
     course_uuid: str,
     current_user: PublicUser | AnonymousUser,
     db_session: Session,
-) -> FullCourseReadWithTrail:
-    # Avoid circular import
-    from src.services.courses.chapters import get_course_chapters
+) -> bytes:
+    """
+    The /meta payload as JSON bytes, using the shared course cache.
 
+    Authorization runs on every call. Only the course body - which is identical
+    for every user - is cached; the caller's trail is spliced in afterwards.
+    """
     course_statement = select(Course).where(Course.course_uuid == course_uuid)
     course = db_session.exec(course_statement).first()
 
@@ -430,49 +436,51 @@ async def get_course_meta(
             detail="Course not found",
         )
 
-    # RBAC check
     await rbac_check(request, course.course_uuid, current_user, "read", db_session)
 
-    # Get course authors
+    shared = await meta_cache.get_cached_shared_payload(course_uuid)
+    if shared is None:
+        shared = orjson.dumps(
+            _build_course_meta_shared(request, course, db_session)
+        )
+        await meta_cache.set_cached_shared_payload(course_uuid, shared)
+
+    trail = None
+    if not isinstance(current_user, AnonymousUser):
+        trail = await get_user_trail_with_orgid(
+            request, current_user, course.org_id, db_session
+        )
+
+    return meta_cache.splice_trail(
+        shared, trail.dict(by_alias=True) if trail else None
+    )
+
+
+def _build_course_meta_shared(
+    request: Request,
+    course: Course,
+    db_session: Session,
+) -> dict:
+    """Everything in the meta payload except the per-user trail."""
+    # Avoid circular import
+    from src.services.courses.chapters import get_course_chapters_sync
+
     authors_statement = (
         select(User)
         .join(ResourceAuthor)
         .where(ResourceAuthor.resource_uuid == course.course_uuid)
     )
     authors = db_session.exec(authors_statement).all()
-
-    # convert from User to UserRead
     author_reads = [UserRead.model_validate(author) for author in authors]
 
     tabs = ensure_default_tabs(course, db_session)
     course_read = build_course_read(course, author_reads, tabs)
+    chapters = get_course_chapters_sync(course.id, db_session)
 
-    # Get course chapters
-    chapters = await get_course_chapters(request, course.id, db_session, current_user)
+    payload = course_read.dict(by_alias=True)
+    payload['chapters'] = [chapter.dict(by_alias=True) for chapter in chapters]
+    return payload
 
-    # Trail
-    trail = None
-
-    if isinstance(current_user, AnonymousUser):
-        trail = None
-    else:
-        trail = await get_user_trail_with_orgid(
-            request, current_user, course.org_id, db_session
-        )
-
-    # course_read is already validated, so re-dumping it into the constructor and
-    # revalidating would walk the whole (multi-megabyte) course payload twice for
-    # nothing. construct() skips both passes; the values are already the right
-    # types because they come straight off the validated CourseRead.
-    return FullCourseReadWithTrail.construct(
-        **{
-            field: getattr(course_read, field)
-            for field in FullCourseReadWithTrail.__fields__
-            if field not in ('chapters', 'trail') and hasattr(course_read, field)
-        },
-        chapters=chapters,
-        trail=trail if trail else None,
-    )
 
 async def get_courses_orgslug(
     request: Request,
