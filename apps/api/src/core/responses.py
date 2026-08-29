@@ -16,7 +16,7 @@ Routes using them should declare `response_model=None` and document the real
 shape via `responses={200: {'model': ...}}` so the OpenAPI schema stays honest.
 """
 
-from typing import Any, Iterable
+from typing import Any
 
 import orjson
 from fastapi import Response
@@ -43,9 +43,11 @@ def orjson_response(
     `by_alias` defaults to True to match what FastAPI's response_model path
     emits, so callers keep field aliases such as `tabStore` and `tabMetadata`.
     """
+    # Only real sequences are treated as collections. Do not fall back to a
+    # generic Iterable check: pydantic v1 models define __iter__ (it yields
+    # field name/value pairs), so a single model would be mistaken for a list
+    # of its own fields.
     if isinstance(payload, (list, tuple)):
-        content = [_dump(item, by_alias) for item in payload]
-    elif isinstance(payload, Iterable) and not isinstance(payload, (str, bytes, dict)):
         content = [_dump(item, by_alias) for item in payload]
     else:
         content = _dump(payload, by_alias)
