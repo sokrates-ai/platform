@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "problems": [
+    {
+      "id": "woche-1/bruchrechenregeln-d1-a1",
+      "title": "Aufgabe A1 (Schwierigkeit 1)",
+      "plainText": "Aufgabentyp A: Berechne das Ergebnis der folgenden Terme. Kürze dabei soweit wie möglich. (Brüche ohne Unbekannte)\n$\\frac{1}{2} + \\frac{1}{4}$\nLösung: $\\frac{3}{4} = 0.75$",
+      "chapterName": "Bruchrechenregeln — S1 · A1"
+    },
+    {
+      "id": "woche-1/bruchrechenregeln-d1-a2",
+      "title": "Aufgabe A2 (Schwierigkeit 1)",
+      "plainText": "Aufgabentyp A: Berechne das Ergebnis der folgenden Terme. Kürze dabei soweit wie möglich. (Brüche ohne Unbekannte)\n$\\frac{1}{2} / \\frac{3}{4}$\nLösung: $\\frac{1}{3} \\approx 0.3333$",
+      "chapterName": "Bruchrechenregeln — S1 · A2"
+    },
+    {
+      "id": "woche-1/bruchrechenregeln-d1-b1",
+      "title": "Aufgabe B1 (Schwierigkeit 1)",
+      "plainText": "Aufgabentyp B: Ermittle den Wert von der Unbekannten x. (Brüche mit Unbekannte)\n$\\frac{1}{10} + \\frac{8}{10} = \\frac{x}{10}$\nLösung: $x = 9$",
+      "chapterName": "Bruchrechenregeln — S1 · B1"
+    },
+    {
+      "id": "woche-1/bruchrechenregeln-d1-b3",
+      "title": "Aufgabe B3 (Schwierigkeit 1)",
+      "plainText": "Aufgabentyp B: Ermittle den Wert von der Unbekannten x. (Brüche mit Unbekannte)\n$\\frac{3}{8} + \\frac{x}{2} = \\frac{5}{4}$\nLösung: $x = \\frac{14}{8} = 1.75$",
+      "chapterName": "Bruchrechenregeln — S1 · B3"
+    },
+    {
+      "id": "woche-1/bruchrechenregeln-d1-b2",
+      "title": "Aufgabe B2 (Schwierigkeit 1)",
+      "plainText": "Aufgabentyp B: Ermittle den Wert von der Unbekannten x. (Brüche mit Unbekannte)\n$\\frac{8}{3+x} = 2$\nLösung: $x=1$",
+      "chapterName": "Bruchrechenregeln — S1 · B2"
+    },
+    {
+      "id": "woche-1/bruchrechenregeln-d2-a1",
+      "title": "Aufgabe A1 (Schwierigkeit 2)",
+      "plainText": "Aufgabentyp A: Berechne das Ergebnis der folgenden Terme. Kürze dabei soweit wie möglich. (Brüche ohne Unbekannte)\n$\\frac{ \\frac{1}{2} + \\frac{1}{3} }{ (\\frac{1}{2} - \\frac{1}{3}) - \\frac{1}{12}}$\nLösung: $10$",
+      "chapterName": "Bruchrechenregeln — S2 · A1"
+    },
+    {
+      "id": "woche-1/bruchrechenregeln-d2-a2",
+      "title": "Aufgabe A2 (Schwierigkeit 2)",
+      "plainText": "Aufgabentyp A: Berechne das Ergebnis der folgenden Terme. Kürze dabei soweit wie möglich. (Brüche ohne Unbekannte)\n$\\frac{3/7}{2/3 + 1/4} \\cdot \\frac{7/10}{4/3-2/5}$\nLösung: $\\frac{27}{77}$",
+      "chapterName": "Bruchrechenregeln — S2 · A2"
+    },
+    {
+      "id": "woche-1/bruchrechenregeln-d2-b1",
+      "title": "Aufgabe B1 (Schwierigkeit 2)",
+      "plainText": "Aufgabentyp B: Ermittle den Wert von der Unbekannten x. (Brüche mit Unbekannte)\n$\\frac{1}{x+2} + \\frac{1}{x} = 0$\nLösung: $x=-1$",
+      "chapterName": "Bruchrechenregeln — S2 · B1"
+    },
+    {
+      "id": "woche-1/bruchrechenregeln-d2-b2",
+      "title": "Aufgabe B2 (Schwierigkeit 2)",
+      "plainText": "Aufgabentyp B: Ermittle den Wert von der Unbekannten x. (Brüche mit Unbekannte)\n$\\frac{3}{x+1} = \\frac{-5}{2x-1}$\nLösung: $x=-\\frac{2}{11} \\approx -0.1818$",
+      "chapterName": "Bruchrechenregeln — S2 · B2"
+    },
+    {
+      "id": "woche-1/bruchrechenregeln-d2-b3",
+      "title": "Aufgabe B3 (Schwierigkeit 2)",
+      "plainText": "Aufgabentyp B: Ermittle den Wert von der Unbekannten x. (Brüche mit Unbekannte)\n$\\frac{x}{21} - 1 = (\\frac{18}{9} + \\frac{8}{2}) \\cdot 6$\nLösung: $x=777$",
+      "chapterName": "Bruchrechenregeln — S2 · B3"
+    },
+    {
+      "id": "woche-1/bruchrechenregeln-d3-b1",
+      "title": "Aufgabe B1 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp B: Ermittle den Wert von der Unbekannten x. (Brüche mit Unbekannte)\n$\\frac{1}{x+2} + \\frac{1}{x} = 1$\nLösung: $x=\\sqrt{2}$",
+      "chapterName": "Bruchrechenregeln — S3 · B1"
+    },
+    {
+      "id": "woche-1/bruchrechenregeln-d3-b2",
+      "title": "Aufgabe B2 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp B: Ermittle den Wert von der Unbekannten x. (Brüche mit Unbekannte)\n$\\frac{1}{5} \\cdot x + 3 = x - 5$\nLösung: $x=10$",
+      "chapterName": "Bruchrechenregeln — S3 · B2"
+    },
+    {
+      "id": "woche-1/bruchrechenregeln-d4-c1",
+      "title": "Aufgabe C1 (Schwierigkeit 4)",
+      "plainText": "Aufgabentyp C: Löse die folgenden Textaufgaben\nIch mache eine Pizzaparty und habe 6 Pizzen. Wenn ich selbst eine drei-viertel-Pizza esse und ansonsten allen Gästen von jeder Pizza gleich viel gebe, dann hat jeder Gast genau eine Pizza mehr gegessen als ich. Wie viele Gäste habe ich?\nLösung: Ich habe drei Gäste.",
+      "chapterName": "Bruchrechenregeln — S4 · C1"
+    },
+    {
+      "id": "woche-1/bruchrechenregeln-d4-c2",
+      "title": "Aufgabe C2 (Schwierigkeit 4)",
+      "plainText": "Aufgabentyp C: Löse die folgenden Textaufgaben\nAuf meiner Käsepackung steht bei der Nährwertetabelle, dass 100g des Produkts 30g Fett enthalten. Außerdem steht auf der Packung, dass der Käse \"40% Fett i.Tr.\" enthält, also nach entzug allen Wassers der Fettgehalt bei 40% ist. Wie viel Prozent des Produkts sind Wasser?\nLösung: 25%",
+      "chapterName": "Bruchrechenregeln — S4 · C2"
+    }
+  ]
+}

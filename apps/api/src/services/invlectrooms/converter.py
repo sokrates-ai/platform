@@ -634,6 +634,7 @@ def guess_chapter_name(value: str) -> str:
 def build_activity_content(
     problem: InvlectRoomsProblemPayload,
     source_url: str,
+    source_type: str = "invlectrooms",
 ) -> Dict[str, Any]:
     nodes: List[Dict[str, Any]] = []
     status_text = _normalize_text(problem.status or "")
@@ -672,11 +673,12 @@ def build_activity_content(
         )
 
     metadata: Dict[str, Any] = {
-        "provider": "invlectrooms",
-        "url": source_url,
+        "provider": source_type,
         "problem_id": problem.id,
         "status": problem.status,
     }
+    if source_url:
+        metadata["url"] = source_url
     if problem.image:
         metadata["image"] = problem.image
     if problem.plain_text:
@@ -1264,11 +1266,13 @@ async def convert_invlectrooms_payload_to_course(
     current_user: PublicUser | AnonymousUser,
     db_session: Session,
 ) -> InvlectRoomsApplyResponse:
-    base_name = payload.chapter_name or guess_chapter_name(str(payload.url))
+    source_url = str(payload.url) if payload.url else ""
+    base_name = payload.chapter_name or (
+        guess_chapter_name(source_url) if source_url else ""
+    )
     chapters: List[ChapterRead] = []
     activities: List[ActivityRead] = []
-    source_url = str(payload.url)
-    source_host = urlsplit(source_url).hostname
+    source_host = urlsplit(source_url).hostname if source_url else None
     chapter_contexts: List[ChapterContext] = []
     image_only_problems: List[InvlectRoomsProblemPayload] = []
     map_sequence: List[MapSequenceItem] = []
@@ -1317,7 +1321,7 @@ async def convert_invlectrooms_payload_to_course(
             request, chapter_request, current_user, db_session
         )
 
-        content = build_activity_content(problem, source_url)
+        content = build_activity_content(problem, source_url, payload.source_type)
 
         activity_request = ActivityCreate(
             chapter_id=chapter.id,

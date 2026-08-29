@@ -1,0 +1,162 @@
+{
+  "version": 1,
+  "problems": [
+    {
+      "id": "woche-2/ableiten-d1-a1",
+      "title": "Aufgabe A1 (Schwierigkeit 1)",
+      "plainText": "Aufgabentyp A: Berechne die Ableitung der gegebenen Funktion.\n$ f\\colon \\realnum \\rightarrow \\realnum, x \\mapsto 2x^2 + 4x^3+x-3$\nLösung: $ \\forall x \\in \\realnum: f'(x) = 4x + 12x^2 + 1 $",
+      "chapterName": "Ableitungsregeln — S1 · A1"
+    },
+    {
+      "id": "woche-2/ableiten-d1-a2",
+      "title": "Aufgabe A2 (Schwierigkeit 1)",
+      "plainText": "Aufgabentyp A: Berechne die Ableitung der gegebenen Funktion.\n$ f\\colon \\realnum \\rightarrow \\realnum, x \\mapsto 2\\sqrt{x}$\nLösung: $ \\forall x \\in \\realnum: f'(x) = 1/\\sqrt{x} $",
+      "chapterName": "Ableitungsregeln — S1 · A2"
+    },
+    {
+      "id": "woche-2/ableiten-d1-b1",
+      "title": "Aufgabe B1 (Schwierigkeit 1)",
+      "plainText": "Aufgabentyp B: Bestimme alle Extremstellen der gegebenen Funktion.\n$ f\\colon \\realnum \\rightarrow \\realnum, x \\mapsto 2x+3$\nLösung: keine Extremstellen",
+      "chapterName": "Ableitungsregeln — S1 · B1"
+    },
+    {
+      "id": "woche-2/ableiten-d1-b2",
+      "title": "Aufgabe B2 (Schwierigkeit 1)",
+      "plainText": "Aufgabentyp B: Bestimme alle Extremstellen der gegebenen Funktion.\n$ f\\colon \\realnum \\rightarrow \\realnum, x \\mapsto x^2+1$\nLösung: $ x=0 $ mit Wert $f(x) = 1$",
+      "chapterName": "Ableitungsregeln — S1 · B2"
+    },
+    {
+      "id": "woche-2/ableiten-d2-a1",
+      "title": "Aufgabe A1 (Schwierigkeit 2)",
+      "plainText": "Aufgabentyp A: Berechne die Ableitung der gegebenen Funktion.\n$ f\\colon \\realnum \\rightarrow \\realnum, y \\mapsto 2y^2+3$\nLösung: $ \\forall x \\in \\realnum: f'(x) = 4x $",
+      "chapterName": "Ableitungsregeln — S2 · A1"
+    },
+    {
+      "id": "woche-2/ableiten-d2-a2",
+      "title": "Aufgabe A2 (Schwierigkeit 2)",
+      "plainText": "Aufgabentyp A: Berechne die Ableitung der gegebenen Funktion.\n$ f\\colon \\realnum \\rightarrow \\realnum, x \\mapsto \\sqrt[3]{x}+1$\nLösung: $ \\forall x \\in \\realnum: f'(x) = x^{-2/3}/3 $",
+      "chapterName": "Ableitungsregeln — S2 · A2"
+    },
+    {
+      "id": "woche-2/ableiten-d2-b1",
+      "title": "Aufgabe B1 (Schwierigkeit 2)",
+      "plainText": "Aufgabentyp B: Bestimme alle Extremstellen der gegebenen Funktion.\n$ f\\colon \\realnum \\rightarrow \\realnum, x \\mapsto e^x+e^{-x}$\nLösung: $ x=0 $ mit Wert $f(x) = 2$",
+      "chapterName": "Ableitungsregeln — S2 · B1"
+    },
+    {
+      "id": "woche-2/ableiten-d2-b2",
+      "title": "Aufgabe B2 (Schwierigkeit 2)",
+      "plainText": "Aufgabentyp B: Bestimme alle Extremstellen der gegebenen Funktion.\n$ f\\colon \\realnum \\rightarrow \\realnum, x \\mapsto -2x^3 - 12 x^2 + 30 x + 12$\nLösung: $ -5 $ und $ 1 $",
+      "chapterName": "Ableitungsregeln — S2 · B2"
+    },
+    {
+      "id": "woche-2/ableiten-d3-a1",
+      "title": "Aufgabe A1 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp A: Berechne die Ableitung der gegebenen Funktion.\n$ f\\colon \\realnum \\rightarrow \\realnum, y \\mapsto e^{\\sqrt{2x+3}}$\nLösung: $ \\forall x \\in \\realnum: f'(x) = 4x $",
+      "chapterName": "Ableitungsregeln — S3 · A1"
+    },
+    {
+      "id": "woche-2/ableiten-d3-a2",
+      "title": "Aufgabe A2 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp A: Berechne die Ableitung der gegebenen Funktion.\n$ f\\colon \\realnum \\rightarrow \\realnum, x \\mapsto \\ln(1+x^2)$\nLösung: $ \\forall x \\in \\realnum: f'(x) = x^{-2/3}/3 $",
+      "chapterName": "Ableitungsregeln — S3 · A2"
+    },
+    {
+      "id": "woche-2/ableiten-d3-b1",
+      "title": "Aufgabe B1 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp B: Bestimme alle Extremstellen der gegebenen Funktion.\n$ f\\colon \\realnum \\rightarrow \\realnum, x \\mapsto \\frac{2 x}{1 + x^2}$\nLösung: Maximum bei $ x=1 $ mit Wert $f(x) = 1$, Minimum bei $ x=-1$ mit Wert $-1$",
+      "chapterName": "Ableitungsregeln — S3 · B1"
+    },
+    {
+      "id": "woche-2/ableiten-d3-b2",
+      "title": "Aufgabe B2 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp B: Bestimme alle Extremstellen der gegebenen Funktion.\n$ f\\colon \\realnum \\rightarrow \\realnum, x \\mapsto e^x-1-x$\nLösung: Minimum bei $ x=0 $ mit Wert $f(x) = 0$",
+      "chapterName": "Ableitungsregeln — S3 · B2"
+    },
+    {
+      "id": "woche-2/ableiten-d3-c1",
+      "title": "Aufgabe C1 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp C: Berechne den gegebenen Term.\n$\\frac{d}{dx} x^2 \\cdot y$;\nLösung: $2xy$",
+      "chapterName": "Ableitungsregeln — S3 · C1"
+    },
+    {
+      "id": "woche-2/ableiten-d3-c2",
+      "title": "Aufgabe C2 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp C: Berechne den gegebenen Term.\n$\\frac{d}{dy} x^2 \\cdot y$;\nLösung: $x^2$",
+      "chapterName": "Ableitungsregeln — S3 · C2"
+    },
+    {
+      "id": "woche-2/ableiten-d3-c3",
+      "title": "Aufgabe C3 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp C: Berechne den gegebenen Term.\n$\\frac{d}{dz} x^2 \\cdot y$;\nLösung: $0$",
+      "chapterName": "Ableitungsregeln — S3 · C3"
+    },
+    {
+      "id": "woche-2/ableiten-d3-c4",
+      "title": "Aufgabe C4 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp C: Berechne den gegebenen Term.\n$\\frac{d}{dx} \\exp(y) + x^2+y$.\nLösung: $2x$",
+      "chapterName": "Ableitungsregeln — S3 · C4"
+    },
+    {
+      "id": "woche-2/ableiten-d3-c5",
+      "title": "Aufgabe C5 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp C: Berechne den gegebenen Term.\n$\\frac{d}{d\\sigma} x\\cdot e^{\\sigma^2}$\nLösung: $2 \\sigma x e^{\\sigma^2}$",
+      "chapterName": "Ableitungsregeln — S3 · C5"
+    },
+    {
+      "id": "woche-2/ableiten-d3-c6",
+      "title": "Aufgabe C6 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp C: Berechne den gegebenen Term.\n$\\frac{d}{da} abc$\nLösung: $bc$",
+      "chapterName": "Ableitungsregeln — S3 · C6"
+    },
+    {
+      "id": "woche-2/ableiten-d4-b1",
+      "title": "Aufgabe B1 (Schwierigkeit 4)",
+      "plainText": "Aufgabentyp B: Bestimme alle Extremstellen der gegebenen Funktion.\nZeige, dass für alle $y \\in \\realnum$ gilt, dass $\\frac{2 y}{1 + y^2}$ ein Wert in $[-1,1]$ ist.\nLösung: Lokale Extremstellen wurden bereits in 3B1 berechnet; Konvergenz bei y nach $\\infty$ und $-\\infty$ ODER Monotonie durch Ableiten zeigt die Aussage",
+      "chapterName": "Ableitungsregeln — S4 · B1"
+    },
+    {
+      "id": "woche-2/ableiten-d4-b2",
+      "title": "Aufgabe B2 (Schwierigkeit 4)",
+      "plainText": "Aufgabentyp B: Bestimme alle Extremstellen der gegebenen Funktion.\nDu möchtest in einer Gensequenz mit $n$ Basenpaaren genau ein konkretes Verändern, um eine Krankheit zu heilen; alle anderen sollen intakt bleiben. Dies kannst du jetzt erreichen, indem du die Zellen bestrahlst; durch geschicktes Dosieren der Strahlung kannst du jeden beliebigen Parameter $p$ erzielen, welcher die Wahrscheinlichkeit angibt, mit der unabhängig jedes der Basenpaare verändert wird.\nSollte nicht genau nur das eine Zielbasenpaar verändert werden, repariert der Körper die Veränderung und alles bleibt beim Alten. Sollte genau das eine Zielbasenpaar verändert werden, ist die Krankheit geheilt. Wie sollte $p$ eingestellt werden, um die Chance auf Heilung zu maximieren?",
+      "chapterName": "Ableitungsregeln — S4 · B2"
+    },
+    {
+      "id": "woche-2/ableiten-d4-c1",
+      "title": "Aufgabe C1 (Schwierigkeit 4)",
+      "plainText": "Aufgabentyp C: Berechne den gegebenen Term.\n$\\frac{d}{dx} \\frac{d}{dy} \\exp(y) + x^2 + yx$.\nLösung: $1$",
+      "chapterName": "Ableitungsregeln — S4 · C1"
+    },
+    {
+      "id": "woche-2/ableiten-d4-c2",
+      "title": "Aufgabe C2 (Schwierigkeit 4)",
+      "plainText": "Aufgabentyp C: Berechne den gegebenen Term.\n$\\frac{d}{d\\sigma} \\frac{d}{d\\sigma} x\\cdot e^{\\sigma^2}$\nLösung: $4 \\sigma^2 x e^{\\sigma^2} + 2xe^{\\sigma^2}$",
+      "chapterName": "Ableitungsregeln — S4 · C2"
+    },
+    {
+      "id": "woche-2/ableiten-d4-c3",
+      "title": "Aufgabe C3 (Schwierigkeit 4)",
+      "plainText": "Aufgabentyp C: Berechne den gegebenen Term.\n$\\frac{d}{db} \\left( \\frac{d}{da} abc \\right)$\nLösung: $c$",
+      "chapterName": "Ableitungsregeln — S4 · C3"
+    },
+    {
+      "id": "woche-2/ableiten-d4-c4",
+      "title": "Aufgabe C4 (Schwierigkeit 4)",
+      "plainText": "Aufgabentyp C: Berechne den gegebenen Term.\n$\\frac{d}{dx_1} \\prod_{i=1}^n x_i$\nLösung: $\\frac{d}{dx_1} \\prod_{i=2}^n x_i$",
+      "chapterName": "Ableitungsregeln — S4 · C4"
+    },
+    {
+      "id": "woche-2/ableiten-d4-c5",
+      "title": "Aufgabe C5 (Schwierigkeit 4)",
+      "plainText": "Aufgabentyp C: Berechne den gegebenen Term.\n$\\frac{d}{dx_1} \\sum_{i=1}^n (n-i) \\cdot x_i$\nLösung: $n-1$",
+      "chapterName": "Ableitungsregeln — S4 · C5"
+    },
+    {
+      "id": "woche-2/ableiten-d5-a1",
+      "title": "Aufgabe A1 (Schwierigkeit 5)",
+      "status": "DRAFT",
+      "plainText": "Aufgabentyp A: Berechne die Ableitung der gegebenen Funktion.\nAufgabe und Lösung sind in der Markdown-Quelle noch nicht ausgefüllt.",
+      "chapterName": "Ableitungsregeln — S5 · A1"
+    }
+  ]
+}

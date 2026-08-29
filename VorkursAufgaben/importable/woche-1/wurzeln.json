@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "problems": [
+    {
+      "id": "woche-1/wurzeln-d1-a1",
+      "title": "Aufgabe A1 (Schwierigkeit 1)",
+      "plainText": "Aufgabentyp A: Berechne das Ergbenis des folgenden Terms. - ohne Notwendigkeit von Potenzgesetzten\n$ \\sqrt[2]{\\left(\\frac{1}{2}\\right)^2}$\nLösung: $\\frac{1}{2} = 0.5$",
+      "chapterName": "Wurzeln — S1 · A1"
+    },
+    {
+      "id": "woche-1/wurzeln-d1-a2",
+      "title": "Aufgabe A2 (Schwierigkeit 1)",
+      "plainText": "Aufgabentyp A: Berechne das Ergbenis des folgenden Terms. - ohne Notwendigkeit von Potenzgesetzten\n$ \\sqrt{0,81}$\nLösung: $0,9$",
+      "chapterName": "Wurzeln — S1 · A2"
+    },
+    {
+      "id": "woche-1/wurzeln-d1-b1",
+      "title": "Aufgabe B1 (Schwierigkeit 1)",
+      "plainText": "Aufgabentyp B: Bestimme den Wert der folgenden Unbekannten. - ohne Notwendigkeit von Potenzgesetzten\n$\\sqrt{x} = 4 $\nLösung: $x=16$",
+      "chapterName": "Wurzeln — S1 · B1"
+    },
+    {
+      "id": "woche-1/wurzeln-d1-b2",
+      "title": "Aufgabe B2 (Schwierigkeit 1)",
+      "plainText": "Aufgabentyp B: Bestimme den Wert der folgenden Unbekannten. - ohne Notwendigkeit von Potenzgesetzten\n$x^2 = 256 $\nLösung: $x=16$",
+      "chapterName": "Wurzeln — S1 · B2"
+    },
+    {
+      "id": "woche-1/wurzeln-d1-c1",
+      "title": "Aufgabe C1 (Schwierigkeit 1)",
+      "plainText": "Aufgabentyp C: Vereinfache den gegebenen Term. - mit Notwendigkeit von Potenzgesetzten\n$ \\sqrt[3]{x^6} $\nLösung: $ x^2 $",
+      "chapterName": "Wurzeln — S1 · C1"
+    },
+    {
+      "id": "woche-1/wurzeln-d2-a1",
+      "title": "Aufgabe A1 (Schwierigkeit 2)",
+      "plainText": "Aufgabentyp A: Berechne das Ergbenis des folgenden Terms. - ohne Notwendigkeit von Potenzgesetzten\n$ \\sqrt[4]{16}$\nLösung: $2$",
+      "chapterName": "Wurzeln — S2 · A1"
+    },
+    {
+      "id": "woche-1/wurzeln-d2-a2",
+      "title": "Aufgabe A2 (Schwierigkeit 2)",
+      "plainText": "Aufgabentyp A: Berechne das Ergbenis des folgenden Terms. - ohne Notwendigkeit von Potenzgesetzten\n$ \\sqrt{6,25}$\nLösung: $2,5 = \\frac{5}{2}$",
+      "chapterName": "Wurzeln — S2 · A2"
+    },
+    {
+      "id": "woche-1/wurzeln-d2-a3",
+      "title": "Aufgabe A3 (Schwierigkeit 2)",
+      "plainText": "Aufgabentyp A: Berechne das Ergbenis des folgenden Terms. - ohne Notwendigkeit von Potenzgesetzten\n$ \\sqrt{\\frac{1}{4}}$\nLösung: $\\frac{1}{2} = 0.5$",
+      "chapterName": "Wurzeln — S2 · A3"
+    },
+    {
+      "id": "woche-1/wurzeln-d2-b1",
+      "title": "Aufgabe B1 (Schwierigkeit 2)",
+      "plainText": "Aufgabentyp B: Bestimme den Wert der folgenden Unbekannten. - ohne Notwendigkeit von Potenzgesetzten\n$\\sqrt{x+3} = 3 $\nLösung: $x=6$",
+      "chapterName": "Wurzeln — S2 · B1"
+    },
+    {
+      "id": "woche-1/wurzeln-d2-b2",
+      "title": "Aufgabe B2 (Schwierigkeit 2)",
+      "plainText": "Aufgabentyp B: Bestimme den Wert der folgenden Unbekannten. - ohne Notwendigkeit von Potenzgesetzten\n$\\sqrt{x+3} = \\sqrt{2x-1}x$\nLösung: $x=4$",
+      "chapterName": "Wurzeln — S2 · B2"
+    },
+    {
+      "id": "woche-1/wurzeln-d2-c1",
+      "title": "Aufgabe C1 (Schwierigkeit 2)",
+      "plainText": "Aufgabentyp C: Vereinfache den gegebenen Term. - mit Notwendigkeit von Potenzgesetzten\n$ \\sqrt[2]{x^3 \\cdot y^4} $\nLösung: $ x \\cdot \\sqrt[2]{x} \\cdot y^2 $",
+      "chapterName": "Wurzeln — S2 · C1"
+    },
+    {
+      "id": "woche-1/wurzeln-d3-a1",
+      "title": "Aufgabe A1 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp A: Berechne das Ergbenis des folgenden Terms. - ohne Notwendigkeit von Potenzgesetzten\n$ \\sqrt{\\frac{6}{5} - \\sqrt{1,44}}$\nLösung: $0$",
+      "chapterName": "Wurzeln — S3 · A1"
+    },
+    {
+      "id": "woche-1/wurzeln-d3-a3",
+      "title": "Aufgabe A3 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp A: Berechne das Ergbenis des folgenden Terms. - ohne Notwendigkeit von Potenzgesetzten\n$ \\frac{1}{\\sqrt{\\frac{1}{144}}}$\nLösung: $12$",
+      "chapterName": "Wurzeln — S3 · A3"
+    },
+    {
+      "id": "woche-1/wurzeln-d3-b1",
+      "title": "Aufgabe B1 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp B: Bestimme den Wert der folgenden Unbekannten. - ohne Notwendigkeit von Potenzgesetzten\n$(x-3)^2 = 25 $\nLösung: $x=8$",
+      "chapterName": "Wurzeln — S3 · B1"
+    },
+    {
+      "id": "woche-1/wurzeln-d3-b2",
+      "title": "Aufgabe B2 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp B: Bestimme den Wert der folgenden Unbekannten. - ohne Notwendigkeit von Potenzgesetzten\n$\\sqrt{x+3} = \\sqrt{2x-1}$\nLösung: $x=4$",
+      "chapterName": "Wurzeln — S3 · B2"
+    },
+    {
+      "id": "woche-1/wurzeln-d3-c1",
+      "title": "Aufgabe C1 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp C: Vereinfache den gegebenen Term. - mit Notwendigkeit von Potenzgesetzten\n$ \\sqrt[5]{x^{10} \\cdot 32} $\nLösung: $ x^2 \\cdot 2 $",
+      "chapterName": "Wurzeln — S3 · C1"
+    },
+    {
+      "id": "woche-1/wurzeln-d3-c2",
+      "title": "Aufgabe C2 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp C: Vereinfache den gegebenen Term. - mit Notwendigkeit von Potenzgesetzten\n$\\sqrt{\\frac{\\sqrt{\\sqrt[3]{11}}}{\\sqrt[3]{\\sqrt{11}}}}$\nLösung: $1$",
+      "chapterName": "Wurzeln — S3 · C2"
+    },
+    {
+      "id": "woche-1/wurzeln-d3-c3",
+      "title": "Aufgabe C3 (Schwierigkeit 3)",
+      "plainText": "Aufgabentyp C: Vereinfache den gegebenen Term. - mit Notwendigkeit von Potenzgesetzten\n$\\left(\\sqrt{\\sqrt{\\sqrt{\\sqrt{2}}}}\\right) ^{48}$\nLösung: $8$",
+      "chapterName": "Wurzeln — S3 · C3"
+    }
+  ]
+}

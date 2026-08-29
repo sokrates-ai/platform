@@ -24,21 +24,6 @@ extend({ Viewport, Graphics })
 
 const snapValueToGrid = (value: number, gridSize: number) => Math.round(value / gridSize) * gridSize
 
-function useZoomLevel() {
-  const [zoom, setZoom] = useState(window.devicePixelRatio)
-
-  useEffect(() => {
-    const handleResize = () => {
-      setZoom(window.devicePixelRatio)
-    }
-
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-
-  return zoom
-}
-
 interface CanvasViewportProps {
   placedAssets: AssetData[]
   selectedIds: number[]
@@ -76,6 +61,59 @@ const DEFAULT_BOUNDARIES = {
   bottom: 1000,
 }
 
+const constrainViewportToBounds = (
+  viewport: Viewport,
+  left: number,
+  right: number,
+  top: number,
+  bottom: number,
+) => {
+  const scaleX = viewport.scale.x
+  const scaleY = viewport.scale.y
+  const visibleWidth = viewport.screenWidth / scaleX
+  const visibleHeight = viewport.screenHeight / scaleY
+  const worldWidth = right - left
+  const worldHeight = bottom - top
+  let constrainedX = false
+  let constrainedY = false
+
+  if (visibleWidth >= worldWidth) {
+    const centeredX =
+      viewport.screenWidth / 2 - ((left + right) / 2) * scaleX
+    if (viewport.x !== centeredX) {
+      viewport.x = centeredX
+      constrainedX = true
+    }
+  } else if (viewport.left < left) {
+    viewport.x = -left * scaleX
+    constrainedX = true
+  } else if (viewport.right > right) {
+    viewport.x = viewport.screenWidth - right * scaleX
+    constrainedX = true
+  }
+
+  if (visibleHeight >= worldHeight) {
+    const centeredY =
+      viewport.screenHeight / 2 - ((top + bottom) / 2) * scaleY
+    if (viewport.y !== centeredY) {
+      viewport.y = centeredY
+      constrainedY = true
+    }
+  } else if (viewport.top < top) {
+    viewport.y = -top * scaleY
+    constrainedY = true
+  } else if (viewport.bottom > bottom) {
+    viewport.y = viewport.screenHeight - bottom * scaleY
+    constrainedY = true
+  }
+
+  const decelerate = viewport.plugins.get('decelerate') as
+    | { x?: number; y?: number }
+    | undefined
+  if (constrainedX && decelerate) decelerate.x = 0
+  if (constrainedY && decelerate) decelerate.y = 0
+}
+
 const CanvasViewport: React.FC<CanvasViewportProps> = memo(
   ({
     placedAssets,
@@ -99,14 +137,14 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
   }) => {
 
     const { app } = useApplication()
+    const appCanvas = app?.renderer?.canvas as HTMLCanvasElement | undefined
 
     const { left, right, top, bottom } = boundaries || DEFAULT_BOUNDARIES
 
     const worldWidth = Math.abs(right - left)
     const worldHeight = Math.abs(bottom - top)
 
-  const [viewport, setViewport] = useState<Viewport | null>(null)
-  const zoom = useZoomLevel()
+    const [viewport, setViewport] = useState<Viewport | null>(null)
 
     const gridSize =
       effectiveGridSize || MINOR_GRID_SIZE * (11 - gridGranularity)
@@ -138,10 +176,15 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
         if (!node) return
 
         const isNewViewport = node !== viewport
+        const containerRect = appCanvas?.parentElement?.getBoundingClientRect()
+        const screenWidth =
+          containerRect?.width || appCanvas?.clientWidth || window.innerWidth
+        const screenHeight =
+          containerRect?.height || appCanvas?.clientHeight || window.innerHeight
 
         node.resize(
-          app.renderer.width,
-          app.renderer.height,
+          screenWidth,
+          screenHeight,
           worldWidth,
           worldHeight,
         )
@@ -151,7 +194,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
             .drag({ clampWheel: true, mouseButtons: 'left' })
             .decelerate({ friction: 0.9, bounce: 0, minSpeed: 0.02 })
             .pinch()
-            .wheel({ percent: 0.15 })
+            .wheel({ percent: 0.1, smooth: 6 })
 
           if (readOnly) {
             if (minZoom || maxZoom) {
@@ -163,23 +206,24 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
               )
               const safeMax = Math.max(resolvedMin, resolvedMax)
               node.clampZoom({
-                minWidth: app.renderer.width / safeMax,
-                maxWidth: app.renderer.width / safeMin,
+                minScale: safeMin,
+                maxScale: safeMax,
               })
             } else {
               node.clampZoom({
-                minWidth: app.renderer.width * 0.75,
-                maxWidth: app.renderer.width * 1,
+                minWidth: screenWidth * 0.75,
+                maxWidth: screenWidth,
               })
             }
           } else {
             node.clampZoom({
-              minWidth: app.renderer.width * 0.2,
-              maxWidth: app.renderer.width * 3,
+              minWidth: screenWidth * 0.2,
+              maxWidth: screenWidth * 3,
             })
           }
 
           node.fit()
+          node.moveCenter((left + right) / 2, (top + bottom) / 2)
 
 
           // const zoomBlurFilter = new ZoomBlurFilter({ strength: 0.25, radius: app.renderer.width*1.25, innerRadius: app.renderer.width * 0.55})
@@ -190,17 +234,13 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
           // expose to parent
           setViewport(node)
           onViewportReady?.(node)
-          node.moveCenter(-60000, -60000)
         }
 
         if (readOnly) {
-          node.clamp({
-            left: left,
-            right: right,
-            top: top,
-            bottom: bottom,
-            underflow: 'none',
-          })
+          if (node.plugins.get('clamp')) {
+            node.plugins.remove('clamp')
+          }
+          constrainViewportToBounds(node, left, right, top, bottom)
         } else if (clampToMap) {
           const padding = Math.min(worldWidth, worldHeight) * 0.1
           node.clamp({
@@ -218,7 +258,7 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
       },
       [
         viewport,
-        app?.renderer,
+        appCanvas,
         worldWidth,
         worldHeight,
         left,
@@ -236,50 +276,66 @@ const CanvasViewport: React.FC<CanvasViewportProps> = memo(
     useEffect(() => {
       if (!viewport || !readOnly) return
 
-      const updateClamp = () => {
-        const screenWorldWidth = viewport.worldScreenWidth
-        const screenWorldHeight = viewport.worldScreenHeight
-        const extraX = Math.max(0, (screenWorldWidth - worldWidth) / 2)
-        const extraY = Math.max(0, (screenWorldHeight - worldHeight) / 2)
-        const padding = Math.min(worldWidth, worldHeight) * 0.05
+      const constrainViewport = () => {
+        constrainViewportToBounds(viewport, left, right, top, bottom)
+      }
 
-        viewport.clamp({
-          left: left - extraX - padding,
-          right: right + extraX + padding,
-          top: top - extraY - padding,
-          bottom: bottom + extraY + padding,
-          underflow: 'none',
+      constrainViewport()
+      viewport.on('moved', constrainViewport)
+      viewport.on('zoomed', constrainViewport)
+      viewport.on('zoomed-end', constrainViewport)
+
+      return () => {
+        viewport.off('moved', constrainViewport)
+        viewport.off('zoomed', constrainViewport)
+        viewport.off('zoomed-end', constrainViewport)
+      }
+    }, [viewport, readOnly, left, right, top, bottom])
+
+    useEffect(() => {
+      if (!viewport) return
+
+      if (!appCanvas) return
+      const container = appCanvas.parentElement
+      if (!container) return
+
+      let resizeFrame: number | null = null
+      const resizeViewport = () => {
+        if (resizeFrame !== null) {
+          cancelAnimationFrame(resizeFrame)
+        }
+        resizeFrame = requestAnimationFrame(() => {
+          resizeFrame = null
+          const rect = container.getBoundingClientRect()
+          if (rect.width <= 0 || rect.height <= 0) return
+          viewport.resize(rect.width, rect.height, worldWidth, worldHeight)
+          if (readOnly) {
+            constrainViewportToBounds(viewport, left, right, top, bottom)
+          }
         })
       }
 
-      updateClamp()
-      viewport.on('zoomed', updateClamp)
-      viewport.on('zoomed-end', updateClamp)
+      const observer = new ResizeObserver(resizeViewport)
+      observer.observe(container)
+      resizeViewport()
 
       return () => {
-        viewport.off('zoomed', updateClamp)
-        viewport.off('zoomed-end', updateClamp)
+        observer.disconnect()
+        if (resizeFrame !== null) {
+          cancelAnimationFrame(resizeFrame)
+        }
       }
-    }, [viewport, readOnly, left, right, top, bottom, worldWidth, worldHeight])
-
-    useEffect(() => {
-      if (!viewport || !readOnly) return
-
-      const updateDragFactor = () => {
-        const drag = viewport.plugins.get('drag') as { options?: { factor?: number } } | undefined
-        if (!drag?.options) return
-        drag.options.factor = Math.max(0.05, Math.min(1, viewport.scale.x))
-      }
-
-      updateDragFactor()
-      viewport.on('zoomed', updateDragFactor)
-      viewport.on('zoomed-end', updateDragFactor)
-
-      return () => {
-        viewport.off('zoomed', updateDragFactor)
-        viewport.off('zoomed-end', updateDragFactor)
-      }
-    }, [viewport, readOnly])
+    }, [
+      appCanvas,
+      viewport,
+      worldWidth,
+      worldHeight,
+      readOnly,
+      left,
+      right,
+      top,
+      bottom,
+    ])
 
     /* ↑ both handlers now come straight from the hook */
 

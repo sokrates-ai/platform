@@ -12,8 +12,10 @@ export interface InvlectRoomsProblem {
   title?: string;
   status?: string;
   body?: string;
+  plainText?: string;
   img?: string | InvlectRoomsProblemImage;
   checkpointLevel?: string;
+  chapterName?: string;
   [key: string]: unknown;
 }
 
@@ -55,7 +57,8 @@ export interface InvlectRoomsProblemPayload {
 }
 
 export interface InvlectRoomsApplyPayload {
-  url: string;
+  source_type?: 'invlectrooms' | 'json';
+  url?: string;
   course_uuid: string;
   tab_uuid?: string;
   chapter_name?: string;

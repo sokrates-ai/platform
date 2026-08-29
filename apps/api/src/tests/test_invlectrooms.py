@@ -372,6 +372,71 @@ def test_apply_invlectrooms_creates_activities(
         client.app.dependency_overrides.pop(get_current_user, None)
 
 
+def test_apply_json_import_without_source_url(
+    client: TestClient,
+    session: Session,
+):
+    course, tab_uuid, public_user = _prepare_course_with_author(session)
+
+    async def override_current_user():
+        return public_user
+
+    client.app.dependency_overrides[get_current_user] = override_current_user
+
+    try:
+        response = client.post(
+            "/api/v1/invlectrooms/apply",
+            json={
+                "source_type": "json",
+                "course_uuid": course.course_uuid,
+                "tab_uuid": tab_uuid,
+                "problems": [
+                    {
+                        "id": "json-problem-1",
+                        "title": "JSON problem",
+                        "plain_text": "Imported from a local JSON document.",
+                        "chapter_name": "JSON chapter",
+                    }
+                ],
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert [chapter["name"] for chapter in data["chapters"]] == [
+            "JSON chapter"
+        ]
+        assert len(data["activities"]) == 1
+        source = data["activities"][0]["content"]["meta"]["source"]
+        assert source["provider"] == "json"
+        assert "url" not in source
+
+        session.refresh(course)
+        tab_map = course.tab_store.get(tab_uuid)
+        assert isinstance(tab_map, dict)
+        chapter_nodes = [
+            obj
+            for obj in tab_map.get("objects", [])
+            if isinstance(obj, dict)
+            and (obj.get("type") or {}).get("kind") == "chapter"
+        ]
+        assert len(chapter_nodes) == 1
+    finally:
+        client.app.dependency_overrides.pop(get_current_user, None)
+
+
+def test_apply_invlectrooms_requires_source_url(client: TestClient):
+    response = client.post(
+        "/api/v1/invlectrooms/apply",
+        json={
+            "course_uuid": "course_missing",
+            "problems": [{"title": "Missing URL"}],
+        },
+    )
+
+    assert response.status_code == 422
+
+
 def test_apply_invlectrooms_skips_image_only_problem(
     client: TestClient,
     session: Session,

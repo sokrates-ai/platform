@@ -531,15 +531,25 @@ const CourseStartedView = ({
     }
 
     const clampPlugin = viewport.plugins.get('clamp-zoom', true) as
-      | { options?: { minWidth?: number | null; maxWidth?: number | null }; clamp?: () => void }
+      | {
+          options?: {
+            minWidth?: number | null
+            maxWidth?: number | null
+            minScale?: number | null
+            maxScale?: number | null
+          }
+          clamp?: () => void
+        }
       | undefined
 
     const applyClampRange = (minZoom: number, maxZoom: number) => {
       if (!clampPlugin?.options) return
       const safeMin = Math.max(0.01, Math.min(minZoom, maxZoom))
       const safeMax = Math.max(minZoom, maxZoom)
-      clampPlugin.options.minWidth = viewport.screenWidth / safeMax
-      clampPlugin.options.maxWidth = viewport.screenWidth / safeMin
+      clampPlugin.options.minWidth = null
+      clampPlugin.options.maxWidth = null
+      clampPlugin.options.minScale = safeMin
+      clampPlugin.options.maxScale = safeMax
       clampPlugin.clamp?.()
     }
 

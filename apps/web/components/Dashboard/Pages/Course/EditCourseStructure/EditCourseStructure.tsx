@@ -19,9 +19,11 @@ import {
 import {
   CheckCircle2,
   Download,
+  FileJson,
   Hexagon,
   Loader2,
   Trash2,
+  Upload,
   X,
 } from 'lucide-react'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
@@ -44,6 +46,7 @@ import { Button } from "@components/ui/button";
 import { Input } from '@components/ui/input';
 import { Card, CardContent } from '@components/ui/card';
 import { Badge } from '@components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { CourseTab, CourseTabSelector } from '@components/Objects/Modals/Course/Create/CourseTabSelector';
 import {
   applyInvlectRoomsImport,
@@ -51,6 +54,11 @@ import {
   InvlectRoomsApplyResponse,
   InvlectRoomsImportResponse,
 } from '@services/invlectrooms';
+import {
+  JSON_IMPORT_EXAMPLE,
+  JSON_IMPORT_MAX_FILE_BYTES,
+  parseJsonCourseImport,
+} from '@services/imports/jsonCourseImport';
 import toast from 'react-hot-toast';
 
 // -----------------------------------------------------------------------------
@@ -79,7 +87,19 @@ const MOCK_IMPORT_STEPS: Array<Omit<ImportStepState, 'status'>> = [
   { id: 'finalize', label: 'Finalizing import' },
 ];
 
+const JSON_IMPORT_STEPS: Array<Omit<ImportStepState, 'status'>> = [
+  { id: 'validate', label: 'Validating JSON syntax' },
+  { id: 'fetch', label: 'Reading JSON content' },
+  { id: 'parse', label: 'Parsing problems and checkpoints' },
+  { id: 'hydrate', label: 'Validating course semantics' },
+  { id: 'finalize', label: 'Preparing course preview' },
+];
+
 type ImportStepId = (typeof MOCK_IMPORT_STEPS)[number]['id'];
+type ImportSourceType = 'invlectrooms' | 'json';
+
+const getImportSteps = (sourceType: ImportSourceType) =>
+  sourceType === 'json' ? JSON_IMPORT_STEPS : MOCK_IMPORT_STEPS;
 
 const normalizeWhitespace = (value: string): string =>
   value.replace(/\s+/g, ' ').trim();
@@ -325,7 +345,11 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
   courseUuid,
   tabUuid,
 }) => {
+  const [sourceType, setSourceType] = useState<ImportSourceType>('invlectrooms');
   const [sourceUrl, setSourceUrl] = useState('');
+  const [jsonText, setJsonText] = useState('');
+  const [jsonFileName, setJsonFileName] = useState<string | null>(null);
+  const jsonFileInputRef = useRef<HTMLInputElement>(null);
   const [hasStarted, setHasStarted] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [hasCompleted, setHasCompleted] = useState(false);
@@ -352,7 +376,10 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
 
   useEffect(() => {
     if (!isOpen) {
+      setSourceType('invlectrooms');
       setSourceUrl('');
+      setJsonText('');
+      setJsonFileName(null);
       setHasStarted(false);
       setTouched(false);
       setIsRunning(false);
@@ -369,6 +396,11 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
     }
   }, [isOpen]);
 
+  const jsonParseResult = useMemo(
+    () => parseJsonCourseImport(jsonText),
+    [jsonText],
+  );
+
   const isValidUrl = useMemo(() => {
     if (!sourceUrl) {
       return false;
@@ -380,6 +412,48 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
       return false;
     }
   }, [sourceUrl]);
+
+  const activeSteps = useMemo(() => getImportSteps(sourceType), [sourceType]);
+  const isSourceValid =
+    sourceType === 'json' ? jsonParseResult.success : isValidUrl;
+
+  const resetImportOutcome = useCallback((nextSource: ImportSourceType) => {
+    setHasStarted(false);
+    setTouched(false);
+    setIsRunning(false);
+    setHasCompleted(false);
+    setErrorMessage(null);
+    setImportResult(null);
+    setChapterNames([]);
+    setImportSource('');
+    setApplyError(null);
+    setSteps(
+      getImportSteps(nextSource).map((step) => ({
+        ...step,
+        status: 'pending',
+      })),
+    );
+  }, []);
+
+  const handleSourceTypeChange = useCallback(
+    (value: string) => {
+      if (isRunning || isApplying) return;
+      const nextSource: ImportSourceType =
+        value === 'json' ? 'json' : 'invlectrooms';
+      setSourceType(nextSource);
+      resetImportOutcome(nextSource);
+    },
+    [isApplying, isRunning, resetImportOutcome],
+  );
+
+  const handleJsonTextChange = useCallback(
+    (value: string, fileName: string | null = null) => {
+      setJsonText(value);
+      setJsonFileName(fileName);
+      resetImportOutcome('json');
+    },
+    [resetImportOutcome],
+  );
 
   const statusLabel = useCallback((status: ImportStepStatus) => {
     switch (status) {
@@ -396,7 +470,7 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
 
   const startImport = useCallback(async () => {
     setTouched(true);
-    if (!isValidUrl || isRunning) {
+    if (!isSourceValid || isRunning) {
       return;
     }
     setErrorMessage(null);
@@ -405,9 +479,9 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
     setHasStarted(true);
     setHasCompleted(false);
     setIsRunning(true);
-    setSteps(MOCK_IMPORT_STEPS.map((step) => ({ ...step, status: 'pending' })));
+    setSteps(activeSteps.map((step) => ({ ...step, status: 'pending' })));
 
-    const stepSequence: ImportStepId[] = MOCK_IMPORT_STEPS.map((step) => step.id as ImportStepId);
+    const stepSequence: ImportStepId[] = activeSteps.map((step) => step.id as ImportStepId);
     let currentStep: ImportStepId = stepSequence[0];
 
     try {
@@ -417,7 +491,27 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
 
       currentStep = 'fetch';
       updateStep(currentStep, 'active');
-      const response = await fetchInvlectRoomsImport(sourceUrl, access_token);
+      let response: InvlectRoomsImportResponse;
+      if (sourceType === 'json' && jsonParseResult.success) {
+        const document = jsonParseResult.data;
+        response = {
+          url: document.sourceUrl ?? '',
+          refresh: {
+            problems: document.problems.map((problem) => ({
+              id: problem.id,
+              title: problem.title,
+              status: problem.status,
+              body: problem.html,
+              plainText: problem.plainText,
+              img: problem.imageUrl,
+              checkpointLevel: problem.checkpointLevel,
+              chapterName: problem.chapterName,
+            })),
+          },
+        };
+      } else {
+        response = await fetchInvlectRoomsImport(sourceUrl, access_token);
+      }
       updateStep(currentStep, 'completed');
 
       currentStep = 'parse';
@@ -433,7 +527,7 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
       updateStep(currentStep, 'completed');
 
       setImportResult(response);
-      setImportSource(response.url || sourceUrl);
+      setImportSource(response.url || (sourceType === 'json' ? '' : sourceUrl));
       if (onResult) {
         onResult(response);
       }
@@ -450,7 +544,17 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
     } finally {
       setIsRunning(false);
     }
-  }, [isValidUrl, isRunning, sourceUrl, access_token, updateStep, onResult]);
+  }, [
+    access_token,
+    activeSteps,
+    isRunning,
+    isSourceValid,
+    jsonParseResult,
+    onResult,
+    sourceType,
+    sourceUrl,
+    updateStep,
+  ]);
 
   const handleSubmit = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
@@ -466,6 +570,45 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
     }
     onCancel();
   }, [isRunning, onCancel]);
+
+  const processJsonFile = useCallback(
+    async (file: File) => {
+      resetImportOutcome('json');
+      if (file.size > JSON_IMPORT_MAX_FILE_BYTES) {
+        setErrorMessage('JSON files must be 5 MiB or smaller.');
+        return;
+      }
+      if (!file.name.toLowerCase().endsWith('.json')) {
+        setErrorMessage('Select a file with a .json extension.');
+        return;
+      }
+      try {
+        handleJsonTextChange(await file.text(), file.name);
+      } catch {
+        setErrorMessage('The selected JSON file could not be read.');
+      }
+    },
+    [handleJsonTextChange, resetImportOutcome],
+  );
+
+  const handleJsonFileChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = '';
+      if (file) await processJsonFile(file);
+    },
+    [processJsonFile],
+  );
+
+  const handleJsonDrop = useCallback(
+    async (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      if (isRunning || isApplying) return;
+      const file = event.dataTransfer.files?.[0];
+      if (file) await processJsonFile(file);
+    },
+    [isApplying, isRunning, processJsonFile],
+  );
 
   const mapProxyBaseUrl = useMemo(() => {
     const apiBase = getAPIUrl();
@@ -607,8 +750,15 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
       const status = typeof problem?.status === 'string' ? problem.status : undefined;
       const html = typeof problem?.body === 'string' ? problem.body : '';
       const segments = extractTextSegments(html);
-      const plainText = segments.join(' ');
-      const preview = buildPreview(segments, MAX_PREVIEW_LENGTH);
+      const suppliedPlainText =
+        typeof problem?.plainText === 'string'
+          ? normalizeWhitespace(problem.plainText)
+          : '';
+      const plainText = suppliedPlainText || segments.join(' ');
+      const preview = buildPreview(
+        suppliedPlainText ? [suppliedPlainText] : segments,
+        MAX_PREVIEW_LENGTH,
+      );
       const imageOnly = detectImageOnlyProblem({
         html,
         plainText,
@@ -640,6 +790,10 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
         imagePreview,
         checkpointLevel,
         imageOnly,
+        chapterName:
+          typeof problem?.chapterName === 'string'
+            ? problem.chapterName.trim()
+            : undefined,
       };
     });
   }, [importResult, toProxiedImageUrl]);
@@ -675,7 +829,12 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
     try {
       const response = await applyInvlectRoomsImport(
         {
-          url: importResult.url || sourceUrl,
+          source_type: sourceType,
+          ...(importResult.url
+            ? { url: importResult.url }
+            : sourceType === 'invlectrooms'
+              ? { url: sourceUrl }
+              : {}),
           course_uuid: courseUuid,
           tab_uuid: tabUuid,
           xp_reward: xpReward,
@@ -707,10 +866,12 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
     } finally {
       setIsApplying(false);
     }
-  }, [isApplying, importResult, courseUuid, tabUuid, chapterNames, problems, sourceUrl, access_token, onApplied, onCancel, xpReward, coinReward]);
+  }, [isApplying, importResult, courseUuid, tabUuid, chapterNames, problems, sourceUrl, sourceType, access_token, onApplied, onCancel, xpReward, coinReward]);
 
   const validationMessage =
-    touched && !isValidUrl ? 'Enter a valid URL (starting with http:// or https://).' : undefined;
+    sourceType === 'invlectrooms' && touched && !isValidUrl
+      ? 'Enter a valid URL (starting with http:// or https://).'
+      : undefined;
   const hasProgress = hasStarted || isRunning || hasCompleted;
 
   useEffect(() => {
@@ -722,6 +883,7 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
     const baseName = guessChapterTitleFromUrl(baseSource);
     setChapterNames(
       problems.map((problem, index) => {
+        if (problem.chapterName) return problem.chapterName;
         const problemTitle = problem.title || `Problem ${index + 1}`;
         return baseName ? `${baseName} — ${problemTitle}` : problemTitle;
       })
@@ -735,26 +897,128 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col space-y-6 py-2">
-      <div className="space-y-2">
-        <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
-          Source URL
-          <Input
-            type="url"
-            placeholder="https://hpi.de/friedrich/docs/InvLectRooms/..."
-            value={sourceUrl}
-            onChange={(event) => setSourceUrl(event.target.value)}
-            required
-            aria-invalid={validationMessage ? 'true' : 'false'}
-            aria-describedby={validationMessage ? 'import-url-error' : undefined}
-            disabled={isRunning}
+      <Tabs value={sourceType} onValueChange={handleSourceTypeChange}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="invlectrooms" disabled={isRunning || isApplying}>
+            InvLectRooms
+          </TabsTrigger>
+          <TabsTrigger value="json" disabled={isRunning || isApplying}>
+            JSON
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {sourceType === 'invlectrooms' ? (
+        <div className="space-y-2">
+          <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
+            Source URL
+            <Input
+              type="url"
+              placeholder="https://hpi.de/friedrich/docs/InvLectRooms/..."
+              value={sourceUrl}
+              onChange={(event) => {
+                setSourceUrl(event.target.value);
+                resetImportOutcome('invlectrooms');
+              }}
+              required
+              aria-invalid={validationMessage ? 'true' : 'false'}
+              aria-describedby={validationMessage ? 'import-url-error' : undefined}
+              disabled={isRunning}
+            />
+          </label>
+          {validationMessage && (
+            <p id="import-url-error" className="text-xs text-red-600">
+              {validationMessage}
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <input
+            ref={jsonFileInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={handleJsonFileChange}
           />
-        </label>
-        {validationMessage && (
-          <p id="import-url-error" className="text-xs text-red-600">
-            {validationMessage}
-          </p>
-        )}
-      </div>
+          <div
+            className="flex items-center justify-between gap-4 rounded-md border border-dashed border-gray-300 bg-gray-50 px-4 py-3"
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={handleJsonDrop}
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <FileJson className="h-5 w-5 shrink-0 text-muted-foreground" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">
+                  {jsonFileName ?? 'Drop a JSON file here'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Strict schema version 1 · maximum 5 MiB
+                </p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => jsonFileInputRef.current?.click()}
+              disabled={isRunning || isApplying}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Choose file
+            </Button>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <label htmlFor="json-import-content" className="text-sm font-medium">
+                JSON content
+              </label>
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-7 px-2 text-xs"
+                onClick={() => handleJsonTextChange(JSON_IMPORT_EXAMPLE)}
+                disabled={isRunning || isApplying}
+              >
+                Use example
+              </Button>
+            </div>
+            <textarea
+              id="json-import-content"
+              value={jsonText}
+              onChange={(event) => handleJsonTextChange(event.target.value)}
+              placeholder={JSON_IMPORT_EXAMPLE}
+              rows={12}
+              spellCheck={false}
+              disabled={isRunning || isApplying}
+              aria-invalid={!jsonParseResult.success && jsonText.trim() ? 'true' : 'false'}
+              className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 font-mono text-xs leading-relaxed ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+          {!jsonParseResult.success && (jsonText.trim() || touched) && (
+            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p className="font-medium">Fix these JSON issues before importing:</p>
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-xs">
+                {jsonParseResult.issues.slice(0, 8).map((issue, index) => (
+                  <li key={`${issue.path}-${index}`}>
+                    <code className="font-semibold">{issue.path}</code>: {issue.message}
+                  </li>
+                ))}
+              </ul>
+              {jsonParseResult.issues.length > 8 && (
+                <p className="mt-1 text-xs">
+                  And {jsonParseResult.issues.length - 8} more issue(s).
+                </p>
+              )}
+            </div>
+          )}
+          {jsonParseResult.success && (
+            <p className="flex items-center gap-1 text-xs text-emerald-700">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Valid JSON with {jsonParseResult.data.problems.length} problem(s).
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-[320px,minmax(0,1fr)]">
         <div className="space-y-3">
@@ -795,7 +1059,7 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
               </ul>
             ) : (
               <div className="space-y-2">
-                {MOCK_IMPORT_STEPS.map((step) => (
+                {activeSteps.map((step) => (
                   <div
                     key={step.id}
                     className="flex items-center justify-between rounded-md border border-dashed border-gray-200 bg-white/60 px-3 py-3"
@@ -1037,7 +1301,7 @@ const ImportCourseStructureDialog: React.FC<ImportCourseStructureDialogProps> = 
         ) : (
           <Button
             type="submit"
-            disabled={!isValidUrl || isRunning}
+            disabled={!isSourceValid || isRunning}
           >
             {isRunning ? (
               <>
@@ -1729,7 +1993,7 @@ const EditCourseStructure = (props: EditCourseStructureProps) => {
         minHeight="md"
         minWidth="lg"
         dialogTitle="Import course content"
-        dialogDescription="Provide a source URL to import chapters and map assets."
+        dialogDescription="Import problems and map assets from InvLectRooms or validated JSON."
         dialogContent={
           <ImportCourseStructureDialog
             isOpen={isImportModalOpen}
