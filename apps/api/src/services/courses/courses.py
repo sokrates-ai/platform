@@ -300,6 +300,48 @@ def build_course_read(
     return CourseRead(**payload, authors=authors)
 
 
+def can_manage_hidden_course(
+    course: Course,
+    current_user: PublicUser | AnonymousUser,
+    db_session: Session,
+) -> bool:
+    """Keep hidden courses manageable without exposing them to learners."""
+    if isinstance(current_user, AnonymousUser) or current_user.id == 0:
+        return False
+
+    authorship = db_session.exec(
+        select(ResourceAuthor).where(
+            ResourceAuthor.resource_uuid == course.course_uuid,
+            ResourceAuthor.user_id == current_user.id,
+            ResourceAuthor.authorship.in_(
+                [
+                    ResourceAuthorshipEnum.CREATOR,
+                    ResourceAuthorshipEnum.MAINTAINER,
+                ]
+            ),
+        )
+    ).first()
+    if authorship:
+        return True
+
+    roles = db_session.exec(
+        select(Role)
+        .join(UserOrganization, UserOrganization.role_id == Role.id)
+        .where(
+            UserOrganization.user_id == current_user.id,
+            UserOrganization.org_id == course.org_id,
+        )
+    ).all()
+    for role in roles:
+        try:
+            if role.rights and role.rights["courses"]["action_update"] is True:
+                return True
+        except (KeyError, TypeError):
+            continue
+
+    return False
+
+
 async def get_course(
     request: Request,
     course_uuid: str,
@@ -449,7 +491,7 @@ async def get_courses_orgslug(
 
     if isinstance(current_user, AnonymousUser):
         # For anonymous users, only show public courses
-        query = query.where(Course.public == True)
+        query = query.where(Course.public == True, Course.visible == True)
     else:
         roles_statement = (
             select(Role)
@@ -462,14 +504,19 @@ async def get_courses_orgslug(
         roles = db_session.exec(roles_statement).all()
 
         has_course_read = False
+        has_course_update = False
         for role in roles:
             role = Role.model_validate(role)
             if role.rights:
                 try:
-                    if role.rights["courses"]["action_read"] is True:
-                        has_course_read = True
-                        break
-                except Exception:
+                    course_rights = role.rights["courses"]
+                    has_course_read = (
+                        has_course_read or course_rights["action_read"] is True
+                    )
+                    has_course_update = (
+                        has_course_update or course_rights["action_update"] is True
+                    )
+                except (KeyError, TypeError):
                     continue
 
         if not has_course_read:
@@ -486,12 +533,49 @@ async def get_courses_orgslug(
                     UserGroupUser.user_id == current_user.id
                 ))
                 .outerjoin(ResourceAuthor, ResourceAuthor.resource_uuid == Course.course_uuid)  # type: ignore
-                .where(or_(
-                    Course.public == True,
-                    UserGroupResource.resource_uuid == None,  # Courses not in any UserGroup # noqa: E711
-                    UserGroupUser.user_id == current_user.id,  # Courses in UserGroups where user is a member
-                    ResourceAuthor.user_id == current_user.id  # Courses where user is a resource author
-                ))
+                .where(
+                    and_(
+                        or_(
+                            Course.public == True,
+                            UserGroupResource.resource_uuid == None,  # Courses not in any UserGroup # noqa: E711
+                            UserGroupUser.user_id == current_user.id,  # Courses in UserGroups where user is a member
+                            ResourceAuthor.user_id == current_user.id,  # Courses where user is a resource author
+                        ),
+                        or_(
+                            Course.visible == True,
+                            and_(
+                                ResourceAuthor.user_id == current_user.id,
+                                ResourceAuthor.authorship.in_(
+                                    [
+                                        ResourceAuthorshipEnum.CREATOR,
+                                        ResourceAuthorshipEnum.MAINTAINER,
+                                    ]
+                                ),
+                            ),
+                        ),
+                    )
+                )
+            )
+        elif not has_course_update:
+            # Learners and tutors must not see hidden courses. Authors retain
+            # access so they can manage and make their own course visible again.
+            query = (
+                query
+                .outerjoin(ResourceAuthor, ResourceAuthor.resource_uuid == Course.course_uuid)  # type: ignore
+                .where(
+                    or_(
+                        Course.visible == True,
+                        and_(
+                            ResourceAuthor.user_id == current_user.id,
+                            ResourceAuthor.authorship.in_(
+                                [
+                                    ResourceAuthorshipEnum.CREATOR,
+                                    ResourceAuthorshipEnum.MAINTAINER,
+                                ]
+                            ),
+                        ),
+                    )
+                )
             )
 
     # Apply pagination
@@ -504,6 +588,7 @@ async def get_courses_orgslug(
         Course.tags,
         Course.thumbnail_image,
         Course.public,
+        Course.visible,
     )
 
     courses = db_session.exec(query).all()
@@ -885,6 +970,14 @@ async def rbac_check(
     db_session: Session,
 ):
     if action == "read":
+        course = db_session.exec(
+            select(Course).where(Course.course_uuid == course_uuid)
+        ).first()
+        if course and not course.visible and not can_manage_hidden_course(
+            course, current_user, db_session
+        ):
+            raise HTTPException(status_code=404, detail="Course not found")
+
         if current_user.id == 0:  # Anonymous user
             res = await authorization_verify_if_element_is_public(
                 request, course_uuid, action, db_session

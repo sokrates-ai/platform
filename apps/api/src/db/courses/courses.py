@@ -43,6 +43,7 @@ class CourseBase(SQLModel):
         alias='tabStore',
     )
     public: bool
+    visible: bool = True
 
 
 class Course(CourseBase, table=True):
@@ -77,7 +78,8 @@ class CourseUpdate(SQLModel):
     map_state: Optional[Dict[str, Any]] = None
     tab_store: Optional[Dict[str, Any]] = Field(default=None, alias='tabStore')
     tabs: Optional[List[CourseTabUpsert]] = Field(default=None, alias='tabs')
-    public: Optional[bool]
+    public: Optional[bool] = None
+    visible: Optional[bool] = None
 
 
 class CourseRead(CourseBase):

@@ -12,7 +12,7 @@ import { getUriWithOrg } from "@services/config/config"
 import { prefetchCourseExperience } from "@services/performance/coursePrefetch"
 import { deleteCourseFromBackend } from "@services/courses/courses"
 import { revalidateTags } from "@services/utils/ts/requests"
-import { BookMinus, FilePenLine, Settings2, EllipsisVertical, GraduationCap } from "lucide-react"
+import { BookMinus, EyeOff, FilePenLine, Settings2, EllipsisVertical, GraduationCap } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -125,6 +125,12 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, orgslug }) => {
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${thumbnailImage})` }}
           />
+          {course.visible === false && (
+            <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-md bg-gray-900/85 px-2.5 py-1 text-xs font-semibold text-white">
+              <EyeOff className="h-3.5 w-3.5" />
+              Hidden
+            </span>
+          )}
           <span className="sr-only">{course.name}</span>
         </Link>
       </motion.div>

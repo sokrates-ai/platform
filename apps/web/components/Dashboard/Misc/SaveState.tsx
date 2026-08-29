@@ -95,6 +95,7 @@ function SaveState(props: { orgslug: string }) {
       learnings: course_structure?.learnings,
       tags: course_structure?.tags,
       public: course_structure?.public,
+      visible: course_structure?.visible,
       tabStore: sanitizedTabStore,
       map_state: primaryMap,
       tabs: metadata,

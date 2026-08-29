@@ -5,12 +5,13 @@ import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import { getAPIUrl } from '@services/config/config'
 import { unLinkResourcesToUserGroup } from '@services/usergroups/usergroups'
 import { swrFetcher } from '@services/utils/ts/requests'
-import { Globe, SquareUserRound, Users, X } from 'lucide-react'
+import { Eye, EyeOff, Globe, SquareUserRound, Users, X } from 'lucide-react'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import useSWR, { mutate } from 'swr'
 import { Button } from "@components/ui/button"
+import { Switch } from '@components/ui/switch'
 
 type EditCourseAccessProps = {
     orgslug: string
@@ -25,12 +26,19 @@ function EditCourseAccess(props: EditCourseAccessProps) {
 
     const { data: usergroups } = useSWR(courseStructure ? `${getAPIUrl()}usergroups/resource/${courseStructure.course_uuid}` : null, (url: string) => swrFetcher(url, access_token));
     const [isClientPublic, setIsClientPublic] = useState<boolean | undefined>(undefined);
+    const [isClientVisible, setIsClientVisible] = useState<boolean | undefined>(undefined);
 
     useEffect(() => {
         if (!isLoading && courseStructure?.public !== undefined) {
             setIsClientPublic(courseStructure.public);
         }
     }, [isLoading, courseStructure]);
+
+    useEffect(() => {
+        if (!isLoading && courseStructure?.visible !== undefined) {
+            setIsClientVisible(courseStructure.visible);
+        }
+    }, [isLoading, courseStructure?.course_uuid, courseStructure?.visible]);
 
     useEffect(() => {
         if (!isLoading && courseStructure?.public !== undefined && isClientPublic !== undefined) {
@@ -45,11 +53,58 @@ function EditCourseAccess(props: EditCourseAccessProps) {
         }
     }, [isLoading, isClientPublic, courseStructure, dispatchCourse]);
 
+    useEffect(() => {
+        if (!isLoading && courseStructure && isClientVisible !== undefined) {
+            if (isClientVisible !== courseStructure.visible) {
+                dispatchCourse({ type: 'setIsNotSaved' });
+                dispatchCourse({
+                    type: 'setCourseStructure',
+                    payload: {
+                        ...courseStructure,
+                        visible: isClientVisible,
+                    },
+                });
+            }
+        }
+    }, [isLoading, isClientVisible, courseStructure, dispatchCourse]);
+
     return (
         <div>
             {courseStructure && (
                 <div>
                     <div className="h-6"></div>
+                    <div className="mx-4 sm:mx-10 mb-4 bg-white rounded-xl shadow-sm px-4 py-4">
+                        <div className="flex items-center justify-between gap-4 rounded-md bg-gray-50 px-3 py-4 sm:px-5">
+                            <div className="flex min-w-0 items-start gap-3">
+                                {isClientVisible === false ? (
+                                    <EyeOff className="mt-0.5 h-5 w-5 shrink-0 text-gray-500" />
+                                ) : (
+                                    <Eye className="mt-0.5 h-5 w-5 shrink-0 text-gray-500" />
+                                )}
+                                <div>
+                                    <label htmlFor="course-visibility" className="font-bold text-lg sm:text-xl text-gray-800">
+                                        Course visibility
+                                    </label>
+                                    <p className="text-gray-500 text-xs sm:text-sm">
+                                        {isClientVisible === false
+                                            ? 'Hidden from students, tutors, and public course listings. Course managers can still access it.'
+                                            : 'Visible to everyone who has access to this course.'}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex shrink-0 items-center gap-2">
+                                <span className="hidden text-sm font-semibold text-gray-600 sm:inline">
+                                    {isClientVisible === false ? 'Hidden' : 'Visible'}
+                                </span>
+                                <Switch
+                                    id="course-visibility"
+                                    checked={isClientVisible ?? true}
+                                    onCheckedChange={setIsClientVisible}
+                                    aria-label="Set course visibility"
+                                />
+                            </div>
+                        </div>
+                    </div>
                     <div className="mx-4 sm:mx-10 bg-white rounded-xl shadow-sm px-4 py-4">
                         <div className="flex flex-col bg-gray-50 -space-y-1 px-3 sm:px-5 py-3 rounded-md mb-3">
                             <h1 className="font-bold text-lg sm:text-xl text-gray-800">Access to the course</h1>
@@ -63,7 +118,7 @@ function EditCourseAccess(props: EditCourseAccessProps) {
                                 confirmationMessage="Are you sure you want this course to be publicly available on the internet?"
                                 dialogTitle="Change to Public?"
                                 dialogTrigger={
-                                    <div className="w-full h-[200px] bg-slate-100 rounded-lg cursor-pointer hover:bg-slate-200 transition-all">
+                                    <div className="relative h-[200px] w-full min-w-0 bg-slate-100 rounded-lg cursor-pointer hover:bg-slate-200 transition-all sm:w-auto sm:flex-1 sm:basis-0">
                                         {isClientPublic && (
                                             <div className="bg-green-200 text-green-600 font-bold w-fit my-3 mx-3 absolute text-sm px-3 py-1 rounded-lg">
                                                 Active
@@ -74,7 +129,7 @@ function EditCourseAccess(props: EditCourseAccessProps) {
                                             <div className="text-xl sm:text-2xl text-slate-700 font-bold">
                                                 Public
                                             </div>
-                                            <div className="text-gray-400 text-sm sm:text-md tracking-tight w-full sm:w-[500px] leading-5 text-center">
+                                            <div className="w-full max-w-md text-center text-sm leading-5 tracking-tight text-gray-400 sm:text-md">
                                                 The Course is publicly available on the internet, it is indexed by search engines and can be accessed by anyone
                                             </div>
                                         </div>
@@ -88,7 +143,7 @@ function EditCourseAccess(props: EditCourseAccessProps) {
                                 confirmationMessage="Are you sure you want this course to be only accessible to signed in users?"
                                 dialogTitle="Change to Users Only?"
                                 dialogTrigger={
-                                    <div className="w-full h-[200px] bg-slate-100 rounded-lg cursor-pointer hover:bg-slate-200 transition-all">
+                                    <div className="relative h-[200px] w-full min-w-0 bg-slate-100 rounded-lg cursor-pointer hover:bg-slate-200 transition-all sm:w-auto sm:flex-1 sm:basis-0">
                                         {!isClientPublic && (
                                             <div className="bg-green-200 text-green-600 font-bold w-fit my-3 mx-3 absolute text-sm px-3 py-1 rounded-lg">
                                                 Active
@@ -99,7 +154,7 @@ function EditCourseAccess(props: EditCourseAccessProps) {
                                             <div className="text-xl sm:text-2xl text-slate-700 font-bold">
                                                 Users Only
                                             </div>
-                                            <div className="text-gray-400 text-sm sm:text-md tracking-tight w-full sm:w-[500px] leading-5 text-center">
+                                            <div className="w-full max-w-md text-center text-sm leading-5 tracking-tight text-gray-400 sm:text-md">
                                                 The Course is only accessible to signed in users, additionally you can choose which UserGroups can access this course
                                             </div>
                                         </div>

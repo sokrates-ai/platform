@@ -22,7 +22,9 @@ async def authorization_verify_if_element_is_public(
     if element_nature == ("courses") and action == "read":
         if element_nature == "courses":
             statement = select(Course).where(
-                Course.public == True, Course.course_uuid == element_uuid
+                Course.public == True,
+                Course.visible == True,
+                Course.course_uuid == element_uuid,
             )
             course = db_session.exec(statement).first()
             if course:

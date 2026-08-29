@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { signIn } from "next-auth/react"
 import { useFormik } from 'formik'
 import { AlertTriangle, Loader2, Mail, Lock } from 'lucide-react'
@@ -35,7 +35,6 @@ const validate = (values: any) => {
 
 const LoginClient = (props: LoginClientProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const router = useRouter();
   const searchParams = useSearchParams()
   const [error, setError] = useState('')
 
@@ -103,7 +102,10 @@ const LoginClient = (props: LoginClientProps) => {
         setSubmitting(false)
         setIsSubmitting(false);
       } else {
-        router.push('/redirect_from_auth')
+        // A client-side navigation keeps the root SessionProvider mounted with
+        // its pre-login state. Use a document navigation so the new session is
+        // loaded before rendering the authenticated start page.
+        window.location.assign(res?.url || '/redirect_from_auth')
       }
     },
   })
