@@ -188,33 +188,34 @@ def task_plain_text(task: MarkdownTask, instruction: str | None) -> tuple[str, b
     else:
         paragraphs.append(f"Aufgabentyp {task.category}")
 
-    def flush_solution() -> None:
+    def discard_solution() -> None:
         if not pending_solution:
             return
-        raw = " ".join(part.strip() for part in pending_solution)
-        paragraphs.append(clean_solution(raw) or clean_text_line(raw))
         pending_solution.clear()
 
     for raw_line in task.lines:
         line = raw_line.strip()
         if not line or line.lower() in {"<br>", "<br/>", "<br />"}:
-            flush_solution()
+            discard_solution()
             continue
         if pending_solution:
             pending_solution.append(line)
             if re.search(r"}\*?\s*$", line):
-                flush_solution()
+                discard_solution()
             continue
         if re.match(r"^#?\*?\{", line):
             pending_solution.append(line)
             if re.search(r"}\*?\s*$", line):
-                flush_solution()
+                discard_solution()
+            continue
+        cleaned_line = clean_text_line(line)
+        if cleaned_line.casefold().startswith("lösung"):
             continue
         if line.startswith(">"):
             paragraphs.append(f"Hinweis: {clean_text_line(line[1:].strip())}")
             continue
-        paragraphs.append(clean_text_line(line))
-    flush_solution()
+        paragraphs.append(cleaned_line)
+    discard_solution()
 
     content_only = " ".join(paragraphs[1:])
     placeholder_key = re.sub(r"[\s$*{}#:.\-]", "", content_only).casefold()
@@ -222,7 +223,7 @@ def task_plain_text(task: MarkdownTask, instruction: str | None) -> tuple[str, b
     if is_placeholder:
         paragraphs = [
             paragraphs[0],
-            "Aufgabe und Lösung sind in der Markdown-Quelle noch nicht ausgefüllt.",
+            "Die Aufgabe ist in der Markdown-Quelle noch nicht ausgefüllt.",
         ]
     return "\n".join(paragraphs), is_placeholder
 
@@ -341,8 +342,9 @@ def main() -> None:
         "",
         "Jede JSON-Datei entspricht dem Inhalt eines Kurs-Tabs. Jede nummerierte",
         "Markdown-Aufgabe wird als eigenes Kapitel und damit als eigener Kartenstein",
-        "importiert. Schwierigkeitsgrad, Aufgabentyp, Aufgabenstellung und Lösung bleiben",
-        "erhalten. Noch leere Quellaufgaben werden ausdrücklich als Entwurf markiert.",
+        "importiert. Schwierigkeitsgrad, Aufgabentyp und Aufgabenstellung bleiben",
+        "erhalten; Lösungen verbleiben ausschließlich in den Markdown-Quelldateien.",
+        "Noch leere Quellaufgaben werden ausdrücklich als Entwurf markiert.",
         "",
         "| Datei | Empfohlener Tabname | Aufgaben/Kapitel |",
         "| --- | --- | ---: |",

@@ -4,97 +4,97 @@
     {
       "id": "woche-1/potenzgesetze-d1-a1",
       "title": "Aufgabe A1 (Schwierigkeit 1)",
-      "plainText": "Aufgabentyp A: Potenzgesetzte\n$ 0.2^3 $\nLösung: 0,008",
+      "plainText": "Aufgabentyp A: Potenzgesetzte\n$ 0.2^3 $",
       "chapterName": "Potenzgesetze — S1 · A1"
     },
     {
       "id": "woche-1/potenzgesetze-d1-a2",
       "title": "Aufgabe A2 (Schwierigkeit 1)",
-      "plainText": "Aufgabentyp A: Potenzgesetzte\n$ 2^{10} $\nLösung: 1024",
+      "plainText": "Aufgabentyp A: Potenzgesetzte\n$ 2^{10} $",
       "chapterName": "Potenzgesetze — S1 · A2"
     },
     {
       "id": "woche-1/potenzgesetze-d1-a3",
       "title": "Aufgabe A3 (Schwierigkeit 1)",
-      "plainText": "Aufgabentyp A: Potenzgesetzte\n$ \\sqrt{7}^4$\nLösung: 49",
+      "plainText": "Aufgabentyp A: Potenzgesetzte\n$ \\sqrt{7}^4$",
       "chapterName": "Potenzgesetze — S1 · A3"
     },
     {
       "id": "woche-1/potenzgesetze-d1-b1",
       "title": "Aufgabe B1 (Schwierigkeit 1)",
-      "plainText": "Aufgabentyp B: Logarithmen\n$ \\log_{10}(x) = 2 $\nLösung: 100",
+      "plainText": "Aufgabentyp B: Logarithmen\n$ \\log_{10}(x) = 2 $",
       "chapterName": "Potenzgesetze — S1 · B1"
     },
     {
       "id": "woche-1/potenzgesetze-d1-b2",
       "title": "Aufgabe B2 (Schwierigkeit 1)",
-      "plainText": "Aufgabentyp B: Logarithmen\n$ \\log_2(x) = 4 $\nLösung: 16",
+      "plainText": "Aufgabentyp B: Logarithmen\n$ \\log_2(x) = 4 $",
       "chapterName": "Potenzgesetze — S1 · B2"
     },
     {
       "id": "woche-1/potenzgesetze-d2-a1",
       "title": "Aufgabe A1 (Schwierigkeit 2)",
-      "plainText": "Aufgabentyp A: Potenzgesetzte\n$ (-4)^3 \\cdot (-0,5)^3 $\nLösung: 8",
+      "plainText": "Aufgabentyp A: Potenzgesetzte\n$ (-4)^3 \\cdot (-0,5)^3 $",
       "chapterName": "Potenzgesetze — S2 · A1"
     },
     {
       "id": "woche-1/potenzgesetze-d2-a2",
       "title": "Aufgabe A2 (Schwierigkeit 2)",
-      "plainText": "Aufgabentyp A: Potenzgesetzte\n$ 0,8^7/0,4^7$\nLösung: 128",
+      "plainText": "Aufgabentyp A: Potenzgesetzte\n$ 0,8^7/0,4^7$",
       "chapterName": "Potenzgesetze — S2 · A2"
     },
     {
       "id": "woche-1/potenzgesetze-d2-b1",
       "title": "Aufgabe B1 (Schwierigkeit 2)",
-      "plainText": "Aufgabentyp B: Logarithmen\n$ 2\\log_{2}(2x) = 6 $\nLösung: 4",
+      "plainText": "Aufgabentyp B: Logarithmen\n$ 2\\log_{2}(2x) = 6 $",
       "chapterName": "Potenzgesetze — S2 · B1"
     },
     {
       "id": "woche-1/potenzgesetze-d2-b2",
       "title": "Aufgabe B2 (Schwierigkeit 2)",
-      "plainText": "Aufgabentyp B: Logarithmen\n$ \\log_{25}(x) = 1/2 $\nLösung: 5",
+      "plainText": "Aufgabentyp B: Logarithmen\n$ \\log_{25}(x) = 1/2 $",
       "chapterName": "Potenzgesetze — S2 · B2"
     },
     {
       "id": "woche-1/potenzgesetze-d2-b3",
       "title": "Aufgabe B3 (Schwierigkeit 2)",
-      "plainText": "Aufgabentyp B: Logarithmen\n$ 2\\log_{16}(x) = 1/2 $\nLösung: 2",
+      "plainText": "Aufgabentyp B: Logarithmen\n$ 2\\log_{16}(x) = 1/2 $",
       "chapterName": "Potenzgesetze — S2 · B3"
     },
     {
       "id": "woche-1/potenzgesetze-d3-a1",
       "title": "Aufgabe A1 (Schwierigkeit 3)",
-      "plainText": "Aufgabentyp A: Potenzgesetzte\n$ \\sqrt{x+1}^4 = 9$\nLösung: x=2",
+      "plainText": "Aufgabentyp A: Potenzgesetzte\n$ \\sqrt{x+1}^4 = 9$",
       "chapterName": "Potenzgesetze — S3 · A1"
     },
     {
       "id": "woche-1/potenzgesetze-d3-a2",
       "title": "Aufgabe A2 (Schwierigkeit 3)",
-      "plainText": "Aufgabentyp A: Potenzgesetzte\n$3^{x+1} = 27$\nLösung: x=2",
+      "plainText": "Aufgabentyp A: Potenzgesetzte\n$3^{x+1} = 27$",
       "chapterName": "Potenzgesetze — S3 · A2"
     },
     {
       "id": "woche-1/potenzgesetze-d3-b1",
       "title": "Aufgabe B1 (Schwierigkeit 3)",
-      "plainText": "Aufgabentyp B: Logarithmen\n$ \\log_5(15x-10) = \\log_5(10x+35) $\nLösung: x=9",
+      "plainText": "Aufgabentyp B: Logarithmen\n$ \\log_5(15x-10) = \\log_5(10x+35) $",
       "chapterName": "Potenzgesetze — S3 · B1"
     },
     {
       "id": "woche-1/potenzgesetze-d3-b2",
       "title": "Aufgabe B2 (Schwierigkeit 3)",
-      "plainText": "Aufgabentyp B: Logarithmen\n$ \\log_4(3x+4) = \\log_4(2x+2) $\nLösung: ACHTUNG: Keine Lösung möglich, da Logarithmus nur für nicht-negative Werte definiert!",
+      "plainText": "Aufgabentyp B: Logarithmen\n$ \\log_4(3x+4) = \\log_4(2x+2) $",
       "chapterName": "Potenzgesetze — S3 · B2"
     },
     {
       "id": "woche-1/potenzgesetze-d3-b3",
       "title": "Aufgabe B3 (Schwierigkeit 3)",
-      "plainText": "Aufgabentyp B: Logarithmen\n$ 2\\log_2(x-1) = \\log_2(3x+1) $\nLösung: x=5",
+      "plainText": "Aufgabentyp B: Logarithmen\n$ 2\\log_2(x-1) = \\log_2(3x+1) $",
       "chapterName": "Potenzgesetze — S3 · B3"
     },
     {
       "id": "woche-1/potenzgesetze-d4-a1",
       "title": "Aufgabe A1 (Schwierigkeit 4)",
-      "plainText": "Aufgabentyp A: Potenzgesetzte\n$2^{x} = 4^{x+2}$\nLösung: x=-4",
+      "plainText": "Aufgabentyp A: Potenzgesetzte\n$2^{x} = 4^{x+2}$",
       "chapterName": "Potenzgesetze — S4 · A1"
     },
     {
@@ -106,31 +106,31 @@
     {
       "id": "woche-1/potenzgesetze-d4-b1",
       "title": "Aufgabe B1 (Schwierigkeit 4)",
-      "plainText": "Aufgabentyp B: Logarithmen\n$ \\log_2(3x-1) + \\log_2(x+5) = 6 $\nLösung: x=3",
+      "plainText": "Aufgabentyp B: Logarithmen\n$ \\log_2(3x-1) + \\log_2(x+5) = 6 $",
       "chapterName": "Potenzgesetze — S4 · B1"
     },
     {
       "id": "woche-1/potenzgesetze-d4-b2",
       "title": "Aufgabe B2 (Schwierigkeit 4)",
-      "plainText": "Aufgabentyp B: Logarithmen\n$ \\log_2(2x-2) + \\log_2(x+1) = \\log_4(4x+4) $\nLösung: x=3",
+      "plainText": "Aufgabentyp B: Logarithmen\n$ \\log_2(2x-2) + \\log_2(x+1) = \\log_4(4x+4) $",
       "chapterName": "Potenzgesetze — S4 · B2"
     },
     {
       "id": "woche-1/potenzgesetze-d4-b3",
       "title": "Aufgabe B3 (Schwierigkeit 4)",
-      "plainText": "Aufgabentyp B: Logarithmen\n$ 25(\\log_10(x+90))^2 -100 \\log_10(x+90) = -100$\nLösung: x=10",
+      "plainText": "Aufgabentyp B: Logarithmen\n$ 25(\\log_10(x+90))^2 -100 \\log_10(x+90) = -100$",
       "chapterName": "Potenzgesetze — S4 · B3"
     },
     {
       "id": "woche-1/potenzgesetze-d5-a1",
       "title": "Aufgabe A1 (Schwierigkeit 5)",
-      "plainText": "Aufgabentyp A: Potenzgesetzte\n$x^{x+y} = y^{24}$ UND $ y^{x+y} = x^6 $\nLösung: (\\pm 1, \\pm 1); (9,3); (16,-4); ...",
+      "plainText": "Aufgabentyp A: Potenzgesetzte\n$x^{x+y} = y^{24}$ UND $ y^{x+y} = x^6 $",
       "chapterName": "Potenzgesetze — S5 · A1"
     },
     {
       "id": "woche-1/potenzgesetze-d5-b1",
       "title": "Aufgabe B1 (Schwierigkeit 5)",
-      "plainText": "Aufgabentyp B: Logarithmen\n$x^{\\log_2(x)} + 32x^{-\\log_{2}(x)} = 18 $\nLösung: 1/4, 1/2, 2, 4",
+      "plainText": "Aufgabentyp B: Logarithmen\n$x^{\\log_2(x)} + 32x^{-\\log_{2}(x)} = 18 $",
       "chapterName": "Potenzgesetze — S5 · B1"
     }
   ]

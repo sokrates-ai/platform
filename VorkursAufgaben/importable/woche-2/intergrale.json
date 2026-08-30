@@ -4,140 +4,140 @@
     {
       "id": "woche-2/intergrale-d1-a1",
       "title": "Aufgabe A1 (Schwierigkeit 1)",
-      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_{1}^{4} x^2 dx$\nLösung: 21",
+      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_{1}^{4} x^2 dx$",
       "chapterName": "Integralrechenregeln — S1 · A1"
     },
     {
       "id": "woche-2/intergrale-d1-a2",
       "title": "Aufgabe A2 (Schwierigkeit 1)",
-      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_{1}^{9} \\frac{1}{x^3} dx$\nLösung: $\\frac{40}{80}$",
+      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_{1}^{9} \\frac{1}{x^3} dx$",
       "chapterName": "Integralrechenregeln — S1 · A2"
     },
     {
       "id": "woche-2/intergrale-d1-b1",
       "title": "Aufgabe B1 (Schwierigkeit 1)",
-      "plainText": "Aufgabentyp B: Ermittle jeweils das unbestimmte Integral\n$f(x) = \\int{2\\,dx}$\nLösung: $2x+C$",
+      "plainText": "Aufgabentyp B: Ermittle jeweils das unbestimmte Integral\n$f(x) = \\int{2\\,dx}$",
       "chapterName": "Integralrechenregeln — S1 · B1"
     },
     {
       "id": "woche-2/intergrale-d1-b2",
       "title": "Aufgabe B2 (Schwierigkeit 1)",
-      "plainText": "Aufgabentyp B: Ermittle jeweils das unbestimmte Integral\n$ x^6 + C$\nLösung: $x^6+C$",
+      "plainText": "Aufgabentyp B: Ermittle jeweils das unbestimmte Integral\n$ x^6 + C$",
       "chapterName": "Integralrechenregeln — S1 · B2"
     },
     {
       "id": "woche-2/intergrale-d2-a1",
       "title": "Aufgabe A1 (Schwierigkeit 2)",
-      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_{1}^{e} \\frac{1}{x} dx$\nLösung: 1",
+      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_{1}^{e} \\frac{1}{x} dx$",
       "chapterName": "Integralrechenregeln — S2 · A1"
     },
     {
       "id": "woche-2/intergrale-d2-a2",
       "title": "Aufgabe A2 (Schwierigkeit 2)",
-      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_{0}^{1} x^2 \\cdot \\left( \\ln({x^2})\\right) dx$\nLösung: $-\\frac{2}{9}$",
+      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_{0}^{1} x^2 \\cdot \\left( \\ln({x^2})\\right) dx$",
       "chapterName": "Integralrechenregeln — S2 · A2"
     },
     {
       "id": "woche-2/intergrale-d2-a3",
       "title": "Aufgabe A3 (Schwierigkeit 2)",
-      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_{1}^{6} 12x^3-9x^2+2dx $\nLösung: 3250",
+      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_{1}^{6} 12x^3-9x^2+2dx $",
       "chapterName": "Integralrechenregeln — S2 · A3"
     },
     {
       "id": "woche-2/intergrale-d2-b1",
       "title": "Aufgabe B1 (Schwierigkeit 2)",
-      "plainText": "Aufgabentyp B: Ermittle jeweils das unbestimmte Integral\n$\\int x^\\frac{2}{3}dx$\nLösung: $\\frac{3}{5}\\cdot x^{\\frac{5}{3}} + C$",
+      "plainText": "Aufgabentyp B: Ermittle jeweils das unbestimmte Integral\n$\\int x^\\frac{2}{3}dx$",
       "chapterName": "Integralrechenregeln — S2 · B1"
     },
     {
       "id": "woche-2/intergrale-d2-b2",
       "title": "Aufgabe B2 (Schwierigkeit 2)",
-      "plainText": "Aufgabentyp B: Ermittle jeweils das unbestimmte Integral\n$ \\int 5x^{-2}dx $\nLösung: $-\\frac{5}{x} + C$",
+      "plainText": "Aufgabentyp B: Ermittle jeweils das unbestimmte Integral\n$ \\int 5x^{-2}dx $",
       "chapterName": "Integralrechenregeln — S2 · B2"
     },
     {
       "id": "woche-2/intergrale-d2-b3",
       "title": "Aufgabe B3 (Schwierigkeit 2)",
-      "plainText": "Aufgabentyp B: Ermittle jeweils das unbestimmte Integral\n$ \\int (2x-6)^2 dx$\nLösung: $\\frac{4x^3}{3}-12x^2+36x+C$",
+      "plainText": "Aufgabentyp B: Ermittle jeweils das unbestimmte Integral\n$ \\int (2x-6)^2 dx$",
       "chapterName": "Integralrechenregeln — S2 · B3"
     },
     {
       "id": "woche-2/intergrale-d3-a1",
       "title": "Aufgabe A1 (Schwierigkeit 3)",
-      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_{-2}^{1} \\left(2\\cdot x^3 - 3 \\cdot x^2 + 3x +4 \\right)$\nLösung: -9",
+      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_{-2}^{1} \\left(2\\cdot x^3 - 3 \\cdot x^2 + 3x +4 \\right)$",
       "chapterName": "Integralrechenregeln — S3 · A1"
     },
     {
       "id": "woche-2/intergrale-d3-a2",
       "title": "Aufgabe A2 (Schwierigkeit 3)",
-      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_{1}^{t} tdx$\nLösung: $\\frac{x^2-1}{2}$",
+      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_{1}^{t} tdx$",
       "chapterName": "Integralrechenregeln — S3 · A2"
     },
     {
       "id": "woche-2/intergrale-d3-a3",
       "title": "Aufgabe A3 (Schwierigkeit 3)",
-      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$\\int_{2}^{3} \\int_{-1}^{4} \\int_{1}^{0} 4x^2 \\cdot y - z^3 dz \\, dy \\, dx$\nLösung: $\\frac{-755}{4}$",
+      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$\\int_{2}^{3} \\int_{-1}^{4} \\int_{1}^{0} 4x^2 \\cdot y - z^3 dz \\, dy \\, dx$",
       "chapterName": "Integralrechenregeln — S3 · A3"
     },
     {
       "id": "woche-2/intergrale-d3-a4",
       "title": "Aufgabe A4 (Schwierigkeit 3)",
-      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_{0,5}^{1} \\left(\\frac{e^{\\frac{1}{x}-1}}{x^2}\\right)dx$\nLösung: $\\frac{e^2-e}{e}$",
+      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_{0,5}^{1} \\left(\\frac{e^{\\frac{1}{x}-1}}{x^2}\\right)dx$",
       "chapterName": "Integralrechenregeln — S3 · A4"
     },
     {
       "id": "woche-2/intergrale-d3-b1",
       "title": "Aufgabe B1 (Schwierigkeit 3)",
-      "plainText": "Aufgabentyp B: Ermittle jeweils das unbestimmte Integral\n$ \\int \\frac{dx}{7x} $\nLösung: $\\frac{\\ln{\\lvert x \\rvert}}{7}+C$",
+      "plainText": "Aufgabentyp B: Ermittle jeweils das unbestimmte Integral\n$ \\int \\frac{dx}{7x} $",
       "chapterName": "Integralrechenregeln — S3 · B1"
     },
     {
       "id": "woche-2/intergrale-d3-b2",
       "title": "Aufgabe B2 (Schwierigkeit 3)",
-      "plainText": "Aufgabentyp B: Ermittle jeweils das unbestimmte Integral\n$\\int \\left(\\sqrt{x^5} - \\sqrt[5]{x^2}\\right)dx$\nLösung: $\\frac{2}{7} \\cdot x^{\\frac{7}{2}} - \\frac{5}{7}\\cdot x^{\\frac{7}{5}} + C$",
+      "plainText": "Aufgabentyp B: Ermittle jeweils das unbestimmte Integral\n$\\int \\left(\\sqrt{x^5} - \\sqrt[5]{x^2}\\right)dx$",
       "chapterName": "Integralrechenregeln — S3 · B2"
     },
     {
       "id": "woche-2/intergrale-d4-a1",
       "title": "Aufgabe A1 (Schwierigkeit 4)",
-      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\frac{d}{db} \\int_{0,5}^{1} b^2 \\, db$\nLösung: $0$ ACHTUNG: Kein b im durchintegrierten Term vorhanden",
+      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\frac{d}{db} \\int_{0,5}^{1} b^2 \\, db$",
       "chapterName": "Integralrechenregeln — S4 · A1"
     },
     {
       "id": "woche-2/intergrale-d4-a2",
       "title": "Aufgabe A2 (Schwierigkeit 4)",
-      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\frac{d}{dx} \\int_{x}^{1} \\frac{1}{y} \\, dy$\nLösung: $-1/x$",
+      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\frac{d}{dx} \\int_{x}^{1} \\frac{1}{y} \\, dy$",
       "chapterName": "Integralrechenregeln — S4 · A2"
     },
     {
       "id": "woche-2/intergrale-d4-a3",
       "title": "Aufgabe A3 (Schwierigkeit 4)",
-      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_0^1 \\int_0^1 \\ldots \\int_0^1 \\sum_{i=1}^n x_i \\, dx_1 \\, dx_2 \\, \\ldots \\, dx_n$\nLösung: $ n/2 $",
+      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_0^1 \\int_0^1 \\ldots \\int_0^1 \\sum_{i=1}^n x_i \\, dx_1 \\, dx_2 \\, \\ldots \\, dx_n$",
       "chapterName": "Integralrechenregeln — S4 · A3"
     },
     {
       "id": "woche-2/intergrale-d4-a4",
       "title": "Aufgabe A4 (Schwierigkeit 4)",
-      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_0^2 \\int_0^2 \\ldots \\int_0^2 \\sum_{i=1}^n x_i \\, dx_1 \\, dx_2 \\, \\ldots \\, dx_n$\nLösung: $ n 2^n $",
+      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_0^2 \\int_0^2 \\ldots \\int_0^2 \\sum_{i=1}^n x_i \\, dx_1 \\, dx_2 \\, \\ldots \\, dx_n$",
       "chapterName": "Integralrechenregeln — S4 · A4"
     },
     {
       "id": "woche-2/intergrale-d4-a5",
       "title": "Aufgabe A5 (Schwierigkeit 4)",
-      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_{-1}^2 \\int_{-1}^2 \\ldots \\int_{-1}^2 \\sum_{i=1}^n x_i \\, dx_1 \\, dx_2 \\, \\ldots \\, dx_n$\nLösung: $ 0 $ most integrations are over constants, which give 0 when integrated from $-1$ to $1$",
+      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_{-1}^2 \\int_{-1}^2 \\ldots \\int_{-1}^2 \\sum_{i=1}^n x_i \\, dx_1 \\, dx_2 \\, \\ldots \\, dx_n$",
       "chapterName": "Integralrechenregeln — S4 · A5"
     },
     {
       "id": "woche-2/intergrale-d4-a6",
       "title": "Aufgabe A6 (Schwierigkeit 4)",
-      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_0^1 \\int_0^1 \\ldots \\int_0^1 \\prod_{i=1}^n x_i \\, dx_1 \\, dx_2 \\, \\ldots \\, dx_n$\nLösung: $1/2^n$",
+      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\n$ \\int_0^1 \\int_0^1 \\ldots \\int_0^1 \\prod_{i=1}^n x_i \\, dx_1 \\, dx_2 \\, \\ldots \\, dx_n$",
       "chapterName": "Integralrechenregeln — S4 · A6"
     },
     {
       "id": "woche-2/intergrale-d5-a1",
       "title": "Aufgabe A1 (Schwierigkeit 5)",
       "status": "DRAFT",
-      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\nAufgabe und Lösung sind in der Markdown-Quelle noch nicht ausgefüllt.",
+      "plainText": "Aufgabentyp A: Ermittle den Wert des bestimmten Integrals\nDie Aufgabe ist in der Markdown-Quelle noch nicht ausgefüllt.",
       "chapterName": "Integralrechenregeln — S5 · A1"
     }
   ]

@@ -22,31 +22,31 @@
     {
       "id": "woche-1/zahlenbereiche-mengen-d1-b1",
       "title": "Aufgabe B1 (Schwierigkeit 1)",
-      "plainText": "Aufgabentyp B: Entscheide, befindet sich die Zahl in der jeweilig angegebenen Menge?\n$0.232117 \\in (0, \\; 0.5)$\nLösung: Ja",
+      "plainText": "Aufgabentyp B: Entscheide, befindet sich die Zahl in der jeweilig angegebenen Menge?\n$0.232117 \\in (0, \\; 0.5)$",
       "chapterName": "Zahlenbereiche und Mengen — S1 · B1"
     },
     {
       "id": "woche-1/zahlenbereiche-mengen-d1-b2",
       "title": "Aufgabe B2 (Schwierigkeit 1)",
-      "plainText": "Aufgabentyp B: Entscheide, befindet sich die Zahl in der jeweilig angegebenen Menge?\n$1 \\in \\mathbb{N}_{<1}$\nLösung: Nein",
+      "plainText": "Aufgabentyp B: Entscheide, befindet sich die Zahl in der jeweilig angegebenen Menge?\n$1 \\in \\mathbb{N}_{<1}$",
       "chapterName": "Zahlenbereiche und Mengen — S1 · B2"
     },
     {
       "id": "woche-1/zahlenbereiche-mengen-d1-b3",
       "title": "Aufgabe B3 (Schwierigkeit 1)",
-      "plainText": "Aufgabentyp B: Entscheide, befindet sich die Zahl in der jeweilig angegebenen Menge?\n$-2 \\in [-3, \\; 2]$\nLösung: Ja",
+      "plainText": "Aufgabentyp B: Entscheide, befindet sich die Zahl in der jeweilig angegebenen Menge?\n$-2 \\in [-3, \\; 2]$",
       "chapterName": "Zahlenbereiche und Mengen — S1 · B3"
     },
     {
       "id": "woche-1/zahlenbereiche-mengen-d1-b4",
       "title": "Aufgabe B4 (Schwierigkeit 1)",
-      "plainText": "Aufgabentyp B: Entscheide, befindet sich die Zahl in der jeweilig angegebenen Menge?\n$0 \\in [4]$\nLösung: Nein",
+      "plainText": "Aufgabentyp B: Entscheide, befindet sich die Zahl in der jeweilig angegebenen Menge?\n$0 \\in [4]$",
       "chapterName": "Zahlenbereiche und Mengen — S1 · B4"
     },
     {
       "id": "woche-1/zahlenbereiche-mengen-d1-b5",
       "title": "Aufgabe B5 (Schwierigkeit 1)",
-      "plainText": "Aufgabentyp B: Entscheide, befindet sich die Zahl in der jeweilig angegebenen Menge?\n$14 \\in (-\\infty, \\; 14)$\nLösung: Nein",
+      "plainText": "Aufgabentyp B: Entscheide, befindet sich die Zahl in der jeweilig angegebenen Menge?\n$14 \\in (-\\infty, \\; 14)$",
       "chapterName": "Zahlenbereiche und Mengen — S1 · B5"
     },
     {
@@ -58,7 +58,7 @@
     {
       "id": "woche-1/zahlenbereiche-mengen-d2-b1",
       "title": "Aufgabe B1 (Schwierigkeit 2)",
-      "plainText": "Aufgabentyp B: Entscheide, befindet sich die Zahl in der jeweilig angegebenen Menge?\n$\\sqrt{2} \\in \\mathbb{Q}_{<1.5}$\nLösung: Nein",
+      "plainText": "Aufgabentyp B: Entscheide, befindet sich die Zahl in der jeweilig angegebenen Menge?\n$\\sqrt{2} \\in \\mathbb{Q}_{<1.5}$",
       "chapterName": "Zahlenbereiche und Mengen — S2 · B1"
     },
     {
@@ -82,19 +82,19 @@
     {
       "id": "woche-1/zahlenbereiche-mengen-d3-b1",
       "title": "Aufgabe B1 (Schwierigkeit 3)",
-      "plainText": "Aufgabentyp B: Entscheide, befindet sich die Zahl in der jeweilig angegebenen Menge?\n$ \\frac{x}{y} \\in \\mathbb{Q} $ mit $ x,y \\in \\mathbb{N}_{+}$\nLösung: Ja",
+      "plainText": "Aufgabentyp B: Entscheide, befindet sich die Zahl in der jeweilig angegebenen Menge?\n$ \\frac{x}{y} \\in \\mathbb{Q} $ mit $ x,y \\in \\mathbb{N}_{+}$",
       "chapterName": "Zahlenbereiche und Mengen — S3 · B1"
     },
     {
       "id": "woche-1/zahlenbereiche-mengen-d4-c1",
       "title": "Aufgabe C1 (Schwierigkeit 4)",
-      "plainText": "Aufgabentyp C: Löse die folgende Textaufgabe. (ggf. die Aufgabe für sich stehen lassen)\nEin Bruder sagt über seinen jüngeren Bruder: \"Vor zwei Jahren war ich dreimal so alt, wie mein kleiner Bruder. In drei Jahren bin ich doppelt so alt wie mein Bruder.\" Wie alt sind die beiden jetzt?\nLösung: Der jüngerer Bruder ist 7 Jahre alt und der ältere ist 17 Jahre alt.",
+      "plainText": "Aufgabentyp C: Löse die folgende Textaufgabe. (ggf. die Aufgabe für sich stehen lassen)\nEin Bruder sagt über seinen jüngeren Bruder: \"Vor zwei Jahren war ich dreimal so alt, wie mein kleiner Bruder. In drei Jahren bin ich doppelt so alt wie mein Bruder.\" Wie alt sind die beiden jetzt?",
       "chapterName": "Zahlenbereiche und Mengen — S4 · C1"
     },
     {
       "id": "woche-1/zahlenbereiche-mengen-d4-c2",
       "title": "Aufgabe C2 (Schwierigkeit 4)",
-      "plainText": "Aufgabentyp C: Löse die folgende Textaufgabe. (ggf. die Aufgabe für sich stehen lassen)\nDie Summe dreier aufeinader folgenden Zahlen ist 108. Was sind die Zahlen?\nLösung: Die Zahlen sind 35, 36 und 37.",
+      "plainText": "Aufgabentyp C: Löse die folgende Textaufgabe. (ggf. die Aufgabe für sich stehen lassen)\nDie Summe dreier aufeinader folgenden Zahlen ist 108. Was sind die Zahlen?",
       "chapterName": "Zahlenbereiche und Mengen — S4 · C2"
     }
   ]

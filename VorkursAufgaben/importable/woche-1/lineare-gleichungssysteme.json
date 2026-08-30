@@ -4,79 +4,79 @@
     {
       "id": "woche-1/lineare-gleichungssysteme-d1-a1",
       "title": "Aufgabe A1 (Schwierigkeit 1)",
-      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nI. $ 2x+10y = 12x $\nII. $ x+y-12 = y+6 $\nLösung: $ x=y=18 $",
+      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nI. $ 2x+10y = 12x $\nII. $ x+y-12 = y+6 $",
       "chapterName": "Lineare Gleichungssysteme — S1 · A1"
     },
     {
       "id": "woche-1/lineare-gleichungssysteme-d1-a2",
       "title": "Aufgabe A2 (Schwierigkeit 1)",
-      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nI. $4x+y=-5$\nII. $-2x-2y=-2$\nLösung: $ x=-2 y=3$",
+      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nI. $4x+y=-5$\nII. $-2x-2y=-2$",
       "chapterName": "Lineare Gleichungssysteme — S1 · A2"
     },
     {
       "id": "woche-1/lineare-gleichungssysteme-d2-a1",
       "title": "Aufgabe A1 (Schwierigkeit 2)",
-      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nI. $ 0 = -2y + 10 - 6x$\nII. $ 14 - 22y = 18x$\nIII. $3x - y + z = 10.5$\nLösung: $ x=2, y=-1 $",
+      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nI. $ 0 = -2y + 10 - 6x$\nII. $ 14 - 22y = 18x$\nIII. $3x - y + z = 10.5$",
       "chapterName": "Lineare Gleichungssysteme — S2 · A1"
     },
     {
       "id": "woche-1/lineare-gleichungssysteme-d2-a2",
       "title": "Aufgabe A2 (Schwierigkeit 2)",
-      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nI. $ x + \\frac{3}{5}y = -\\frac{1}{5} $\nII. $ -\\frac{1}{2}x-\\frac{2}{3}y=\\frac{5}{6}$\nLösung: $1, -2$",
+      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nI. $ x + \\frac{3}{5}y = -\\frac{1}{5} $\nII. $ -\\frac{1}{2}x-\\frac{2}{3}y=\\frac{5}{6}$",
       "chapterName": "Lineare Gleichungssysteme — S2 · A2"
     },
     {
       "id": "woche-1/lineare-gleichungssysteme-d3-a1",
       "title": "Aufgabe A1 (Schwierigkeit 3)",
-      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nLÖSUNG AN KONVENTION ANPASSEN\nI. $ 17x + y -7z = 9 $\nII. $ x + y + z = 1 $\nIII. $ 4x+2y+z = 3 $\nLösung: $ {(x,y,z) \\mid y = 2-3x, z = 2x-1} $",
+      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nI. $ 17x + y -7z = 9 $\nII. $ x + y + z = 1 $\nIII. $ 4x+2y+z = 3 $",
       "chapterName": "Lineare Gleichungssysteme — S3 · A1"
     },
     {
       "id": "woche-1/lineare-gleichungssysteme-d3-a2",
       "title": "Aufgabe A2 (Schwierigkeit 3)",
-      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nI. $ x + y = 3 $\nII. $ 5x + 5y = 14 $\nLösung: $ \\emptyset $",
+      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nI. $ x + y = 3 $\nII. $ 5x + 5y = 14 $",
       "chapterName": "Lineare Gleichungssysteme — S3 · A2"
     },
     {
       "id": "woche-1/lineare-gleichungssysteme-d3-a3",
       "title": "Aufgabe A3 (Schwierigkeit 3)",
-      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nLÖSUNG AN KONVENTION ANPASSEN\nI. $ x + y + z = 3 $\nII. $ x + y  - z = 1 $\nIII. $ 3x+3y - z = 5 $\nLösung: $ {(x,y,z) \\mid x + y = 2, z=1} $",
+      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nI. $ x + y + z = 3 $\nII. $ x + y  - z = 1 $\nIII. $ 3x+3y - z = 5 $",
       "chapterName": "Lineare Gleichungssysteme — S3 · A3"
     },
     {
       "id": "woche-1/lineare-gleichungssysteme-d3-a4",
       "title": "Aufgabe A4 (Schwierigkeit 3)",
-      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nI. $ 3x - y + z = 10.5 $\nII. $ x + \\frac{y}{3}  - z = \\frac{25}{6} $\nIII. $ 7x - 3z = 26.5 $\nIV. $\\frac{x}{15} + \\frac{y}{3} - \\frac{z}{9} = \\frac{79}{90}$\nLösung: $ x = 4, y = 2, z = \\frac{1}{2} = 0.5 $",
+      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nI. $ 3x - y + z = 10.5 $\nII. $ x + \\frac{y}{3}  - z = \\frac{25}{6} $\nIII. $ 7x - 3z = 26.5 $\nIV. $\\frac{x}{15} + \\frac{y}{3} - \\frac{z}{9} = \\frac{79}{90}$",
       "chapterName": "Lineare Gleichungssysteme — S3 · A4"
     },
     {
       "id": "woche-1/lineare-gleichungssysteme-d3-a5",
       "title": "Aufgabe A5 (Schwierigkeit 3)",
-      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nI. $ z = 2x+3y + 6,5$\nII. $ y/2  + z = x + 43/4$\nIII. $ 4z+3y - 33= 5y$\nLösung: $ x = -1, y = \\frac{3}{2} = 1.5, z = 9 $",
+      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nI. $ z = 2x+3y + 6,5$\nII. $ y/2  + z = x + 43/4$\nIII. $ 4z+3y - 33= 5y$",
       "chapterName": "Lineare Gleichungssysteme — S3 · A5"
     },
     {
       "id": "woche-1/lineare-gleichungssysteme-d4-a1",
       "title": "Aufgabe A1 (Schwierigkeit 4)",
-      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nI. $ x/5 +y = x/2 + 9/30$\nII. $ z - 3y + 37/35= 0$\nIII. $y - 19/15 = x-4z+y$\nLösung: $ x = 1/3, y = 2/5, z = 1/7 $\nHinweis: Hier kann auch der Taschenrechner verwendet werden",
+      "plainText": "Aufgabentyp A: Bestimme alle Lösungen des LGS möglichst ohne Taschenrechner\nI. $ x/5 +y = x/2 + 9/30$\nII. $ z - 3y + 37/35= 0$\nIII. $y - 19/15 = x-4z+y$\nHinweis: Hier kann auch der Taschenrechner verwendet werden",
       "chapterName": "Lineare Gleichungssysteme — S4 · A1"
     },
     {
       "id": "woche-1/lineare-gleichungssysteme-d4-c1",
       "title": "Aufgabe C1 (Schwierigkeit 4)",
-      "plainText": "Aufgabentyp C\nEin Bauer hält in seinem Stall Hühner und Kaninchen. Er zählt insgesamt 120 Beine. Es gibt dreimal mehr Hühner als Kaninchen. Wie viele Hühner und Kaninchen hat der Bauer? Löse mit einem Gleichungssystem!\nLösung: 36 Hühner und 12 Kaninchen",
+      "plainText": "Aufgabentyp C\nEin Bauer hält in seinem Stall Hühner und Kaninchen. Er zählt insgesamt 120 Beine. Es gibt dreimal mehr Hühner als Kaninchen. Wie viele Hühner und Kaninchen hat der Bauer? Löse mit einem Gleichungssystem!",
       "chapterName": "Lineare Gleichungssysteme — S4 · C1"
     },
     {
       "id": "woche-1/lineare-gleichungssysteme-d4-c2",
       "title": "Aufgabe C2 (Schwierigkeit 4)",
-      "plainText": "Aufgabentyp C\nDein Freund kauft bei einer großen Fastfood-Kette eine wilde Mischung aus Hamburger und Cheeseburger. Die Anzahl aller Burger beträgt 12 und kosten zusammen 12,68 Euro.\nEs gilt: Ein Hamburger kostet 0,99 Euro und ein Cheeseburger 1,19 Euro. Wie viele Hamburger und wie viele Cheeseburger hat dein Freund gekauft?\nLösung: 8 Hamburger und 4 Cheeseburger",
+      "plainText": "Aufgabentyp C\nDein Freund kauft bei einer großen Fastfood-Kette eine wilde Mischung aus Hamburger und Cheeseburger. Die Anzahl aller Burger beträgt 12 und kosten zusammen 12,68 Euro.\nEs gilt: Ein Hamburger kostet 0,99 Euro und ein Cheeseburger 1,19 Euro. Wie viele Hamburger und wie viele Cheeseburger hat dein Freund gekauft?",
       "chapterName": "Lineare Gleichungssysteme — S4 · C2"
     },
     {
       "id": "woche-1/lineare-gleichungssysteme-d4-c3",
       "title": "Aufgabe C3 (Schwierigkeit 4)",
-      "plainText": "Aufgabentyp C\nDu hast ausschließlich rote, grüne und blaue Strümpfe. Alle Strümpfe bis auf drei sind rot, alle bis auf vier sind grün und alle bis auf 5 sind blau. Wie viele Strümpfe hast du von jeder Farbe?\nLösung: r=3, g=2, b=1",
+      "plainText": "Aufgabentyp C\nDu hast ausschließlich rote, grüne und blaue Strümpfe. Alle Strümpfe bis auf drei sind rot, alle bis auf vier sind grün und alle bis auf 5 sind blau. Wie viele Strümpfe hast du von jeder Farbe?",
       "chapterName": "Lineare Gleichungssysteme — S4 · C3"
     }
   ]

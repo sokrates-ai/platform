@@ -4,31 +4,31 @@
     {
       "id": "woche-1/quadratische-gleichungen-d1-a1",
       "title": "Aufgabe A1 (Schwierigkeit 1)",
-      "plainText": "Aufgabentyp A: Finde die kleinsten x, welche die Gleichung lösen.\n$ 2x^2-8x+6 = 0 $\nLösung: $x_1=1$, $x_2=3$",
+      "plainText": "Aufgabentyp A: Finde die kleinsten x, welche die Gleichung lösen.\n$ 2x^2-8x+6 = 0 $",
       "chapterName": "Mitternachtsformel / p-q-Formel — S1 · A1"
     },
     {
       "id": "woche-1/quadratische-gleichungen-d1-a2",
       "title": "Aufgabe A2 (Schwierigkeit 1)",
-      "plainText": "Aufgabentyp A: Finde die kleinsten x, welche die Gleichung lösen.\n$ 2x^2-8x+8 = 0 $\nLösung: $x_1=2$",
+      "plainText": "Aufgabentyp A: Finde die kleinsten x, welche die Gleichung lösen.\n$ 2x^2-8x+8 = 0 $",
       "chapterName": "Mitternachtsformel / p-q-Formel — S1 · A2"
     },
     {
       "id": "woche-1/quadratische-gleichungen-d2-a1",
       "title": "Aufgabe A1 (Schwierigkeit 2)",
-      "plainText": "Aufgabentyp A: Finde die kleinsten x, welche die Gleichung lösen.\n$ x^2-3x+2=0 $\nLösung: $x_1=1$ $x_2=2$",
+      "plainText": "Aufgabentyp A: Finde die kleinsten x, welche die Gleichung lösen.\n$ x^2-3x+2=0 $",
       "chapterName": "Mitternachtsformel / p-q-Formel — S2 · A1"
     },
     {
       "id": "woche-1/quadratische-gleichungen-d2-a2",
       "title": "Aufgabe A2 (Schwierigkeit 2)",
-      "plainText": "Aufgabentyp A: Finde die kleinsten x, welche die Gleichung lösen.\n$ x^2+x=48-x $\nLösung: $x_1=-8$ $x_2=6$",
+      "plainText": "Aufgabentyp A: Finde die kleinsten x, welche die Gleichung lösen.\n$ x^2+x=48-x $",
       "chapterName": "Mitternachtsformel / p-q-Formel — S2 · A2"
     },
     {
       "id": "woche-1/quadratische-gleichungen-d4-a1",
       "title": "Aufgabe A1 (Schwierigkeit 4)",
-      "plainText": "Aufgabentyp A: Finde die kleinsten x, welche die Gleichung lösen.\n$ \\frac{2}{\\sqrt{x}} = x-3 $\nLösung: $x_1=4$",
+      "plainText": "Aufgabentyp A: Finde die kleinsten x, welche die Gleichung lösen.\n$ \\frac{2}{\\sqrt{x}} = x-3 $",
       "chapterName": "Mitternachtsformel / p-q-Formel — S4 · A1"
     }
   ]

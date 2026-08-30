@@ -2,8 +2,9 @@
 
 Jede JSON-Datei entspricht dem Inhalt eines Kurs-Tabs. Jede nummerierte
 Markdown-Aufgabe wird als eigenes Kapitel und damit als eigener Kartenstein
-importiert. Schwierigkeitsgrad, Aufgabentyp, Aufgabenstellung und Lösung bleiben
-erhalten. Noch leere Quellaufgaben werden ausdrücklich als Entwurf markiert.
+importiert. Schwierigkeitsgrad, Aufgabentyp und Aufgabenstellung bleiben
+erhalten; Lösungen verbleiben ausschließlich in den Markdown-Quelldateien.
+Noch leere Quellaufgaben werden ausdrücklich als Entwurf markiert.
 
 | Datei | Empfohlener Tabname | Aufgaben/Kapitel |
 | --- | --- | ---: |
