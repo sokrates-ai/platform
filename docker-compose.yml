@@ -25,6 +25,15 @@ services:
       container_name: sk-platform-backend
       image: ghcr.io/sokrates-ai/sk-platform-backend:staging
       restart: unless-stopped
+      # Docker defaults this container to 1024 open files. Each browser tab
+      # holds several connections, so a few hundred concurrent users exhaust
+      # the worker's descriptors; it then stops accepting connections while
+      # burning no CPU, and only recovers as sockets time out. Sockets seen
+      # stuck in CLOSE-WAIT make that worse.
+      ulimits:
+        nofile:
+          soft: 65535
+          hard: 65535
       healthcheck:
         test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:1338/api/v1/health', timeout=5)\""]
         interval: 15s
