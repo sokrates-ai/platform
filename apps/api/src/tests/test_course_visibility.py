@@ -1,4 +1,5 @@
 import asyncio
+import json
 from datetime import datetime
 from uuid import uuid4
 
@@ -10,7 +11,7 @@ from starlette.requests import Request
 from src.db.courses.courses import Course
 from src.db.organizations import Organization
 from src.db.users import AnonymousUser, PublicUser, User
-from src.services.courses.courses import get_course, get_courses_orgslug
+from src.services.courses.courses import get_course_json, get_courses_orgslug
 
 
 def _request() -> Request:
@@ -76,7 +77,7 @@ def test_hidden_course_direct_access_is_denied_to_students(session: Session):
 
     with pytest.raises(HTTPException) as exc_info:
         asyncio.run(
-            get_course(
+            get_course_json(
                 _request(),
                 course.course_uuid,
                 _public_user(session, "robin"),
@@ -86,9 +87,11 @@ def test_hidden_course_direct_access_is_denied_to_students(session: Session):
 
     assert exc_info.value.status_code == 404
 
-    manager_course = asyncio.run(
-        get_course(
-            _request(), course.course_uuid, _public_user(session, "batman"), session
+    manager_course = json.loads(
+        asyncio.run(
+            get_course_json(
+                _request(), course.course_uuid, _public_user(session, "batman"), session
+            )
         )
     )
-    assert manager_course.course_uuid == course.course_uuid
+    assert manager_course["course_uuid"] == course.course_uuid

@@ -73,8 +73,8 @@ from src.services.courses.tutor_room_selection import (
 from src.services.courses.analytics import get_course_analytics
 from src.services.courses.courses import (
     create_course,
-    get_course,
     get_course_by_id,
+    get_course_json,
     get_course_meta_json,
     get_courses_orgslug,
     update_course,
@@ -280,10 +280,10 @@ async def api_get_course(
     it carries the full map state (hundreds of kilobytes). See
     src/core/responses.py for why the response_model path is avoided.
     """
-    course = await get_course(
+    body = await get_course_json(
         request, course_uuid, current_user=current_user, db_session=db_session
     )
-    return orjson_response(course)
+    return Response(content=body, media_type='application/json')
 
 
 @router.get('/id/{course_id}')

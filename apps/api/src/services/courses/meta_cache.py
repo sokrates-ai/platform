@@ -27,7 +27,7 @@ from redis.asyncio import Redis
 
 from config.config import get_learnhouse_config
 
-_KEY_PREFIX = "course_meta:v1:"
+_KEY_PREFIX = "course_cache:v1:"
 _TTL_SECONDS = 300
 
 _logger = logging.getLogger(__name__)
@@ -60,46 +60,35 @@ async def _get_redis() -> Optional[Redis]:
     return _redis_client
 
 
-def _key(course_uuid: str) -> str:
-    return f"{_KEY_PREFIX}{course_uuid}"
+def _key(kind: str, course_uuid: str) -> str:
+    return f"{_KEY_PREFIX}{kind}:{course_uuid}"
 
 
-async def get_cached_shared_payload(course_uuid: str) -> Optional[bytes]:
-    """The course payload as JSON bytes, without the per-user `trail` key."""
+async def get_cached_payload(kind: str, course_uuid: str) -> Optional[bytes]:
+    """
+    A cached course payload as JSON bytes.
+
+    `kind` separates the shapes different endpoints serve: "meta" is the course
+    body without the per-user `trail`, "course" is the course on its own.
+    """
     redis = await _get_redis()
     if redis is None:
         return None
     try:
-        return await redis.get(_key(course_uuid))
+        return await redis.get(_key(kind, course_uuid))
     except Exception:
-        _logger.warning("Course meta cache read failed", exc_info=True)
+        _logger.warning("Course cache read failed", exc_info=True)
         return None
 
 
-async def set_cached_shared_payload(course_uuid: str, payload: bytes) -> None:
+async def set_cached_payload(kind: str, course_uuid: str, payload: bytes) -> None:
     redis = await _get_redis()
     if redis is None:
         return
     try:
-        await redis.set(_key(course_uuid), payload, ex=_TTL_SECONDS)
+        await redis.set(_key(kind, course_uuid), payload, ex=_TTL_SECONDS)
     except Exception:
-        _logger.warning("Course meta cache write failed", exc_info=True)
-
-
-async def invalidate(course_uuid: Optional[str] = None) -> None:
-    """Drop one course, or every course when the change cannot be attributed."""
-    redis = await _get_redis()
-    if redis is None:
-        return
-    try:
-        if course_uuid is not None:
-            await redis.delete(_key(course_uuid))
-            return
-        keys = [key async for key in redis.scan_iter(match=f"{_KEY_PREFIX}*")]
-        if keys:
-            await redis.delete(*keys)
-    except Exception:
-        _logger.warning("Course meta cache invalidation failed", exc_info=True)
+        _logger.warning("Course cache write failed", exc_info=True)
 
 
 def splice_trail(shared_payload: bytes, trail: object) -> bytes:

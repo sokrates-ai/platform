@@ -345,41 +345,6 @@ def can_manage_hidden_course(
     return False
 
 
-async def get_course(
-    request: Request,
-    course_uuid: str,
-    current_user: PublicUser | AnonymousUser,
-    db_session: Session,
-):
-    statement = select(Course).where(Course.course_uuid == course_uuid)
-    course = db_session.exec(statement).first()
-
-    if not course:
-        raise HTTPException(
-            status_code=404,
-            detail="Course not found",
-        )
-
-    # RBAC check
-    await rbac_check(request, course.course_uuid, current_user, "read", db_session)
-
-    # Get course authors
-    authors_statement = (
-        select(User)
-        .join(ResourceAuthor)
-        .where(ResourceAuthor.resource_uuid == course.course_uuid)
-    )
-    authors = db_session.exec(authors_statement).all()
-
-    # convert from User to UserRead
-    author_reads = [UserRead.model_validate(author) for author in authors]
-
-    tabs = ensure_default_tabs(course, db_session)
-    course_read = build_course_read(course, author_reads, tabs)
-
-    return course_read
-
-
 async def get_course_by_id(
     request: Request,
     course_id: str,
@@ -415,6 +380,49 @@ async def get_course_by_id(
     return course_read
 
 
+async def get_course_json(
+    request: Request,
+    course_uuid: str,
+    current_user: PublicUser | AnonymousUser,
+    db_session: Session,
+) -> bytes:
+    """
+    The course body as JSON bytes, using the shared course cache.
+
+    This is what the course page renders from. The body is the same for every
+    user, so it is cached; authorization still runs on every call.
+    """
+    course_statement = select(Course).where(Course.course_uuid == course_uuid)
+    course = db_session.exec(course_statement).first()
+
+    if not course:
+        raise HTTPException(
+            status_code=404,
+            detail="Course not found",
+        )
+
+    await rbac_check(request, course.course_uuid, current_user, "read", db_session)
+
+    cached = await meta_cache.get_cached_payload('course', course_uuid)
+    if cached is not None:
+        return cached
+
+    authors_statement = (
+        select(User)
+        .join(ResourceAuthor)
+        .where(ResourceAuthor.resource_uuid == course.course_uuid)
+    )
+    authors = db_session.exec(authors_statement).all()
+    author_reads = [UserRead.model_validate(author) for author in authors]
+
+    tabs = ensure_default_tabs(course, db_session)
+    payload = orjson.dumps(
+        build_course_read(course, author_reads, tabs).dict(by_alias=True)
+    )
+    await meta_cache.set_cached_payload('course', course_uuid, payload)
+    return payload
+
+
 async def get_course_meta_json(
     request: Request,
     course_uuid: str,
@@ -438,12 +446,12 @@ async def get_course_meta_json(
 
     await rbac_check(request, course.course_uuid, current_user, "read", db_session)
 
-    shared = await meta_cache.get_cached_shared_payload(course_uuid)
+    shared = await meta_cache.get_cached_payload('meta', course_uuid)
     if shared is None:
         shared = orjson.dumps(
             _build_course_meta_shared(request, course, db_session)
         )
-        await meta_cache.set_cached_shared_payload(course_uuid, shared)
+        await meta_cache.set_cached_payload('meta', course_uuid, shared)
 
     trail = None
     if not isinstance(current_user, AnonymousUser):

@@ -52,7 +52,14 @@ app.add_middleware(
 )
 
 # Gzip Middleware (will add brotli later)
-app.add_middleware(GZipMiddleware, minimum_size=1000)
+# compresslevel 9 is starlette's default and costs several times more CPU than
+# 6 for a couple of percent smaller output. Course payloads are hundreds of
+# kilobytes and compression runs on the event loop, so the trade is worth it.
+app.add_middleware(
+    GZipMiddleware,
+    minimum_size=1000,
+    compresslevel=int(os.getenv('LEARNHOUSE_GZIP_LEVEL', '6')),
+)
 
 
 # Events
