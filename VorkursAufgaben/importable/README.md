@@ -18,6 +18,7 @@ Noch leere Quellaufgaben werden ausdrücklich als Entwurf markiert.
 | `woche-2/ableiten.json` | Ableitungsregeln | 26 |
 | `woche-2/intergrale.json` | Integralrechenregeln | 23 |
 | `woche-3/summen-und-produktzeichen.json` | Summen- und Produktzeichen | 9 |
+| `raetsel.json` | Rätsel | 7 |
 
 Die Dateien verwenden Version 1 des strikten Sokrates-JSON-Imports.
 Erneute Generierung: `python3 VorkursAufgaben/convert_markdown_imports.py`.

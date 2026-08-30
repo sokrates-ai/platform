@@ -315,8 +315,12 @@ def main() -> None:
     markdown_files = sorted(SOURCE_ROOT.glob("*/*.md"))
     if not markdown_files:
         raise SystemExit(f"No Markdown files found below {SOURCE_ROOT}")
-    if OUTPUT_ROOT.exists():
-        shutil.rmtree(OUTPUT_ROOT)
+    OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
+    # The PDF-derived riddle import and its PNG assets are maintained
+    # separately. Regenerating the Markdown imports must not delete them.
+    for generated_week in OUTPUT_ROOT.glob("woche-*"):
+        if generated_week.is_dir():
+            shutil.rmtree(generated_week)
 
     manifest: list[tuple[str, str, int]] = []
     for source in markdown_files:
@@ -335,6 +339,13 @@ def main() -> None:
                 topic_name(source, source.read_text(encoding="utf-8-sig")),
                 len(document["problems"]),
             )
+        )
+
+    riddle_import = OUTPUT_ROOT / "raetsel.json"
+    if riddle_import.exists():
+        riddle_document = json.loads(riddle_import.read_text(encoding="utf-8"))
+        manifest.append(
+            ("raetsel.json", "Rätsel", len(riddle_document.get("problems", [])))
         )
 
     readme_lines = [

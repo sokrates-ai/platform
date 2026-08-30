@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "problems": [
+    {
+      "id": "pdf-raetsel-1",
+      "title": "Hexe am See",
+      "plainText": "Löse das Rätsel auf dem Bild.",
+      "image": {
+        "original": "https://sokrates-hpi.de/content/vorkurs-raetsel/01-hexe-am-see.png"
+      },
+      "chapterName": "Rätsel — 1 · Hexe am See"
+    },
+    {
+      "id": "pdf-raetsel-2",
+      "title": "Schlüsseldienst",
+      "plainText": "Löse das Rätsel auf dem Bild.",
+      "image": {
+        "original": "https://sokrates-hpi.de/content/vorkurs-raetsel/02-schluesseldienst.png"
+      },
+      "chapterName": "Rätsel — 2 · Schlüsseldienst"
+    },
+    {
+      "id": "pdf-raetsel-3",
+      "title": "Ganovenduell",
+      "plainText": "Löse das Rätsel auf dem Bild.",
+      "image": {
+        "original": "https://sokrates-hpi.de/content/vorkurs-raetsel/03-ganovenduell.png"
+      },
+      "chapterName": "Rätsel — 3 · Ganovenduell"
+    },
+    {
+      "id": "pdf-raetsel-4",
+      "title": "5er Pferderennen",
+      "plainText": "Löse das Rätsel auf dem Bild.",
+      "image": {
+        "original": "https://sokrates-hpi.de/content/vorkurs-raetsel/04-pferderennen.png"
+      },
+      "chapterName": "Rätsel — 4 · 5er Pferderennen"
+    },
+    {
+      "id": "pdf-raetsel-5",
+      "title": "Ameisenhungrige Spinnen",
+      "plainText": "Löse das Rätsel auf dem Bild.",
+      "image": {
+        "original": "https://sokrates-hpi.de/content/vorkurs-raetsel/05-ameisenhungrige-spinnen.png"
+      },
+      "chapterName": "Rätsel — 5 · Ameisenhungrige Spinnen"
+    },
+    {
+      "id": "pdf-raetsel-6",
+      "title": "Kettensägen",
+      "plainText": "Löse das Rätsel auf dem Bild.",
+      "image": {
+        "original": "https://sokrates-hpi.de/content/vorkurs-raetsel/06-kettensaegen.png"
+      },
+      "chapterName": "Rätsel — 6 · Kettensägen"
+    },
+    {
+      "id": "pdf-raetsel-7",
+      "title": "Architekt gegen Spinne",
+      "plainText": "Löse das Rätsel auf dem Bild.",
+      "image": {
+        "original": "https://sokrates-hpi.de/content/vorkurs-raetsel/07-architekt-gegen-spinne.png"
+      },
+      "chapterName": "Rätsel — 7 · Architekt gegen Spinne"
+    }
+  ]
+}
