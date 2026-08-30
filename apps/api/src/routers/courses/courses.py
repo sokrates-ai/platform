@@ -40,6 +40,11 @@ from src.db.trail_steps import TrailStepVerificationEnum
 from src.security.auth import get_current_user
 from src.services.courses.course_canvas import get_canvas, put_update
 from src.services.courses.students import list_course_students, CourseStudent
+from src.services.courses.progress_reset import (
+    CourseProgressResetRequest,
+    CourseProgressResetResult,
+    reset_course_progress,
+)
 from src.services.courses.member_groups import (
     accept_member_group_invite,
     bulk_delete_course_member_groups,
@@ -542,6 +547,23 @@ async def api_list_course_students(
     """
     return await list_course_students(
         request, course_uuid, current_user, db_session
+    )
+
+
+@router.post('/{course_uuid}/progress/reset')
+async def api_reset_course_progress(
+    request: Request,
+    course_uuid: str,
+    payload: CourseProgressResetRequest,
+    current_user: PublicUser = Depends(get_current_user),
+    db_session: Session = Depends(get_db_session),
+) -> CourseProgressResetResult:
+    """
+    Delete all progress (completed and begun activities, task markers, task logs
+    and the enrollment) of the selected users for this course.
+    """
+    return await reset_course_progress(
+        request, course_uuid, payload.user_ids, current_user, db_session
     )
 
 

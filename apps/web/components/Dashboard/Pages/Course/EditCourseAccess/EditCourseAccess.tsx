@@ -1,5 +1,6 @@
 import { useCourse, useCourseDispatch } from '@components/Contexts/CourseContext'
 import LinkToUserGroup from '@components/Objects/Modals/Dash/EditCourseAccess/LinkToUserGroup'
+import ResetCourseProgress from './ResetCourseProgress'
 import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationModal/ConfirmationModal'
 import Modal from '@components/Objects/StyledElements/Modal/Modal'
 import { getAPIUrl } from '@services/config/config'
@@ -105,6 +106,7 @@ function EditCourseAccess(props: EditCourseAccessProps) {
                             </div>
                         </div>
                     </div>
+                    <ResetCourseProgress courseUuid={courseStructure.course_uuid} />
                     <div className="mx-4 sm:mx-10 bg-white rounded-xl shadow-sm px-4 py-4">
                         <div className="flex flex-col bg-gray-50 -space-y-1 px-3 sm:px-5 py-3 rounded-md mb-3">
                             <h1 className="font-bold text-lg sm:text-xl text-gray-800">Access to the course</h1>
