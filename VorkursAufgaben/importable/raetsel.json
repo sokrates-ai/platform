@@ -63,6 +63,24 @@
         "original": "https://sokrates-hpi.de/content/vorkurs-raetsel/07-architekt-gegen-spinne.png"
       },
       "chapterName": "Rätsel — 7 · Architekt gegen Spinne"
+    },
+    {
+      "id": "pdf-raetsel-8",
+      "title": "Compounding The Co-dependency",
+      "plainText": "Löse das Sudoku mit den auf dem Bild beschriebenen CTC-Regeln.",
+      "image": {
+        "original": "https://sokrates-hpi.de/content/vorkurs-raetsel/08-ctc-compounding-the-co-dependency.png"
+      },
+      "chapterName": "Rätsel — 8 · Compounding The Co-dependency"
+    },
+    {
+      "id": "pdf-raetsel-9",
+      "title": "Regex Crossword",
+      "plainText": "Löse das reguläre Kreuzworträtsel auf dem Bild.",
+      "image": {
+        "original": "https://sokrates-hpi.de/content/vorkurs-raetsel/09-regex-crossword.png"
+      },
+      "chapterName": "Rätsel — 9 · Regex Crossword"
     }
   ]
 }
