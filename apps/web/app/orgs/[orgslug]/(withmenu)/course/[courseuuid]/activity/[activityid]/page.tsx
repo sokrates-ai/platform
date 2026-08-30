@@ -27,7 +27,10 @@ export async function generateMetadata({
   const course_meta = await getCourseMetadata(
     params.courseuuid,
     { revalidate: 0, tags: ['courses'] },
-    access_token ? access_token : null
+    access_token ? access_token : null,
+    // Server component: the activity view renders one tab, and the fetch can
+    // stay on the container network.
+    { includeTabStore: false, serverSide: true }
   )
   const activity = await getActivityWithAuthHeader(
     params.activityid,
@@ -69,7 +72,10 @@ const ActivityPage = async (params: any) => {
   const course_meta = await getCourseMetadata(
     courseuuid,
     { revalidate: 0, tags: ['courses'] },
-    access_token ? access_token : null
+    access_token ? access_token : null,
+    // Server component: the activity view renders one tab, and the fetch can
+    // stay on the container network.
+    { includeTabStore: false, serverSide: true }
   )
   const activity = await getActivityWithAuthHeader(
     activityid,

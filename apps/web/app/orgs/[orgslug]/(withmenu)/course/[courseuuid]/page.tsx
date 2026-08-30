@@ -43,7 +43,7 @@ export async function generateMetadata({
     `course_${params.courseuuid}`,
     { revalidate: 0, tags: ['courses'] },
     access_token ? access_token : null,
-    { includeTabStore: false }
+    { includeTabStore: false, serverSide: true }
   )
 
   // SEO
@@ -96,13 +96,13 @@ const CoursePage = async (params: any) => {
         courseuuid,
         { revalidate: 0, tags: ['courses'] },
         access_token,
-        { includeTabStore: false }
+        { includeTabStore: false, serverSide: true }
       )
     : await getCourse(
         `course_${courseuuid}`,
         { revalidate: 0, tags: ['courses'] },
         null,
-        { includeTabStore: false }
+        { includeTabStore: false, serverSide: true }
       )
   const courseCanvas = access_token
     ? await getCourseCanvasInteractionState({

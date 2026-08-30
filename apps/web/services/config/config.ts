@@ -48,6 +48,26 @@ function getLearnhouseBaseURL(): string {
     return url
 }
 
+/*
+ * API base for fetches that provably run on the server.
+ *
+ * getAPIUrl() cannot be used for this. It branches on `typeof window`, which is
+ * also true while server-rendering a *client* component - and several of those
+ * build SWR keys from it that the browser then fetches. An internal hostname
+ * baked into such a key is unreachable from a browser, so the branch has to be
+ * chosen explicitly by the caller rather than inferred.
+ *
+ * Only server components may use this. Without it, every server-side fetch
+ * leaves the container and re-enters over the public hostname, making the
+ * reverse proxy terminate TLS twice per page render.
+ *
+ * Deliberately not NEXT_PUBLIC_: that would inline it into the client bundle.
+ */
+export const getServerAPIUrl = () => {
+    const internal = process.env.LEARNHOUSE_INTERNAL_API_URL
+    return internal && internal !== 'undefined' ? internal : getAPIUrl()
+}
+
 export const getAPIUrl = () => {
     let url: string | null = null
 

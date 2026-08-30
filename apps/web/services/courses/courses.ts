@@ -1,4 +1,4 @@
-import { getAPIUrl } from '@services/config/config'
+import { getAPIUrl, getServerAPIUrl } from '@services/config/config'
 import {
   RequestBodyFormWithAuthHeader,
   RequestBodyWithAuthHeader,
@@ -34,12 +34,13 @@ export async function getCourseMetadata(
   course_uuid: any,
   next: any,
   access_token?: string | null,
-  options?: { includeTabStore?: boolean }
+  options?: { includeTabStore?: boolean; serverSide?: boolean }
 ) {
   const query =
     options?.includeTabStore === false ? '?include_tab_store=false' : ''
+  const base = options?.serverSide ? getServerAPIUrl() : getAPIUrl()
   const result = await fetch(
-    `${getAPIUrl()}courses/course_${course_uuid}/meta${query}`,
+    `${base}courses/course_${course_uuid}/meta${query}`,
     RequestBodyWithAuthHeader('GET', null, next, access_token ?? undefined)
   )
   const res = await errorHandling(result)
@@ -79,12 +80,13 @@ export async function getCourse(
   course_uuid: string,
   next: any,
   access_token: any,
-  options?: { includeTabStore?: boolean }
+  options?: { includeTabStore?: boolean; serverSide?: boolean }
 ) {
   const query =
     options?.includeTabStore === false ? '?include_tab_store=false' : ''
+  const base = options?.serverSide ? getServerAPIUrl() : getAPIUrl()
   const result: any = await fetch(
-    `${getAPIUrl()}courses/${course_uuid}${query}`,
+    `${base}courses/${course_uuid}${query}`,
     RequestBodyWithAuthHeader('GET', null, next, access_token)
   )
   const res = await errorHandling(result)
