@@ -76,6 +76,7 @@ from src.services.courses.courses import (
     get_course_by_id,
     get_course_json,
     get_course_meta_json,
+    get_course_tab_map_json,
     get_courses_orgslug,
     update_course,
     delete_course,
@@ -270,6 +271,7 @@ async def api_get_course_analytics(
 async def api_get_course(
     request: Request,
     course_uuid: str,
+    include_tab_store: bool = True,
     db_session: Session = Depends(get_db_session),
     current_user: PublicUser = Depends(get_current_user),
 ) -> Response:
@@ -281,7 +283,11 @@ async def api_get_course(
     src/core/responses.py for why the response_model path is avoided.
     """
     body = await get_course_json(
-        request, course_uuid, current_user=current_user, db_session=db_session
+        request,
+        course_uuid,
+        current_user=current_user,
+        db_session=db_session,
+        include_tab_store=include_tab_store,
     )
     return Response(content=body, media_type='application/json')
 
@@ -309,6 +315,7 @@ async def api_get_course_by_id(
 async def api_get_course_meta(
     request: Request,
     course_uuid: str,
+    include_tab_store: bool = True,
     db_session: Session = Depends(get_db_session),
     current_user: PublicUser = Depends(get_current_user),
 ) -> Response:
@@ -323,7 +330,35 @@ async def api_get_course_meta(
     throughput ceiling for the whole API.
     """
     body = await get_course_meta_json(
-        request, course_uuid, current_user=current_user, db_session=db_session
+        request,
+        course_uuid,
+        current_user=current_user,
+        db_session=db_session,
+        include_tab_store=include_tab_store,
+    )
+    return Response(content=body, media_type='application/json')
+
+
+@router.get('/{course_uuid}/tabs/{tab_uuid}/map', response_model=None)
+async def api_get_course_tab_map(
+    request: Request,
+    course_uuid: str,
+    tab_uuid: str,
+    db_session: Session = Depends(get_db_session),
+    current_user: PublicUser = Depends(get_current_user),
+) -> Response:
+    """
+    Get a single tab's map state.
+
+    Readers that show one tab at a time use this instead of pulling the whole
+    tab_store, which is the bulk of a course payload.
+    """
+    body = await get_course_tab_map_json(
+        request,
+        course_uuid,
+        tab_uuid,
+        current_user=current_user,
+        db_session=db_session,
     )
     return Response(content=body, media_type='application/json')
 

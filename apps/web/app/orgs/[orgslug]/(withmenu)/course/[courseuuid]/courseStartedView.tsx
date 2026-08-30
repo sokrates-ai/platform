@@ -26,6 +26,7 @@ import PageLoading from '@components/Objects/Loaders/PageLoading'
 import { useSokratesSession } from '@components/Contexts/SokratesSessionContext'
 import {
   getCourseMetadata,
+  getCourseTabMap,
   updateCourseCanvasInteractionState,
 } from '@services/courses/courses'
 import { cn } from '@/lib/utils'
@@ -71,6 +72,12 @@ const CourseStartedView = ({
   const initialTabParamRef = useRef(searchParams.get('tab'))
   const { toast } = useToast()
   const [courseData, setCourseData] = useState(course)
+  // The course payload no longer carries every tab's map state - that was the
+  // bulk of its size - so the map for the tab being shown is fetched on demand
+  // and kept per tab once loaded.
+  const [fetchedTabMaps, setFetchedTabMaps] = useState<
+    Record<string, { objects: any[]; boundaries: any }>
+  >({})
 
   useEffect(() => {
     setCourseData(course)
@@ -408,7 +415,7 @@ const CourseStartedView = ({
   }, [activeCourse, selectedTab, fallbackTabId])
 
   const layout: LayoutState = useMemo(() => {
-    const fallback = tabMaps[selectedTab] ?? {
+    const fallback = fetchedTabMaps[selectedTab] ?? tabMaps[selectedTab] ?? {
       objects:
         Array.isArray(activeCourse?.map_state?.objects)
           ? activeCourse.map_state.objects
@@ -441,7 +448,7 @@ const CourseStartedView = ({
       },
       updateOriginator: 'initial',
     }
-  }, [tabMaps, selectedTab, activeCourse])
+  }, [fetchedTabMaps, tabMaps, selectedTab, activeCourse])
 
   const layeredLayout: LayoutState = useMemo(() => {
     const assets = Array.isArray(layout.layout) ? layout.layout : []
@@ -670,6 +677,7 @@ const CourseStartedView = ({
         courseIdWithoutPrefix,
         null,
         access_token,
+        { includeTabStore: false },
       )
       if (updated) {
         setCourseData(updated)
@@ -680,6 +688,34 @@ const CourseStartedView = ({
       refreshInFlightRef.current = false
     }
   }, [access_token, courseIdWithoutPrefix])
+
+  useEffect(() => {
+    if (!selectedTab) return
+    // Already have it, either from a previous fetch or from an editor payload
+    // that still carries the full store.
+    if (fetchedTabMaps[selectedTab]) return
+    if (rawTabStore?.[selectedTab]) return
+
+    let cancelled = false
+    getCourseTabMap(courseIdWithoutPrefix, selectedTab, null, access_token)
+      .then((map) => {
+        if (cancelled || !map || !Array.isArray(map.objects)) return
+        setFetchedTabMaps((current) => ({ ...current, [selectedTab]: map }))
+      })
+      .catch(() => {
+        // Leave the existing fallback map in place.
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    selectedTab,
+    fetchedTabMaps,
+    rawTabStore,
+    courseIdWithoutPrefix,
+    access_token,
+  ])
 
   const isCustomImageAsset = useCallback((asset: AssetData) => {
     if (!asset || asset.type?.kind === 'chapter') {

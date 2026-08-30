@@ -24,13 +24,38 @@ export async function getOrgCourses(
   return res
 }
 
+/*
+ * tabStore holds the map state for every tab and is by far the largest part of
+ * a course payload. Views that render one tab at a time pass
+ * includeTabStore: false and pull the tab they show from getCourseTabMap.
+ * Editors, which need every tab's state to save it back, keep the default.
+ */
 export async function getCourseMetadata(
   course_uuid: any,
+  next: any,
+  access_token?: string | null,
+  options?: { includeTabStore?: boolean }
+) {
+  const query =
+    options?.includeTabStore === false ? '?include_tab_store=false' : ''
+  const result = await fetch(
+    `${getAPIUrl()}courses/course_${course_uuid}/meta${query}`,
+    RequestBodyWithAuthHeader('GET', null, next, access_token ?? undefined)
+  )
+  const res = await errorHandling(result)
+  return res
+}
+
+export async function getCourseTabMap(
+  course_uuid: any,
+  tab_uuid: string,
   next: any,
   access_token?: string | null
 ) {
   const result = await fetch(
-    `${getAPIUrl()}courses/course_${course_uuid}/meta`,
+    `${getAPIUrl()}courses/course_${course_uuid}/tabs/${encodeURIComponent(
+      tab_uuid
+    )}/map`,
     RequestBodyWithAuthHeader('GET', null, next, access_token ?? undefined)
   )
   const res = await errorHandling(result)
@@ -53,10 +78,13 @@ export async function updateCourse(
 export async function getCourse(
   course_uuid: string,
   next: any,
-  access_token: any
+  access_token: any,
+  options?: { includeTabStore?: boolean }
 ) {
+  const query =
+    options?.includeTabStore === false ? '?include_tab_store=false' : ''
   const result: any = await fetch(
-    `${getAPIUrl()}courses/${course_uuid}`,
+    `${getAPIUrl()}courses/${course_uuid}${query}`,
     RequestBodyWithAuthHeader('GET', null, next, access_token)
   )
   const res = await errorHandling(result)

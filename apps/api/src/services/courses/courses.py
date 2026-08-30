@@ -247,7 +247,18 @@ def build_course_read(
     course: Course,
     authors: List[UserRead],
     tabs: List[CourseTab],
+    include_tab_store: bool = True,
 ) -> CourseRead:
+    """
+    Assemble the course read model.
+
+    tab_store holds the decorative map state for every tab and is by far the
+    largest thing in a course payload (around 890KB on a real course, against
+    60KB for the active tab's map_state). Readers that only render one tab pass
+    include_tab_store=False and fetch the tabs they actually open from
+    /courses/{uuid}/tabs/{tab_uuid}/map instead. Editors still need the whole
+    store, so it is included by default.
+    """
     sanitized_store = sanitize_tab_map_store(course.tab_store)
     today = datetime.utcnow().date()
 
@@ -296,7 +307,7 @@ def build_course_read(
         map_state = sanitize_map_state(course.map_state)
 
     payload = course.model_dump()
-    payload['tab_store'] = sanitized_store
+    payload['tab_store'] = sanitized_store if include_tab_store else {}
     payload['map_state'] = map_state
     payload['tab_metadata'] = tab_reads
 
@@ -385,6 +396,7 @@ async def get_course_json(
     course_uuid: str,
     current_user: PublicUser | AnonymousUser,
     db_session: Session,
+    include_tab_store: bool = True,
 ) -> bytes:
     """
     The course body as JSON bytes, using the shared course cache.
@@ -403,7 +415,8 @@ async def get_course_json(
 
     await rbac_check(request, course.course_uuid, current_user, "read", db_session)
 
-    cached = await meta_cache.get_cached_payload('course', course_uuid)
+    kind = 'course' if include_tab_store else 'course-lean'
+    cached = await meta_cache.get_cached_payload(kind, course_uuid)
     if cached is not None:
         return cached
 
@@ -417,9 +430,49 @@ async def get_course_json(
 
     tabs = ensure_default_tabs(course, db_session)
     payload = orjson.dumps(
-        build_course_read(course, author_reads, tabs).dict(by_alias=True)
+        build_course_read(
+            course, author_reads, tabs, include_tab_store=include_tab_store
+        ).dict(by_alias=True)
     )
-    await meta_cache.set_cached_payload('course', course_uuid, payload)
+    await meta_cache.set_cached_payload(kind, course_uuid, payload)
+    return payload
+
+
+async def get_course_tab_map_json(
+    request: Request,
+    course_uuid: str,
+    tab_uuid: str,
+    current_user: PublicUser | AnonymousUser,
+    db_session: Session,
+) -> bytes:
+    """
+    One tab's map state as JSON bytes.
+
+    Lets a reader pull just the tab it is showing instead of the whole
+    tab_store. Falls back to the course's own map_state for tabs that have no
+    stored entry, matching what the client used to derive locally.
+    """
+    course_statement = select(Course).where(Course.course_uuid == course_uuid)
+    course = db_session.exec(course_statement).first()
+
+    if not course:
+        raise HTTPException(
+            status_code=404,
+            detail="Course not found",
+        )
+
+    await rbac_check(request, course.course_uuid, current_user, "read", db_session)
+
+    kind = f'tabmap:{tab_uuid}'
+    cached = await meta_cache.get_cached_payload(kind, course_uuid)
+    if cached is not None:
+        return cached
+
+    store = sanitize_tab_map_store(course.tab_store)
+    map_state = store.get(tab_uuid) or sanitize_map_state(course.map_state)
+
+    payload = orjson.dumps(map_state)
+    await meta_cache.set_cached_payload(kind, course_uuid, payload)
     return payload
 
 
@@ -428,6 +481,7 @@ async def get_course_meta_json(
     course_uuid: str,
     current_user: PublicUser | AnonymousUser,
     db_session: Session,
+    include_tab_store: bool = True,
 ) -> bytes:
     """
     The /meta payload as JSON bytes, using the shared course cache.
@@ -446,12 +500,15 @@ async def get_course_meta_json(
 
     await rbac_check(request, course.course_uuid, current_user, "read", db_session)
 
-    shared = await meta_cache.get_cached_payload('meta', course_uuid)
+    kind = 'meta' if include_tab_store else 'meta-lean'
+    shared = await meta_cache.get_cached_payload(kind, course_uuid)
     if shared is None:
         shared = orjson.dumps(
-            _build_course_meta_shared(request, course, db_session)
+            _build_course_meta_shared(
+                request, course, db_session, include_tab_store=include_tab_store
+            )
         )
-        await meta_cache.set_cached_payload('meta', course_uuid, shared)
+        await meta_cache.set_cached_payload(kind, course_uuid, shared)
 
     trail = None
     if not isinstance(current_user, AnonymousUser):
@@ -468,6 +525,7 @@ def _build_course_meta_shared(
     request: Request,
     course: Course,
     db_session: Session,
+    include_tab_store: bool = True,
 ) -> dict:
     """Everything in the meta payload except the per-user trail."""
     # Avoid circular import
@@ -482,7 +540,9 @@ def _build_course_meta_shared(
     author_reads = [UserRead.model_validate(author) for author in authors]
 
     tabs = ensure_default_tabs(course, db_session)
-    course_read = build_course_read(course, author_reads, tabs)
+    course_read = build_course_read(
+        course, author_reads, tabs, include_tab_store=include_tab_store
+    )
     chapters = get_course_chapters_sync(course.id, db_session)
 
     payload = course_read.dict(by_alias=True)

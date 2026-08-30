@@ -296,3 +296,72 @@ def test_course_meta_json_for_anonymous_user_has_null_trail(session: Session):
     payload = json.loads(body)
     assert payload["trail"] is None
     assert payload["course_uuid"] == course.course_uuid
+
+
+def test_course_meta_json_can_omit_the_tab_store(session: Session):
+    """
+    tab_store carries the map state for every tab and is the bulk of a course
+    payload. Readers that render one tab ask for it to be left out.
+    """
+    user, course, _ = _prepare_course_with_trail_step(session)
+    request = _build_request(f"/api/v1/courses/{course.course_uuid}/meta")
+
+    full = json.loads(
+        asyncio.run(get_course_meta_json(request, course.course_uuid, user, session))
+    )
+    lean = json.loads(
+        asyncio.run(
+            get_course_meta_json(
+                request, course.course_uuid, user, session, include_tab_store=False
+            )
+        )
+    )
+
+    assert full["tabStore"] != {}
+    assert lean["tabStore"] == {}
+    # Everything else is untouched, including the active tab's own map.
+    assert lean["map_state"] == full["map_state"]
+    assert lean["chapters"] == full["chapters"]
+    assert lean["course_uuid"] == full["course_uuid"]
+
+
+def test_lean_and_full_course_payloads_do_not_share_a_cache_entry(session: Session):
+    """
+    The two shapes are cached separately; serving one for the other would
+    either strip the editor's store or undo the saving.
+    """
+    from src.services.courses.meta_cache import _key
+
+    assert _key("meta", "course_1") != _key("meta-lean", "course_1")
+    assert _key("course", "course_1") != _key("course-lean", "course_1")
+
+
+def test_course_tab_map_returns_that_tab_and_falls_back(session: Session):
+    from src.services.courses.courses import get_course_tab_map_json
+
+    user, course, _ = _prepare_course_with_trail_step(session)
+    request = _build_request(f"/api/v1/courses/{course.course_uuid}/tabs/x/map")
+
+    full = json.loads(
+        asyncio.run(get_course_meta_json(request, course.course_uuid, user, session))
+    )
+    known_tab = next(iter(full["tabStore"]))
+
+    stored = json.loads(
+        asyncio.run(
+            get_course_tab_map_json(
+                request, course.course_uuid, known_tab, user, session
+            )
+        )
+    )
+    assert stored == full["tabStore"][known_tab]
+
+    # An unknown tab falls back to the course map_state rather than erroring.
+    fallback = json.loads(
+        asyncio.run(
+            get_course_tab_map_json(
+                request, course.course_uuid, "tab-does-not-exist", user, session
+            )
+        )
+    )
+    assert "objects" in fallback and "boundaries" in fallback
